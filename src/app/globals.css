@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: #F7F7FB;
+    color: #0F0B1E;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    letter-spacing: -0.011em;
+  }
+
+  /* Elegant text selection */
+  ::selection {
+    background: #EDE9FE;
+    color: #6D28D9;
+  }
+
+  /* Subtle scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #E5E1F0; border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #D3CCE8; background-clip: padding-box; }
+}
+
+@layer components {
+  .prose-elegant {
+    @apply text-text leading-relaxed;
+  }
+  .prose-elegant h1 { @apply text-4xl md:text-5xl font-semibold tracking-tight mt-12 mb-6; letter-spacing: -0.02em; }
+  .prose-elegant h2 { @apply text-2xl md:text-3xl font-semibold tracking-tight mt-12 mb-4; letter-spacing: -0.02em; }
+  .prose-elegant h3 { @apply text-xl font-semibold tracking-tight mt-8 mb-3; }
+  .prose-elegant p { @apply text-base leading-7 text-text-muted mb-4; }
+  .prose-elegant a { @apply text-primary underline underline-offset-4; }
+  .prose-elegant strong { @apply text-text font-semibold; }
+  .prose-elegant ul { @apply list-disc pl-6 space-y-2 text-text-muted mb-4; }
+  .prose-elegant code { @apply bg-surface text-text px-1.5 py-0.5 rounded text-sm; }
+
+  /* Gradient text — the brand's signature */
+  .text-gradient {
+    @apply bg-gradient-brand bg-clip-text text-transparent;
+    background-size: 200% 200%;
+  }
+  .text-gradient-animate {
+    @apply text-gradient animate-gradient;
+  }
+
+  /* Frosted glass surface */
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: saturate(180%) blur(16px);
+    -webkit-backdrop-filter: saturate(180%) blur(16px);
+  }
+
+  /* Gradient border card: use as wrapper, put content in a white child */
+  .gradient-ring {
+    background: linear-gradient(120deg, rgba(99,102,241,0.4), rgba(217,70,239,0.4));
+    padding: 1px;
+  }
+
+  .noise-bg {
+    background-image:
+      radial-gradient(at 20% 20%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
+      radial-gradient(at 80% 60%, rgba(217, 70, 239, 0.06) 0px, transparent 50%);
+  }
+
+  /* Subtle dotted grid backdrop */
+  .bg-grid {
+    background-image: radial-gradient(rgba(15, 11, 30, 0.05) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+}

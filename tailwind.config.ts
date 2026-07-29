@@ -1,0 +1,95 @@
+import type { Config } from 'tailwindcss';
+
+const config: Config = {
+  content: [
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        background: '#FFFFFF',
+        surface: '#F7F7FB',
+        primary: {
+          DEFAULT: '#7C3AED',
+          hover: '#6D28D9',
+          light: '#EDE9FE',
+        },
+        accent: {
+          DEFAULT: '#22C55E',
+          hover: '#16A34A',
+          light: '#DCFCE7',
+        },
+        fuchsia: {
+          brand: '#D946EF',
+        },
+        indigo: {
+          brand: '#6366F1',
+        },
+        text: {
+          DEFAULT: '#0F0B1E',
+          muted: '#6B7280',
+          subtle: '#9CA3AF',
+        },
+        border: {
+          DEFAULT: '#EAE7F2',
+          light: '#F1EFF8',
+        },
+      },
+      fontFamily: {
+        sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
+      borderRadius: {
+        'xl': '16px',
+        '2xl': '24px',
+        '3xl': '32px',
+      },
+      boxShadow: {
+        'soft': '0 1px 3px 0 rgb(15 11 30 / 0.04), 0 1px 2px -1px rgb(15 11 30 / 0.03)',
+        'soft-md': '0 4px 16px -4px rgb(15 11 30 / 0.08), 0 2px 6px -2px rgb(15 11 30 / 0.04)',
+        'soft-lg': '0 16px 40px -8px rgb(15 11 30 / 0.10), 0 6px 12px -6px rgb(15 11 30 / 0.06)',
+        'soft-xl': '0 28px 60px -12px rgb(15 11 30 / 0.14), 0 10px 20px -10px rgb(15 11 30 / 0.06)',
+        'glow': '0 0 0 4px rgb(124 58 237 / 0.12)',
+        'glow-lg': '0 10px 40px -8px rgb(124 58 237 / 0.35)',
+        'glow-fuchsia': '0 10px 40px -8px rgb(217 70 239 / 0.30)',
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.5s ease-out',
+        'fade-up': 'fadeUp 0.6s ease-out',
+        'scale-in': 'scaleIn 0.3s ease-out',
+        'shimmer': 'shimmer 2.5s linear infinite',
+        'blob': 'blob 18s ease-in-out infinite',
+        'blob-slow': 'blob 26s ease-in-out infinite',
+        'gradient': 'gradientShift 8s ease infinite',
+        'float': 'float 6s ease-in-out infinite',
+        'spin-slow': 'spin 14s linear infinite',
+      },
+      keyframes: {
+        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+        fadeUp: { '0%': { opacity: '0', transform: 'translateY(12px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+        scaleIn: { '0%': { opacity: '0', transform: 'scale(0.96)' }, '100%': { opacity: '1', transform: 'scale(1)' } },
+        shimmer: { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } },
+        blob: {
+          '0%, 100%': { transform: 'translate(0px, 0px) scale(1)' },
+          '33%': { transform: 'translate(30px, -40px) scale(1.1)' },
+          '66%': { transform: 'translate(-25px, 25px) scale(0.95)' },
+        },
+        gradientShift: {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+      },
+      backgroundImage: {
+        'gradient-brand': 'linear-gradient(120deg, #6366F1 0%, #8B5CF6 50%, #D946EF 100%)',
+        'gradient-brand-soft': 'linear-gradient(120deg, #EEF2FF 0%, #F5F3FF 50%, #FDF4FF 100%)',
+        'gradient-mesh': 'radial-gradient(at 15% 15%, rgba(99, 102, 241, 0.14) 0px, transparent 45%), radial-gradient(at 85% 25%, rgba(217, 70, 239, 0.12) 0px, transparent 45%), radial-gradient(at 50% 90%, rgba(139, 92, 246, 0.10) 0px, transparent 45%)',
+      },
+    },
+  },
+  plugins: [],
+};
+export default config;

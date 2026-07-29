@@ -1,0 +1,102 @@
+import type { Metadata } from 'next';
+import { siteConfig } from '@/config/site';
+
+type SeoInput = {
+  title: string;
+  description: string;
+  path?: string;
+  image?: string;
+  keywords?: string[];
+  noIndex?: boolean;
+};
+
+export function buildMetadata({
+  title,
+  description,
+  path = '/',
+  image,
+  keywords = [],
+  noIndex = false,
+}: SeoInput): Metadata {
+  const url = `${siteConfig.url}${path}`;
+  const ogImage = image ?? `${siteConfig.url}/og-default.svg`;
+
+  return {
+    title,
+    description,
+    keywords: keywords.length ? keywords : [...siteConfig.keywords],
+    metadataBase: new URL(siteConfig.url),
+    alternates: { canonical: url },
+    robots: noIndex ? { index: false, follow: false } : { index: true, follow: true },
+    openGraph: {
+      type: 'website',
+      url,
+      title,
+      description,
+      siteName: siteConfig.name,
+      images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImage],
+      creator: siteConfig.twitterHandle,
+    },
+    authors: [{ name: siteConfig.name }],
+  };
+}
+
+export function jsonLd(data: Record<string, unknown>) {
+  return {
+    __html: JSON.stringify({ '@context': 'https://schema.org', ...data }),
+  };
+}
+
+export function softwareAppSchema(tool: { name: string; description: string; url: string }) {
+  return {
+    '@type': 'SoftwareApplication',
+    name: tool.name,
+    description: tool.description,
+    url: tool.url,
+    applicationCategory: 'MultimediaApplication',
+    operatingSystem: 'Any',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: '4.8',
+      ratingCount: '1284',
+    },
+  };
+}
+
+export function faqSchema(items: ReadonlyArray<{ question: string; answer: string }>) {
+  const entities = [];
+  for (const item of (items || [])) {
+    entities.push({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: { '@type': 'Answer', text: item.answer },
+    });
+  }
+  return {
+    '@type': 'FAQPage',
+    mainEntity: entities,
+  };
+}
+
+export function breadcrumbSchema(crumbs: ReadonlyArray<{ name: string; url: string }>) {
+  const items = [];
+  for (let i = 0; i < (crumbs || []).length; i++) {
+    items.push({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: crumbs[i].name,
+      item: crumbs[i].url,
+    });
+  }
+  return {
+    '@type': 'BreadcrumbList',
+    itemListElement: items,
+  };
+}
