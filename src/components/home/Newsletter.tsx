@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Send, Check } from 'lucide-react';
-import { Container } from '@/components/layout/Container';
+import { Section } from '@/components/layout/Section';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 
@@ -32,8 +32,7 @@ export function Newsletter() {
   };
 
   return (
-    <section className="py-24">
-      <Container>
+    <Section variant="default">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-brand bg-[length:200%_200%] animate-gradient text-white px-8 py-16 md:px-16 md:py-20 shadow-glow-lg">
           <div className="absolute -top-16 -right-16 w-72 h-72 bg-white/15 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-20 -left-10 w-72 h-72 bg-fuchsia-brand/30 rounded-full blur-3xl pointer-events-none" />
@@ -71,7 +70,6 @@ export function Newsletter() {
             )}
           </div>
         </div>
-      </Container>
-    </section>
+    </Section>
   );
 }

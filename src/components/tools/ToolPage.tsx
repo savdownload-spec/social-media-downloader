@@ -11,9 +11,9 @@ import { jsonLd, faqSchema, softwareAppSchema, breadcrumbSchema } from '@/lib/se
 import { siteConfig } from '@/config/site';
 
 const perks = [
-  { icon: Zap, label: 'Blazing fast', desc: 'Under-a-second link analysis.' },
-  { icon: Lock, label: 'Fully private', desc: 'Nothing is stored on our servers.' },
-  { icon: Sparkles, label: 'No watermarks', desc: 'Clean, original media output.' },
+  { icon: Zap, label: 'Blazing Fast', desc: 'Under-a-second link analysis.' },
+  { icon: Lock, label: 'Fully Private', desc: 'Nothing is stored on our servers.' },
+  { icon: Sparkles, label: 'No Watermarks', desc: 'Clean, original media output.' },
 ];
 
 export function ToolPageView({ tool }: { tool: Tool }) {
@@ -105,7 +105,7 @@ export function ToolPageView({ tool }: { tool: Tool }) {
 
           <HeroShowcase
             platform={tool.platform}
-            title={`${tool.shortName} — saved in seconds`}
+            title={`${tool.shortName}, saved in seconds`}
             author={`savdown.com · ${tool.platform}`}
             seed={tool.slug}
             floating={false}

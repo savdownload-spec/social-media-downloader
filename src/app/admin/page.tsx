@@ -52,7 +52,7 @@ export default async function AdminPage() {
     { label: 'Total downloads', value: totalDownloads.toLocaleString(), icon: DownloadIcon, tone: 'text-primary' },
     { label: 'Registered users', value: totalUsers.toLocaleString(), icon: Users, tone: 'text-accent-hover' },
     { label: 'Newsletter subscribers', value: totalSubs.toLocaleString(), icon: Mail, tone: 'text-text' },
-    { label: 'Top tool', value: byTool[0]?.tool ?? '—', icon: TrendingUp, tone: 'text-primary' },
+    { label: 'Top tool', value: byTool[0]?.tool ?? '-', icon: TrendingUp, tone: 'text-primary' },
   ];
 
   return (

@@ -19,7 +19,7 @@ const plans = [
     credits: '30 credits / day',
     description: 'Everything you need for everyday downloads.',
     features: [
-      'All 8 downloaders',
+      'Every downloader included',
       'Up to 1080p HD',
       'No watermarks',
       'Standard download speed',
@@ -74,7 +74,7 @@ const creditCosts = [
 const faqs = [
   {
     q: 'Is SavDown free right now?',
-    a: 'Yes. SavDown is completely free while we build. The credit system below is a preview of our upcoming plans — nothing is charged today.',
+    a: 'Yes. SavDown is completely free while we build. The credit system below is a preview of our upcoming plans, nothing is charged today.',
   },
   {
     q: 'What is a credit?',
@@ -86,7 +86,7 @@ const faqs = [
   },
   {
     q: 'What are the AI tools?',
-    a: 'We are building smart, AI-powered features — think auto-captions, smart trimming, and format suggestions. Pro members get early access as they roll out.',
+    a: 'We are building smart, AI-powered features, think auto-captions, smart trimming, and format suggestions. Pro members get early access as they roll out.',
   },
 ];
 
@@ -190,7 +190,7 @@ export default function PricingPage() {
           </div>
           <p className="mt-8 flex items-center justify-center gap-2 text-sm text-text-muted">
             <Zap className="w-4 h-4 text-primary" />
-            Every new account starts with free daily credits — no card required.
+            Every new account starts with free daily credits, no card required.
           </p>
         </Container>
       </section>

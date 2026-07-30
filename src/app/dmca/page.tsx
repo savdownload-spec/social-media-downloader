@@ -53,7 +53,7 @@ export default function DmcaPage() {
         <h2>Where to send</h2>
         <p>
           Submit notices via our <a href="/contact">contact form</a> with subject line
-          "DMCA Notice" — or email our designated agent at{' '}
+          "DMCA Notice", or email our designated agent at{' '}
           <a href="mailto:dmca@example.com">dmca@example.com</a>.
         </p>
 

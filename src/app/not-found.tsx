@@ -11,7 +11,7 @@ export default function NotFound() {
           404
         </p>
         <h1 className="mt-6 text-3xl md:text-4xl font-semibold tracking-tight">
-          This page slipped away.
+          This Page Slipped Away.
         </h1>
         <p className="mt-4 text-text-muted leading-relaxed">
           The link you followed may be broken, or the page has moved. Let's get you

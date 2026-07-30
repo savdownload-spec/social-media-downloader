@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 
 /**
  * Typewriter effect that types a word, pauses, deletes it, then moves to the
- * next — looping forever. Used in the hero to cycle supported platforms.
+ * next, looping forever. Used in the hero to cycle supported platforms.
  */
 export function TypingText({
   words,

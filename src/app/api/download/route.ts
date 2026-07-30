@@ -98,10 +98,10 @@ async function resolveDownload(toolSlug: string, url: string): Promise<DownloadR
   const apiUrl = process.env.DOWNLOADER_API_URL;
 
   if (!apiUrl) {
-    // Demo response — replace by integrating a real downloader service.
+    // Demo response, replace by integrating a real downloader service.
     return {
       ok: true,
-      title: 'Demo mode — set DOWNLOADER_API_URL to enable real downloads',
+      title: 'Demo mode, set DOWNLOADER_API_URL to enable real downloads',
       thumbnail: 'https://picsum.photos/seed/savdown/640/360',
       author: 'SavDown',
       platform: toolSlug,

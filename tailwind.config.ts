@@ -34,10 +34,21 @@ const config: Config = {
           DEFAULT: '#EAE7F2',
           light: '#F1EFF8',
         },
+        // Dark surfaces for high-contrast sections and the footer
+        ink: {
+          DEFAULT: '#0B0918',
+          950: '#08061A',
+          900: '#0B0918',
+          800: '#151030',
+          700: '#221A45',
+          600: '#332A5C',
+          muted: '#A79FC9',
+          subtle: '#7A719E',
+        },
       },
       fontFamily: {
         sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['var(--font-jakarta)', 'var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         'xl': '16px',
@@ -87,6 +98,7 @@ const config: Config = {
         'gradient-brand': 'linear-gradient(120deg, #6366F1 0%, #8B5CF6 50%, #D946EF 100%)',
         'gradient-brand-soft': 'linear-gradient(120deg, #EEF2FF 0%, #F5F3FF 50%, #FDF4FF 100%)',
         'gradient-mesh': 'radial-gradient(at 15% 15%, rgba(99, 102, 241, 0.14) 0px, transparent 45%), radial-gradient(at 85% 25%, rgba(217, 70, 239, 0.12) 0px, transparent 45%), radial-gradient(at 50% 90%, rgba(139, 92, 246, 0.10) 0px, transparent 45%)',
+        'gradient-mesh-dark': 'radial-gradient(at 12% 18%, rgba(99, 102, 241, 0.35) 0px, transparent 42%), radial-gradient(at 88% 12%, rgba(217, 70, 239, 0.28) 0px, transparent 42%), radial-gradient(at 60% 95%, rgba(139, 92, 246, 0.30) 0px, transparent 45%)',
       },
     },
   },

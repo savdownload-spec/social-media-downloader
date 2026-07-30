@@ -38,7 +38,7 @@ export function getRedis(): MinimalRedis | null {
 
   if (process.env.REDIS_URL) {
     const r = new IORedis(process.env.REDIS_URL, { lazyConnect: true, maxRetriesPerRequest: 2 });
-    r.connect().catch(() => { /* silent — will retry per op */ });
+    r.connect().catch(() => { /* silent, will retry per op */ });
     client = {
       get: (k) => r.get(k),
       set: async (k, v, ttl) => (ttl ? r.set(k, v, 'EX', ttl) : r.set(k, v)),

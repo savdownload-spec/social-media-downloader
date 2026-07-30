@@ -25,9 +25,9 @@ export default function CookiesPage() {
         <h2>Essential cookies</h2>
         <p>These are required for basic functionality and can't be turned off.</p>
         <ul>
-          <li><code>next-auth.session-token</code> — keeps you signed in.</li>
-          <li><code>next-auth.csrf-token</code> — prevents cross-site request forgery.</li>
-          <li>Rate-limit identifiers — prevent abuse.</li>
+          <li><code>next-auth.session-token</code>, keeps you signed in.</li>
+          <li><code>next-auth.csrf-token</code>, prevents cross-site request forgery.</li>
+          <li>Rate-limit identifiers, prevent abuse.</li>
         </ul>
 
         <h2>Analytics cookies (optional)</h2>

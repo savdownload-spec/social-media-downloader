@@ -1,7 +1,7 @@
 import type { Platform } from '@/config/tools';
 
 /**
- * Brand presentation for each platform — a gradient tile + solid accent —
+ * Brand presentation for each platform, a gradient tile + solid accent, 
  * so tool cards across the site share one consistent, recognizable identity.
  * `tile` renders the app-icon background; `glow` is the matching hover shadow.
  */

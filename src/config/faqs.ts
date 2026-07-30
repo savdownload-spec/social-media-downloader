@@ -2,7 +2,7 @@ export const homeFaqs = [
   {
     question: 'Is SavDown free?',
     answer:
-      'Yes — every downloader on SavDown is free to use with no signup, no watermarks, and no download caps.',
+      'Yes, every downloader on SavDown is free to use with no signup, no watermarks, and no download caps.',
   },
   {
     question: 'Do you save my downloads?',
@@ -12,7 +12,7 @@ export const homeFaqs = [
   {
     question: 'What platforms are supported?',
     answer:
-      'YouTube, TikTok, Instagram, Facebook, Pinterest, and X — six platforms with eight specialized tools.',
+      'YouTube, TikTok, Instagram, Facebook, Pinterest, and X are all supported, each with its own dedicated downloader.',
   },
   {
     question: 'Can I download private or copyrighted content?',
@@ -22,7 +22,7 @@ export const homeFaqs = [
   {
     question: 'Do you have an app?',
     answer:
-      'SavDown is web-first — no install needed. Works on any modern browser, mobile or desktop.',
+      'SavDown is web-first, no install needed. Works on any modern browser, mobile or desktop.',
   },
   {
     question: 'What formats are supported?',

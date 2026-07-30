@@ -39,7 +39,7 @@ export default function ContactPage() {
         Say Hello.
       </h1>
       <p className="mt-4 text-text-muted leading-relaxed">
-        Feedback, feature requests, bug reports, partnerships — we read every message.
+        Feedback, feature requests, bug reports, partnerships, we read every message.
       </p>
 
       <div className="mt-10 space-y-4">
@@ -77,7 +77,7 @@ export default function ContactPage() {
           <p className="text-sm text-red-600">Please fill in email and message.</p>
         )}
         {state === 'ok' && (
-          <p className="text-sm text-accent">Thanks — we'll get back to you soon.</p>
+          <p className="text-sm text-accent">Thanks, we'll get back to you soon.</p>
         )}
       </div>
     </Container>

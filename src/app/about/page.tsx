@@ -18,7 +18,7 @@ export default function AboutPage() {
         <p>
           SavDown started with a simple observation: every downloader we tried was
           plastered with ads, dark patterns, and shady popups. We wanted the
-          opposite — a tool that felt like Apple's calmest apps: fewer surfaces,
+          opposite, a tool that felt like Apple's calmest apps: fewer surfaces,
           more clarity, no drama.
         </p>
         <h2>What we believe</h2>
@@ -32,13 +32,13 @@ export default function AboutPage() {
         <p>
           YouTube (videos, Shorts, thumbnails), TikTok, Instagram Reels,
           Facebook, Pinterest, and X. We add new platforms only when we can do
-          them well — never for the sake of a longer list.
+          them well, never for the sake of a longer list.
         </p>
         <h2>Who's behind it</h2>
         <p>
           A small independent team of designers and engineers who love clean
           tools. We fund SavDown through the occasional Pro upgrade (coming
-          soon) — never through selling your data.
+          soon), never through selling your data.
         </p>
       </div>
     </Container>

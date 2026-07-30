@@ -12,14 +12,14 @@ type Props = {
 };
 
 /**
- * Editorial hero visual — a floating "app window" product preview that shows
+ * Editorial hero visual, a floating "app window" product preview that shows
  * a finished download so the value is obvious at a glance. The thumbnail is a
  * real (deterministic) image so the mockup never looks empty. Reused on tool
  * pages via props so each platform gets a matching preview.
  */
 export function HeroShowcase({
   platform = 'tiktok',
-  title = 'Golden hour sunset timelapse — 4K',
+  title = 'Golden hour sunset timelapse, 4K',
   author = '@creator.studio · 0:42',
   seed = 'savdown-hero',
   floating = true,

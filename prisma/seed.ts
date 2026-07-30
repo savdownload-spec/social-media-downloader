@@ -7,8 +7,8 @@ async function main() {
     {
       slug: 'how-to-download-youtube-videos-safely',
       title: 'How to Download YouTube Videos Safely in 2025',
-      excerpt: 'A guide to downloading YouTube videos legally and safely — with tips on quality, formats, and offline viewing.',
-      content: `# How to Download YouTube Videos Safely\n\nDownloading videos for personal, offline use is a common need — for travel, education, and archival purposes. In this guide we cover legal considerations, best formats, and how to preserve quality.\n\n## Choose the right format\n\nFor most cases, MP4 (H.264) at 1080p is the sweet spot between quality and file size. If you're archiving lectures or tutorials, consider MP4 at 720p to save space.\n\n## Respect copyright\n\nOnly download content you own, have permission to download, or that's licensed under Creative Commons. Never redistribute copyrighted material.\n\n## Use a reputable tool\n\nStay away from sketchy sites bundled with malware. Look for HTTPS, no forced installs, and transparent privacy policies.`,
+      excerpt: 'A guide to downloading YouTube videos legally and safely, with tips on quality, formats, and offline viewing.',
+      content: `# How to Download YouTube Videos Safely\n\nDownloading videos for personal, offline use is a common need, for travel, education, and archival purposes. In this guide we cover legal considerations, best formats, and how to preserve quality.\n\n## Choose the right format\n\nFor most cases, MP4 (H.264) at 1080p is the sweet spot between quality and file size. If you're archiving lectures or tutorials, consider MP4 at 720p to save space.\n\n## Respect copyright\n\nOnly download content you own, have permission to download, or that's licensed under Creative Commons. Never redistribute copyrighted material.\n\n## Use a reputable tool\n\nStay away from sketchy sites bundled with malware. Look for HTTPS, no forced installs, and transparent privacy policies.`,
       tags: ['youtube', 'guide', 'downloader'],
       published: true,
       publishedAt: new Date(),

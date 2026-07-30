@@ -25,7 +25,7 @@ export function generateMetadata({ params }: Props) {
   });
 }
 
-/** Bold (**text**) inline formatting only — content is trusted, authored in-repo. */
+/** Bold (**text**) inline formatting only, content is trusted, authored in-repo. */
 function inline(text: string) {
   return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 }
@@ -156,8 +156,8 @@ export default function BlogPostPage({ params }: Props) {
 
         {/* CTA */}
         <div className="mt-14 rounded-3xl bg-gradient-brand bg-[length:200%_200%] animate-gradient text-white p-8 md:p-10 text-center shadow-glow-lg">
-          <h2 className="text-2xl font-bold tracking-tight">Ready to save a video?</h2>
-          <p className="mt-2 text-white/80">Try our free, watermark-free downloaders — no signup required.</p>
+          <h2 className="text-2xl font-bold tracking-tight">Ready To Save A Video?</h2>
+          <p className="mt-2 text-white/80">Try our free, watermark-free downloaders, no signup required.</p>
           <Link
             href="/#tools"
             className="inline-flex items-center mt-6 px-6 py-3 rounded-2xl bg-white text-text font-semibold shadow-soft-md hover:shadow-soft-lg transition-all"

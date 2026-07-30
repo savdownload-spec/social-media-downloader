@@ -44,7 +44,7 @@ export default function TermsPage() {
         <h2>Intellectual property</h2>
         <p>
           SavDown does not host, store, or claim ownership over any downloaded content. All content
-          remains the property of its original creators and rights holders. SavDown is a tool — how
+          remains the property of its original creators and rights holders. SavDown is a tool, how
           you use it is your responsibility.
         </p>
 

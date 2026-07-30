@@ -2,7 +2,7 @@ import type { Platform } from '@/config/tools';
 
 /**
  * Simplified, recognizable brand glyphs rendered in white, meant to sit
- * inside a brand-colored tile (see platformBrand). Nominative use only —
+ * inside a brand-colored tile (see platformBrand). Nominative use only, 
  * these identify the source platform a tool works with.
  */
 export function PlatformIcon({

@@ -3,7 +3,7 @@ import { buildMetadata } from '@/lib/seo';
 
 export const metadata = buildMetadata({
   title: 'Privacy Policy',
-  description: 'How SavDown handles your data — clearly and honestly.',
+  description: 'How SavDown handles your data, clearly and honestly.',
   path: '/privacy',
 });
 
@@ -30,14 +30,14 @@ export default function PrivacyPage() {
         </p>
         <p>
           <strong>Anonymous usage data.</strong> IP address hash, user agent, tool used, and
-          timestamp — used for rate limiting and analytics. We never link this back to you.
+          timestamp, used for rate limiting and analytics. We never link this back to you.
         </p>
         <p>
           <strong>Account data (if you sign in).</strong> Email, name, and profile image from your
           OAuth provider. Nothing more.
         </p>
         <p>
-          <strong>Newsletter data (if you subscribe).</strong> Just your email — used to send you
+          <strong>Newsletter data (if you subscribe).</strong> Just your email, used to send you
           the calm monthly update and nothing else.
         </p>
 
@@ -51,7 +51,7 @@ export default function PrivacyPage() {
         <h2>Cookies</h2>
         <p>
           We use essential cookies for sign-in sessions and rate limiting. Optional analytics
-          cookies are only set if you consent — see our{' '}
+          cookies are only set if you consent, see our{' '}
           <a href="/cookies">Cookie Disclaimer</a> for the full list.
         </p>
 

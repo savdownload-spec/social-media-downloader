@@ -1,4 +1,4 @@
-import { Container } from '@/components/layout/Container';
+import { Section, SectionHeading } from '@/components/layout/Section';
 import { PlatformIcon } from '@/components/ui/PlatformIcon';
 import { platformBrand } from '@/config/platforms';
 import { Play } from 'lucide-react';
@@ -21,21 +21,18 @@ const items: { seed: string; platform: Platform; ratio: string; label: string }[
 
 export function MediaShowcase() {
   return (
-    <section className="py-24">
-      <Container>
-        <div className="max-w-2xl mb-14">
-          <p className="text-sm font-semibold uppercase tracking-wider text-gradient inline-block mb-3">
-            Save anything
-          </p>
-          <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-text">
-            Videos, Reels, Pins &amp; More —{' '}
-            <span className="text-gradient">In Original Quality.</span>
-          </h2>
-          <p className="mt-3 text-text-muted leading-relaxed">
-            From cinematic 4K vlogs to quick recipe reels, SavDown keeps every pixel and
-            never adds a watermark.
-          </p>
-        </div>
+    <Section variant="default" id="showcase">
+        <SectionHeading
+          eyebrow="Save anything"
+          title={
+            <>
+              Videos, Reels, Pins, And More,{' '}
+              <span className="text-gradient">In Original Quality.</span>
+            </>
+          }
+          description="From cinematic 4K vlogs to quick recipe reels, SavDown keeps every pixel and never adds a watermark."
+        />
+        <div className="mt-16" />
 
         <div className="columns-2 md:columns-4 gap-4 [column-fill:_balance]">
           {items.map((item) => {
@@ -73,7 +70,6 @@ export function MediaShowcase() {
             );
           })}
         </div>
-      </Container>
-    </section>
+    </Section>
   );
 }
