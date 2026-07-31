@@ -21,12 +21,12 @@ const features = [
   {
     icon: Layers,
     title: 'Every Format You Need',
-    body: 'MP4 up to 4K, MP3 audio, GIFs, and full-resolution thumbnails, all from a single paste box.',
+    body: 'MP4 up to 4K, MP3 audio, GIFs, photos, and full-resolution thumbnails, all from one toolkit.',
   },
   {
     icon: BadgeDollarSign,
     title: 'Free With No Signup',
-    body: 'No account, no credit card, and no daily caps. Paste a link and go, as many times as you like.',
+    body: 'No account, no credit card, and no daily caps. Use every tool as many times as you like.',
   },
   {
     icon: MonitorSmartphone,

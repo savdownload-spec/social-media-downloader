@@ -13,20 +13,20 @@ export function CTASection() {
       <Reveal className="relative">
         <div className="max-w-2xl mx-auto text-center">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-white">
-            <Sparkles className="w-3.5 h-3.5" /> Free, no signup, no limits
+            <Sparkles className="w-3.5 h-3.5" /> Free forever, no signup, no limits
           </span>
           <h2 className="mt-6 text-3xl md:text-5xl font-bold tracking-tight text-white leading-tight">
-            Ready To Save Your First Video?
+            Explore The Whole Toolkit.
           </h2>
           <p className="mt-4 text-ink-muted text-lg leading-relaxed max-w-xl mx-auto">
-            Paste a link and download it in seconds. No account, no watermark, no catch.
+            Every tool you need, gathered in one place. Browse the full kit and find exactly what you are looking for. No account, no catch.
           </p>
           <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/#tools"
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all"
             >
-              Start downloading <ArrowRight className="w-5 h-5" />
+              Browse All Tools <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
               href="/faq"

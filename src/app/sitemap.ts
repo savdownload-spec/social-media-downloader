@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { siteConfig } from '@/config/site';
 import { tools } from '@/config/tools';
+import { catalog } from '@/config/catalog';
 import { blogPosts } from '@/config/blog';
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -9,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${base}/`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
+    { url: `${base}/tools`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${base}/pricing`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${base}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${base}/contact`, lastModified: now, changeFrequency: 'yearly', priority: 0.5 },
@@ -21,8 +23,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/dmca`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
   ];
 
-  const toolRoutes: MetadataRoute.Sitemap = tools.map((t) => ({
-    url: `${base}/tools/${t.slug}`,
+  const toolSlugs = new Set<string>(catalog.map((t) => t.slug));
+  for (const t of tools) toolSlugs.add(t.slug);
+  const toolRoutes: MetadataRoute.Sitemap = Array.from(toolSlugs, (slug) => ({
+    url: `${base}/tools/${slug}`,
     lastModified: now,
     changeFrequency: 'weekly',
     priority: 0.9,

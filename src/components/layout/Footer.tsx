@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Github, Youtube, Mail, Twitter, ArrowUpRight } from 'lucide-react';
+import { Github, Youtube, Mail, Twitter } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { featuredTools } from '@/config/tools';
 import { Container } from './Container';
@@ -70,12 +70,11 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Config-driven columns */}
-          {Object.entries(siteConfig.footerLinks).map(([heading, links]) => (
-            <div
-              key={heading}
-              className={heading === 'Legal' ? 'md:col-span-2' : 'md:col-span-2'}
-            >
+          {/* Config-driven columns (Legal lives in the bottom bar instead) */}
+          {Object.entries(siteConfig.footerLinks)
+            .filter(([heading]) => heading !== 'Legal')
+            .map(([heading, links]) => (
+            <div key={heading} className="md:col-span-2">
               <h3 className="text-sm font-semibold text-white">{heading}</h3>
               <ul className="mt-4 space-y-3">
                 {links.map((link) => (
@@ -97,16 +96,16 @@ export function Footer() {
           <p className="text-xs text-ink-subtle">
             © {new Date().getFullYear()} {siteConfig.name}. All rights reserved. Not affiliated with any social platform.
           </p>
-          <div className="flex items-center gap-5 text-xs">
-            <Link href="/privacy" className="text-ink-subtle hover:text-white transition-colors">Privacy</Link>
-            <Link href="/terms" className="text-ink-subtle hover:text-white transition-colors">Terms</Link>
-            <Link href="/dmca" className="text-ink-subtle hover:text-white transition-colors">DMCA</Link>
-            <Link
-              href="/#tools"
-              className="inline-flex items-center gap-1 font-medium text-white hover:text-primary-light transition-colors"
-            >
-              Start downloading <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
+            {siteConfig.footerLinks.Legal.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-ink-subtle hover:text-white transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
       </Container>

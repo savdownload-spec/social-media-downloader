@@ -25,7 +25,7 @@ export const siteConfig = {
     'x video downloader',
   ],
   navigation: [
-    { label: 'Tools', href: '/#tools' },
+    { label: 'Tools', href: '/tools' },
     { label: 'Pricing', href: '/pricing' },
     { label: 'Blog', href: '/blog' },
     { label: 'FAQ', href: '/faq' },
@@ -33,7 +33,7 @@ export const siteConfig = {
   ],
   footerLinks: {
     Product: [
-      { label: 'All tools', href: '/#tools' },
+      { label: 'All tools', href: '/tools' },
       { label: 'Pricing', href: '/pricing' },
       { label: 'Blog', href: '/blog' },
       { label: 'FAQ', href: '/faq' },

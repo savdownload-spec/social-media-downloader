@@ -1,22 +1,22 @@
-import { Link2, MousePointerClick, Download } from 'lucide-react';
+import { LayoutGrid, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { Section, SectionHeading } from '@/components/layout/Section';
 import { Reveal } from '@/components/ui/Reveal';
 
 const steps = [
   {
-    icon: Link2,
-    title: 'Paste Your Link',
-    body: 'Copy the share link from any supported app and drop it into the box. SavDown detects the platform automatically.',
+    icon: LayoutGrid,
+    title: 'Pick Your Tool',
+    body: 'Open the tool that fits the job, from video and audio to photos and thumbnails, all in one place.',
   },
   {
-    icon: MousePointerClick,
-    title: 'Pick A Format',
-    body: 'Choose the resolution or file type you need, from crisp 4K video to lightweight MP3 audio.',
+    icon: SlidersHorizontal,
+    title: 'Choose Your Options',
+    body: 'Set the format, quality, or output you want. Everything is detected and set up for you automatically.',
   },
   {
-    icon: Download,
-    title: 'Download Instantly',
-    body: 'Your file is prepared in seconds and saved straight to your device. No watermark, no waiting room.',
+    icon: Sparkles,
+    title: 'Get It Instantly',
+    body: 'Your result is ready in seconds and saved straight to your device. No watermark, no waiting room.',
   },
 ];
 
@@ -27,10 +27,10 @@ export function HowItWorks() {
         eyebrow="How it works"
         title={
           <>
-            Save Any Video In <span className="text-gradient">Three Simple Steps.</span>
+            Get What You Need In <span className="text-gradient">Three Simple Steps.</span>
           </>
         }
-        description="No apps to install and no accounts to create. The whole thing takes about ten seconds from link to download."
+        description="No apps to install and no accounts to create. Every tool in the kit follows the same quick, friendly flow."
       />
 
       <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6 relative">

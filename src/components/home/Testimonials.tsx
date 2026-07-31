@@ -12,7 +12,7 @@ const testimonials = [
   },
   {
     quote:
-      'Finally a downloader that does not bury the button under ten fake ones. Paste, click, done. It just works.',
+      'Finally a set of tools that does not bury the button under ten fake ones. Open, click, done. It just works.',
     name: 'Daniel K.',
     role: 'Video creator',
     seed: 'savdown-person-daniel',
