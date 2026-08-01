@@ -118,7 +118,11 @@ const utilityTools: CatalogTool[] = [
   { slug: 'gradient-generator', name: 'Gradient Generator', group: 'Utility', description: 'Design beautiful CSS gradients in seconds.', icon: Blend, tile: TILE.fuchsia },
 ];
 
-/** Master catalog. Order matters: the homepage shows the first `HOMEPAGE_LIMIT`. */
+/**
+ * Master catalog. Order matters: the homepage shows the first N tools, where N
+ * depends on viewport, so earlier entries should be the ones most worth seeing
+ * first on a small screen.
+ */
 export const catalog: CatalogTool[] = [
   ...downloaders,
   ...imageTools,
@@ -129,7 +133,8 @@ export const catalog: CatalogTool[] = [
   ...utilityTools,
 ];
 
-export const HOMEPAGE_LIMIT = 30;
+export const HOMEPAGE_DESKTOP_LIMIT = 32;
+export const HOMEPAGE_MOBILE_LIMIT = 10;
 
 export const toolGroups: ToolGroup[] = ['Downloaders', 'Image', 'Video', 'PDF', 'AI', 'SEO', 'Utility'];
 

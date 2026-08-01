@@ -1,75 +1,90 @@
+import Link from 'next/link';
+import { ArrowUpRight } from 'lucide-react';
 import { Section, SectionHeading } from '@/components/layout/Section';
-import { PlatformIcon } from '@/components/ui/PlatformIcon';
-import { platformBrand } from '@/config/platforms';
-import { Play } from 'lucide-react';
-import type { Platform } from '@/config/tools';
+import { getCatalogTool } from '@/config/catalog';
 
 /**
- * Visual band showing the kind of content you can save. Deterministic photos
- * (via seeded picsum) keep the layout lively without shipping binary assets.
+ * Visual band showing what the toolkit actually does, across categories, not
+ * just video downloads. Each tile is a real catalog tool: its own icon, name,
+ * and a link straight to that tool's page. A uniform grid (equal aspect ratio
+ * per cell) keeps every row level, unlike a masonry layout. Deterministic
+ * photos (via seeded picsum) keep the layout lively without shipping assets.
  */
-const items: { seed: string; platform: Platform; ratio: string; label: string }[] = [
-  { seed: 'savdown-travel', platform: 'youtube', ratio: 'aspect-[3/4]', label: 'Travel vlog' },
-  { seed: 'savdown-food', platform: 'tiktok', ratio: 'aspect-square', label: 'Recipe reel' },
-  { seed: 'savdown-street', platform: 'instagram', ratio: 'aspect-[4/5]', label: 'Street style' },
-  { seed: 'savdown-nature', platform: 'pinterest', ratio: 'aspect-square', label: 'Nature pin' },
-  { seed: 'savdown-city', platform: 'facebook', ratio: 'aspect-[4/5]', label: 'City tour' },
-  { seed: 'savdown-sport', platform: 'x', ratio: 'aspect-[3/4]', label: 'Match clip' },
-  { seed: 'savdown-music', platform: 'youtube', ratio: 'aspect-square', label: 'Music video' },
-  { seed: 'savdown-art', platform: 'instagram', ratio: 'aspect-[4/5]', label: 'Art reel' },
+const items: { slug: string; seed: string; cta: string }[] = [
+  { slug: 'youtube-video-downloader', seed: 'savdown-travel', cta: 'Download video' },
+  { slug: 'background-remover', seed: 'savdown-portrait', cta: 'Remove background' },
+  { slug: 'instagram-photo-downloader', seed: 'savdown-street', cta: 'Save photo' },
+  { slug: 'merge-pdf', seed: 'savdown-desk', cta: 'Combine files' },
+  { slug: 'image-upscaler', seed: 'savdown-nature', cta: 'Upscale image' },
+  { slug: 'tiktok-video-downloader', seed: 'savdown-food', cta: 'Download video' },
+  { slug: 'ai-thumbnail-generator', seed: 'savdown-city', cta: 'Generate with AI' },
+  { slug: 'pinterest-image-downloader', seed: 'savdown-art', cta: 'Save image' },
+  { slug: 'facebook-video-downloader', seed: 'savdown-crowd', cta: 'Download video' },
+  { slug: 'image-compressor', seed: 'savdown-mountain', cta: 'Compress image' },
+  { slug: 'instagram-reels-downloader', seed: 'savdown-dance', cta: 'Download reel' },
+  { slug: 'pdf-to-word', seed: 'savdown-office', cta: 'Convert PDF' },
+  { slug: 'video-compressor', seed: 'savdown-beach', cta: 'Compress video' },
+  { slug: 'ai-caption-generator', seed: 'savdown-coffee', cta: 'Generate with AI' },
+  { slug: 'x-video-downloader', seed: 'savdown-skyline', cta: 'Download video' },
+  { slug: 'qr-code-generator', seed: 'savdown-market', cta: 'Create QR code' },
 ];
 
 export function MediaShowcase() {
   return (
     <Section variant="default" id="showcase">
-        <SectionHeading
-          eyebrow="Save anything"
-          title={
-            <>
-              Videos, Reels, Pins, And More,{' '}
-              <span className="text-gradient">In Original Quality.</span>
-            </>
-          }
-          description="From cinematic 4K vlogs to quick recipe reels, SavDown keeps every pixel and never adds a watermark."
-        />
-        <div className="mt-16" />
+      <SectionHeading
+        eyebrow="See it in action"
+        title={
+          <>
+            One Toolkit, <span className="text-gradient">Endless Ways To Use It.</span>
+          </>
+        }
+        description="From saving a video to cleaning up an image or merging a PDF, every tool is one click away. Tap any example to open its tool."
+      />
+      <div className="mt-16" />
 
-        <div className="columns-2 md:columns-4 gap-4 [column-fill:_balance]">
-          {items.map((item) => {
-            const brand = platformBrand[item.platform];
-            return (
-              <div
-                key={item.seed}
-                className="group relative mb-4 break-inside-avoid rounded-2xl overflow-hidden border border-border shadow-soft hover:shadow-soft-lg transition-all duration-300"
-              >
-                <div className={`relative ${item.ratio} bg-surface`}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`https://picsum.photos/seed/${item.seed}/500/700`}
-                    alt={item.label}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {items.map((item) => {
+          const tool = getCatalogTool(item.slug);
+          if (!tool) return null;
+          const Icon = tool.icon;
+          return (
+            <Link
+              key={item.slug}
+              href={`/tools/${item.slug}`}
+              className="group relative block aspect-square rounded-2xl overflow-hidden border border-border shadow-soft hover:shadow-soft-lg transition-all duration-300"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`https://picsum.photos/seed/${item.seed}/500/500`}
+                alt={tool.name}
+                loading="lazy"
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
 
-                  <div className={`absolute top-3 left-3 w-8 h-8 rounded-lg ${brand.tile} flex items-center justify-center text-white shadow-soft`}>
-                    <PlatformIcon platform={item.platform} className="w-4 h-4" />
-                  </div>
+              <span className={`absolute top-3 left-3 w-8 h-8 rounded-lg ${tool.tile} flex items-center justify-center shadow-soft`}>
+                <Icon className="w-4 h-4" />
+              </span>
 
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="w-11 h-11 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-soft-lg">
-                      <Play className="w-4 h-4 text-text ml-0.5" />
-                    </div>
-                  </div>
-
-                  <span className="absolute bottom-3 left-3 text-xs font-semibold text-white drop-shadow">
-                    {item.label}
-                  </span>
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="w-11 h-11 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-soft-lg">
+                  <ArrowUpRight className="w-4 h-4 text-text" />
                 </div>
               </div>
-            );
-          })}
-        </div>
+
+              <div className="absolute bottom-0 inset-x-0 p-3">
+                <span className="block text-xs font-semibold text-white drop-shadow truncate">
+                  {tool.name}
+                </span>
+                <span className="block text-[11px] text-white/75 drop-shadow">
+                  {item.cta}
+                </span>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
     </Section>
   );
 }

@@ -4,7 +4,14 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, ArrowRight } from 'lucide-react';
 import { Section } from '@/components/layout/Section';
-import { catalog, toolGroups, HOMEPAGE_LIMIT, isToolAvailable, type ToolGroup } from '@/config/catalog';
+import {
+  catalog,
+  toolGroups,
+  HOMEPAGE_DESKTOP_LIMIT,
+  HOMEPAGE_MOBILE_LIMIT,
+  isToolAvailable,
+  type ToolGroup,
+} from '@/config/catalog';
 
 type Filter = 'all' | ToolGroup;
 const filters: Filter[] = ['all', ...toolGroups];
@@ -23,7 +30,7 @@ export function AllToolsGrid() {
   const [filter, setFilter] = useState<Filter>('all');
   const visible =
     filter === 'all'
-      ? catalog.slice(0, HOMEPAGE_LIMIT)
+      ? catalog.slice(0, HOMEPAGE_DESKTOP_LIMIT)
       : catalog.filter((t) => t.group === filter);
 
   return (
@@ -65,11 +72,19 @@ export function AllToolsGrid() {
         layout
         className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
       >
-        {visible.map((tool) => {
+        {visible.map((tool, i) => {
           const Icon = tool.icon;
           const live = isToolAvailable(tool.slug);
+          // On the unfiltered view, only the first HOMEPAGE_MOBILE_LIMIT cards
+          // show on small screens; the rest reveal from md: up to 32.
+          const mobileHidden = filter === 'all' && i >= HOMEPAGE_MOBILE_LIMIT;
           return (
-            <motion.div key={tool.slug} layout transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}>
+            <motion.div
+              key={tool.slug}
+              layout
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              className={mobileHidden ? 'hidden md:block' : undefined}
+            >
               <Link
                 href={`/tools/${tool.slug}`}
                 className="group flex flex-col h-full bg-white border border-border rounded-2xl p-7 shadow-soft hover:shadow-soft-lg hover:-translate-y-1 hover:border-primary/30 transition-all duration-300"

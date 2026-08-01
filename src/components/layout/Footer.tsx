@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Github, Youtube, Mail, Twitter } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { featuredTools } from '@/config/tools';
+import { Logo } from '@/components/ui/Logo';
 import { Container } from './Container';
 
 const socialIcons = {
@@ -25,12 +26,7 @@ export function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-12 gap-10 md:gap-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-4">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-brand flex items-center justify-center text-white font-bold text-base shadow-glow-lg">
-                S
-              </div>
-              <span className="font-bold tracking-tight text-lg">{siteConfig.name}</span>
-            </Link>
+            <Logo variant="light" height={30} />
             <p className="mt-4 text-sm text-ink-muted leading-relaxed max-w-xs">
               {siteConfig.footerDescription}
             </p>

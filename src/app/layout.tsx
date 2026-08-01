@@ -43,7 +43,17 @@ export const metadata: Metadata = {
     creator: siteConfig.twitterHandle,
   },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
-  icons: { icon: '/favicon.svg' },
+  icons: {
+    icon: [
+      { url: '/icon-16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/icon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icon-48.png', sizes: '48x48', type: 'image/png' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    shortcut: '/icon-32.png',
+    apple: '/icon-180.png',
+  },
 };
 
 export const viewport: Viewport = {
@@ -56,7 +66,7 @@ const orgSchema = {
   '@type': 'Organization',
   name: siteConfig.name,
   url: siteConfig.url,
-  logo: `${siteConfig.url}/logo.svg`,
+  logo: `${siteConfig.url}/logo-black.png`,
   sameAs: [],
 };
 

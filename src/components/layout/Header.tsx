@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Search } from 'lucide-react';
 import { siteConfig } from '@/config/site';
+import { Logo } from '@/components/ui/Logo';
 import { Container } from './Container';
 
 export function Header() {
@@ -12,12 +13,9 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 glass border-b border-border-light">
       <Container className="flex items-center justify-between h-16">
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-brand bg-[length:200%_200%] flex items-center justify-center text-white font-bold text-base shadow-glow-lg group-hover:scale-105 group-hover:rotate-3 transition-transform">
-            S
-          </div>
-          <span className="font-bold text-text tracking-tight text-lg">{siteConfig.name}</span>
-        </Link>
+        <div className="group transition-transform hover:scale-[1.02]">
+          <Logo variant="dark" height={30} />
+        </div>
 
         <nav className="hidden md:flex items-center gap-8">
           {siteConfig.navigation.map((item) => (
