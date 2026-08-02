@@ -6,9 +6,11 @@ import { Container } from './Container';
 
 /**
  * Reserved horizontal ad slot shown just below the header on every page
- * except the homepage. Sized to the industry-standard 970x250 leaderboard so
- * it can be swapped for a real ad unit without reflowing the page. Styled as
- * a premium placement opportunity, not a broken/empty dev box.
+ * except the homepage. Mobile gets its own compact size (320x100, a real IAB
+ * mobile banner) rather than a squeezed-down leaderboard — the 970x250 unit
+ * only ever renders at tablet/desktop widths, so labelling it that way on a
+ * phone would be misleading. Styled as a premium placement opportunity, not
+ * a broken/empty dev box.
  */
 export function AdBanner() {
   const pathname = usePathname();
@@ -16,17 +18,41 @@ export function AdBanner() {
 
   return (
     <div className="border-b border-border-light bg-surface">
-      <Container className="py-4 md:py-5">
-        <div className="relative overflow-hidden rounded-2xl border border-dashed border-primary/25 bg-gradient-brand-soft">
+      <Container className="py-3 md:py-5">
+        <div className="relative overflow-hidden rounded-xl md:rounded-2xl border border-dashed border-primary/25 bg-gradient-brand-soft">
           <div className="absolute inset-0 bg-grid [mask-image:radial-gradient(ellipse_80%_100%_at_50%_0%,black,transparent)] pointer-events-none" />
-          <div className="relative flex min-h-[110px] md:min-h-[130px] flex-col md:flex-row items-center justify-center md:justify-between gap-3 md:gap-6 px-6 md:px-10 py-6 text-center md:text-left">
-            <div className="flex flex-col md:flex-row items-center md:items-center gap-3 md:gap-5">
+
+          {/* Mobile: compact 320x100-style banner */}
+          <div className="relative flex sm:hidden min-h-[100px] items-center justify-between gap-3 px-4 py-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="inline-flex w-9 h-9 flex-shrink-0 rounded-xl bg-white items-center justify-center shadow-soft-md">
+                <Sparkles className="w-4 h-4 text-primary" />
+              </span>
+              <div className="min-w-0 text-left">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-primary/70">Advertisement</p>
+                <p className="mt-0.5 text-sm font-bold text-text tracking-tight leading-tight">
+                  Advertise Here
+                </p>
+                <p className="text-[11px] text-text-subtle">320 &times; 100 mobile banner</p>
+              </div>
+            </div>
+            <Link
+              href="/contact"
+              className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-full text-xs font-semibold text-white bg-gradient-brand shadow-soft"
+            >
+              Inquire <ArrowUpRight className="w-3 h-3" />
+            </Link>
+          </div>
+
+          {/* Tablet/desktop: full 970x250-style leaderboard */}
+          <div className="relative hidden sm:flex min-h-[130px] flex-row items-center justify-between gap-6 px-10 py-6 text-left">
+            <div className="flex items-center gap-5">
               <span className="inline-flex w-11 h-11 flex-shrink-0 rounded-2xl bg-white items-center justify-center shadow-soft-md">
                 <Sparkles className="w-5 h-5 text-primary" />
               </span>
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-wider text-primary/70">Advertisement</p>
-                <p className="mt-1 text-base md:text-lg font-bold text-text tracking-tight">
+                <p className="mt-1 text-lg font-bold text-text tracking-tight">
                   Advertise Your Brand Here
                 </p>
                 <p className="mt-0.5 text-sm text-text-muted">
@@ -35,7 +61,7 @@ export function AdBanner() {
               </div>
             </div>
 
-            <div className="flex flex-col items-center md:items-end gap-2 flex-shrink-0">
+            <div className="flex flex-col items-end gap-2 flex-shrink-0">
               <Link
                 href="/contact"
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-white bg-gradient-brand shadow-soft hover:shadow-soft-md transition-shadow"
