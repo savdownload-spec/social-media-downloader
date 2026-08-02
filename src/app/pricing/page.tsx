@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Check, Sparkles, Zap, Film, Music, Wand2, Coins } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
+import { Accordion } from '@/components/ui/Accordion';
 import { buildMetadata } from '@/lib/seo';
 
 export const metadata = buildMetadata({
@@ -202,20 +203,7 @@ export default function PricingPage() {
             <p className="text-sm font-semibold uppercase tracking-wider text-gradient inline-block mb-3">Pricing FAQ</p>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Good Questions.</h2>
           </div>
-          <div className="space-y-3">
-            {faqs.map((f) => (
-              <details
-                key={f.q}
-                className="group bg-white border border-border rounded-2xl overflow-hidden shadow-soft hover:border-primary/30 transition-colors [&_summary::-webkit-details-marker]:hidden"
-              >
-                <summary className="flex items-center justify-between p-6 cursor-pointer font-semibold text-text">
-                  {f.q}
-                  <span className="text-primary text-xl leading-none transition-transform group-open:rotate-45">+</span>
-                </summary>
-                <div className="px-6 pb-6 text-text-muted leading-relaxed">{f.a}</div>
-              </details>
-            ))}
-          </div>
+          <Accordion items={faqs.map((f) => ({ question: f.q, answer: f.a }))} multiple />
         </Container>
       </section>
     </>

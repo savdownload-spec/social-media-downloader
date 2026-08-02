@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { CheckCircle2, ChevronRight, Zap, Lock, Sparkles } from 'lucide-react';
+import { CheckCircle2, Zap, Lock, Sparkles, ChevronRight } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { Section, SectionHeading } from '@/components/layout/Section';
+import { Accordion } from '@/components/ui/Accordion';
 import { DownloaderForm } from './DownloaderForm';
-import { getCatalogTool, fallbackIcon } from '@/config/catalog';
+import { ToolLongContentSection } from './ToolLongContent';
+import { getCatalogTool, fallbackIcon, catalog } from '@/config/catalog';
 import type { Tool } from '@/config/tools';
 import { jsonLd, faqSchema, softwareAppSchema, breadcrumbSchema } from '@/lib/seo';
 import { siteConfig } from '@/config/site';
@@ -160,23 +162,53 @@ export function ToolPageView({ tool }: { tool: Tool }) {
           eyebrow="FAQ"
           title={<>Common <span className="text-gradient">Questions.</span></>}
         />
-        <div className="mt-12 space-y-3">
-          {tool.faq.map((f) => (
-            <details
-              key={f.question}
-              className="group bg-white border border-border rounded-2xl overflow-hidden shadow-soft hover:border-primary/30 transition-colors [&_summary::-webkit-details-marker]:hidden"
-            >
-              <summary className="flex items-center justify-between p-6 cursor-pointer font-semibold text-text">
-                {f.question}
-                <ChevronRight className="w-5 h-5 text-primary transition-transform group-open:rotate-90" />
-              </summary>
-              <div className="px-6 pb-6 text-text-muted leading-relaxed">
-                {f.answer}
-              </div>
-            </details>
-          ))}
+        <div className="mt-12">
+          <Accordion items={tool.faq} multiple />
         </div>
       </Section>
+
+      {/* ── Similar Tools (related downloads in the same group) ── */}
+      {(() => {
+        const meta = getCatalogTool(tool.slug);
+        if (!meta) return null;
+        const related = catalog
+          .filter((t) => t.group === meta.group && t.slug !== tool.slug)
+          .slice(0, 6);
+        if (related.length === 0) return null;
+        return (
+          <Section variant="default">
+            <SectionHeading
+              eyebrow={`More ${meta.group === 'Downloaders' ? 'downloaders' : `${meta.group.toLowerCase()} tools`}`}
+              title={<>Try <span className="text-gradient">Another Tool.</span></>}
+              description="More from the same category — every tool on SavDown is free, no signup, no watermarks."
+            />
+            <div className="mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {related.map((r) => {
+                const RIcon = r.icon;
+                return (
+                  <Link
+                    key={r.slug}
+                    href={`/tools/${r.slug}`}
+                    className="group flex flex-col h-full bg-white border border-border rounded-2xl p-7 shadow-soft hover:shadow-soft-lg hover:-translate-y-1 hover:border-primary/30 transition-all duration-300"
+                  >
+                    <div className="flex items-start justify-between">
+                      <span className={`w-12 h-12 rounded-xl ${r.tile} flex items-center justify-center group-hover:scale-105 transition-transform`}>
+                        <RIcon className="w-6 h-6" />
+                      </span>
+                      <ChevronRight className="w-5 h-5 text-text-subtle opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                    </div>
+                    <h3 className="mt-5 font-bold text-text group-hover:text-primary transition-colors">{r.name}</h3>
+                    <p className="mt-2 text-sm text-text-muted leading-relaxed">{r.description}</p>
+                  </Link>
+                );
+              })}
+            </div>
+          </Section>
+        );
+      })()}
+
+      {/* ── Long-form SEO content (~1,000+ words) ─────────────── */}
+      <ToolLongContentSection slug={tool.slug} />
     </>
   );
 }

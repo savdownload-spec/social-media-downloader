@@ -20,7 +20,7 @@ const staticPages: SearchItem[] = [
   { title: 'Pricing', description: 'Simple credit-based plans for power users.', href: '/pricing', category: 'Product', keywords: ['pricing', 'plans', 'credits', 'pro', 'upgrade'] },
   { title: 'Blog', description: 'Guides and stories on downloading media.', href: '/blog', category: 'Content', keywords: ['blog', 'articles', 'guides'] },
   { title: 'FAQ', description: 'Common questions and answers.', href: '/faq', category: 'Support', keywords: ['faq', 'help', 'questions'] },
-  { title: 'Contact', description: 'Get in touch with us.', href: '/contact', category: 'Support', keywords: ['contact', 'email', 'support'] },
+  { title: 'Contact Us', description: 'Get in touch with us.', href: '/contact', category: 'Support', keywords: ['contact', 'email', 'support'] },
   { title: 'Privacy Policy', description: 'How we handle your data.', href: '/privacy', category: 'Legal', keywords: ['privacy', 'gdpr', 'data'] },
   { title: 'Terms of Service', description: 'The terms of using SavDown.', href: '/terms', category: 'Legal', keywords: ['terms', 'legal'] },
   { title: 'Cookie Disclaimer', description: 'How we use cookies.', href: '/cookies', category: 'Legal', keywords: ['cookies'] },

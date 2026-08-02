@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Search } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { Logo } from '@/components/ui/Logo';
+import { LanguageSelector } from '@/components/ui/LanguageSelector';
 import { Container } from './Container';
 
 export function Header() {
@@ -30,6 +31,7 @@ export function Header() {
         </nav>
 
         <div className="hidden md:flex items-center gap-2">
+          <LanguageSelector variant="header" />
           <Link
             href="/search"
             aria-label="Search"
@@ -63,6 +65,9 @@ export function Header() {
             className="md:hidden overflow-hidden border-t border-border-light bg-white"
           >
             <Container className="py-4 flex flex-col gap-1">
+              <div className="flex items-center justify-between py-2">
+                <LanguageSelector variant="header" />
+              </div>
               {siteConfig.navigation.map((item) => (
                 <Link
                   key={item.href}
