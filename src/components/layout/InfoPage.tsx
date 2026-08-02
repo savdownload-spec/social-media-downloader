@@ -71,7 +71,7 @@ type InfoBlockProps = {
   /** Gradient tile class, e.g. "bg-amber-50 text-amber-600" */
   tile: string;
   title: string;
-  description?: string;
+  description?: ReactNode;
   children?: ReactNode;
 };
 

@@ -207,7 +207,7 @@ export const toolContent: Record<string, ToolLongContent> = {
     keyFeatures: [
       { title: 'Up to 320kbps MP3', description: 'Save the audio at the highest practical bitrate — perfect for music and high-fidelity voice content.' },
       { title: 'M4A option', description: 'Prefer Apple\'s AAC container? Save the audio as M4A for smaller files at equivalent quality.' },
-      { title: 'No audio watermark', description: 'The file is the actual audio track — no spoken 'downloaded from' outro, no silent tag at the end.' },
+      { title: 'No audio watermark', description: "The file is the actual audio track — no spoken 'downloaded from' outro, no silent tag at the end." },
       { title: 'Works with all YouTube URLs', description: 'youtube.com, youtu.be, the mobile app share link, and embedded player URLs all work.' },
       { title: 'Fast and free', description: 'The whole flow takes seconds. There is no daily quota, no signup, and no premium tier.' },
       { title: 'ID3-friendly output', description: 'The MP3 keeps the original metadata where possible, so your library manager picks up title and channel.' },

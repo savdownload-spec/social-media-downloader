@@ -172,7 +172,7 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
       <Section variant="tinted" containerClassName="max-w-6xl">
         <SectionHeading
           eyebrow="Common use cases"
-          title={<>Built For <span className="text-gradient">Real Workflows.</span></}
+          title={<>Built For <span className="text-gradient">Real Workflows.</span></>}
           description="How creators, students, marketers, and researchers use this tool in practice."
         />
         <div className="mt-14 grid sm:grid-cols-2 gap-5">
