@@ -7,8 +7,8 @@ const trustBadges = ['Free forever', 'No signup', 'Privacy-first', 'Every platfo
 
 const heroStats = [
   { value: '2M+', label: 'Happy users' },
-  { value: '50+', label: 'Tools' },
   { value: '100%', label: 'Free' },
+  { value: '0', label: 'Data stored' },
   { value: '4.9', label: 'Rating', star: true },
 ];
 

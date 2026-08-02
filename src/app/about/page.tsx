@@ -49,14 +49,14 @@ const milestones = [
   { year: '2024', title: 'First line of code', body: 'A small team, frustrated by ad-filled downloaders, started building the alternative.' },
   { year: '2025', title: 'Beta launch', body: 'SavDown went live with YouTube, TikTok, and Instagram support — fast, free, and clean.' },
   { year: '2025', title: 'Platform expansion', body: 'Added Facebook, Pinterest, and X. Introduced thumbnail grabbers and MP3 extraction.' },
-  { year: '2026', title: 'The toolkit era', body: 'Launched 49+ tools across Image, Video, PDF, AI, SEO, and Utility categories.' },
+  { year: '2026', title: 'The toolkit era', body: 'Expanded into Image, Video, PDF, AI, SEO, and Utility categories, all under one roof.' },
 ];
 
 const stats = [
-  { value: '49+', label: 'Free Tools' },
-  { value: '6', label: 'Platforms' },
+  { value: '100%', label: 'Free' },
   { value: '100%', label: 'Browser-Based' },
   { value: '0', label: 'Ads Shown' },
+  { value: '4.9', label: 'Rating' },
 ];
 
 /* ── page ────────────────────────────────────────────────── */
@@ -205,7 +205,7 @@ export default function AboutPage() {
         <SectionHeading
           eyebrow="Our Journey"
           title={<>From Idea to <span className="text-gradient">Toolkit.</span></>}
-          description="A short history of how SavDown grew from a weekend project into a 49-tool platform."
+          description="A short history of how SavDown grew from a weekend project into a full toolkit platform."
         />
         <div className="mt-14 relative">
           {/* Connecting line (hidden on mobile) */}

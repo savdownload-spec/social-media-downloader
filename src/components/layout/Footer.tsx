@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { SVGProps } from 'react';
-import { Facebook, Instagram, Linkedin, Twitter, Mail, ArrowUpRight } from 'lucide-react';
+import { Facebook, Instagram, Linkedin, Twitter, Mail, ArrowUpRight, Check } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { catalog, toolGroups, type ToolGroup } from '@/config/catalog';
 import { Logo } from '@/components/ui/Logo';
@@ -56,10 +56,6 @@ export function Footer() {
     label: categoryLabels[group],
     tools: catalog.filter((t) => t.group === group),
   }));
-
-  // Get tool counts for the brand bar
-  const downloaderCount = catalog.filter((t) => t.group === 'Downloaders').length;
-  const totalTools = catalog.length;
 
   return (
     <footer className="relative bg-ink text-white overflow-hidden">
@@ -127,25 +123,21 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Stats / brand statement */}
+          {/* Brand statement (qualitative — no tool/platform counts) */}
           <div className="lg:col-span-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-4">
-              By the numbers
+              Why SavDown
             </p>
-            <dl className="space-y-3">
-              <div className="flex items-baseline gap-2">
-                <dt className="text-2xl font-display font-bold text-gradient-light">{totalTools}+</dt>
-                <dd className="text-xs text-ink-muted">Free tools</dd>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <dt className="text-2xl font-display font-bold text-gradient-light">{downloaderCount}</dt>
-                <dd className="text-xs text-ink-muted">Social platforms</dd>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <dt className="text-2xl font-display font-bold text-gradient-light">0</dt>
-                <dd className="text-xs text-ink-muted">Ads shown</dd>
-              </div>
-            </dl>
+            <ul className="space-y-3">
+              {['Free, always', 'No signup required', 'Privacy-first by design'].map((item) => (
+                <li key={item} className="flex items-center gap-2.5 text-sm text-ink-muted">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center">
+                    <Check className="w-3 h-3 text-white" />
+                  </span>
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
@@ -157,7 +149,7 @@ export function Footer() {
                 The complete toolkit
               </p>
               <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">
-                Browse all {totalTools} free tools
+                Browse the full toolkit
               </h2>
             </div>
             <Link
