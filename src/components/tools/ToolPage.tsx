@@ -4,6 +4,7 @@ import { CheckCircle2, Zap, Lock, Sparkles, ChevronRight } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { Section, SectionHeading } from '@/components/layout/Section';
 import { Accordion } from '@/components/ui/Accordion';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { DownloaderForm } from './DownloaderForm';
 import { ToolLongContentSection } from './ToolLongContent';
 import { getCatalogTool, fallbackIcon, catalog } from '@/config/catalog';
@@ -54,15 +55,14 @@ export function ToolPageView({ tool }: { tool: Tool }) {
           <div className="absolute -top-10 right-0 w-[22rem] h-[22rem] bg-fuchsia-brand/15 rounded-full blur-3xl animate-blob-slow" />
         </div>
         <Container className="relative pt-14 pb-16 md:pt-16 md:pb-20 text-center">
-          <nav aria-label="Breadcrumb" className="mb-10">
-            <ol className="flex items-center justify-center gap-1 text-xs text-text-muted">
-              <li><Link href="/" className="hover:text-text">Home</Link></li>
-              <li><ChevronRight className="w-3 h-3" /></li>
-              <li><Link href="/tools" className="hover:text-text">Tools</Link></li>
-              <li><ChevronRight className="w-3 h-3" /></li>
-              <li className="text-text">{tool.shortName}</li>
-            </ol>
-          </nav>
+          <Breadcrumb
+            className="mb-10 md:mb-12"
+            items={[
+              { label: 'Home', href: '/' },
+              { label: 'Tools', href: '/tools' },
+              { label: tool.shortName },
+            ]}
+          />
 
           <div className="reveal max-w-2xl mx-auto">
             <span className={`inline-flex w-20 h-20 rounded-3xl ${tile} items-center justify-center shadow-soft-md`}>

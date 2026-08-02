@@ -1,8 +1,9 @@
 import Link from 'next/link';
-import { ChevronRight, Clock, ArrowRight, ArrowUpRight, Bell } from 'lucide-react';
+import { Clock, ArrowRight, ArrowUpRight, Bell } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { Section, SectionHeading } from '@/components/layout/Section';
 import { Reveal } from '@/components/ui/Reveal';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { catalog, type CatalogTool } from '@/config/catalog';
 import { jsonLd, breadcrumbSchema } from '@/lib/seo';
 import { siteConfig } from '@/config/site';
@@ -38,15 +39,14 @@ export function GenericToolPage({ tool }: { tool: CatalogTool }) {
         </div>
 
         <Container className="relative pt-14 pb-16 md:pt-16 md:pb-20 text-center">
-          <nav aria-label="Breadcrumb" className="mb-10">
-            <ol className="flex items-center justify-center gap-1 text-xs text-text-muted">
-              <li><Link href="/" className="hover:text-text">Home</Link></li>
-              <li><ChevronRight className="w-3 h-3" /></li>
-              <li><Link href="/tools" className="hover:text-text">Tools</Link></li>
-              <li><ChevronRight className="w-3 h-3" /></li>
-              <li className="text-text">{tool.name}</li>
-            </ol>
-          </nav>
+          <Breadcrumb
+            className="mb-10 md:mb-12"
+            items={[
+              { label: 'Home', href: '/' },
+              { label: 'Tools', href: '/tools' },
+              { label: tool.name },
+            ]}
+          />
 
           <div className="reveal max-w-2xl mx-auto">
             <span className={`inline-flex w-20 h-20 rounded-3xl ${tool.tile} items-center justify-center shadow-soft-md`}>
@@ -70,7 +70,7 @@ export function GenericToolPage({ tool }: { tool: CatalogTool }) {
 
             <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
-                href="/#tools"
+                href="/tools"
                 className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all"
               >
                 Explore Live Tools <ArrowRight className="w-5 h-5" />
