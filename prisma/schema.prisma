@@ -1,19 +1,18 @@
-// -----------------------------------------------------------------------------
 // Prisma schema for Social Media Downloader
-// -----------------------------------------------------------------------------
+// Development: SQLite | Production: PostgreSQL
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
-// -----------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
 // Auth (NextAuth compatible)
-// -----------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
 
 model User {
   id            String     @id @default(cuid())
@@ -21,7 +20,7 @@ model User {
   email         String?    @unique
   emailVerified DateTime?
   image         String?
-  role          Role       @default(USER)
+  role          String     @default("USER")
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
@@ -30,23 +29,18 @@ model User {
   downloads     Download[]
 }
 
-enum Role {
-  USER
-  ADMIN
-}
-
 model Account {
   id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -70,19 +64,19 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// -----------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
 // Downloader tracking
-// -----------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
 
 model Download {
   id         String    @id @default(cuid())
   platform   String
   tool       String
-  sourceUrl  String    @db.Text
+  sourceUrl  String
   status     String    @default("success")
   userId     String?
   ipHash     String?
-  userAgent  String?   @db.Text
+  userAgent  String?
   createdAt  DateTime  @default(now())
 
   user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -99,26 +93,26 @@ model AnalyticsEvent {
   referrer  String?
   country   String?
   device    String?
-  meta      Json?
+  metaJson  String?
   createdAt DateTime @default(now())
 
   @@index([name, createdAt])
   @@index([path, createdAt])
 }
 
-// -----------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
 // Content
-// -----------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
 
 model Post {
   id          String    @id @default(cuid())
   slug        String    @unique
   title       String
-  excerpt     String?   @db.Text
-  content     String    @db.Text
+  excerpt     String?
+  content     String
   coverImage  String?
   author      String    @default("Editorial Team")
-  tags        String[]  @default([])
+  tagsJson    String    @default("[]")
   published   Boolean   @default(false)
   publishedAt DateTime?
   createdAt   DateTime  @default(now())
@@ -139,6 +133,6 @@ model ContactMessage {
   name      String
   email     String
   subject   String?
-  message   String   @db.Text
+  message   String
   createdAt DateTime @default(now())
 }
