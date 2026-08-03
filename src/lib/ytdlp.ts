@@ -197,9 +197,23 @@ export async function resolveWithYtdlp(
         if (formats.length >= 3) break;
       }
     } else {
-      // Video formats: pick unique heights
+      // Video formats: try merged mp4 first (has both video+audio in one stream),
+      // then fall back to DASH video-only streams paired with best audio.
+      //
+      // Strategy: include formats where either:
+      //   (a) both vcodec and acodec are present (pre-merged, e.g. format_id "18")
+      //   (b) video-only DASH streams — we'll pair them with audio client-side via proxy
       const videoFmts = rawFormats
-        .filter((f) => f.height && f.acodec !== 'none' && f.ext === 'mp4')
+        .filter((f) => {
+          const hasVideo = f.vcodec && f.vcodec !== 'none';
+          const hasAudio = f.acodec && f.acodec !== 'none';
+          const ext = f.ext as string;
+          // Pre-merged mp4 (e.g. 360p format_id "18") — best option
+          if (hasVideo && hasAudio && ext === 'mp4') return true;
+          // DASH video-only mp4 streams — include for quality variety
+          if (hasVideo && !hasAudio && ext === 'mp4') return true;
+          return false;
+        })
         .sort((a, b) => ((b.height as number) || 0) - ((a.height as number) || 0));
 
       const seenHeights = new Set<number>();
@@ -208,17 +222,18 @@ export async function resolveWithYtdlp(
         if (!seenHeights.has(h)) {
           seenHeights.add(h);
           const dl = (f.url as string) || '';
+          const hasAudio = f.acodec && f.acodec !== 'none';
           formats.push({
             label: buildLabel(f),
             quality: `${h}p`,
             extension: 'mp4',
             size: formatBytes(f.filesize as number),
             url: dl ? proxyUrl(dl, `${sanitizeFilename(title)}.mp4`) : '#',
-            hasAudio: true,
+            hasAudio: !!hasAudio,
             hasVideo: true,
           });
         }
-        if (formats.length >= 4) break;
+        if (formats.length >= 5) break;
       }
 
       // Always offer MP3 as audio fallback
