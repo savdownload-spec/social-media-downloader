@@ -49,9 +49,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg }, { status: 400 });
   }
 
-  // QRCodeToBufferOptions extends QRCodeRenderersOptions which has `width`.
-  // We share this object across all three render paths.
-  const opts: QRCode.QRCodeToBufferOptions = {
+  // Shared renderer options (QRCodeRenderersOptions has width, margin, color).
+  const rendererOpts: QRCode.QRCodeRenderersOptions = {
     width:                body.size,
     margin:               body.margin,
     errorCorrectionLevel: body.ecLevel,
@@ -59,19 +58,15 @@ export async function POST(req: Request) {
       dark:  body.color,
       light: body.bgColor,
     },
-    type: 'png',   // default; overridden per-path below
   };
 
   try {
     if (body.format === 'svg') {
-      const svgOpts: QRCode.QRCodeToStringOptions = {
-        margin:               opts.margin,
-        errorCorrectionLevel: opts.errorCorrectionLevel,
-        color:                opts.color,
-        width:                opts.width,
-        type:                 'svg',
-      };
-      const svg = await QRCode.toString(body.text, svgOpts);
+      const svg = await QRCode.toString(body.text, {
+        ...rendererOpts,
+        type: 'svg',
+      } as QRCode.QRCodeToStringOptions);
+
       return new NextResponse(svg, {
         headers: {
           'Content-Type':        'image/svg+xml',
@@ -82,12 +77,21 @@ export async function POST(req: Request) {
     }
 
     if (body.format === 'base64') {
-      const dataUrl = await QRCode.toDataURL(body.text, { ...opts, type: 'png' });
+      // toDataURL uses 'image/png', not 'png'
+      const dataUrl = await QRCode.toDataURL(body.text, {
+        ...rendererOpts,
+        type: 'image/png',
+      } as QRCode.QRCodeToDataURLOptions);
+
       return NextResponse.json({ ok: true, dataUrl });
     }
 
-    // PNG (default)
-    const pngBuffer = await QRCode.toBuffer(body.text, { ...opts, type: 'png' });
+    // PNG (default) — toBuffer uses 'png'
+    const pngBuffer = await QRCode.toBuffer(body.text, {
+      ...rendererOpts,
+      type: 'png',
+    } as QRCode.QRCodeToBufferOptions);
+
     return new NextResponse(pngBuffer.buffer as ArrayBuffer, {
       headers: {
         'Content-Type':        'image/png',
