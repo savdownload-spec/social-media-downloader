@@ -27,13 +27,22 @@ export function Accordion({ items, multiple = false }: AccordionProps) {
 
   function toggle(i: number) {
     setOpen((prev) => {
-      const next = new Set(multiple ? prev : []);
-      if (prev.has(i) && multiple) {
-        next.delete(i);
+      if (multiple) {
+        // multi-open: toggle the clicked item
+        const next = new Set(prev);
+        if (prev.has(i)) {
+          next.delete(i);
+        } else {
+          next.add(i);
+        }
+        return next;
       } else {
-        next.add(i);
+        // single-open: close if already open, otherwise open only this one
+        if (prev.has(i)) {
+          return new Set();
+        }
+        return new Set([i]);
       }
-      return next;
     });
   }
 

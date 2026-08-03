@@ -1,36 +1,33 @@
 'use client';
-import Link from 'next/link';
 import { useState } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Search } from 'lucide-react';
-import { siteConfig } from '@/config/site';
+import { Menu, X, Search, Zap } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { LanguageSelector } from '@/components/ui/LanguageSelector';
 import { Container } from './Container';
+import { MegaMenu } from './MegaMenu';
+import { MobileNav } from './MobileNav';
 
 export function Header() {
-  const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-border-light">
       <Container className="flex items-center justify-between h-16">
-        <div className="group transition-transform hover:scale-[1.02]">
-          <Logo variant="dark" height={30} />
-        </div>
 
-        <nav className="hidden md:flex items-center gap-8">
-          {siteConfig.navigation.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="text-sm text-text-muted hover:text-text transition-colors relative after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-0 after:rounded-full after:bg-gradient-brand hover:after:w-full after:transition-all"
-            >
-              {item.label}
-            </Link>
-          ))}
+        {/* Logo */}
+        <Link href="/" className="group transition-transform hover:scale-[1.02] shrink-0" aria-label="SavDown home">
+          <Logo variant="dark" height={30} linked={false} />
+        </Link>
+
+        {/* Desktop mega menu */}
+        <nav className="hidden md:flex items-center" aria-label="Primary navigation">
+          <MegaMenu />
         </nav>
 
-        <div className="hidden md:flex items-center gap-2">
+        {/* Desktop right actions */}
+        <div className="hidden md:flex items-center gap-2 shrink-0">
           <LanguageSelector variant="header" />
           <Link
             href="/search"
@@ -41,50 +38,46 @@ export function Header() {
           </Link>
           <Link
             href="/#tools"
-            className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:shadow-[0_14px_48px_-8px_rgb(124_58_237_/_0.5)] hover:bg-[position:100%_50%] transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:shadow-[0_14px_48px_-8px_rgb(124_58_237_/_0.5)] hover:bg-[position:100%_50%] transition-all"
           >
-            Get started
+            <Zap className="w-3.5 h-3.5" /> Get started
           </Link>
         </div>
 
+        {/* Mobile hamburger */}
         <button
-          className="md:hidden w-10 h-10 rounded-full hover:bg-surface flex items-center justify-center"
-          onClick={() => setOpen(!open)}
-          aria-label="Toggle menu"
+          className="md:hidden w-10 h-10 rounded-full hover:bg-surface flex items-center justify-center transition-colors"
+          onClick={() => setMobileOpen((v) => !v)}
+          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={mobileOpen}
         >
-          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          <AnimatePresence mode="wait" initial={false}>
+            {mobileOpen
+              ? <motion.span key="x"    initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}><X    className="w-5 h-5" /></motion.span>
+              : <motion.span key="menu" initial={{ rotate:  90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.15 }}><Menu className="w-5 h-5" /></motion.span>
+            }
+          </AnimatePresence>
         </button>
       </Container>
 
+      {/* Mobile drawer */}
       <AnimatePresence>
-        {open && (
+        {mobileOpen && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="md:hidden overflow-hidden border-t border-border-light bg-white"
           >
-            <Container className="py-4 flex flex-col gap-1">
-              <div className="flex items-center justify-between py-2">
+            <Container className="py-3">
+              <div className="flex items-center justify-between pb-3 border-b border-border-light mb-1">
                 <LanguageSelector variant="header" />
-              </div>
-              {siteConfig.navigation.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className="py-3 text-text-muted hover:text-text"
-                >
-                  {item.label}
+                <Link href="/search" onClick={() => setMobileOpen(false)} className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text">
+                  <Search className="w-4 h-4" /> Search
                 </Link>
-              ))}
-              <Link
-                href="/search"
-                onClick={() => setOpen(false)}
-                className="py-3 text-text-muted hover:text-text"
-              >
-                Search
-              </Link>
+              </div>
+              <MobileNav close={() => setMobileOpen(false)} />
             </Container>
           </motion.div>
         )}

@@ -121,11 +121,11 @@ export function ToolPageView({ tool }: { tool: Tool }) {
             </>
           }
         />
-        <div className="mt-14 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="mt-14 flex flex-wrap justify-center gap-4">
           {tool.howTo.map((step, i) => (
             <div
               key={step.title}
-              className="group p-6 bg-white border border-border rounded-2xl shadow-soft hover:shadow-soft-lg hover:-translate-y-1 transition-all duration-300"
+              className="group w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(25%-0.75rem)] min-w-[200px] max-w-xs p-6 bg-white border border-border rounded-2xl shadow-soft hover:shadow-soft-lg hover:-translate-y-1 transition-all duration-300"
             >
               <div className="w-9 h-9 rounded-xl bg-gradient-brand text-white text-sm font-bold flex items-center justify-center shadow-glow-lg group-hover:scale-105 transition-transform">
                 {i + 1}
