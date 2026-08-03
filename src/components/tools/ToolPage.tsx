@@ -5,6 +5,7 @@ import { Container } from '@/components/layout/Container';
 import { Section, SectionHeading } from '@/components/layout/Section';
 import { Accordion } from '@/components/ui/Accordion';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
+import { ShareButton } from '@/components/ui/ShareButton';
 import { DownloaderForm } from './DownloaderForm';
 import { ToolLongContentSection } from './ToolLongContent';
 import { getCatalogTool, fallbackIcon, catalog } from '@/config/catalog';
@@ -68,10 +69,11 @@ export function ToolPageView({ tool }: { tool: Tool }) {
             <span className={`inline-flex w-20 h-20 rounded-3xl ${tile} items-center justify-center shadow-soft-md`}>
               <Icon className="w-10 h-10" />
             </span>
-            <div className="mt-5 flex items-center justify-center">
+            <div className="mt-5 flex items-center justify-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-light text-xs font-semibold text-accent-hover">
                 <Zap className="w-3.5 h-3.5" /> Free tool, no signup
               </span>
+              <ShareButton url={url} />
             </div>
             <h1 className="mt-5 text-4xl md:text-5xl lg:text-6xl font-bold tracking-[-0.03em] text-text leading-[1.05]">
               {tool.headline}

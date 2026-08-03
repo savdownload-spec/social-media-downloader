@@ -1,10 +1,12 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, Loader2, AlertCircle, Play } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { CopyButton } from '@/components/ui/CopyButton';
+import { useToast } from '@/components/ui/Toast';
 import type { DownloadResult } from '@/types';
 
 /**
@@ -26,6 +28,7 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [error, setError] = useState('');
   const [result, setResult] = useState<Extract<DownloadResult, { ok: true }> | null>(null);
+  const { success, error: errorToast, warning } = useToast();
 
   useEffect(() => {
     const q = params.get('url');
@@ -36,7 +39,7 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const submit = async (input?: string) => {
+  const submit = useCallback(async (input?: string) => {
     const target = (input ?? url).trim();
     if (!target) {
       setError('Paste a link to get started.');
@@ -63,18 +66,28 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
       const data: DownloadResult = await res.json();
 
       if (!res.ok || !data.ok) {
-        setError(data.ok ? 'Something went wrong.' : data.error);
+        const message = data.ok ? 'Something went wrong.' : data.error;
+        setError(message);
         setState('error');
+
+        // Toast for rate-limited or network-level errors
+        if (res.status === 429) {
+          warning('Slow down!', 'Too many requests — please wait a moment before trying again.');
+        } else {
+          errorToast('Download failed', message);
+        }
         return;
       }
 
       setResult(data);
       setState('done');
+      success('Download ready', `${tool.name} media analyzed successfully.`);
     } catch {
       setError('Network error. Please try again.');
       setState('error');
+      errorToast('Network error', 'Could not reach the server. Check your connection and try again.');
     }
-  };
+  }, [url, tool, success, errorToast, warning]);
 
   return (
     <div className="w-full">
@@ -166,6 +179,15 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
                       {f.size && <span className="text-white/60 text-xs">· {f.size}</span>}
                     </a>
                   ))}
+                  {result.formats.length > 0 && (
+                    <CopyButton
+                      value={result.formats[0].url}
+                      variant="outline"
+                      size="sm"
+                      successMessage="Link copied!"
+                      successDescription="You can now paste it anywhere."
+                    />
+                  )}
                 </div>
               </div>
             </div>

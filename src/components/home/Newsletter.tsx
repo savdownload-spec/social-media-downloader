@@ -4,11 +4,13 @@ import { Send, Check } from 'lucide-react';
 import { Section } from '@/components/layout/Section';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { useToast } from '@/components/ui/Toast';
 
 export function Newsletter() {
   const [email, setEmail] = useState('');
   const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle');
   const [error, setError] = useState('');
+  const { success, error: errorToast, warning } = useToast();
 
   const submit = async () => {
     if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
@@ -16,16 +18,28 @@ export function Newsletter() {
       return;
     }
     setState('loading');
+    setError('');
     try {
       const res = await fetch('/api/newsletter', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      if (!res.ok) throw new Error('failed');
+      if (!res.ok) {
+        if (res.status === 429) {
+          warning('Slow down!', 'Too many requests — please wait a moment.');
+        } else {
+          errorToast('Subscription failed', 'Something went wrong. Please try again.');
+        }
+        setState('err');
+        setError('Something went wrong. Try again.');
+        return;
+      }
       setState('ok');
       setEmail('');
+      success('Subscribed!', 'You\'re on the list. We\'ll be in touch.');
     } catch {
+      errorToast('Network error', 'Could not reach the server. Check your connection and try again.');
       setState('err');
       setError('Something went wrong. Try again.');
     }

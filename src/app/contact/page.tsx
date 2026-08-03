@@ -4,28 +4,54 @@ import { Container } from '@/components/layout/Container';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Send, Check, Mail } from 'lucide-react';
+import { useToast } from '@/components/ui/Toast';
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
-  const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle');
+  const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'err' | 'server-err'>('idle');
+  const [validationError, setValidationError] = useState('');
+  const { success, error: errorToast } = useToast();
 
   const submit = async () => {
-    if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/) || !form.message) {
+    // Client-side validation
+    if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      setValidationError('Please enter a valid email address.');
       setState('err');
       return;
     }
+    if (!form.message.trim()) {
+      setValidationError('Please write a message before sending.');
+      setState('err');
+      return;
+    }
+
+    setValidationError('');
     setState('loading');
+
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(form),
       });
-      if (!res.ok) throw new Error('failed');
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        if (res.status === 429) {
+          errorToast('Slow down!', 'Too many requests — please wait a moment.');
+        } else {
+          errorToast('Send failed', data?.error ?? 'Something went wrong on our end. Please try again.');
+        }
+        setState('server-err');
+        return;
+      }
+
       setState('ok');
       setForm({ name: '', email: '', subject: '', message: '' });
+      success('Message sent!', 'We\'ll get back to you as soon as possible.');
     } catch {
-      setState('err');
+      errorToast('Network error', 'Could not reach the server. Check your connection and try again.');
+      setState('server-err');
     }
   };
 
@@ -51,7 +77,7 @@ export default function ContactPage() {
           />
           <Input
             value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            onChange={(e) => { setForm({ ...form, email: e.target.value }); if (state === 'err') { setState('idle'); setValidationError(''); } }}
             type="email"
             placeholder="you@example.com"
             required
@@ -64,7 +90,7 @@ export default function ContactPage() {
         />
         <textarea
           value={form.message}
-          onChange={(e) => setForm({ ...form, message: e.target.value })}
+          onChange={(e) => { setForm({ ...form, message: e.target.value }); if (state === 'err') { setState('idle'); setValidationError(''); } }}
           placeholder="What's on your mind?"
           rows={6}
           className="w-full bg-white border border-border rounded-2xl px-5 py-3.5 text-text placeholder:text-text-subtle focus:outline-none focus:border-primary focus:shadow-glow resize-none"
@@ -73,8 +99,8 @@ export default function ContactPage() {
         <Button size="lg" onClick={submit} loading={state === 'loading'} className="w-full sm:w-auto">
           {state === 'ok' ? <>Message sent <Check className="w-4 h-4" /></> : <>Send message <Send className="w-4 h-4" /></>}
         </Button>
-        {state === 'err' && (
-          <p className="text-sm text-red-600">Please fill in email and message.</p>
+        {state === 'err' && validationError && (
+          <p className="text-sm text-red-600">{validationError}</p>
         )}
         {state === 'ok' && (
           <p className="text-sm text-accent">Thanks, we'll get back to you soon.</p>

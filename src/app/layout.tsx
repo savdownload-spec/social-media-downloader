@@ -4,6 +4,8 @@ import './globals.css';
 import { Header } from '@/components/layout/Header';
 import { AdBanner } from '@/components/layout/AdBanner';
 import { Footer } from '@/components/layout/Footer';
+import { ToastProvider } from '@/components/ui/Toast';
+import { ConfirmProvider } from '@/components/ui/ConfirmProvider';
 import { siteConfig } from '@/config/site';
 import { jsonLd } from '@/lib/seo';
 
@@ -96,10 +98,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="font-sans bg-surface text-text antialiased">
-        <Header />
-        <AdBanner />
-        <main className="min-h-[calc(100vh-4rem)]">{children}</main>
-        <Footer />
+        <ToastProvider>
+          <ConfirmProvider>
+            <Header />
+            <AdBanner />
+            <main className="min-h-[calc(100vh-4rem)]">{children}</main>
+            <Footer />
+          </ConfirmProvider>
+        </ToastProvider>
       </body>
     </html>
   );
