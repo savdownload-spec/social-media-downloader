@@ -5,30 +5,54 @@ import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { cacheJson } from '@/lib/redis';
 import { prisma } from '@/lib/prisma';
 import { sha256 } from '@/lib/utils';
+import { resolveWithYtdlp } from '@/lib/ytdlp';
+import { resolveWithGalleryDl } from '@/lib/gallerydl';
 import type { DownloadResult } from '@/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const BodySchema = z.object({
-  url: z.string().min(1).max(2048),
+  url:  z.string().min(1).max(2048),
   tool: z.string().min(1).max(100),
 });
 
 /**
- * POST /api/download
- * Body: { url, tool }
- *
- * Flow:
- *   1. Validate + rate-limit by IP.
- *   2. Look up the tool by slug and verify URL pattern.
- *   3. Cache-fetch metadata from the downloader service (30-min TTL).
- *   4. Log the download event (non-blocking).
- *
- * The actual media resolution is delegated to DOWNLOADER_API_URL.
- * If unset, we return a structured stub so the UI still works in dev.
+ * Tools that use gallery-dl (image galleries, carousels, profile pics).
+ * All others default to yt-dlp.
  */
+const GALLERY_DL_TOOLS = new Set([
+  'instagram-photo-downloader',
+  'instagram-story-downloader',
+  'instagram-profile-picture-downloader',
+  'pinterest-image-downloader',
+  'tiktok-photo-downloader',
+]);
+
+/**
+ * Tools where we call the thumbnail resolver directly (no binary needed).
+ */
+const THUMBNAIL_TOOLS = new Set([
+  'youtube-thumbnail-downloader',
+]);
+
+/**
+ * Tools that want audio-only extraction from yt-dlp.
+ */
+const AUDIO_ONLY_TOOLS = new Set([
+  'youtube-to-mp3',
+  'tiktok-to-mp3',
+]);
+
+/**
+ * Tools that want playlist mode.
+ */
+const PLAYLIST_TOOLS = new Set([
+  'youtube-playlist-downloader',
+]);
+
 export async function POST(req: Request) {
+  /* ── 1. Rate limit ── */
   const ip = getClientId(req);
   const rl = await ratelimit(`dl:${ip}`, { limit: 20, windowSeconds: 60 });
   if (!rl.success) {
@@ -38,16 +62,24 @@ export async function POST(req: Request) {
     );
   }
 
-  let body;
+  /* ── 2. Validate body ── */
+  let body: z.infer<typeof BodySchema>;
   try {
     body = BodySchema.parse(await req.json());
   } catch {
-    return NextResponse.json<DownloadResult>({ ok: false, error: 'Invalid request.' }, { status: 400 });
+    return NextResponse.json<DownloadResult>(
+      { ok: false, error: 'Invalid request.' },
+      { status: 400 },
+    );
   }
 
+  /* ── 3. Look up tool ── */
   const tool = toolsBySlug.get(body.tool);
   if (!tool) {
-    return NextResponse.json<DownloadResult>({ ok: false, error: 'Unknown tool.' }, { status: 404 });
+    return NextResponse.json<DownloadResult>(
+      { ok: false, error: 'Unknown tool.' },
+      { status: 404 },
+    );
   }
   if (!tool.urlPattern.test(body.url)) {
     return NextResponse.json<DownloadResult>(
@@ -56,85 +88,57 @@ export async function POST(req: Request) {
     );
   }
 
-  const cacheKey = `dl:${tool.slug}:${await sha256(body.url)}`;
+  /* ── 4. Cache → resolve ── */
+  const cacheKey = `dl:v2:${tool.slug}:${await sha256(body.url)}`;
+
   const result = await cacheJson<DownloadResult>(cacheKey, 60 * 30, async () =>
-    resolveDownload(tool.slug, body.url),
+    dispatch(tool.slug, body.url),
   );
 
-  // Fire-and-forget logging
+  /* ── 5. Log download (non-blocking) ── */
   if (result.ok) {
     void prisma.download
       .create({
         data: {
-          platform: tool.platform,
-          tool: tool.slug,
+          platform:  tool.platform,
+          tool:      tool.slug,
           sourceUrl: body.url,
-          status: 'success',
-          ipHash: await sha256(ip),
-          userAgent: req.headers.get('user-agent') || null,
+          status:    'success',
+          ipHash:    await sha256(ip),
+          userAgent: req.headers.get('user-agent') ?? null,
         },
       })
-      .catch(() => { /* ignore */ });
+      .catch(() => { /* ignore DB errors */ });
   }
 
   return NextResponse.json(result, {
     headers: {
-      'x-ratelimit-limit': String(rl.limit),
-      'x-ratelimit-remaining': String(rl.remaining),
+      'x-ratelimit-limit':      String(rl.limit),
+      'x-ratelimit-remaining':  String(rl.remaining),
     },
   });
 }
 
 /**
- * Delegates to your downloader micro-service.
- *
- * Set DOWNLOADER_API_URL to your own yt-dlp/gallery-dl service or a RapidAPI
- * endpoint. The expected response shape matches DownloadResult.
- *
- * If DOWNLOADER_API_URL is not set, we return a demo payload so the front-end
- * remains fully clickable in local dev.
+ * Route a download request to the correct service layer.
  */
-async function resolveDownload(toolSlug: string, url: string): Promise<DownloadResult> {
-  const apiUrl = process.env.DOWNLOADER_API_URL;
-
-  if (!apiUrl) {
-    // Demo response, replace by integrating a real downloader service.
-    return {
-      ok: true,
-      title: 'Demo mode, set DOWNLOADER_API_URL to enable real downloads',
-      thumbnail: 'https://picsum.photos/seed/savdown/640/360',
-      author: 'SavDown',
-      platform: toolSlug,
-      formats: [
-        { label: 'MP4 1080p', quality: '1080p', extension: 'mp4', size: '24.6 MB', url: '#demo', hasAudio: true, hasVideo: true },
-        { label: 'MP4 720p', quality: '720p', extension: 'mp4', size: '11.2 MB', url: '#demo', hasAudio: true, hasVideo: true },
-        { label: 'MP3 audio', quality: '192kbps', extension: 'mp3', size: '3.1 MB', url: '#demo', hasAudio: true },
-      ],
-    };
+async function dispatch(toolSlug: string, url: string): Promise<DownloadResult> {
+  if (GALLERY_DL_TOOLS.has(toolSlug)) {
+    return resolveWithGalleryDl(url, toolSlug);
   }
 
-  try {
-    const res = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        ...(process.env.DOWNLOADER_API_KEY
-          ? { authorization: `Bearer ${process.env.DOWNLOADER_API_KEY}` }
-          : {}),
-      },
-      body: JSON.stringify({ url, tool: toolSlug }),
-      // 25s ceiling so the UI doesn't hang forever
-      signal: AbortSignal.timeout(25_000),
-    });
-
-    if (!res.ok) {
-      return { ok: false, error: `Downloader service responded ${res.status}.` };
-    }
-    return (await res.json()) as DownloadResult;
-  } catch (e) {
-    return {
-      ok: false,
-      error: e instanceof Error ? `Downloader failed: ${e.message}` : 'Downloader failed.',
-    };
+  if (THUMBNAIL_TOOLS.has(toolSlug)) {
+    return resolveWithYtdlp(url, toolSlug, { thumbnailOnly: true });
   }
+
+  if (AUDIO_ONLY_TOOLS.has(toolSlug)) {
+    return resolveWithYtdlp(url, toolSlug, { audioOnly: true });
+  }
+
+  if (PLAYLIST_TOOLS.has(toolSlug)) {
+    return resolveWithYtdlp(url, toolSlug, { playlist: true });
+  }
+
+  // Default: yt-dlp with full video+audio formats
+  return resolveWithYtdlp(url, toolSlug);
 }
