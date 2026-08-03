@@ -17,9 +17,9 @@ import { isToolAvailable } from '@/config/catalog';
 
 /* ─── animation ─────────────────────────────────────────────── */
 const panelVariants = {
-  hidden:  { opacity: 0, y: 10, scale: 0.98 },
-  visible: { opacity: 1, y: 0,  scale: 1, transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] } },
-  exit:    { opacity: 0, y: 6,  scale: 0.98, transition: { duration: 0.14 } },
+  hidden:  { opacity: 0, y: 10, scale: 0.98, x: '-50%' },
+  visible: { opacity: 1, y: 0,  scale: 1, x: '-50%', transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] } },
+  exit:    { opacity: 0, y: 6,  scale: 0.98, x: '-50%', transition: { duration: 0.14 } },
 };
 
 /* ─── group meta ─────────────────────────────────────────────── */
@@ -546,7 +546,7 @@ export function MegaMenu() {
             aria-hidden
           />
 
-          {/* Panel — truly centered on the viewport */}
+          {/* Panel — viewport-centered; x:'-50%' in variants keeps centering during scale/y animation */}
           <motion.div
             id="mega-menu-panel"
             key={active}
@@ -560,7 +560,6 @@ export function MegaMenu() {
               position: 'fixed',
               top: 68,
               left: '50%',
-              transform: 'translateX(-50%)',
               zIndex: 100,
             }}
             className={`${PANEL_WIDTH[active]} ${PANEL_HEIGHT[active]} bg-white rounded-2xl border border-border-light shadow-[0_16px_64px_-12px_rgba(0,0,0,0.2)] overflow-hidden`}
