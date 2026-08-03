@@ -1,4 +1,4 @@
-# SavDown — One Toolkit For Everything You Share
+# SavDown | One Toolkit For Everything You Share
 
 A production-ready, full-stack social media downloader built with Next.js 14, TypeScript, Tailwind, Framer Motion, Prisma, PostgreSQL, and Redis.
 
