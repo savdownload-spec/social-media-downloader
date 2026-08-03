@@ -1,9 +1,8 @@
 /**
  * yt-dlp service layer.
  *
- * Spawns yt-dlp as a child process and returns structured DownloadResult.
- * Falls back gracefully to DOWNLOADER_API_URL if yt-dlp binary is not
- * available (production containers that don't bundle it).
+ * Uses yt-dlp's --print / --format selectors to get exactly the streams we
+ * want without downloading the full multi-megabyte --dump-json blob.
  *
  * Architecture: API Route → ytdlp.ts → yt-dlp binary (or DOWNLOADER_API_URL)
  */
@@ -13,241 +12,220 @@ import type { DownloadResult, DownloadFormat } from '@/types';
 
 const execFileAsync = promisify(execFile);
 
-// Where yt-dlp lives. Override via env for Docker deployments.
-const YTDLP_BIN = process.env.YTDLP_BIN || 'yt-dlp';
-// Max time to wait for yt-dlp metadata extraction (ms)
-const YTDLP_TIMEOUT = parseInt(process.env.YTDLP_TIMEOUT_MS || '30000', 10);
-// Max retries on transient failures
-const MAX_RETRIES = 2;
+const YTDLP_BIN     = process.env.YTDLP_BIN     || 'yt-dlp';
+const YTDLP_TIMEOUT = parseInt(process.env.YTDLP_TIMEOUT_MS || '45000', 10);
+const MAX_RETRIES   = 2;
 
 export type YtdlpOptions = {
-  audioOnly?: boolean;
-  /** 'thumbnail' mode returns only thumbnail URLs */
+  audioOnly?:    boolean;
   thumbnailOnly?: boolean;
-  /** 'playlist' mode returns all entries */
-  playlist?: boolean;
+  playlist?:     boolean;
 };
 
-/**
- * Check if yt-dlp binary exists and is executable.
- */
+/* ─── binary check ──────────────────────────────────────────── */
+
 async function isBinaryAvailable(): Promise<boolean> {
   try {
     await execFileAsync(YTDLP_BIN, ['--version'], { timeout: 5000 });
     return true;
-  } catch {
-    return false;
-  }
+  } catch { return false; }
 }
 
-/**
- * Run yt-dlp with --dump-json to get media metadata without downloading.
- */
-async function runYtdlpJson(url: string, extraArgs: string[] = []): Promise<Record<string, unknown>[]> {
-  const args = [
-    '--dump-json',
-    '--no-playlist',
-    '--no-warnings',
-    '--no-call-home',
-    '--socket-timeout', '20',
-    '--retries', '2',
-    ...extraArgs,
-    '--',
-    url,
-  ];
+/* ─── helpers ───────────────────────────────────────────────── */
 
-  let lastError: Error | null = null;
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      const { stdout } = await execFileAsync(YTDLP_BIN, args, {
-        timeout: YTDLP_TIMEOUT,
-        maxBuffer: 10 * 1024 * 1024, // 10 MB
-      });
-      // stdout may be multiple JSON lines (playlist)
-      return stdout
-        .trim()
-        .split('\n')
-        .filter(Boolean)
-        .map((line) => JSON.parse(line) as Record<string, unknown>);
-    } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-      if (attempt < MAX_RETRIES) await sleep(500 * (attempt + 1));
-    }
-  }
-  throw lastError ?? new Error('yt-dlp failed');
-}
+function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
 
-/** Sleep helper */
-function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-/**
- * Format bytes to a human-readable size string.
- */
 function formatBytes(bytes: number | null | undefined): string | undefined {
-  if (!bytes) return undefined;
+  if (!bytes || bytes <= 0) return undefined;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-/**
- * Extract quality label from yt-dlp format entry.
- */
-function qualityLabel(fmt: Record<string, unknown>): string {
-  const height = fmt.height as number | null;
-  const abr = fmt.abr as number | null;
-  const ext = fmt.ext as string;
-  if (height) return `${height}p`;
-  if (abr) return `${Math.round(abr)}kbps`;
-  if (ext === 'mp3') return 'MP3';
-  if (ext === 'm4a') return 'M4A';
-  return (fmt.format_note as string) || (fmt.format as string) || 'Unknown';
+function sanitize(title: string): string {
+  return title.replace(/[/\\?%*:|"<>]/g, '-').slice(0, 80);
 }
 
-/**
- * Build user-facing format label.
- */
-function buildLabel(fmt: Record<string, unknown>): string {
-  const ext = (fmt.ext as string || 'mp4').toUpperCase();
-  const height = fmt.height as number | null;
-  const abr = fmt.abr as number | null;
-  if (height) return `${ext} ${height}p`;
-  if (abr) return `${ext} ${Math.round(abr)}kbps`;
-  return ext;
-}
-
-/**
- * Build a direct download URL for a specific format.
- * We proxy through our own /api/proxy endpoint to avoid CORS and expose clean URLs.
- */
-function proxyUrl(originalUrl: string, filename: string): string {
+function proxyUrl(rawUrl: string, filename: string): string {
   const base = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  const params = new URLSearchParams({ url: originalUrl, filename });
-  return `${base}/api/proxy?${params.toString()}`;
+  return `${base}/api/proxy?${new URLSearchParams({ url: rawUrl, filename })}`;
+}
+
+/* ─── core yt-dlp runner ─────────────────────────────────────── */
+
+interface YtdlpMeta {
+  title:     string;
+  thumbnail: string;
+  uploader:  string;
+  duration:  number;
+  platform:  string;
 }
 
 /**
- * Main entry point: resolve a URL to DownloadResult using yt-dlp.
+ * Get metadata (title, thumbnail, uploader, duration) via --print.
+ * Much smaller output than --dump-json.
  */
+async function getMeta(url: string): Promise<YtdlpMeta> {
+  const template = [
+    '%(title)s',
+    '%(thumbnail)s',
+    '%(uploader|channel)s',
+    '%(duration)s',
+    '%(extractor_key)s',
+  ].join('\n---FIELD---\n');
+
+  const args = [
+    '--no-playlist', '--no-warnings', '--no-call-home',
+    '--socket-timeout', '20', '--retries', '2',
+    '--print', template,
+    '--', url,
+  ];
+
+  let last: Error | null = null;
+  for (let i = 0; i <= MAX_RETRIES; i++) {
+    try {
+      const { stdout } = await execFileAsync(YTDLP_BIN, args, {
+        timeout: YTDLP_TIMEOUT,
+        maxBuffer: 512 * 1024, // 512 KB — plenty for metadata
+      });
+      const [title = '', thumbnail = '', uploader = '', durationStr = '', platform = ''] =
+        stdout.trim().split('\n---FIELD---\n').map(s => s.trim());
+      return {
+        title:     title     || 'Download',
+        thumbnail: thumbnail || '',
+        uploader:  uploader  || '',
+        duration:  parseFloat(durationStr) || 0,
+        platform:  platform  || 'youtube',
+      };
+    } catch (err) {
+      last = err instanceof Error ? err : new Error(String(err));
+      if (i < MAX_RETRIES) await sleep(500 * (i + 1));
+    }
+  }
+  throw last ?? new Error('yt-dlp metadata fetch failed');
+}
+
+/**
+ * Get the direct stream URL for a specific yt-dlp format selector.
+ * Returns empty string if the format is not available.
+ */
+async function getFormatUrl(url: string, formatSelector: string): Promise<{ streamUrl: string; filesize: number }> {
+  const args = [
+    '--no-playlist', '--no-warnings', '--no-call-home',
+    '--socket-timeout', '20', '--retries', '1',
+    '-f', formatSelector,
+    '--print', '%(url)s\n---FIELD---\n%(filesize|filesize_approx|0)s',
+    '--', url,
+  ];
+
+  try {
+    const { stdout } = await execFileAsync(YTDLP_BIN, args, {
+      timeout: YTDLP_TIMEOUT,
+      maxBuffer: 256 * 1024,
+    });
+    const parts = stdout.trim().split('\n---FIELD---\n');
+    const streamUrl = parts[0]?.trim() || '';
+    const filesize  = parseInt(parts[1]?.trim() || '0', 10) || 0;
+    return { streamUrl, filesize };
+  } catch {
+    return { streamUrl: '', filesize: 0 };
+  }
+}
+
+/* ─── video quality tiers ────────────────────────────────────── */
+
+// Quality tiers — use single-file format selectors only, since --print
+// cannot output a merged DASH stream URL (that requires actual muxing).
+// For each tier: prefer a pre-muxed mp4 → fall back to best mp4 DASH video.
+const VIDEO_TIERS: { label: string; quality: string; selector: string }[] = [
+  { label: 'MP4 2160p (4K)', quality: '2160p', selector: 'bestvideo[height<=2160][ext=mp4][acodec!=none]/bestvideo[height<=2160][ext=mp4]/best[height<=2160]' },
+  { label: 'MP4 1440p',      quality: '1440p', selector: 'bestvideo[height<=1440][ext=mp4][acodec!=none]/bestvideo[height<=1440][ext=mp4]/best[height<=1440]' },
+  { label: 'MP4 1080p (HD)', quality: '1080p', selector: 'bestvideo[height<=1080][ext=mp4][acodec!=none]/bestvideo[height<=1080][ext=mp4]/best[height<=1080]' },
+  { label: 'MP4 720p',       quality: '720p',  selector: 'bestvideo[height<=720][ext=mp4][acodec!=none]/bestvideo[height<=720][ext=mp4]/best[height<=720]'   },
+  { label: 'MP4 480p',       quality: '480p',  selector: 'bestvideo[height<=480][ext=mp4][acodec!=none]/bestvideo[height<=480][ext=mp4]/best[height<=480]'   },
+  { label: 'MP4 360p',       quality: '360p',  selector: 'best[height<=360][ext=mp4]/bestvideo[height<=360][ext=mp4]/best[height<=360]'                      },
+];
+
+// Audio tier for music/podcast downloads
+const AUDIO_TIERS: { label: string; quality: string; ext: string; selector: string }[] = [
+  { label: 'M4A 128kbps', quality: '128kbps', ext: 'm4a', selector: 'bestaudio[ext=m4a]/bestaudio' },
+  { label: 'WebM Audio',  quality: 'high',    ext: 'webm', selector: 'bestaudio[ext=webm]' },
+];
+
+/* ─── main resolver ─────────────────────────────────────────── */
+
 export async function resolveWithYtdlp(
   url: string,
   toolSlug: string,
   options: YtdlpOptions = {},
 ): Promise<DownloadResult> {
-  // Check if binary is available
   const available = await isBinaryAvailable();
-  if (!available) {
-    // Fall back to external DOWNLOADER_API_URL if set
-    return resolveViaRemoteApi(url, toolSlug);
-  }
+  if (!available) return resolveViaRemoteApi(url, toolSlug);
 
   try {
-    if (options.thumbnailOnly) {
-      return await resolveThumbnail(url);
-    }
+    // Thumbnail-only: no yt-dlp needed, direct CDN
+    if (options.thumbnailOnly) return resolveThumbnail(url);
 
-    const extraArgs: string[] = [];
-    if (options.playlist) {
-      // Remove --no-playlist for playlist mode
-    }
-    if (options.audioOnly) {
-      extraArgs.push('--format', 'bestaudio/best');
-    }
+    // Step 1: get metadata (fast, small output)
+    const meta = await getMeta(url);
+    const title     = meta.title;
+    const thumbnail = meta.thumbnail;
+    const author    = meta.uploader || undefined;
+    const duration  = meta.duration || undefined;
+    const platform  = meta.platform || toolSlug;
 
-    const entries = await runYtdlpJson(url, extraArgs);
-    if (!entries.length) {
-      return { ok: false, error: 'No media found at this URL.' };
-    }
-
-    const entry = entries[0]!;
-    const title = (entry.title as string) || (entry.webpage_url_basename as string) || 'Download';
-    const thumbnail = (entry.thumbnail as string) || '';
-    const author = (entry.uploader as string) || (entry.channel as string) || undefined;
-    const duration = entry.duration as number | undefined;
-    const platform = (entry.extractor_key as string) || toolSlug;
-
-    // Build format list from yt-dlp formats array
-    const rawFormats = (entry.formats as Record<string, unknown>[] | undefined) || [];
-
-    let formats: DownloadFormat[] = [];
+    const formats: DownloadFormat[] = [];
 
     if (options.audioOnly) {
-      // Audio-only: pick best audio formats
-      const audioFmts = rawFormats.filter((f) =>
-        f.vcodec === 'none' || f.acodec !== 'none'
-      );
-      // Deduplicate by ext
-      const seen = new Set<string>();
-      for (const f of audioFmts.reverse()) {
-        const ext = (f.ext as string || 'mp3');
-        if (!seen.has(ext) && ['mp3', 'm4a', 'webm', 'ogg'].includes(ext)) {
-          seen.add(ext);
-          const dl = (f.url as string) || '';
-          formats.push({
-            label: buildLabel(f),
-            quality: qualityLabel(f),
-            extension: ext,
-            size: formatBytes(f.filesize as number),
-            url: dl ? proxyUrl(dl, `${sanitizeFilename(title)}.${ext}`) : '#',
-            hasAudio: true,
-            hasVideo: false,
-          });
-        }
-        if (formats.length >= 3) break;
+      // Audio-only mode: fetch best audio streams
+      for (const tier of AUDIO_TIERS) {
+        const { streamUrl, filesize } = await getFormatUrl(url, tier.selector);
+        if (!streamUrl || streamUrl === 'NA') continue;
+        formats.push({
+          label:    tier.label,
+          quality:  tier.quality,
+          extension: tier.ext,
+          size:     formatBytes(filesize),
+          url:      proxyUrl(streamUrl, `${sanitize(title)}.${tier.ext}`),
+          hasAudio: true,
+          hasVideo: false,
+        });
+        if (formats.length >= 2) break;
       }
     } else {
-      // Video formats: try merged mp4 first (has both video+audio in one stream),
-      // then fall back to DASH video-only streams paired with best audio.
-      //
-      // Strategy: include formats where either:
-      //   (a) both vcodec and acodec are present (pre-merged, e.g. format_id "18")
-      //   (b) video-only DASH streams — we'll pair them with audio client-side via proxy
-      const videoFmts = rawFormats
-        .filter((f) => {
-          const hasVideo = f.vcodec && f.vcodec !== 'none';
-          const hasAudio = f.acodec && f.acodec !== 'none';
-          const ext = f.ext as string;
-          // Pre-merged mp4 (e.g. 360p format_id "18") — best option
-          if (hasVideo && hasAudio && ext === 'mp4') return true;
-          // DASH video-only mp4 streams — include for quality variety
-          if (hasVideo && !hasAudio && ext === 'mp4') return true;
-          return false;
-        })
-        .sort((a, b) => ((b.height as number) || 0) - ((a.height as number) || 0));
+      // Video mode: probe each quality tier in parallel (up to 3 at once)
+      // We check in order from highest to lowest quality
+      const tierResults = await Promise.allSettled(
+        VIDEO_TIERS.map(tier => getFormatUrl(url, tier.selector)),
+      );
 
-      const seenHeights = new Set<number>();
-      for (const f of videoFmts) {
-        const h = f.height as number;
-        if (!seenHeights.has(h)) {
-          seenHeights.add(h);
-          const dl = (f.url as string) || '';
-          const hasAudio = f.acodec && f.acodec !== 'none';
-          formats.push({
-            label: buildLabel(f),
-            quality: `${h}p`,
-            extension: 'mp4',
-            size: formatBytes(f.filesize as number),
-            url: dl ? proxyUrl(dl, `${sanitizeFilename(title)}.mp4`) : '#',
-            hasAudio: !!hasAudio,
-            hasVideo: true,
-          });
-        }
-        if (formats.length >= 5) break;
+      for (let i = 0; i < VIDEO_TIERS.length; i++) {
+        const tier   = VIDEO_TIERS[i]!;
+        const result = tierResults[i];
+        if (result?.status !== 'fulfilled') continue;
+        const { streamUrl, filesize } = result.value;
+        if (!streamUrl || streamUrl === 'NA') continue;
+
+        formats.push({
+          label:    tier.label,
+          quality:  tier.quality,
+          extension: 'mp4',
+          size:     formatBytes(filesize),
+          url:      proxyUrl(streamUrl, `${sanitize(title)}.mp4`),
+          hasAudio: true,
+          hasVideo: true,
+        });
       }
 
-      // Always offer MP3 as audio fallback
-      const bestAudio = rawFormats
-        .filter((f) => f.vcodec === 'none' && f.acodec !== 'none')
-        .sort((a, b) => ((b.abr as number) || 0) - ((a.abr as number) || 0))[0];
-      if (bestAudio) {
-        const dl = (bestAudio.url as string) || '';
+      // Always add best audio (M4A)
+      const { streamUrl: audioUrl, filesize: audioSize } =
+        await getFormatUrl(url, AUDIO_TIERS[0]!.selector);
+      if (audioUrl && audioUrl !== 'NA') {
         formats.push({
-          label: 'MP3 audio',
-          quality: qualityLabel(bestAudio),
-          extension: 'mp3',
-          size: formatBytes(bestAudio.filesize as number),
-          url: dl ? proxyUrl(dl, `${sanitizeFilename(title)}.mp3`) : '#',
+          label:    'M4A Audio',
+          quality:  'best',
+          extension: 'm4a',
+          size:     formatBytes(audioSize),
+          url:      proxyUrl(audioUrl, `${sanitize(title)}.m4a`),
           hasAudio: true,
           hasVideo: false,
         });
@@ -255,121 +233,74 @@ export async function resolveWithYtdlp(
     }
 
     if (!formats.length) {
-      // Fallback: use the direct webpage URL
-      const directUrl = (entry.url as string) || (entry.webpage_url as string) || '';
-      formats = [{
-        label: 'Download',
-        quality: 'best',
-        extension: 'mp4',
-        url: directUrl ? proxyUrl(directUrl, `${sanitizeFilename(title)}.mp4`) : '#',
-        hasAudio: true,
-        hasVideo: true,
-      }];
+      return { ok: false, error: 'No downloadable formats found for this URL.' };
     }
 
-    return {
-      ok: true,
-      title,
-      thumbnail,
-      author,
-      duration,
-      platform,
-      formats,
-    };
+    return { ok: true, title, thumbnail, author, duration, platform, formats };
+
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    // Parse common yt-dlp error messages into user-friendly ones
-    if (msg.includes('Private video') || msg.includes('private')) {
+    if (msg.includes('Private video') || msg.includes('private'))
       return { ok: false, error: 'This video is private and cannot be downloaded.' };
-    }
-    if (msg.includes('not available') || msg.includes('removed')) {
+    if (msg.includes('not available') || msg.includes('removed'))
       return { ok: false, error: 'This media is no longer available.' };
-    }
-    if (msg.includes('geo') || msg.includes('blocked')) {
+    if (msg.includes('geo') || msg.includes('blocked') || msg.includes('not available in your country'))
       return { ok: false, error: 'This content is not available in the server region.' };
-    }
-    if (msg.includes('Unsupported URL')) {
+    if (msg.includes('Unsupported URL'))
       return { ok: false, error: 'This URL is not supported.' };
-    }
-    return { ok: false, error: `Could not process this URL. ${msg.slice(0, 120)}` };
+    return { ok: false, error: `Could not process this URL. ${msg.slice(0, 160)}` };
   }
 }
 
-/**
- * Resolve YouTube thumbnail URLs directly from img.youtube.com CDN.
- * No yt-dlp binary needed for this path.
- */
+/* ─── thumbnail resolver (no yt-dlp needed) ─────────────────── */
+
 async function resolveThumbnail(url: string): Promise<DownloadResult> {
-  // Extract video ID from any YouTube URL format
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
     /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/v\/([a-zA-Z0-9_-]{11})/,
   ];
-
   let videoId: string | null = null;
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match?.[1]) { videoId = match[1]; break; }
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m?.[1]) { videoId = m[1]; break; }
   }
+  if (!videoId)
+    return { ok: false, error: 'Could not extract YouTube video ID from this URL.' };
 
-  if (!videoId) {
-    return { ok: false, error: 'Could not extract video ID from this YouTube URL.' };
-  }
-
-  // YouTube thumbnail endpoints
-  const thumbnailVariants = [
-    { label: 'MaxRes JPG', quality: '1280×720', url: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`, extension: 'jpg' },
-    { label: 'HQ JPG',     quality: '480×360',  url: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,     extension: 'jpg' },
-    { label: 'MQ JPG',     quality: '320×180',  url: `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`,     extension: 'jpg' },
-    { label: 'SD JPG',     quality: '120×90',   url: `https://img.youtube.com/vi/${videoId}/default.jpg`,       extension: 'jpg' },
+  const base = `https://img.youtube.com/vi/${videoId}`;
+  const variants = [
+    { label: 'MaxRes JPG', quality: '1280×720', url: `${base}/maxresdefault.jpg` },
+    { label: 'HQ JPG',     quality: '480×360',  url: `${base}/hqdefault.jpg`     },
+    { label: 'MQ JPG',     quality: '320×180',  url: `${base}/mqdefault.jpg`     },
+    { label: 'SD JPG',     quality: '120×90',   url: `${base}/default.jpg`       },
   ];
 
-  // Verify maxres actually exists (some old videos don't have it)
+  // Verify maxres exists (some videos don't have it)
   const formats: DownloadFormat[] = [];
-  for (const v of thumbnailVariants) {
+  for (const v of variants) {
     if (v.label === 'MaxRes JPG') {
-      try {
-        const check = await fetch(v.url, { method: 'HEAD' });
-        if (!check.ok) continue;
-      } catch { continue; }
+      try { const r = await fetch(v.url, { method: 'HEAD' }); if (!r.ok) continue; }
+      catch { continue; }
     }
-    formats.push({
-      label: v.label,
-      quality: v.quality,
-      extension: v.extension,
-      url: v.url,
-      hasAudio: false,
-      hasVideo: false,
-    });
+    formats.push({ label: v.label, quality: v.quality, extension: 'jpg', url: v.url, hasAudio: false, hasVideo: false });
   }
 
   return {
     ok: true,
-    title: `YouTube Video Thumbnail (${videoId})`,
-    thumbnail: formats[0]?.url || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-    platform: 'youtube',
+    title:     `YouTube Thumbnail (${videoId})`,
+    thumbnail: formats[0]?.url || `${base}/hqdefault.jpg`,
+    platform:  'youtube',
     formats,
   };
 }
 
-/** Sanitize a title for use as a filename. */
-function sanitizeFilename(title: string): string {
-  return title.replace(/[/\\?%*:|"<>]/g, '-').slice(0, 80);
-}
+/* ─── remote API fallback ────────────────────────────────────── */
 
-/**
- * Fallback: delegate to DOWNLOADER_API_URL (the existing external service path).
- */
 async function resolveViaRemoteApi(url: string, toolSlug: string): Promise<DownloadResult> {
   const apiUrl = process.env.DOWNLOADER_API_URL;
   if (!apiUrl) {
-    return {
-      ok: false,
-      error: 'Downloader service is not configured. Set YTDLP_BIN or DOWNLOADER_API_URL.',
-    };
+    return { ok: false, error: 'Downloader service is not configured. Set YTDLP_BIN or DOWNLOADER_API_URL.' };
   }
-
   try {
     const res = await fetch(apiUrl, {
       method: 'POST',
