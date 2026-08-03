@@ -49,19 +49,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg }, { status: 400 });
   }
 
-  const opts: QRCode.QRCodeOptions = {
-    width:           body.size,
-    margin:          body.margin,
+  // QRCodeToBufferOptions extends QRCodeRenderersOptions which has `width`.
+  // We share this object across all three render paths.
+  const opts: QRCode.QRCodeToBufferOptions = {
+    width:                body.size,
+    margin:               body.margin,
     errorCorrectionLevel: body.ecLevel,
     color: {
       dark:  body.color,
       light: body.bgColor,
     },
+    type: 'png',   // default; overridden per-path below
   };
 
   try {
     if (body.format === 'svg') {
-      const svg = await QRCode.toString(body.text, { ...opts, type: 'svg' });
+      const svgOpts: QRCode.QRCodeToStringOptions = {
+        margin:               opts.margin,
+        errorCorrectionLevel: opts.errorCorrectionLevel,
+        color:                opts.color,
+        width:                opts.width,
+        type:                 'svg',
+      };
+      const svg = await QRCode.toString(body.text, svgOpts);
       return new NextResponse(svg, {
         headers: {
           'Content-Type':        'image/svg+xml',
@@ -72,13 +82,13 @@ export async function POST(req: Request) {
     }
 
     if (body.format === 'base64') {
-      const dataUrl = await QRCode.toDataURL(body.text, opts);
+      const dataUrl = await QRCode.toDataURL(body.text, { ...opts, type: 'png' });
       return NextResponse.json({ ok: true, dataUrl });
     }
 
     // PNG (default)
     const pngBuffer = await QRCode.toBuffer(body.text, { ...opts, type: 'png' });
-    return new NextResponse(pngBuffer, {
+    return new NextResponse(pngBuffer.buffer as ArrayBuffer, {
       headers: {
         'Content-Type':        'image/png',
         'Content-Disposition': 'attachment; filename="qrcode.png"',
