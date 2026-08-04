@@ -1,0 +1,61 @@
+{
+  "common": {
+    "language": "语言",
+    "search": "搜索",
+    "getStarted": "开始",
+    "learnMore": "了解更多",
+    "close": "关闭",
+    "menu": "菜单",
+    "followUs": "关注我们"
+  },
+  "nav": {
+    "home": "首页",
+    "tools": "工具",
+    "blog": "博客",
+    "about": "关于",
+    "contact": "联系",
+    "pricing": "价格",
+    "faq": "常见问题"
+  },
+  "hero": {
+    "title": "下载视频、图片等",
+    "subtitle": "用于从社交媒体平台下载内容的快速、免费且易于使用的工具",
+    "cta": "开始下载"
+  },
+  "features": {
+    "title": "为什么选择 SavDown？",
+    "fast": "闪电般快速",
+    "fastDesc": "通过优化的流媒体在几秒内下载内容",
+    "secure": "完全安全",
+    "secureDesc": "您的隐私是我们的优先事项。无数据收集",
+    "unlimited": "无限下载",
+    "unlimitedDesc": "随意下载，完全免费",
+    "noAds": "无广告",
+    "noAdsDesc": "干净的界面，没有烦人的广告"
+  },
+  "tools": {
+    "title": "所有工具",
+    "subtitle": "从我们强大的下载器集合中选择",
+    "youtubeVideo": "YouTube 视频下载器",
+    "youtubeShorts": "YouTube Shorts 下载器",
+    "youtubePlaylist": "YouTube 播放列表下载器",
+    "instagramPost": "Instagram 帖子下载器",
+    "instagramReels": "Instagram Reels 下载器",
+    "tiktok": "TikTok 下载器",
+    "twitter": "Twitter/X 视频下载器",
+    "facebook": "Facebook 视频下载器",
+    "pinterest": "Pinterest 下载器",
+    "twitch": "Twitch 视频下载器"
+  },
+  "footer": {
+    "description": "用于从您最喜欢的社交媒体平台下载视频、图片和媒体的免费在线工具。",
+    "quickLinks": "快速链接",
+    "resources": "资源",
+    "legal": "法律",
+    "terms": "服务条款",
+    "privacy": "隐私政策",
+    "cookies": "Cookie 政策",
+    "dmca": "DMCA",
+    "copyright": "© 2024 SavDown。版权所有。"
+  }
+}

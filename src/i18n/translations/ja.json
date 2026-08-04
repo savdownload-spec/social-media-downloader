@@ -1,0 +1,61 @@
+{
+  "common": {
+    "language": "言語",
+    "search": "検索",
+    "getStarted": "開始",
+    "learnMore": "詳しく知る",
+    "close": "閉じる",
+    "menu": "メニュー",
+    "followUs": "フォロー"
+  },
+  "nav": {
+    "home": "ホーム",
+    "tools": "ツール",
+    "blog": "ブログ",
+    "about": "概要",
+    "contact": "お問い合わせ",
+    "pricing": "価格",
+    "faq": "よくある質問"
+  },
+  "hero": {
+    "title": "ビデオ、画像など をダウンロード",
+    "subtitle": "ソーシャルメディアプラットフォームからコンテンツをダウンロードするための、高速で無料で使いやすいツール",
+    "cta": "ダウンロード開始"
+  },
+  "features": {
+    "title": "SavDownを選ぶ理由",
+    "fast": "稲妻のように速い",
+    "fastDesc": "最適化されたストリーミングでコンテンツを数秒でダウンロード",
+    "secure": "完全に安全",
+    "secureDesc": "プライバシーが優先事項です。データ収集なし",
+    "unlimited": "無制限ダウンロード",
+    "unlimitedDesc": "好きなだけダウンロード、完全無料",
+    "noAds": "広告なし",
+    "noAdsDesc": "迷惑な広告のないクリーンなインターフェース"
+  },
+  "tools": {
+    "title": "すべてのツール",
+    "subtitle": "強力なダウンローダーのコレクションから選択",
+    "youtubeVideo": "YouTube動画ダウンローダー",
+    "youtubeShorts": "YouTube Shortsダウンローダー",
+    "youtubePlaylist": "YouTubeプレイリストダウンローダー",
+    "instagramPost": "Instagramポストダウンローダー",
+    "instagramReels": "InstagramReelsダウンローダー",
+    "tiktok": "TikTokダウンローダー",
+    "twitter": "Twitter/X動画ダウンローダー",
+    "facebook": "Facebook動画ダウンローダー",
+    "pinterest": "Pinterestダウンローダー",
+    "twitch": "Twitch動画ダウンローダー"
+  },
+  "footer": {
+    "description": "お気に入りのソーシャルメディアプラットフォームからビデオ、画像、メディアをダウンロードするための無料のオンラインツール。",
+    "quickLinks": "クイックリンク",
+    "resources": "リソース",
+    "legal": "法的",
+    "terms": "利用規約",
+    "privacy": "プライバシーポリシー",
+    "cookies": "クッキーポリシー",
+    "dmca": "DMCA",
+    "copyright": "© 2024 SavDown。著作権所有。"
+  }
+}

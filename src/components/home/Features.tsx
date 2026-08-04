@@ -1,41 +1,21 @@
+'use client';
+
 import { ShieldCheck, Sparkles, Gauge, BadgeDollarSign, Layers, MonitorSmartphone } from 'lucide-react';
 import { Section, SectionHeading } from '@/components/layout/Section';
 import { Reveal } from '@/components/ui/Reveal';
+import { useTranslation } from '@/i18n';
 
-const features = [
-  {
-    icon: Sparkles,
-    title: 'No Watermarks, Ever',
-    body: 'Every download comes out clean. We never stamp logos, usernames, or badges onto your files.',
-  },
-  {
-    icon: Gauge,
-    title: 'Genuinely Fast',
-    body: 'Link analysis finishes in under a second and downloads start immediately, even for long 4K clips.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Private By Design',
-    body: 'We stream media through and never store your files or build a history. What you save stays yours.',
-  },
-  {
-    icon: Layers,
-    title: 'Every Format You Need',
-    body: 'MP4 up to 4K, MP3 audio, GIFs, photos, and full-resolution thumbnails, all from one toolkit.',
-  },
-  {
-    icon: BadgeDollarSign,
-    title: 'Free With No Signup',
-    body: 'No account, no credit card, and no daily caps. Use every tool as many times as you like.',
-  },
-  {
-    icon: MonitorSmartphone,
-    title: 'Works Everywhere',
-    body: 'A browser is all you need. SavDown runs the same on phones, tablets, and desktops.',
-  },
+const featureKeys = [
+  { icon: Sparkles, titleKey: 'features.fast', descKey: 'features.fastDesc' },
+  { icon: ShieldCheck, titleKey: 'features.secure', descKey: 'features.secureDesc' },
+  { icon: Layers, titleKey: 'features.unlimited', descKey: 'features.unlimitedDesc' },
+  { icon: Gauge, titleKey: 'features.noAds', descKey: 'features.noAdsDesc' },
+  { icon: BadgeDollarSign, titleKey: 'common.getStarted', descKey: 'features.unlimitedDesc' },
+  { icon: MonitorSmartphone, titleKey: 'features.unlimited', descKey: 'features.unlimitedDesc' },
 ];
 
 export function Features() {
+  const t = useTranslation();
   return (
     <Section variant="dark" className="relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-mesh-dark pointer-events-none" />
@@ -44,24 +24,20 @@ export function Features() {
       <div className="relative">
         <SectionHeading
           dark
-          eyebrow="Why choose SavDown"
-          title={
-            <>
-              Built To Feel Effortless, <span className="text-gradient-light">Every Single Time.</span>
-            </>
-          }
+          eyebrow={t('common.learnMore')}
+          title={t('features.title')}
           description="The little things add up: no ads pushing you around, no fake download buttons, and no compromise on quality."
         />
 
         <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {features.map((f, i) => (
-            <Reveal key={f.title} delay={i * 0.05}>
+          {featureKeys.map((f, i) => (
+            <Reveal key={f.titleKey} delay={i * 0.05}>
               <div className="group h-full rounded-2xl bg-white/[0.04] border border-white/10 p-7 backdrop-blur-sm hover:bg-white/[0.07] hover:border-white/20 transition-all duration-300">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-brand flex items-center justify-center text-white shadow-glow-lg group-hover:scale-105 transition-transform">
                   <f.icon className="w-6 h-6" />
                 </div>
-                <h3 className="mt-5 text-lg font-bold text-white">{f.title}</h3>
-                <p className="mt-2 text-sm text-ink-muted leading-relaxed">{f.body}</p>
+                <h3 className="mt-5 text-lg font-bold text-white">{t(f.titleKey)}</h3>
+                <p className="mt-2 text-sm text-ink-muted leading-relaxed">{t(f.descKey)}</p>
               </div>
             </Reveal>
           ))}

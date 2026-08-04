@@ -1,0 +1,61 @@
+{
+  "common": {
+    "language": "Language",
+    "search": "Search",
+    "getStarted": "Get started",
+    "learnMore": "Learn more",
+    "close": "Close",
+    "menu": "Menu",
+    "followUs": "Follow us"
+  },
+  "nav": {
+    "home": "Home",
+    "tools": "Tools",
+    "blog": "Blog",
+    "about": "About",
+    "contact": "Contact",
+    "pricing": "Pricing",
+    "faq": "FAQ"
+  },
+  "hero": {
+    "title": "Download Videos, Images & More",
+    "subtitle": "Fast, free, and easy-to-use tools for downloading content from social media platforms",
+    "cta": "Start Downloading"
+  },
+  "features": {
+    "title": "Why Choose SavDown?",
+    "fast": "Lightning Fast",
+    "fastDesc": "Download content in seconds with optimized streaming",
+    "secure": "Completely Secure",
+    "secureDesc": "Your privacy is our priority. No data collection",
+    "unlimited": "Unlimited Downloads",
+    "unlimitedDesc": "Download as much as you want, completely free",
+    "noAds": "No Ads",
+    "noAdsDesc": "Clean interface without annoying advertisements"
+  },
+  "tools": {
+    "title": "All Tools",
+    "subtitle": "Choose from our collection of powerful downloaders",
+    "youtubeVideo": "YouTube Video Downloader",
+    "youtubeShorts": "YouTube Shorts Downloader",
+    "youtubePlaylist": "YouTube Playlist Downloader",
+    "instagramPost": "Instagram Post Downloader",
+    "instagramReels": "Instagram Reels Downloader",
+    "tiktok": "TikTok Downloader",
+    "twitter": "Twitter/X Video Downloader",
+    "facebook": "Facebook Video Downloader",
+    "pinterest": "Pinterest Downloader",
+    "twitch": "Twitch Video Downloader"
+  },
+  "footer": {
+    "description": "Free online tools for downloading videos, images, and media from your favorite social media platforms.",
+    "quickLinks": "Quick Links",
+    "resources": "Resources",
+    "legal": "Legal",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "cookies": "Cookie Policy",
+    "dmca": "DMCA",
+    "copyright": "© 2024 SavDown. All rights reserved."
+  }
+}

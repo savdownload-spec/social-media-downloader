@@ -1,0 +1,61 @@
+{
+  "common": {
+    "language": "Idioma",
+    "search": "Pesquisar",
+    "getStarted": "Comece",
+    "learnMore": "Saiba mais",
+    "close": "Fechar",
+    "menu": "Menu",
+    "followUs": "Siga-nos"
+  },
+  "nav": {
+    "home": "Início",
+    "tools": "Ferramentas",
+    "blog": "Blog",
+    "about": "Sobre",
+    "contact": "Contato",
+    "pricing": "Preços",
+    "faq": "Perguntas Frequentes"
+  },
+  "hero": {
+    "title": "Baixe Vídeos, Imagens e Muito Mais",
+    "subtitle": "Ferramentas rápidas, gratuitas e fáceis de usar para baixar conteúdo de redes sociais",
+    "cta": "Começar a Baixar"
+  },
+  "features": {
+    "title": "Por que escolher SavDown?",
+    "fast": "Rápido",
+    "fastDesc": "Baixe conteúdo em segundos com streaming otimizado",
+    "secure": "Completamente Seguro",
+    "secureDesc": "Sua privacidade é nossa prioridade. Sem coleta de dados",
+    "unlimited": "Downloads Ilimitados",
+    "unlimitedDesc": "Baixe o quanto quiser, completamente grátis",
+    "noAds": "Sem Anúncios",
+    "noAdsDesc": "Interface limpa sem anúncios irritantes"
+  },
+  "tools": {
+    "title": "Todas as Ferramentas",
+    "subtitle": "Escolha de nossa coleção de downloaders poderosos",
+    "youtubeVideo": "Downloader de Vídeos do YouTube",
+    "youtubeShorts": "Downloader de YouTube Shorts",
+    "youtubePlaylist": "Downloader de Playlists do YouTube",
+    "instagramPost": "Downloader de Posts do Instagram",
+    "instagramReels": "Downloader de Reels do Instagram",
+    "tiktok": "Downloader do TikTok",
+    "twitter": "Downloader de Vídeos do Twitter/X",
+    "facebook": "Downloader de Vídeos do Facebook",
+    "pinterest": "Downloader do Pinterest",
+    "twitch": "Downloader de Vídeos do Twitch"
+  },
+  "footer": {
+    "description": "Ferramentas online gratuitas para baixar vídeos, imagens e mídia de suas plataformas de redes sociais favoritas.",
+    "quickLinks": "Links Rápidos",
+    "resources": "Recursos",
+    "legal": "Legal",
+    "terms": "Termos de Serviço",
+    "privacy": "Política de Privacidade",
+    "cookies": "Política de Cookies",
+    "dmca": "DMCA",
+    "copyright": "© 2024 SavDown. Todos os direitos reservados."
+  }
+}

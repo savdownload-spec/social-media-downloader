@@ -1,0 +1,61 @@
+{
+  "common": {
+    "language": "اللغة",
+    "search": "بحث",
+    "getStarted": "ابدأ",
+    "learnMore": "معرفة المزيد",
+    "close": "إغلاق",
+    "menu": "القائمة",
+    "followUs": "تابعنا"
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "tools": "الأدوات",
+    "blog": "المدونة",
+    "about": "حولنا",
+    "contact": "تواصل",
+    "pricing": "الأسعار",
+    "faq": "الأسئلة الشائعة"
+  },
+  "hero": {
+    "title": "حمّل الفيديوهات والصور والمزيد",
+    "subtitle": "أدوات سريعة وسهلة الاستخدام ومجانية لتحميل المحتوى من منصات وسائل التواصل الاجتماعي",
+    "cta": "ابدأ التحميل"
+  },
+  "features": {
+    "title": "لماذا تختار SavDown؟",
+    "fast": "سريع جداً",
+    "fastDesc": "حمّل المحتوى في ثوانٍ مع البث المحسّن",
+    "secure": "آمن تماماً",
+    "secureDesc": "خصوصيتك هي أولويتنا. لا توجد جمع بيانات",
+    "unlimited": "تحميلات غير محدودة",
+    "unlimitedDesc": "حمّل ما تريد، تماماً مجاني",
+    "noAds": "بدون إعلانات",
+    "noAdsDesc": "واجهة نظيفة بدون إعلانات مزعجة"
+  },
+  "tools": {
+    "title": "جميع الأدوات",
+    "subtitle": "اختر من مجموعتنا من مُحملات قوية",
+    "youtubeVideo": "محمل فيديوهات YouTube",
+    "youtubeShorts": "محمل YouTube Shorts",
+    "youtubePlaylist": "محمل قائمة تشغيل YouTube",
+    "instagramPost": "محمل منشورات Instagram",
+    "instagramReels": "محمل Instagram Reels",
+    "tiktok": "محمل TikTok",
+    "twitter": "محمل فيديوهات Twitter/X",
+    "facebook": "محمل فيديوهات Facebook",
+    "pinterest": "محمل Pinterest",
+    "twitch": "محمل فيديوهات Twitch"
+  },
+  "footer": {
+    "description": "أدوات مجانية على الإنترنت لتحميل مقاطع الفيديو والصور والوسائط من منصات وسائل التواصل الاجتماعي المفضلة لديك.",
+    "quickLinks": "روابط سريعة",
+    "resources": "الموارد",
+    "legal": "قانوني",
+    "terms": "شروط الخدمة",
+    "privacy": "سياسة الخصوصية",
+    "cookies": "سياسة ملفات تعريف الارتباط",
+    "dmca": "DMCA",
+    "copyright": "© 2024 SavDown. جميع الحقوق محفوظة."
+  }
+}

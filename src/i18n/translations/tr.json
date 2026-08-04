@@ -1,0 +1,61 @@
+{
+  "common": {
+    "language": "Dil",
+    "search": "Ara",
+    "getStarted": "Başla",
+    "learnMore": "Daha fazla bilgi",
+    "close": "Kapat",
+    "menu": "Menü",
+    "followUs": "Bizi Takip Edin"
+  },
+  "nav": {
+    "home": "Ana Sayfa",
+    "tools": "Araçlar",
+    "blog": "Blog",
+    "about": "Hakkında",
+    "contact": "İletişim",
+    "pricing": "Fiyatlandırma",
+    "faq": "Sık Sorulan Sorular"
+  },
+  "hero": {
+    "title": "Videoları, Resimleri ve Daha Fazlasını İndir",
+    "subtitle": "Sosyal medya platformlarından içerik indirmek için hızlı, ücretsiz ve kullanımı kolay araçlar",
+    "cta": "İndirmeye Başla"
+  },
+  "features": {
+    "title": "SavDown'u Neden Seçmelisiniz?",
+    "fast": "Yıldırım Hızında",
+    "fastDesc": "Optimize edilmiş akışla içeriği saniyeler içinde indirin",
+    "secure": "Tamamen Güvenli",
+    "secureDesc": "Gizliliğiniz bizim önceliğimizdir. Veri toplama yoktur",
+    "unlimited": "Sınırsız İndirmeler",
+    "unlimitedDesc": "İstediğiniz kadar indirin, tamamen ücretsiz",
+    "noAds": "Reklam Yok",
+    "noAdsDesc": "Rahatsız edici reklamlar olmadan temiz arayüz"
+  },
+  "tools": {
+    "title": "Tüm Araçlar",
+    "subtitle": "Güçlü indiriciler koleksiyonundan seçin",
+    "youtubeVideo": "YouTube Video İndiricisi",
+    "youtubeShorts": "YouTube Shorts İndiricisi",
+    "youtubePlaylist": "YouTube Çalma Listesi İndiricisi",
+    "instagramPost": "Instagram Gönderi İndiricisi",
+    "instagramReels": "Instagram Reels İndiricisi",
+    "tiktok": "TikTok İndiricisi",
+    "twitter": "Twitter/X Video İndiricisi",
+    "facebook": "Facebook Video İndiricisi",
+    "pinterest": "Pinterest İndiricisi",
+    "twitch": "Twitch Video İndiricisi"
+  },
+  "footer": {
+    "description": "Favori sosyal medya platformlarından video, resim ve medya indirmek için ücretsiz çevrimiçi araçlar.",
+    "quickLinks": "Hızlı Bağlantılar",
+    "resources": "Kaynaklar",
+    "legal": "Yasal",
+    "terms": "Hizmet Koşulları",
+    "privacy": "Gizlilik Politikası",
+    "cookies": "Çerez Politikası",
+    "dmca": "DMCA",
+    "copyright": "© 2024 SavDown. Tüm Hakları Saklıdır."
+  }
+}

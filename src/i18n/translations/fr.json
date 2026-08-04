@@ -1,0 +1,61 @@
+{
+  "common": {
+    "language": "Langue",
+    "search": "Rechercher",
+    "getStarted": "Commencer",
+    "learnMore": "En savoir plus",
+    "close": "Fermer",
+    "menu": "Menu",
+    "followUs": "Suivez-nous"
+  },
+  "nav": {
+    "home": "Accueil",
+    "tools": "Outils",
+    "blog": "Blog",
+    "about": "À propos",
+    "contact": "Contact",
+    "pricing": "Tarification",
+    "faq": "FAQ"
+  },
+  "hero": {
+    "title": "Téléchargez des Vidéos, des Images et Plus",
+    "subtitle": "Outils rapides, gratuits et faciles à utiliser pour télécharger du contenu des réseaux sociaux",
+    "cta": "Commencer à Télécharger"
+  },
+  "features": {
+    "title": "Pourquoi choisir SavDown ?",
+    "fast": "Ultra Rapide",
+    "fastDesc": "Téléchargez du contenu en quelques secondes avec la diffusion optimisée",
+    "secure": "Complètement Sécurisé",
+    "secureDesc": "Votre confidentialité est notre priorité. Aucune collecte de données",
+    "unlimited": "Téléchargements Illimités",
+    "unlimitedDesc": "Téléchargez autant que vous voulez, complètement gratuit",
+    "noAds": "Sans Publicités",
+    "noAdsDesc": "Interface propre sans publicités gênantes"
+  },
+  "tools": {
+    "title": "Tous les Outils",
+    "subtitle": "Choisissez parmi notre collection de téléchargeurs puissants",
+    "youtubeVideo": "Téléchargeur de Vidéos YouTube",
+    "youtubeShorts": "Téléchargeur de YouTube Shorts",
+    "youtubePlaylist": "Téléchargeur de Listes de Lecture YouTube",
+    "instagramPost": "Téléchargeur de Posts Instagram",
+    "instagramReels": "Téléchargeur de Reels Instagram",
+    "tiktok": "Téléchargeur TikTok",
+    "twitter": "Téléchargeur de Vidéos Twitter/X",
+    "facebook": "Téléchargeur de Vidéos Facebook",
+    "pinterest": "Téléchargeur Pinterest",
+    "twitch": "Téléchargeur de Vidéos Twitch"
+  },
+  "footer": {
+    "description": "Outils en ligne gratuits pour télécharger des vidéos, des images et des médias de vos plateformes de réseaux sociaux préférées.",
+    "quickLinks": "Liens Rapides",
+    "resources": "Ressources",
+    "legal": "Légal",
+    "terms": "Conditions d'Utilisation",
+    "privacy": "Politique de Confidentialité",
+    "cookies": "Politique relative aux Cookies",
+    "dmca": "DMCA",
+    "copyright": "© 2024 SavDown. Tous les droits sont réservés."
+  }
+}

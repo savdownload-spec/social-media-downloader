@@ -1,0 +1,61 @@
+{
+  "common": {
+    "language": "언어",
+    "search": "검색",
+    "getStarted": "시작하기",
+    "learnMore": "자세히 알아보기",
+    "close": "닫기",
+    "menu": "메뉴",
+    "followUs": "팔로우하기"
+  },
+  "nav": {
+    "home": "홈",
+    "tools": "도구",
+    "blog": "블로그",
+    "about": "소개",
+    "contact": "연락처",
+    "pricing": "가격",
+    "faq": "자주 묻는 질문"
+  },
+  "hero": {
+    "title": "비디오, 이미지 등 다운로드",
+    "subtitle": "소셜 미디어 플랫폼에서 콘텐츠를 다운로드하기 위한 빠르고 무료이며 사용하기 쉬운 도구",
+    "cta": "다운로드 시작"
+  },
+  "features": {
+    "title": "SavDown을 선택하는 이유는?",
+    "fast": "번개 같이 빠름",
+    "fastDesc": "최적화된 스트리밍으로 몇 초 만에 콘텐츠 다운로드",
+    "secure": "완전히 안전함",
+    "secureDesc": "귀하의 개인정보가 우리의 우선순위입니다. 데이터 수집 없음",
+    "unlimited": "무제한 다운로드",
+    "unlimitedDesc": "원하는 만큼 다운로드 가능, 완전 무료",
+    "noAds": "광고 없음",
+    "noAdsDesc": "성가신 광고 없는 깔끔한 인터페이스"
+  },
+  "tools": {
+    "title": "모든 도구",
+    "subtitle": "강력한 다운로더 모음에서 선택",
+    "youtubeVideo": "YouTube 비디오 다운로더",
+    "youtubeShorts": "YouTube Shorts 다운로더",
+    "youtubePlaylist": "YouTube 재생목록 다운로더",
+    "instagramPost": "Instagram 포스트 다운로더",
+    "instagramReels": "Instagram Reels 다운로더",
+    "tiktok": "TikTok 다운로더",
+    "twitter": "Twitter/X 비디오 다운로더",
+    "facebook": "Facebook 비디오 다운로더",
+    "pinterest": "Pinterest 다운로더",
+    "twitch": "Twitch 비디오 다운로더"
+  },
+  "footer": {
+    "description": "좋아하는 소셜 미디어 플랫폼에서 비디오, 이미지 및 미디어를 다운로드하기 위한 무료 온라인 도구입니다.",
+    "quickLinks": "빠른 링크",
+    "resources": "리소스",
+    "legal": "법적",
+    "terms": "서비스 약관",
+    "privacy": "개인정보 보호정책",
+    "cookies": "쿠키 정책",
+    "dmca": "DMCA",
+    "copyright": "© 2024 SavDown. 모든 권리 보유."
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "common": {
+    "language": "Idioma",
+    "search": "Buscar",
+    "getStarted": "Comenzar",
+    "learnMore": "Más información",
+    "close": "Cerrar",
+    "menu": "Menú",
+    "followUs": "Síguenos"
+  },
+  "nav": {
+    "home": "Inicio",
+    "tools": "Herramientas",
+    "blog": "Blog",
+    "about": "Acerca de",
+    "contact": "Contacto",
+    "pricing": "Precios",
+    "faq": "Preguntas frecuentes"
+  },
+  "hero": {
+    "title": "Descarga Videos, Imágenes y Más",
+    "subtitle": "Herramientas rápidas, gratuitas y fáciles de usar para descargar contenido de redes sociales",
+    "cta": "Comenzar a Descargar"
+  },
+  "features": {
+    "title": "¿Por qué elegir SavDown?",
+    "fast": "Rápido",
+    "fastDesc": "Descarga contenido en segundos con transmisión optimizada",
+    "secure": "Completamente Seguro",
+    "secureDesc": "Tu privacidad es nuestra prioridad. Sin recopilación de datos",
+    "unlimited": "Descargas Ilimitadas",
+    "unlimitedDesc": "Descarga tanto como quieras, completamente gratis",
+    "noAds": "Sin Anuncios",
+    "noAdsDesc": "Interfaz limpia sin anuncios molestos"
+  },
+  "tools": {
+    "title": "Todas las Herramientas",
+    "subtitle": "Elige de nuestra colección de potentes descargadores",
+    "youtubeVideo": "Descargador de Videos de YouTube",
+    "youtubeShorts": "Descargador de YouTube Shorts",
+    "youtubePlaylist": "Descargador de Playlists de YouTube",
+    "instagramPost": "Descargador de Posts de Instagram",
+    "instagramReels": "Descargador de Reels de Instagram",
+    "tiktok": "Descargador de TikTok",
+    "twitter": "Descargador de Videos de Twitter/X",
+    "facebook": "Descargador de Videos de Facebook",
+    "pinterest": "Descargador de Pinterest",
+    "twitch": "Descargador de Videos de Twitch"
+  },
+  "footer": {
+    "description": "Herramientas en línea gratuitas para descargar videos, imágenes y medios de tus plataformas de redes sociales favoritas.",
+    "quickLinks": "Enlaces Rápidos",
+    "resources": "Recursos",
+    "legal": "Legal",
+    "terms": "Términos de Servicio",
+    "privacy": "Política de Privacidad",
+    "cookies": "Política de Cookies",
+    "dmca": "DMCA",
+    "copyright": "© 2024 SavDown. Todos los derechos reservados."
+  }
+}

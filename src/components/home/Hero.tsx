@@ -1,7 +1,10 @@
+'use client';
+
 import Link from 'next/link';
 import { ArrowRight, Check, Star, Sparkles } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { HeroToolkit } from '@/components/home/HeroToolkit';
+import { useTranslation } from '@/i18n';
 
 const trustBadges = ['Free forever', 'No signup', 'Privacy-first', 'Every platform'];
 
@@ -13,6 +16,7 @@ const heroStats = [
 ];
 
 export function Hero() {
+  const t = useTranslation();
   return (
     <section className="relative overflow-hidden">
       {/* Decorative animated backdrop */}
@@ -35,13 +39,11 @@ export function Hero() {
           </span>
 
           <h1 className="mt-6 text-4xl md:text-6xl lg:text-7xl font-bold tracking-[-0.03em] text-text leading-[1.03]">
-            One Toolkit For{' '}
-            <span className="text-gradient-animate">Everything You Share.</span>
+            {t('hero.title')}
           </h1>
 
           <p className="mt-6 text-lg text-text-muted max-w-xl mx-auto leading-relaxed">
-            Every social media tool you need, gathered into one fast, free, and private place.
-            Save, convert, and grab videos, photos, and audio, with no apps and no signup.
+            {t('hero.subtitle')}
           </p>
 
           <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -49,7 +51,7 @@ export function Hero() {
               href="/#tools"
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all"
             >
-              <Sparkles className="w-5 h-5" /> Explore All Tools
+              <Sparkles className="w-5 h-5" /> {t('common.getStarted')}
             </Link>
             <Link
               href="/#how-it-works"

@@ -3,11 +3,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { Globe, ChevronDown } from 'lucide-react';
 import { languages } from '@/config/languages';
+import { useLanguage } from '@/i18n';
 
 /**
- * Language selector dropdown. Sets the Google Translate cookie and
- * reloads the page so the Google Translate widget (if loaded) picks
- * it up, or falls back to the browser's built-in translation prompt.
+ * Language selector dropdown using i18n context.
+ * Persists language choice to localStorage and automatically
+ * updates the entire app when language is changed.
  *
  * Two visual variants:
  *  `variant="header"` — compact pill that fits the top nav bar.
@@ -19,8 +20,27 @@ type LanguageSelectorProps = {
 
 export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) {
   const [open, setOpen] = useState(false);
-  const [current, setCurrent] = useState(languages[0]);
+  const [mounted, setMounted] = useState(false);
+  const [languageContext, setLanguageContext] = useState<any>(null);
   const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    try {
+      const ctx = useLanguage();
+      setLanguageContext(ctx);
+      setMounted(true);
+    } catch (e) {
+      // If provider not available, still render with fallback
+      setLanguageContext({
+        currentLanguage: languages[0],
+        setLanguage: (code: string) => {
+          localStorage.setItem('preferredLanguage', code);
+          window.location.reload();
+        }
+      });
+      setMounted(true);
+    }
+  }, []);
 
   // Close on outside click
   useEffect(() => {
@@ -31,16 +51,15 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  function select(lang: (typeof languages)[number]) {
-    // Set the Google Translate cookie so the GT script auto-detects the language
-    const domain = window.location.hostname === 'localhost' ? '' : `; domain=${window.location.hostname}`;
-    document.cookie = `googtrans=/auto/${lang.code}; path=/${domain}; max-age=31536000`;
-    setCurrent(lang);
+  const handleLanguageSelect = (langCode: string) => {
+    if (languageContext?.setLanguage) {
+      languageContext.setLanguage(langCode);
+    }
     setOpen(false);
+  };
 
-    // If the page already has Google Translate loaded, trigger a page reload
-    // so GT re-translates with the new target language.
-    window.location.reload();
+  if (!mounted || !languageContext) {
+    return null;
   }
 
   // Footer variant — simple inline display
@@ -54,7 +73,7 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
           aria-expanded={open}
         >
           <Globe className="w-4 h-4" />
-          <span>{current.label}</span>
+          <span>{languageContext.currentLanguage.label}</span>
           <ChevronDown className="w-3 h-3" />
         </button>
 
@@ -63,9 +82,9 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
             {languages.map((lang) => (
               <button
                 key={lang.code}
-                onClick={() => select(lang)}
+                onClick={() => handleLanguageSelect(lang.code)}
                 className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm text-left transition-colors ${
-                  lang.code === current.code
+                  lang.code === languageContext.currentLanguage.code
                     ? 'text-white bg-white/10'
                     : 'text-ink-muted hover:text-white hover:bg-white/5'
                 }`}
@@ -90,7 +109,7 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
         aria-expanded={open}
       >
         <Globe className="w-4 h-4" />
-        <span className="hidden lg:inline">{current.label}</span>
+        <span className="hidden lg:inline">{languageContext.currentLanguage.label}</span>
         <ChevronDown className="w-3.5 h-3.5" />
       </button>
 
@@ -99,9 +118,9 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
           {languages.map((lang) => (
             <button
               key={lang.code}
-              onClick={() => select(lang)}
+              onClick={() => handleLanguageSelect(lang.code)}
               className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm text-left transition-colors ${
-                lang.code === current.code
+                lang.code === languageContext.currentLanguage.code
                   ? 'text-primary bg-primary-light/50'
                   : 'text-text-muted hover:text-text hover:bg-surface'
               }`}
