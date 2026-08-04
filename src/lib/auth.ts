@@ -49,7 +49,7 @@ export const authOptions: NextAuthOptions = {
           },
         });
         token.id = dbUser.id;
-        token.role = dbUser.role;
+        (token as Record<string, unknown>).role = dbUser.role;
       }
       return token;
     },

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 
@@ -22,10 +21,12 @@ export async function POST(req: Request) {
     const body = Body.parse(await req.json());
     await prisma.analyticsEvent.create({
       data: {
-        name: body.name,
-        path: body.path,
+        name:     body.name,
+        path:     body.path,
         referrer: body.referrer,
-        meta: (body.meta ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+        // The schema stores arbitrary metadata as a JSON string column
+        // (metaJson String?), so we serialise here rather than using a Json type.
+        metaJson: body.meta ? JSON.stringify(body.meta) : null,
       },
     });
     return NextResponse.json({ ok: true });
