@@ -1,48 +1,49 @@
+'use client';
+
 import { Check, X, Smartphone, Laptop, Tablet, Chrome, Globe, Compass } from 'lucide-react';
 import { Section, SectionHeading } from '@/components/layout/Section';
 import { Reveal } from '@/components/ui/Reveal';
+import { useTranslation } from '@/i18n';
 
-const devices = [
-  { icon: Smartphone, label: 'iPhone & Android' },
-  { icon: Tablet, label: 'iPad & tablets' },
-  { icon: Laptop, label: 'Windows, Mac & Linux' },
-];
-
-const browsers = [
-  { icon: Chrome, label: 'Chrome' },
-  { icon: Compass, label: 'Safari' },
-  { icon: Globe, label: 'Firefox' },
-  { icon: Globe, label: 'Edge' },
-  { icon: Globe, label: 'Brave' },
-  { icon: Globe, label: 'Opera' },
-];
-
-const comparison = [
-  { feature: 'Watermark-free output', others: false, savdown: true },
-  { feature: 'Resolution up to 4K', others: false, savdown: true },
-  { feature: 'No signup required', others: false, savdown: true },
-  { feature: 'No pop-up ads or fake buttons', others: false, savdown: true },
-  { feature: 'Always free', others: true, savdown: true },
-];
+const deviceIcons = [Smartphone, Tablet, Laptop];
+const browserIcons = [Chrome, Compass, Globe, Globe, Globe, Globe];
 
 export function Compatibility() {
+  const t = useTranslation();
+
+  const devices = (t('compatibility.devices') as unknown as string[]).map((label, i) => ({
+    icon: deviceIcons[i],
+    label,
+  }));
+
+  const browsers = (t('compatibility.browsers') as unknown as string[]).map((label, i) => ({
+    icon: browserIcons[i],
+    label,
+  }));
+
+  const comparison = (t('compatibility.features') as unknown as string[]).map((feature, i) => ({
+    feature,
+    others: i === 4, // "Always free" is true for others
+    savdown: true,
+  }));
+
   return (
     <Section variant="default" id="compatibility">
       <SectionHeading
-        eyebrow="Works everywhere"
+        eyebrow={t('compatibility.eyebrow')}
         title={
           <>
-            Any Device, Any Browser, <span className="text-gradient">The Same Clean Result.</span>
+            Any Device, Any Browser, <span className="text-gradient">{t('compatibility.title')}</span>
           </>
         }
-        description="There is nothing to install. If it opens a browser, it runs SavDown, and every download comes out at the same high quality."
+        description={t('compatibility.description')}
       />
 
       <div className="mt-16 grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Devices + browsers */}
         <Reveal className="lg:col-span-2">
           <div className="h-full rounded-2xl bg-white border border-border shadow-soft p-8">
-            <h3 className="font-bold text-text">Device Compatibility</h3>
+            <h3 className="font-bold text-text">{t('compatibility.deviceTitle')}</h3>
             <ul className="mt-4 space-y-3">
               {devices.map((d) => (
                 <li key={d.label} className="flex items-center gap-3 text-sm text-text-muted">
@@ -54,7 +55,7 @@ export function Compatibility() {
               ))}
             </ul>
 
-            <h3 className="mt-8 font-bold text-text">Browser Compatibility</h3>
+            <h3 className="mt-8 font-bold text-text">{t('compatibility.browserTitle')}</h3>
             <div className="mt-4 flex flex-wrap gap-2">
               {browsers.map((b) => (
                 <span
@@ -73,9 +74,9 @@ export function Compatibility() {
         <Reveal delay={0.1} className="lg:col-span-3">
           <div className="h-full rounded-2xl bg-white border border-border shadow-soft overflow-hidden">
             <div className="grid grid-cols-[1fr_auto_auto] items-center gap-4 px-6 md:px-8 py-4 border-b border-border-light bg-surface/60">
-              <span className="text-sm font-bold text-text">Download Quality</span>
-              <span className="w-20 text-center text-xs font-semibold text-text-subtle uppercase tracking-wide">Others</span>
-              <span className="w-20 text-center text-xs font-semibold text-primary uppercase tracking-wide">SavDown</span>
+              <span className="text-sm font-bold text-text">{t('compatibility.downloadQuality')}</span>
+              <span className="w-20 text-center text-xs font-semibold text-text-subtle uppercase tracking-wide">{t('compatibility.others')}</span>
+              <span className="w-20 text-center text-xs font-semibold text-primary uppercase tracking-wide">{t('compatibility.savdown')}</span>
             </div>
             <ul>
               {comparison.map((row) => (

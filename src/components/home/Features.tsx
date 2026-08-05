@@ -5,17 +5,18 @@ import { Section, SectionHeading } from '@/components/layout/Section';
 import { Reveal } from '@/components/ui/Reveal';
 import { useTranslation } from '@/i18n';
 
-const featureKeys = [
-  { icon: Sparkles, titleKey: 'features.fast', descKey: 'features.fastDesc' },
-  { icon: ShieldCheck, titleKey: 'features.secure', descKey: 'features.secureDesc' },
-  { icon: Layers, titleKey: 'features.unlimited', descKey: 'features.unlimitedDesc' },
-  { icon: Gauge, titleKey: 'features.noAds', descKey: 'features.noAdsDesc' },
-  { icon: BadgeDollarSign, titleKey: 'common.getStarted', descKey: 'features.unlimitedDesc' },
-  { icon: MonitorSmartphone, titleKey: 'features.unlimited', descKey: 'features.unlimitedDesc' },
-];
-
 export function Features() {
   const t = useTranslation();
+  
+  const featureKeys = [
+    { icon: Sparkles, titleKey: 'features.fast', descKey: 'features.fastDesc' },
+    { icon: ShieldCheck, titleKey: 'features.secure', descKey: 'features.secureDesc' },
+    { icon: Layers, titleKey: 'features.unlimited', descKey: 'features.unlimitedDesc' },
+    { icon: Gauge, titleKey: 'features.noAds', descKey: 'features.noAdsDesc' },
+    { icon: BadgeDollarSign, titleKey: 'features.quality', descKey: 'features.qualityDesc' },
+    { icon: MonitorSmartphone, titleKey: 'features.anyDevice', descKey: 'features.anyDeviceDesc' },
+  ];
+
   return (
     <Section variant="dark" className="relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-mesh-dark pointer-events-none" />
@@ -26,7 +27,7 @@ export function Features() {
           dark
           eyebrow={t('common.learnMore')}
           title={t('features.title')}
-          description="The little things add up: no ads pushing you around, no fake download buttons, and no compromise on quality."
+          description={t('features.subtitle')}
         />
 
         <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">

@@ -1,3 +1,4 @@
+'use client';
 import Link from 'next/link';
 import type { SVGProps } from 'react';
 import { Facebook, Instagram, Linkedin, Twitter, Mail, Check } from 'lucide-react';
@@ -6,10 +7,8 @@ import { Logo } from '@/components/ui/Logo';
 import { LanguageSelector } from '@/components/ui/LanguageSelector';
 import { Container } from './Container';
 import { FooterToolGrid } from './FooterToolGrid';
+import { useTranslation } from '@/i18n';
 
-/** Pinterest and Reddit have no icon in lucide-react; these are brand-accurate
- *  inline SVGs that share lucide's `{ className }` interface for consistent
- *  sizing and styling. */
 function PinterestIcon({ className }: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
@@ -36,6 +35,8 @@ const socialIcons = {
 } as const;
 
 export function Footer() {
+  const t = useTranslation();
+
   return (
     <footer className="relative bg-ink text-white overflow-hidden">
       {/* subtle brand glow + grid for depth */}
@@ -50,13 +51,13 @@ export function Footer() {
           <div className="lg:col-span-5">
             <Logo variant="light" height={32} />
             <p className="mt-4 text-sm text-ink-muted leading-relaxed max-w-sm">
-              {siteConfig.footerDescription}
+              {t('footer.description')}
             </p>
 
             {/* Social media row */}
             <div className="mt-6">
               <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
-                Follow us
+                {t('common.followUs')}
               </p>
               <div className="flex flex-wrap items-center gap-2.5">
                 {siteConfig.social.map((s) => {
@@ -82,33 +83,33 @@ export function Footer() {
           {/* Contact + language */}
           <div className="lg:col-span-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-4">
-              Stay in the loop
+              {t('footer.stayInLoop') || 'Stay in the loop'}
             </p>
             <p className="text-sm text-ink-muted leading-relaxed mb-5">
-              We read every message. Reach us anytime for support, partnerships, or just to say hi.
+              {t('footer.stayInLoopDesc') || 'We read every message. Reach us anytime for support, partnerships, or just to say hi.'}
             </p>
             <Link
               href="/contact"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all"
             >
               <Mail className="w-4 h-4" />
-              Contact us
+              {t('nav.contact')}
             </Link>
             <div className="mt-6">
               <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
-                Language
+                {t('common.language')}
               </p>
               <LanguageSelector variant="footer" />
             </div>
           </div>
 
-          {/* Brand statement (qualitative — no tool/platform counts) */}
+          {/* Brand statement */}
           <div className="lg:col-span-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-4">
-              Why SavDown
+              {t('footer.whySavDown') || 'Why SavDown'}
             </p>
             <ul className="space-y-3">
-              {['Free, always', 'No signup required', 'Privacy-first by design'].map((item) => (
+              {[t('features.unlimited'), t('features.noSignup') || 'No signup required', t('features.secure')].map((item) => (
                 <li key={item} className="flex items-center gap-2.5 text-sm text-ink-muted">
                   <span className="flex-shrink-0 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center">
                     <Check className="w-3 h-3 text-white" />
@@ -120,49 +121,58 @@ export function Footer() {
           </div>
         </div>
 
-        {/* ── SEO mega-grid: every tool linked, grouped by category ── */}
+        {/* ── SEO mega-grid ── */}
         <FooterToolGrid />
 
-        {/* ── Site nav columns (Resources / Company / Legal) ──── */}
+        {/* ── Site nav columns ──── */}
         <div className="mt-14 pt-12 border-t border-white/10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {Object.entries(siteConfig.footerLinks)
             .filter(([heading]) => !['All Tools', 'Social Media Downloaders', 'Video Downloaders', 'Audio Downloaders', 'Image Downloaders'].includes(heading))
-            .map(([heading, links]) => (
-              <div key={heading}>
-                <h3 className="text-[11px] font-bold uppercase tracking-wider text-white">
-                  {heading}
-                </h3>
-                <ul className="mt-4 space-y-2.5">
-                  {links.map((link) => (
-                    <li key={link.href}>
-                      <Link
-                        href={link.href}
-                        className="text-[13px] text-ink-muted hover:text-white transition-colors leading-snug block"
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+            .map(([heading, links]) => {
+              const translatedHeading = t(`footer.${heading.toLowerCase()}`) || heading;
+              return (
+                <div key={heading}>
+                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-white">
+                    {translatedHeading}
+                  </h3>
+                  <ul className="mt-4 space-y-2.5">
+                    {links.map((link) => {
+                      const translatedLabel = t(`nav.${link.label.toLowerCase().replace(' ', '')}`) || link.label;
+                      return (
+                        <li key={link.href}>
+                          <Link
+                            href={link.href}
+                            className="text-[13px] text-ink-muted hover:text-white transition-colors leading-snug block"
+                          >
+                            {translatedLabel}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
         </div>
 
-        {/* ── Bottom bar ─────────────────────────────────────── */}
+        {/* ── Bottom bar ── */}
         <div className="mt-14 pt-8 border-t border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <p className="text-xs text-ink-subtle">
-            © {new Date().getFullYear()} {siteConfig.name}. All rights reserved. Not affiliated with any social platform.
+            © {new Date().getFullYear()} {siteConfig.name}. {t('footer.copyright')}
           </p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
-            {siteConfig.footerLinks.Legal.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-ink-subtle hover:text-white transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {siteConfig.footerLinks.Legal.map((link) => {
+              const translatedLabel = t(`footer.${link.label.toLowerCase().replace(' ', '')}`) || link.label;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="text-ink-subtle hover:text-white transition-colors"
+                >
+                  {translatedLabel}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </Container>

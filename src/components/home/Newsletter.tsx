@@ -5,8 +5,10 @@ import { Section } from '@/components/layout/Section';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
+import { useTranslation } from '@/i18n';
 
 export function Newsletter() {
+  const t = useTranslation();
   const [email, setEmail] = useState('');
   const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle');
   const [error, setError] = useState('');
@@ -14,7 +16,7 @@ export function Newsletter() {
 
   const submit = async () => {
     if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      setError('Please enter a valid email.');
+      setError(t('contact.validation.email') || 'Please enter a valid email.');
       return;
     }
     setState('loading');
@@ -27,21 +29,21 @@ export function Newsletter() {
       });
       if (!res.ok) {
         if (res.status === 429) {
-          warning('Slow down!', 'Too many requests — please wait a moment.');
+          warning(t('contact.toasts.slowDown'), t('contact.toasts.tooManyRequests'));
         } else {
-          errorToast('Subscription failed', 'Something went wrong. Please try again.');
+          errorToast(t('newsletter.errorTitle') || 'Subscription failed', t('newsletter.error'));
         }
         setState('err');
-        setError('Something went wrong. Try again.');
+        setError(t('newsletter.error'));
         return;
       }
       setState('ok');
       setEmail('');
-      success('Subscribed!', 'You\'re on the list. We\'ll be in touch.');
+      success(t('contact.toasts.success'), t('newsletter.success'));
     } catch {
-      errorToast('Network error', 'Could not reach the server. Check your connection and try again.');
+      errorToast(t('contact.toasts.networkError'), t('contact.toasts.networkErrorDesc'));
       setState('err');
-      setError('Something went wrong. Try again.');
+      setError(t('newsletter.error'));
     }
   };
 
@@ -52,18 +54,18 @@ export function Newsletter() {
           <div className="absolute -bottom-20 -left-10 w-72 h-72 bg-fuchsia-brand/30 rounded-full blur-3xl pointer-events-none" />
           <div className="relative max-w-2xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Get The Good Updates.
+              {t('newsletter.title') || 'Get The Good Updates.'}
             </h2>
             <p className="mt-3 text-white/70 leading-relaxed">
-              One thoughtful email per month. Zero fluff. Only when we ship something worth telling you about.
+              {t('newsletter.description') || 'One thoughtful email per month. Zero fluff. Only when we ship something worth telling you about.'}
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <Input
+              <input
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setError(''); }}
                 type="email"
-                placeholder="you@example.com"
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-white/40"
+                placeholder={t('newsletter.placeholder') || 'you@example.com'}
+                className="flex h-11 w-full rounded-2xl border bg-white/10 border-white/20 px-5 py-3.5 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none transition-all"
               />
               <Button
                 variant="secondary"
@@ -72,15 +74,15 @@ export function Newsletter() {
                 disabled={state === 'ok'}
               >
                 {state === 'ok' ? (
-                  <>Subscribed <Check className="w-4 h-4" /></>
+                  <>{t('newsletter.subscribed') || 'Subscribed'} <Check className="w-4 h-4" /></>
                 ) : (
-                  <>Subscribe <Send className="w-4 h-4" /></>
+                  <>{t('newsletter.button') || 'Subscribe'} <Send className="w-4 h-4" /></>
                 )}
               </Button>
             </div>
             {error && <p className="mt-3 text-sm text-red-300">{error}</p>}
             {state === 'ok' && (
-              <p className="mt-3 text-sm text-accent">You're on the list. Talk soon.</p>
+              <p className="mt-3 text-sm text-accent">{t('newsletter.success')}</p>
             )}
           </div>
         </div>

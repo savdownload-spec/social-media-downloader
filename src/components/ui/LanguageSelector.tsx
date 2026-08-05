@@ -2,45 +2,22 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Globe, ChevronDown } from 'lucide-react';
+import { useLocale } from 'next-intl';
+import { usePathname, useRouter } from '@/navigation';
 import { languages } from '@/config/languages';
-import { useLanguage } from '@/i18n';
 
-/**
- * Language selector dropdown using i18n context.
- * Persists language choice to localStorage and automatically
- * updates the entire app when language is changed.
- *
- * Two visual variants:
- *  `variant="header"` — compact pill that fits the top nav bar.
- *  `variant="footer"` — subtle inline label suited for the footer.
- */
 type LanguageSelectorProps = {
   variant?: 'header' | 'footer';
 };
 
 export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [languageContext, setLanguageContext] = useState<any>(null);
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    try {
-      const ctx = useLanguage();
-      setLanguageContext(ctx);
-      setMounted(true);
-    } catch (e) {
-      // If provider not available, still render with fallback
-      setLanguageContext({
-        currentLanguage: languages[0],
-        setLanguage: (code: string) => {
-          localStorage.setItem('preferredLanguage', code);
-          window.location.reload();
-        }
-      });
-      setMounted(true);
-    }
-  }, []);
+  const currentLanguage = languages.find(l => l.code === locale) || languages[0];
 
   // Close on outside click
   useEffect(() => {
@@ -52,15 +29,9 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
   }, []);
 
   const handleLanguageSelect = (langCode: string) => {
-    if (languageContext?.setLanguage) {
-      languageContext.setLanguage(langCode);
-    }
+    router.replace(pathname, { locale: langCode });
     setOpen(false);
   };
-
-  if (!mounted || !languageContext) {
-    return null;
-  }
 
   // Footer variant — simple inline display
   if (variant === 'footer') {
@@ -73,7 +44,7 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
           aria-expanded={open}
         >
           <Globe className="w-4 h-4" />
-          <span>{languageContext.currentLanguage.label}</span>
+          <span>{currentLanguage.label}</span>
           <ChevronDown className="w-3 h-3" />
         </button>
 
@@ -84,7 +55,7 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
                 key={lang.code}
                 onClick={() => handleLanguageSelect(lang.code)}
                 className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm text-left transition-colors ${
-                  lang.code === languageContext.currentLanguage.code
+                  lang.code === locale
                     ? 'text-white bg-white/10'
                     : 'text-ink-muted hover:text-white hover:bg-white/5'
                 }`}
@@ -109,7 +80,7 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
         aria-expanded={open}
       >
         <Globe className="w-4 h-4" />
-        <span className="hidden lg:inline">{languageContext.currentLanguage.label}</span>
+        <span className="hidden lg:inline">{currentLanguage.label}</span>
         <ChevronDown className="w-3.5 h-3.5" />
       </button>
 
@@ -120,7 +91,7 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
               key={lang.code}
               onClick={() => handleLanguageSelect(lang.code)}
               className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm text-left transition-colors ${
-                lang.code === languageContext.currentLanguage.code
+                lang.code === locale
                   ? 'text-primary bg-primary-light/50'
                   : 'text-text-muted hover:text-text hover:bg-surface'
               }`}

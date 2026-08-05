@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, ArrowRight } from 'lucide-react';
 import { Section } from '@/components/layout/Section';
+import { useTranslation } from '@/i18n';
 import {
   catalog,
   toolGroups,
@@ -14,20 +15,13 @@ import {
 } from '@/config/catalog';
 
 type Filter = 'all' | ToolGroup;
-const filters: Filter[] = ['all', ...toolGroups];
-const filterLabel: Record<Filter, string> = {
-  all: 'All',
-  Downloaders: 'Downloaders',
-  Image: 'Image',
-  Video: 'Video',
-  PDF: 'PDF',
-  AI: 'AI',
-  SEO: 'SEO',
-  Utility: 'Utility',
-};
 
 export function AllToolsGrid() {
+  const t = useTranslation();
   const [filter, setFilter] = useState<Filter>('all');
+  
+  const filters: Filter[] = ['all', ...toolGroups];
+  
   const visible =
     filter === 'all'
       ? catalog.slice(0, HOMEPAGE_DESKTOP_LIMIT)
@@ -37,12 +31,10 @@ export function AllToolsGrid() {
     <Section variant="default" id="tools">
       <div className="max-w-3xl mx-auto text-center">
         <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-text leading-[1.05]">
-          Every Tool You Need, <span className="text-gradient">In One Place.</span>
+          {t('catalog.title') || 'Every Tool You Need, In One Place.'}
         </h2>
         <p className="mt-5 text-base md:text-lg text-text-muted leading-relaxed">
-          A growing toolkit for creators and marketers, all in one place. Download from every major
-          platform, edit images and video, work with PDFs, and speed up your workflow with AI, all
-          100% free and easy to use.
+          {t('catalog.subtitle') || 'A growing toolkit for creators and marketers, all in one place.'}
         </p>
       </div>
 
@@ -50,6 +42,7 @@ export function AllToolsGrid() {
       <div className="mt-10 flex flex-wrap items-center justify-center gap-2.5">
         {filters.map((f) => {
           const active = filter === f;
+          const label = f === 'all' ? t('common.all') || 'All' : t(`catalog.groups.${f}`) || f;
           return (
             <button
               key={f}
@@ -61,7 +54,7 @@ export function AllToolsGrid() {
                   : 'bg-white text-text-muted border border-border hover:border-primary/40 hover:text-text'
               }`}
             >
-              {filterLabel[f]}
+              {label}
             </button>
           );
         })}
@@ -75,9 +68,11 @@ export function AllToolsGrid() {
         {visible.map((tool, i) => {
           const Icon = tool.icon;
           const live = isToolAvailable(tool.slug);
-          // On the unfiltered view, only the first HOMEPAGE_MOBILE_LIMIT cards
-          // show on small screens; the rest reveal from md: up to 32.
           const mobileHidden = filter === 'all' && i >= HOMEPAGE_MOBILE_LIMIT;
+          
+          const toolName = t(`catalog.tools.${tool.slug}.name`) || tool.name;
+          const toolDesc = t(`catalog.tools.${tool.slug}.description`) || tool.description;
+
           return (
             <motion.div
               key={tool.slug}
@@ -96,14 +91,14 @@ export function AllToolsGrid() {
                   {live ? (
                     <ArrowUpRight className="w-5 h-5 text-text-subtle opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                   ) : (
-                    <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-primary-light text-primary">Soon</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-primary-light text-primary">{t('common.soon')}</span>
                   )}
                 </div>
                 <h3 className="mt-5 text-base font-bold text-text tracking-tight group-hover:text-primary transition-colors">
-                  {tool.name}
+                  {toolName}
                 </h3>
                 <p className="mt-2 text-sm text-text-muted leading-relaxed flex-1">
-                  {tool.description}
+                  {toolDesc}
                 </p>
               </Link>
             </motion.div>
@@ -117,9 +112,9 @@ export function AllToolsGrid() {
           href="/tools"
           className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all"
         >
-          View All Tools <ArrowRight className="w-5 h-5" />
+          {t('common.viewAll')} <ArrowRight className="w-5 h-5" />
         </Link>
-        <p className="mt-3 text-sm text-text-muted">Downloaders, image, video, PDF, AI, SEO, and utility tools.</p>
+        <p className="mt-3 text-sm text-text-muted">{t('catalog.footerDesc') || 'Downloaders, image, video, PDF, AI, SEO, and utility tools.'}</p>
       </div>
     </Section>
   );

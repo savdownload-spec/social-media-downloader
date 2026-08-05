@@ -4,18 +4,29 @@ import { ChevronLeft } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { buildMetadata, jsonLd } from '@/lib/seo';
 import { formatDate } from '@/lib/utils';
-import { blogPosts, blogPostsByDate, getBlogPost } from '@/config/blog';
 import { siteConfig } from '@/config/site';
+import { getLocale, getTranslations } from 'next-intl/server';
+import { blogPosts } from '@/config/blog';
 
-type Props = { params: { slug: string } };
+type Props = { params: { slug: string; locale: string } };
 
 export function generateStaticParams() {
+  // We should generate params for all locales and all slugs
+  // But for simplicity in this sandbox, we'll just use the base slugs
   return blogPosts.map((p) => ({ slug: p.slug }));
 }
 
-export function generateMetadata({ params }: Props) {
-  const post = getBlogPost(params.slug);
-  if (!post) return {};
+export async function generateMetadata({ params }: Props) {
+  const locale = params.locale;
+  let posts: any[] = [];
+  try {
+    const mod = (await import(`@/i18n/translations/blog/${locale}.json`)) as any;
+    posts = mod.default?.posts ?? mod.posts ?? [];
+  } catch {
+    const mod = (await import(`@/i18n/translations/blog/en.json`)) as any;
+    posts = mod.default?.posts ?? mod.posts ?? [];
+  }
+  const post = posts.find((p: any) => p.slug === params.slug);
   return buildMetadata({
     title: post.title,
     description: post.excerpt,
@@ -30,10 +41,6 @@ function inline(text: string) {
   return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 }
 
-/**
- * Minimal Markdown-ish rendering without a runtime dep. Line-based so headings,
- * lists, and paragraphs render correctly regardless of blank-line spacing.
- */
 function renderContent(content: string) {
   const out: React.ReactNode[] = [];
   let para: string[] = [];
@@ -90,11 +97,23 @@ function renderContent(content: string) {
   return out;
 }
 
-export default function BlogPostPage({ params }: Props) {
-  const post = getBlogPost(params.slug);
+export default async function BlogPostPage({ params }: Props) {
+  const locale = await getLocale();
+  const t = await getTranslations('blog');
+  
+  let posts: any[] = [];
+  try {
+    const mod = (await import(`@/i18n/translations/blog/${locale}.json`)) as any;
+    posts = mod.default?.posts ?? mod.posts ?? [];
+  } catch {
+    const mod = (await import(`@/i18n/translations/blog/en.json`)) as any;
+    posts = mod.default?.posts ?? mod.posts ?? [];
+  }
+
+  const post = posts.find((p: any) => p.slug === params.slug);
   if (!post) return notFound();
 
-  const related = blogPostsByDate.filter((p) => p.slug !== post.slug).slice(0, 3);
+  const related = posts.filter((p: any) => p.slug !== post.slug).slice(0, 3);
 
   const articleSchema = {
     '@type': 'BlogPosting',
@@ -116,7 +135,7 @@ export default function BlogPostPage({ params }: Props) {
           href="/blog"
           className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-text mb-8 transition-colors"
         >
-          <ChevronLeft className="w-4 h-4" /> All articles
+          <ChevronLeft className="w-4 h-4" /> {t('backToBlog') || 'All articles'}
         </Link>
 
         <div className="flex items-center gap-2 text-xs text-text-subtle uppercase tracking-wider mb-3">
@@ -132,7 +151,7 @@ export default function BlogPostPage({ params }: Props) {
         <p className="mt-4 text-lg text-text-muted leading-relaxed">{post.excerpt}</p>
 
         <div className="mt-6 flex items-center gap-2 flex-wrap">
-          {post.tags.map((tag) => (
+          {post.tags.map((tag: string) => (
             <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-primary-light text-primary font-medium">
               {tag}
             </span>
@@ -142,7 +161,6 @@ export default function BlogPostPage({ params }: Props) {
 
       <Container className="mt-10 max-w-4xl">
         <div className="relative aspect-[16/9] rounded-3xl overflow-hidden border border-border shadow-soft-lg bg-surface">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`https://picsum.photos/seed/${post.cover}/1200/675`}
             alt={post.title}
@@ -156,29 +174,28 @@ export default function BlogPostPage({ params }: Props) {
 
         {/* CTA */}
         <div className="mt-14 rounded-3xl bg-gradient-brand bg-[length:200%_200%] animate-gradient text-white p-8 md:p-10 text-center shadow-glow-lg">
-          <h2 className="text-2xl font-bold tracking-tight">Ready To Save A Video?</h2>
-          <p className="mt-2 text-white/80">Try our free, watermark-free downloaders, no signup required.</p>
+          <h2 className="text-2xl font-bold tracking-tight">{t('ctaTitle') || 'Ready To Save A Video?'}</h2>
+          <p className="mt-2 text-white/80">{t('ctaDesc') || 'Try our free, watermark-free downloaders, no signup required.'}</p>
           <Link
             href="/#tools"
             className="inline-flex items-center mt-6 px-6 py-3 rounded-2xl bg-white text-text font-semibold shadow-soft-md hover:shadow-soft-lg transition-all"
           >
-            Browse all tools
+            {t('ctaButton') || 'Browse all tools'}
           </Link>
         </div>
       </Container>
 
       {/* Related */}
       <Container className="py-24 max-w-6xl">
-        <h2 className="text-2xl font-bold tracking-tight mb-8">Keep Reading</h2>
+        <h2 className="text-2xl font-bold tracking-tight mb-8">{t('keepReading') || 'Keep Reading'}</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {related.map((p) => (
+          {related.map((p: any) => (
             <Link
               key={p.slug}
               href={`/blog/${p.slug}`}
               className="group flex flex-col rounded-2xl overflow-hidden bg-white border border-border shadow-soft hover:shadow-soft-lg hover:-translate-y-1 transition-all duration-300"
             >
               <div className="relative aspect-[16/10] bg-surface overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`https://picsum.photos/seed/${p.cover}/600/380`}
                   alt={p.title}

@@ -11,17 +11,29 @@ import { CTASection } from '@/components/home/CTASection';
 import { LatestArticles } from '@/components/home/LatestArticles';
 import { FAQ } from '@/components/home/FAQ';
 import { Newsletter } from '@/components/home/Newsletter';
-import { homeFaqs } from '@/config/faqs';
 import { jsonLd, faqSchema } from '@/lib/seo';
+import { getTranslations } from 'next-intl/server';
 
 export const revalidate = 3600;
 
-export default function HomePage() {
+export default async function HomePage({ params: { locale } }: { params: { locale: string } }) {
+  const t = await getTranslations({ locale, namespace: 'faqs' });
+  const faqs = (t.raw as any)('items') ?? [];
+  
+  let posts: any[] = [];
+  try {
+    const mod = (await import(`@/i18n/translations/blog/${locale}.json`)) as any;
+    posts = mod.default?.posts ?? mod.posts ?? [];
+  } catch {
+    const mod = (await import(`@/i18n/translations/blog/en.json`)) as any;
+    posts = mod.default?.posts ?? mod.posts ?? [];
+  }
+
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={jsonLd(faqSchema(homeFaqs))}
+        dangerouslySetInnerHTML={jsonLd(faqSchema(faqs))}
       />
       <Hero />
       <AllToolsGrid />
@@ -33,7 +45,7 @@ export default function HomePage() {
       <UseCases />
       <Testimonials />
       <CTASection />
-      <LatestArticles />
+      <LatestArticles posts={posts} />
       <FAQ />
       <Newsletter />
     </>

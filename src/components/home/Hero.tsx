@@ -6,17 +6,23 @@ import { Container } from '@/components/layout/Container';
 import { HeroToolkit } from '@/components/home/HeroToolkit';
 import { useTranslation } from '@/i18n';
 
-const trustBadges = ['Free forever', 'No signup', 'Privacy-first', 'Every platform'];
-
-const heroStats = [
-  { value: '2M+', label: 'Happy users' },
-  { value: '100%', label: 'Free' },
-  { value: '0', label: 'Data stored' },
-  { value: '4.9', label: 'Rating', star: true },
-];
-
 export function Hero() {
   const t = useTranslation();
+  
+  const trustBadges = [
+    t('features.unlimited'),
+    t('features.noAds'),
+    t('hero.badges.privacyFirst'),
+    t('hero.badges.everyPlatform'),
+  ];
+
+  const heroStats = [
+    { value: '2M+', label: t('hero.trusted') },
+    { value: '100%', label: t('hero.stats.free') },
+    { value: '0', label: t('hero.stats.dataStored') },
+    { value: '4.9', label: t('hero.stats.rating'), star: true },
+  ];
+
   return (
     <section className="relative overflow-hidden">
       {/* Decorative animated backdrop */}
@@ -35,7 +41,7 @@ export function Hero() {
                 <Star key={i} className="w-3 h-3 fill-current" />
               ))}
             </span>
-            Trusted by 2M+ creators
+            {t('hero.trusted')}
           </span>
 
           <h1 className="mt-6 text-4xl md:text-6xl lg:text-7xl font-bold tracking-[-0.03em] text-text leading-[1.03]">
@@ -57,7 +63,7 @@ export function Hero() {
               href="/#how-it-works"
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-text bg-white border border-border hover:border-primary/40 hover:bg-primary-light/40 transition-colors"
             >
-              See How It Works <ArrowRight className="w-4 h-4" />
+              {t('hero.howItWorks')} <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 

@@ -1,28 +1,5 @@
-import type { Metadata, Viewport } from 'next';
-import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
-import './globals.css';
-import { Header } from '@/components/layout/Header';
-import { AdBanner } from '@/components/layout/AdBanner';
-import { Footer } from '@/components/layout/Footer';
-import { ToastProvider } from '@/components/ui/Toast';
-import { ConfirmProvider } from '@/components/ui/ConfirmProvider';
-import { LanguageProvider } from '@/i18n';
+import { Metadata, Viewport } from 'next';
 import { siteConfig } from '@/config/site';
-import { jsonLd } from '@/lib/seo';
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-});
-
-// Premium display face for headings — geometric, modern, SaaS-grade.
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  variable: '--font-jakarta',
-  display: 'swap',
-  weight: ['500', '600', '700', '800'],
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -66,50 +43,6 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-const orgSchema = {
-  '@type': 'Organization',
-  name: siteConfig.name,
-  url: siteConfig.url,
-  logo: `${siteConfig.url}/logo-black.png`,
-  sameAs: [],
-};
-
-const websiteSchema = {
-  '@type': 'WebSite',
-  name: siteConfig.name,
-  url: siteConfig.url,
-  potentialAction: {
-    '@type': 'SearchAction',
-    target: `${siteConfig.url}/search?q={search_term_string}`,
-    'query-input': 'required name=search_term_string',
-  },
-};
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <html lang="en" className={`${inter.variable} ${jakarta.variable}`}>
-      <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={jsonLd(orgSchema)}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={jsonLd(websiteSchema)}
-        />
-      </head>
-      <body className="font-sans bg-surface text-text antialiased">
-        <LanguageProvider>
-          <ToastProvider>
-            <ConfirmProvider>
-              <Header />
-              <AdBanner />
-              <main className="min-h-[calc(100vh-4rem)]">{children}</main>
-              <Footer />
-            </ConfirmProvider>
-          </ToastProvider>
-        </LanguageProvider>
-      </body>
-    </html>
-  );
+  return children;
 }

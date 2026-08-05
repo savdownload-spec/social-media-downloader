@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from '@/i18n';
 import {
   ChevronDown, ArrowRight, Zap, Lock, Sparkles, Star,
   MonitorPlay, Film, Search, BookOpen, HelpCircle,
@@ -22,20 +23,18 @@ const panelVariants = {
   exit:    { opacity: 0, y: 6,  scale: 0.98, x: '-50%', transition: { duration: 0.14 } },
 };
 
-/* ─── group meta ─────────────────────────────────────────────── */
-const GROUP_META: Record<ToolGroup, {
+/* ─── group meta (icons + colors stay static; labels/descs come from i18n) ── */
+const GROUP_META_ICONS: Record<ToolGroup, {
   icon: React.ComponentType<{ className?: string }>;
   color: string;
-  label: string;
-  desc: string;
 }> = {
-  Downloaders: { icon: MonitorPlay, color: 'text-violet-600 bg-violet-50',   label: 'Downloaders', desc: 'Save videos, audio & images'  },
-  Image:       { icon: Image,       color: 'text-sky-600 bg-sky-50',         label: 'Image Tools', desc: 'Edit, convert & enhance'        },
-  Video:       { icon: Film,        color: 'text-rose-600 bg-rose-50',       label: 'Video Tools', desc: 'Convert, compress & more'       },
-  PDF:         { icon: FileText,    color: 'text-orange-600 bg-orange-50',   label: 'PDF Tools',   desc: 'Merge, split & convert PDFs'    },
-  AI:          { icon: Sparkles,    color: 'text-fuchsia-600 bg-fuchsia-50', label: 'AI Tools',    desc: 'AI-powered creator tools'       },
-  SEO:         { icon: Search,      color: 'text-emerald-600 bg-emerald-50', label: 'SEO Tools',   desc: 'Rank higher & get found'        },
-  Utility:     { icon: Layers,      color: 'text-slate-600 bg-slate-100',    label: 'Utility',     desc: 'QR codes, colors & more'        },
+  Downloaders: { icon: MonitorPlay, color: 'text-violet-600 bg-violet-50'   },
+  Image:       { icon: Image,       color: 'text-sky-600 bg-sky-50'         },
+  Video:       { icon: Film,        color: 'text-rose-600 bg-rose-50'       },
+  PDF:         { icon: FileText,    color: 'text-orange-600 bg-orange-50'   },
+  AI:          { icon: Sparkles,    color: 'text-fuchsia-600 bg-fuchsia-50' },
+  SEO:         { icon: Search,      color: 'text-emerald-600 bg-emerald-50' },
+  Utility:     { icon: Layers,      color: 'text-slate-600 bg-slate-100'    },
 };
 
 const FEATURED_SLUGS = [
@@ -49,10 +48,11 @@ const FEATURED_SLUGS = [
    TOOLS PANEL  — clean 3-zone layout
 ═══════════════════════════════════════════════════════════ */
 function ToolsPanel({ close }: { close: () => void }) {
+  const t = useTranslation();
   const [activeGroup, setActiveGroup] = useState<ToolGroup>('Downloaders');
-  const groupTools = catalog.filter((t) => t.group === activeGroup);
+  const groupTools = catalog.filter((tool) => tool.group === activeGroup);
   const featured = FEATURED_SLUGS
-    .map((s) => catalog.find((t) => t.slug === s))
+    .map((s) => catalog.find((tool) => tool.slug === s))
     .filter(Boolean) as typeof catalog;
 
   return (
@@ -60,9 +60,10 @@ function ToolsPanel({ close }: { close: () => void }) {
 
       {/* ── Zone 1: Category sidebar ── */}
       <nav className="w-56 shrink-0 border-r border-border-light bg-[#fafafa] p-3 flex flex-col gap-0.5 overflow-y-auto">
-        <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-widest text-text-subtle">Categories</p>
+        <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-widest text-text-subtle">{t('megaMenu.categories')}</p>
         {toolGroups.map((g) => {
-          const { icon: GIcon, color, label, desc } = GROUP_META[g];
+          const { icon: GIcon, color } = GROUP_META_ICONS[g];
+          const groupMeta = t(`megaMenu.groupMeta.${g}`) as unknown as { label: string; desc: string };
           const active = g === activeGroup;
           return (
             <button
@@ -79,8 +80,8 @@ function ToolsPanel({ close }: { close: () => void }) {
                 <GIcon className="w-4 h-4" />
               </span>
               <div className="min-w-0">
-                <p className="text-sm font-semibold leading-none">{label}</p>
-                <p className="text-[11px] text-text-subtle mt-0.5 leading-none truncate">{desc}</p>
+                <p className="text-sm font-semibold leading-none">{groupMeta?.label ?? g}</p>
+                <p className="text-[11px] text-text-subtle mt-0.5 leading-none truncate">{groupMeta?.desc ?? ''}</p>
               </div>
               {active && <ArrowRight className="w-3.5 h-3.5 ml-auto shrink-0 text-primary" />}
             </button>
@@ -92,7 +93,7 @@ function ToolsPanel({ close }: { close: () => void }) {
             onClick={close}
             className="flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-xl bg-gradient-brand text-white text-sm font-semibold shadow-glow hover:opacity-90 transition-opacity"
           >
-            View All Tools <ArrowRight className="w-4 h-4" />
+            {t('megaMenu.viewAllTools')} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </nav>
@@ -101,34 +102,36 @@ function ToolsPanel({ close }: { close: () => void }) {
       <div className="flex-1 min-w-0 p-5 overflow-y-auto">
         <div className="flex items-center gap-2 mb-4">
           {(() => {
-            const { icon: GIcon, color, label } = GROUP_META[activeGroup];
+            const { icon: GIcon, color } = GROUP_META_ICONS[activeGroup];
+            const groupMeta = t(`megaMenu.groupMeta.${activeGroup}`) as unknown as { label: string };
             return (
               <>
                 <span className={`w-7 h-7 rounded-lg flex items-center justify-center ${color}`}>
                   <GIcon className="w-3.5 h-3.5" />
                 </span>
-                <p className="text-sm font-bold text-text">{label}</p>
+                <p className="text-sm font-bold text-text">{groupMeta?.label ?? activeGroup}</p>
               </>
             );
           })()}
         </div>
         <div className="grid grid-cols-2 gap-1">
-          {groupTools.map((t) => {
-            const TIcon = t.icon;
-            const live = isToolAvailable(t.slug);
+          {groupTools.map((tool) => {
+            const TIcon = tool.icon;
+            const live = isToolAvailable(tool.slug);
+            const toolT = t(`catalog.tools.${tool.slug}`) as unknown as { name: string; description: string } | undefined;
             return (
               <Link
-                key={t.slug}
-                href={live ? `/tools/${t.slug}` : '/tools'}
+                key={tool.slug}
+                href={live ? `/tools/${tool.slug}` : '/tools'}
                 onClick={close}
                 className="group flex items-center gap-3 p-3 rounded-xl hover:bg-surface border border-transparent hover:border-border transition-all"
               >
-                <span className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center ${t.tile}`}>
+                <span className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center ${tool.tile}`}>
                   <TIcon className="w-4 h-4" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-text group-hover:text-primary transition-colors leading-snug truncate">{t.name}</p>
-                  <p className="text-[11px] text-text-subtle leading-snug mt-0.5 line-clamp-1">{t.description}</p>
+                  <p className="text-sm font-medium text-text group-hover:text-primary transition-colors leading-snug truncate">{toolT?.name ?? tool.name}</p>
+                  <p className="text-[11px] text-text-subtle leading-snug mt-0.5 line-clamp-1">{toolT?.description ?? tool.description}</p>
                 </div>
               </Link>
             );
@@ -138,23 +141,24 @@ function ToolsPanel({ close }: { close: () => void }) {
 
       {/* ── Zone 3: Spotlight ── */}
       <div className="w-56 shrink-0 border-l border-border-light p-4 flex flex-col gap-2 bg-[#fafafa]">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">Popular</p>
-        {featured.map((t) => {
-          const TIcon = t.icon;
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{t('megaMenu.popular')}</p>
+        {featured.map((tool) => {
+          const TIcon = tool.icon;
+          const toolT = t(`catalog.tools.${tool.slug}`) as unknown as { name: string } | undefined;
           return (
             <Link
-              key={t.slug}
-              href={`/tools/${t.slug}`}
+              key={tool.slug}
+              href={`/tools/${tool.slug}`}
               onClick={close}
               className="group flex items-center gap-3 p-3 rounded-xl bg-white border border-border hover:border-primary/30 hover:shadow-soft transition-all"
             >
-              <span className={`w-9 h-9 rounded-xl shrink-0 flex items-center justify-center ${t.tile}`}>
+              <span className={`w-9 h-9 rounded-xl shrink-0 flex items-center justify-center ${tool.tile}`}>
                 <TIcon className="w-4 h-4" />
               </span>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-text group-hover:text-primary transition-colors leading-snug truncate">{t.name}</p>
+                <p className="text-sm font-semibold text-text group-hover:text-primary transition-colors leading-snug truncate">{toolT?.name ?? tool.name}</p>
                 <span className="inline-flex items-center gap-1 text-[11px] text-accent font-medium">
-                  <Zap className="w-3 h-3" /> Free forever
+                  <Zap className="w-3 h-3" /> {t('megaMenu.freeForever')}
                 </span>
               </div>
             </Link>
@@ -166,14 +170,14 @@ function ToolsPanel({ close }: { close: () => void }) {
           <div className="w-8 h-8 rounded-xl bg-gradient-brand flex items-center justify-center shadow-glow mb-3">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
-          <p className="text-sm font-bold text-text">AI Tools Coming</p>
-          <p className="text-[11px] text-text-muted mt-1 leading-relaxed">Next-gen AI tools for creators. Join the waitlist for early access.</p>
+          <p className="text-sm font-bold text-text">{t('megaMenu.aiToolsComing')}</p>
+          <p className="text-[11px] text-text-muted mt-1 leading-relaxed">{t('megaMenu.aiToolsComingDesc')}</p>
           <Link
             href="/pricing"
             onClick={close}
             className="mt-3 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
           >
-            See pricing <ArrowRight className="w-3 h-3" />
+            {t('megaMenu.seePricing')} <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
       </div>
@@ -185,66 +189,74 @@ function ToolsPanel({ close }: { close: () => void }) {
 /* ═══════════════════════════════════════════════════════════
    PRICING PANEL
 ═══════════════════════════════════════════════════════════ */
-const pricingPlans = [
-  { name: 'Free',    price: '$0',  period: 'forever',   desc: 'Everything for everyday downloads.', features: ['All downloaders', 'Up to 1080p HD', 'No watermarks', '30 credits/day'], cta: 'Get Started',   href: '/#tools',  highlight: false, icon: Zap,      iconColor: 'text-emerald-600', iconBg: 'bg-emerald-50' },
-  { name: 'Pro',     price: '$9',  period: '/month',     desc: 'For creators who download every day.', features: ['Everything in Free', '4K quality', 'Batch downloads', 'Early AI access'], cta: 'Join Waitlist', href: '/contact', highlight: true,  icon: Sparkles, iconColor: 'text-primary',     iconBg: 'bg-primary-light' },
-  { name: 'Credits', price: '$19', period: 'one-time',   desc: 'Pay once. Credits never expire.',   features: ['All Pro features', '3,000 credits', 'Never expire', 'Top up any time'],  cta: 'Join Waitlist', href: '/contact', highlight: false, icon: Coins,    iconColor: 'text-amber-600',   iconBg: 'bg-amber-50' },
-];
+const PRICING_PLAN_KEYS = ['free', 'pro', 'credits'] as const;
+const PRICING_PRICES = { free: '$0', pro: '$9', credits: '$19' };
+const PRICING_HREFS  = { free: '/#tools', pro: '/contact', credits: '/contact' };
+const PRICING_ICONS  = { free: Zap, pro: Sparkles, credits: Coins };
+const PRICING_ICON_COLORS = {
+  free:    { iconColor: 'text-emerald-600', iconBg: 'bg-emerald-50' },
+  pro:     { iconColor: 'text-primary',     iconBg: 'bg-primary-light' },
+  credits: { iconColor: 'text-amber-600',   iconBg: 'bg-amber-50' },
+};
 
 function PricingPanel({ close }: { close: () => void }) {
+  const t = useTranslation();
   return (
     <div className="p-7">
       {/* header */}
       <div className="flex items-end justify-between mb-6">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">Pricing</p>
-          <h3 className="text-xl font-bold text-text">Simple, transparent pricing.</h3>
-          <p className="text-sm text-text-muted mt-1">Start free, upgrade when you're ready.</p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{t('nav.pricing')}</p>
+          <h3 className="text-xl font-bold text-text">{t('megaMenu.pricingTitle')}</h3>
+          <p className="text-sm text-text-muted mt-1">{t('megaMenu.pricingSubtitle')}</p>
         </div>
         <Link href="/pricing" onClick={close} className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline shrink-0 mb-1">
-          Full details <ArrowRight className="w-3.5 h-3.5" />
+          {t('megaMenu.fullDetails')} <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
 
       {/* plan cards */}
       <div className="grid grid-cols-3 gap-4">
-        {pricingPlans.map((plan) => {
-          const PIcon = plan.icon;
+        {PRICING_PLAN_KEYS.map((key) => {
+          const plan = t(`megaMenu.pricingPlans.${key}`) as unknown as { name: string; period: string; desc: string; cta: string; features: string[] };
+          const PIcon = PRICING_ICONS[key];
+          const { iconColor, iconBg } = PRICING_ICON_COLORS[key];
+          const highlight = key === 'pro';
           return (
-            <div key={plan.name} className={`relative flex flex-col rounded-2xl p-5 border transition-all ${
-              plan.highlight
+            <div key={key} className={`relative flex flex-col rounded-2xl p-5 border transition-all ${
+              highlight
                 ? 'border-primary/30 bg-gradient-to-b from-primary-light/40 to-white shadow-soft-md'
                 : 'border-border bg-white hover:border-primary/20 hover:shadow-soft'
             }`}>
-              {plan.highlight && (
+              {highlight && (
                 <div className="absolute -top-3 inset-x-0 flex justify-center">
                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-brand text-white text-[11px] font-bold shadow-glow">
-                    <Star className="w-3 h-3" /> Most Popular
+                    <Star className="w-3 h-3" /> {t('megaMenu.mostPopular')}
                   </span>
                 </div>
               )}
-              <div className={`w-10 h-10 rounded-xl ${plan.iconBg} flex items-center justify-center mb-4`}>
-                <PIcon className={`w-5 h-5 ${plan.iconColor}`} />
+              <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center mb-4`}>
+                <PIcon className={`w-5 h-5 ${iconColor}`} />
               </div>
-              <p className="font-bold text-text text-base">{plan.name}</p>
+              <p className="font-bold text-text text-base">{plan?.name}</p>
               <div className="flex items-baseline gap-1 mt-1 mb-1">
-                <span className="text-3xl font-extrabold text-text">{plan.price}</span>
-                <span className="text-xs text-text-muted">{plan.period}</span>
+                <span className="text-3xl font-extrabold text-text">{PRICING_PRICES[key]}</span>
+                <span className="text-xs text-text-muted">{plan?.period}</span>
               </div>
-              <p className="text-xs text-text-muted leading-relaxed mb-4">{plan.desc}</p>
+              <p className="text-xs text-text-muted leading-relaxed mb-4">{plan?.desc}</p>
               <ul className="space-y-2 mb-5 flex-1">
-                {plan.features.map((f) => (
+                {(plan?.features ?? []).map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm text-text-muted">
                     <Check className="w-4 h-4 text-accent shrink-0" /> {f}
                   </li>
                 ))}
               </ul>
-              <Link href={plan.href} onClick={close} className={`inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                plan.highlight
+              <Link href={PRICING_HREFS[key]} onClick={close} className={`inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                highlight
                   ? 'bg-gradient-brand text-white shadow-glow hover:opacity-90'
                   : 'bg-white border border-border text-text hover:border-primary/40 hover:text-primary'
               }`}>
-                {plan.cta} <ArrowRight className="w-3.5 h-3.5" />
+                {plan?.cta} <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           );
@@ -253,9 +265,9 @@ function PricingPanel({ close }: { close: () => void }) {
 
       {/* trust row */}
       <div className="mt-5 pt-5 border-t border-border-light flex items-center gap-8 text-xs text-text-muted">
-        <span className="flex items-center gap-2"><Lock className="w-4 h-4 text-accent" /> No credit card required</span>
-        <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-accent" /> Free tier forever</span>
-        <span className="flex items-center gap-2"><Shield className="w-4 h-4 text-accent" /> Cancel any time</span>
+        <span className="flex items-center gap-2"><Lock className="w-4 h-4 text-accent" /> {t('megaMenu.noCreditCard')}</span>
+        <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-accent" /> {t('megaMenu.freeTierForever')}</span>
+        <span className="flex items-center gap-2"><Shield className="w-4 h-4 text-accent" /> {t('megaMenu.cancelAnytime')}</span>
       </div>
     </div>
   );
@@ -273,6 +285,7 @@ const POST_GRADIENTS = [
 const BLOG_TAGS = ['All', 'YouTube', 'TikTok', 'Instagram', 'Guides', 'Creators'];
 
 function BlogPanel({ close }: { close: () => void }) {
+  const t = useTranslation();
   const [tag, setTag] = useState('All');
   const all = blogPostsByDate.slice(0, 6);
   const posts = tag === 'All' ? all : all.filter((p) => p.tags.includes(tag));
@@ -282,22 +295,22 @@ function BlogPanel({ close }: { close: () => void }) {
       {/* header */}
       <div className="flex items-end justify-between mb-5">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">Blog</p>
-          <h3 className="text-xl font-bold text-text">Latest articles &amp; guides.</h3>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{t('nav.blog')}</p>
+          <h3 className="text-xl font-bold text-text">{t('megaMenu.latestArticlesTitle')}</h3>
         </div>
         <Link href="/blog" onClick={close} className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline shrink-0 mb-1">
-          All articles <ArrowRight className="w-3.5 h-3.5" />
+          {t('megaMenu.allArticles')} <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
 
       {/* tag pills */}
       <div className="flex gap-2 mb-5 flex-wrap">
-        {BLOG_TAGS.map((t) => (
-          <button key={t} onClick={() => setTag(t)}
+        {BLOG_TAGS.map((tagLabel) => (
+          <button key={tagLabel} onClick={() => setTag(tagLabel)}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-              tag === t ? 'bg-primary text-white shadow-glow' : 'bg-surface text-text-muted hover:bg-primary-light/60 hover:text-primary'
+              tag === tagLabel ? 'bg-primary text-white shadow-glow' : 'bg-surface text-text-muted hover:bg-primary-light/60 hover:text-primary'
             }`}>
-            {t}
+            {tagLabel === 'All' ? t('common.all') : tagLabel}
           </button>
         ))}
       </div>
@@ -347,26 +360,28 @@ function BlogPanel({ close }: { close: () => void }) {
 /* ═══════════════════════════════════════════════════════════
    RESOURCES PANEL
 ═══════════════════════════════════════════════════════════ */
-const resourceLinks = [
-  { icon: HelpCircle,    label: 'FAQ',            desc: 'Quick answers to common questions.',       href: '/faq',     color: 'text-violet-600 bg-violet-50'  },
-  { icon: BookOpen,      label: 'Blog & Guides',  desc: 'How-to articles and platform tips.',        href: '/blog',    color: 'text-sky-600 bg-sky-50'        },
-  { icon: Search,        label: 'Search Tools',   desc: 'Find exactly the tool you need fast.',      href: '/search',  color: 'text-emerald-600 bg-emerald-50'},
-  { icon: MessageCircle, label: 'Contact Us',      desc: 'Reach the team — we reply quickly.',        href: '/contact', color: 'text-pink-600 bg-pink-50'      },
-  { icon: Shield,        label: 'Privacy Policy', desc: 'How we handle your data.',                  href: '/privacy', color: 'text-slate-600 bg-slate-100'   },
-  { icon: FileText,      label: 'Terms of Service',desc: 'Platform guidelines and usage rules.',     href: '/terms',   color: 'text-orange-600 bg-orange-50'  },
-];
+const RESOURCE_LINK_CONFIG = [
+  { key: 'faq',     icon: HelpCircle,    href: '/faq',     color: 'text-violet-600 bg-violet-50'  },
+  { key: 'blog',    icon: BookOpen,      href: '/blog',    color: 'text-sky-600 bg-sky-50'        },
+  { key: 'search',  icon: Search,        href: '/search',  color: 'text-emerald-600 bg-emerald-50'},
+  { key: 'contact', icon: MessageCircle, href: '/contact', color: 'text-pink-600 bg-pink-50'      },
+  { key: 'privacy', icon: Shield,        href: '/privacy', color: 'text-slate-600 bg-slate-100'   },
+  { key: 'terms',   icon: FileText,      href: '/terms',   color: 'text-orange-600 bg-orange-50'  },
+] as const;
 
 function ResourcesPanel({ close }: { close: () => void }) {
+  const t = useTranslation();
   return (
     <div className="p-7">
       <div className="mb-6">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">Resources</p>
-        <h3 className="text-xl font-bold text-text">Everything you need to know.</h3>
-        <p className="text-sm text-text-muted mt-1">Documentation, support, and legal — all in one place.</p>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{t('megaMenu.resourcesEyebrow')}</p>
+        <h3 className="text-xl font-bold text-text">{t('megaMenu.resourcesTitle')}</h3>
+        <p className="text-sm text-text-muted mt-1">{t('megaMenu.resourcesSubtitle')}</p>
       </div>
       <div className="grid grid-cols-3 gap-3">
-        {resourceLinks.map((r) => {
+        {RESOURCE_LINK_CONFIG.map((r) => {
           const RIcon = r.icon;
+          const link = t(`megaMenu.resourceLinks.${r.key}`) as unknown as { label: string; desc: string };
           return (
             <Link key={r.href} href={r.href} onClick={close}
               className="group flex flex-col gap-3 p-4 rounded-2xl border border-border bg-white hover:border-primary/20 hover:shadow-soft transition-all">
@@ -374,16 +389,22 @@ function ResourcesPanel({ close }: { close: () => void }) {
                 <RIcon className="w-5 h-5" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-text group-hover:text-primary transition-colors">{r.label}</p>
-                <p className="text-xs text-text-muted mt-0.5 leading-snug">{r.desc}</p>
+                <p className="text-sm font-semibold text-text group-hover:text-primary transition-colors">{link?.label ?? r.key}</p>
+                <p className="text-xs text-text-muted mt-0.5 leading-snug">{link?.desc ?? ''}</p>
               </div>
             </Link>
           );
         })}
       </div>
       <div className="mt-5 pt-4 border-t border-border-light flex flex-wrap gap-x-6 gap-y-1">
-        {[{ label: 'Sitemap', href: '/sitemap.xml' }, { label: 'Cookie Policy', href: '/cookies' }, { label: 'DMCA', href: '/dmca' }].map((l) => (
-          <Link key={l.href} href={l.href} onClick={close} className="text-xs text-text-muted hover:text-primary transition-colors">{l.label}</Link>
+        {[
+          { key: 'sitemap', href: '/sitemap.xml' },
+          { key: 'cookies', href: '/cookies' },
+          { key: 'dmca',    href: '/dmca' },
+        ].map((l) => (
+          <Link key={l.href} href={l.href} onClick={close} className="text-xs text-text-muted hover:text-primary transition-colors">
+            {t(`megaMenu.footerLinks.${l.key}`)}
+          </Link>
         ))}
       </div>
     </div>
@@ -393,49 +414,53 @@ function ResourcesPanel({ close }: { close: () => void }) {
 /* ═══════════════════════════════════════════════════════════
    ABOUT PANEL
 ═══════════════════════════════════════════════════════════ */
-const aboutLinks = [
-  { icon: Info,     label: 'About Us',       desc: 'Our story, mission, and values.',             href: '/about',   color: 'text-violet-600 bg-violet-50'   },
-  { icon: Mail,     label: 'Contact',         desc: 'Support, partnerships, and press.',            href: '/contact', color: 'text-sky-600 bg-sky-50'         },
-  { icon: Sparkles, label: 'Pricing',         desc: 'Free tier, Pro plan, and credit packs.',       href: '/pricing', color: 'text-fuchsia-600 bg-fuchsia-50' },
-  { icon: Shield,   label: 'Privacy Policy', desc: 'We never sell your data.',                     href: '/privacy', color: 'text-emerald-600 bg-emerald-50' },
-  { icon: FileText, label: 'Terms',           desc: 'Usage rules and platform guidelines.',         href: '/terms',   color: 'text-orange-600 bg-orange-50'   },
-  { icon: Users,    label: 'Careers',         desc: "We're hiring — come build the future.",        href: '/contact', color: 'text-rose-600 bg-rose-50'        },
+const ABOUT_LINK_CONFIG = [
+  { key: 'about',   icon: Info,     href: '/about',   color: 'text-violet-600 bg-violet-50'   },
+  { key: 'contact', icon: Mail,     href: '/contact', color: 'text-sky-600 bg-sky-50'         },
+  { key: 'pricing', icon: Sparkles, href: '/pricing', color: 'text-fuchsia-600 bg-fuchsia-50' },
+  { key: 'privacy', icon: Shield,   href: '/privacy', color: 'text-emerald-600 bg-emerald-50' },
+  { key: 'terms',   icon: FileText, href: '/terms',   color: 'text-orange-600 bg-orange-50'   },
+  { key: 'careers', icon: Users,    href: '/contact', color: 'text-rose-600 bg-rose-50'        },
+] as const;
+
+const SOCIAL_LINKS = [
+  { label: 'X',         href: 'https://x.com/savdown' },
+  { label: 'Instagram', href: 'https://instagram.com/savdown' },
+  { label: 'Facebook',  href: 'https://facebook.com/savdown' },
+  { label: 'Pinterest', href: 'https://pinterest.com/savdown' },
+  { label: 'LinkedIn',  href: 'https://linkedin.com/company/savdown' },
 ];
 
 function AboutPanel({ close }: { close: () => void }) {
+  const t = useTranslation();
   return (
     <div className="p-7">
       <div className="mb-6">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">Company</p>
-        <h3 className="text-xl font-bold text-text">The team building SavDown.</h3>
-        <p className="text-sm text-text-muted mt-1">Fast, private, free — that's our promise.</p>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{t('megaMenu.aboutEyebrow')}</p>
+        <h3 className="text-xl font-bold text-text">{t('megaMenu.aboutTitle')}</h3>
+        <p className="text-sm text-text-muted mt-1">{t('megaMenu.aboutSubtitle')}</p>
       </div>
       <div className="grid grid-cols-3 gap-3">
-        {aboutLinks.map((a) => {
+        {ABOUT_LINK_CONFIG.map((a) => {
           const AIcon = a.icon;
+          const link = t(`megaMenu.aboutLinks.${a.key}`) as unknown as { label: string; desc: string };
           return (
-            <Link key={a.label} href={a.href} onClick={close}
+            <Link key={a.key} href={a.href} onClick={close}
               className="group flex flex-col gap-3 p-4 rounded-2xl border border-border bg-white hover:border-primary/20 hover:shadow-soft transition-all">
               <span className={`w-10 h-10 rounded-xl flex items-center justify-center ${a.color}`}>
                 <AIcon className="w-5 h-5" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-text group-hover:text-primary transition-colors">{a.label}</p>
-                <p className="text-xs text-text-muted mt-0.5 leading-snug">{a.desc}</p>
+                <p className="text-sm font-semibold text-text group-hover:text-primary transition-colors">{link?.label ?? a.key}</p>
+                <p className="text-xs text-text-muted mt-0.5 leading-snug">{link?.desc ?? ''}</p>
               </div>
             </Link>
           );
         })}
       </div>
       <div className="mt-5 pt-4 border-t border-border-light flex items-center gap-3">
-        <span className="text-xs text-text-subtle">Follow us:</span>
-        {[
-          { label: 'X', href: 'https://x.com/savdown' },
-          { label: 'Instagram', href: 'https://instagram.com/savdown' },
-          { label: 'Facebook', href: 'https://facebook.com/savdown' },
-          { label: 'Pinterest', href: 'https://pinterest.com/savdown' },
-          { label: 'LinkedIn', href: 'https://linkedin.com/company/savdown' },
-        ].map((s) => (
+        <span className="text-xs text-text-subtle">{t('megaMenu.followUs')}</span>
+        {SOCIAL_LINKS.map((s) => (
           <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
             className="text-xs text-text-muted hover:text-primary transition-colors">{s.label}</a>
         ))}
@@ -445,17 +470,11 @@ function AboutPanel({ close }: { close: () => void }) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   NAV CONFIG
+   ROOT COMPONENT
 ═══════════════════════════════════════════════════════════ */
 type NavId = 'tools' | 'pricing' | 'blog' | 'resources' | 'about';
 
-const NAV_ITEMS: { id: NavId; label: string }[] = [
-  { id: 'tools',     label: 'Tools'     },
-  { id: 'pricing',   label: 'Pricing'   },
-  { id: 'blog',      label: 'Blog'      },
-  { id: 'resources', label: 'Resources' },
-  { id: 'about',     label: 'About'     },
-];
+const NAV_IDS: NavId[] = ['tools', 'pricing', 'blog', 'resources', 'about'];
 
 /* Width of each panel — centered on viewport */
 const PANEL_WIDTH: Record<NavId, string> = {
@@ -474,10 +493,8 @@ const PANEL_HEIGHT: Record<NavId, string> = {
   about:     '',
 };
 
-/* ═══════════════════════════════════════════════════════════
-   ROOT COMPONENT
-═══════════════════════════════════════════════════════════ */
 export function MegaMenu() {
+  const t = useTranslation();
   const [active, setActive] = useState<NavId | null>(null);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
@@ -581,23 +598,24 @@ export function MegaMenu() {
     <>
       {/* Nav trigger buttons — stay inside the header */}
       <div ref={navRef} className="flex items-center gap-0.5">
-        {NAV_ITEMS.map((item) => {
-          const isActive = active === item.id;
+        {NAV_IDS.map((id) => {
+          const isActive = active === id;
+          const label = t(`mobileNav.sections.${id}`) as string;
           return (
             <button
-              key={item.id}
-              onMouseEnter={() => open(item.id)}
+              key={id}
+              onMouseEnter={() => open(id)}
               onMouseLeave={scheduleClose}
-              onFocus={() => open(item.id)}
+              onFocus={() => open(id)}
               onBlur={scheduleClose}
-              onClick={() => (isActive ? close() : open(item.id))}
+              onClick={() => (isActive ? close() : open(id))}
               aria-expanded={isActive}
               aria-haspopup="true"
               className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                 isActive ? 'text-text bg-surface' : 'text-text-muted hover:text-text hover:bg-surface/60'
               }`}
             >
-              {item.label}
+              {label}
               <motion.span animate={{ rotate: isActive ? 180 : 0 }} transition={{ duration: 0.16 }}>
                 <ChevronDown className="w-3.5 h-3.5 opacity-50" />
               </motion.span>
