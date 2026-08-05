@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import type { SVGProps } from 'react';
-import { Facebook, Instagram, Linkedin, Twitter, Mail, ArrowUpRight, Check } from 'lucide-react';
+import { Facebook, Instagram, Linkedin, Twitter, Mail, Check } from 'lucide-react';
 import { siteConfig } from '@/config/site';
-import { catalog, toolGroups, type ToolGroup } from '@/config/catalog';
 import { Logo } from '@/components/ui/Logo';
 import { LanguageSelector } from '@/components/ui/LanguageSelector';
 import { Container } from './Container';
+import { FooterToolGrid } from './FooterToolGrid';
 
 /** Pinterest and Reddit have no icon in lucide-react; these are brand-accurate
  *  inline SVGs that share lucide's `{ className }` interface for consistent
@@ -35,28 +35,7 @@ const socialIcons = {
   reddit: RedditIcon,
 } as const;
 
-/** Display labels for each tool category; hrefs point at the /tools group anchors. */
-const categoryLabels: Record<ToolGroup, string> = {
-  Downloaders: 'Social Media Downloaders',
-  Image: 'Image Tools',
-  Video: 'Video Tools',
-  PDF: 'PDF Tools',
-  AI: 'AI Tools',
-  SEO: 'SEO Tools',
-  Utility: 'Utility Tools',
-};
-
-/** Column order for the SEO mega-footer (all categories surfaced as columns). */
-const columnOrder: ToolGroup[] = ['Downloaders', 'Image', 'Video', 'PDF', 'AI', 'SEO', 'Utility'];
-
 export function Footer() {
-  // Group every catalog tool under its category for the mega-footer link grid.
-  const toolsByGroup = columnOrder.map((group) => ({
-    group,
-    label: categoryLabels[group],
-    tools: catalog.filter((t) => t.group === group),
-  }));
-
   return (
     <footer className="relative bg-ink text-white overflow-hidden">
       {/* subtle brand glow + grid for depth */}
@@ -142,51 +121,7 @@ export function Footer() {
         </div>
 
         {/* ── SEO mega-grid: every tool linked, grouped by category ── */}
-        <div className="pt-12">
-          <div className="flex items-end justify-between gap-4 mb-8">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-1">
-                The complete toolkit
-              </p>
-              <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">
-                Browse the full toolkit
-              </h2>
-            </div>
-            <Link
-              href="/tools"
-              className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-ink-muted hover:text-white transition-colors"
-            >
-              See all tools <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-x-6 gap-y-10">
-            {toolsByGroup.map(({ group, label, tools }) => (
-              <div key={group} className="min-w-0">
-                <h3 className="text-[11px] font-bold uppercase tracking-wider text-white">
-                  <Link
-                    href={`/tools#${group.toLowerCase()}`}
-                    className="hover:text-gradient-light transition-colors"
-                  >
-                    {label}
-                  </Link>
-                </h3>
-                <ul className="mt-4 space-y-2.5">
-                  {tools.map((tool) => (
-                    <li key={tool.slug}>
-                      <Link
-                        href={`/tools/${tool.slug}`}
-                        className="text-[13px] text-ink-muted hover:text-white transition-colors leading-snug block"
-                      >
-                        {tool.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
+        <FooterToolGrid />
 
         {/* ── Site nav columns (Resources / Company / Legal) ──── */}
         <div className="mt-14 pt-12 border-t border-white/10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
