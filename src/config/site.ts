@@ -5,16 +5,16 @@ export const siteConfig = {
     'SavDown is a fast, free video downloader for YouTube, TikTok, Instagram, Facebook, Pinterest, and X. No watermarks, no signup, with AI-powered tools on the way.',
   url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
   ogImage: '/og-default.svg',
-  twitterHandle: '@savdown',
+  twitterHandle: '@SavDownload',
   footerDescription:
     'SavDown is the fast, private way to save videos, reels, and thumbnails from the platforms you use every day. No watermarks, no signup, no clutter.',
   social: [
-    { label: 'Facebook', href: 'https://facebook.com/savdown', icon: 'facebook' },
-    { label: 'Instagram', href: 'https://instagram.com/savdown', icon: 'instagram' },
-    { label: 'X (Twitter)', href: 'https://x.com/savdown', icon: 'x' },
-    { label: 'Pinterest', href: 'https://pinterest.com/savdown', icon: 'pinterest' },
-    { label: 'LinkedIn', href: 'https://linkedin.com/company/savdown', icon: 'linkedin' },
-    { label: 'Reddit', href: 'https://reddit.com/user/savdown', icon: 'reddit' },
+    { label: 'Facebook', href: 'https://www.facebook.com/profile.php?id=61592887680787', icon: 'facebook' },
+    { label: 'Instagram', href: 'https://www.instagram.com/savdownload/?hl=en', icon: 'instagram' },
+    { label: 'X (Twitter)', href: 'https://x.com/SavDownload', icon: 'x' },
+    { label: 'Pinterest', href: 'https://www.pinterest.com/savdownload/_profile/', icon: 'pinterest' },
+    { label: 'LinkedIn', href: 'https://www.linkedin.com/company/savdown/', icon: 'linkedin' },
+    { label: 'Reddit', href: 'https://www.reddit.com/user/SavDownload/', icon: 'reddit' },
   ],
   keywords: [
     'social media downloader',

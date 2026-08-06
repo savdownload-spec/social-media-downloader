@@ -424,11 +424,11 @@ const ABOUT_LINK_CONFIG = [
 ] as const;
 
 const SOCIAL_LINKS = [
-  { label: 'X',         href: 'https://x.com/savdown' },
-  { label: 'Instagram', href: 'https://instagram.com/savdown' },
-  { label: 'Facebook',  href: 'https://facebook.com/savdown' },
-  { label: 'Pinterest', href: 'https://pinterest.com/savdown' },
-  { label: 'LinkedIn',  href: 'https://linkedin.com/company/savdown' },
+  { label: 'X',         href: 'https://x.com/SavDownload' },
+  { label: 'Instagram', href: 'https://www.instagram.com/savdownload/?hl=en' },
+  { label: 'Facebook',  href: 'https://www.facebook.com/profile.php?id=61592887680787' },
+  { label: 'Pinterest', href: 'https://www.pinterest.com/savdownload/_profile/' },
+  { label: 'LinkedIn',  href: 'https://www.linkedin.com/company/savdown/' },
 ];
 
 function AboutPanel({ close }: { close: () => void }) {
