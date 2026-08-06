@@ -129,7 +129,12 @@ export function Footer() {
           {Object.entries(siteConfig.footerLinks)
             .filter(([heading]) => !['All Tools', 'Social Media Downloaders', 'Video Downloaders', 'Audio Downloaders', 'Image Downloaders'].includes(heading))
             .map(([heading, links]) => {
-              const translatedHeading = t(`footer.${heading.toLowerCase()}`) || heading;
+              let translatedHeading = heading;
+              try {
+                translatedHeading = t(`footer.${heading.toLowerCase()}`) || heading;
+              } catch {
+                translatedHeading = heading;
+              }
               return (
                 <div key={heading}>
                   <h3 className="text-[11px] font-bold uppercase tracking-wider text-white">
@@ -137,7 +142,7 @@ export function Footer() {
                   </h3>
                   <ul className="mt-4 space-y-2.5">
                     {links.map((link) => {
-                      const translatedLabel = t(`nav.${link.label.toLowerCase().replace(' ', '')}`) || link.label;
+                      const translatedLabel = link.label;
                       return (
                         <li key={link.href}>
                           <Link
