@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { CheckCircle2, Zap, Lock, Sparkles, ChevronRight } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { Section, SectionHeading } from '@/components/layout/Section';
-import { Accordion } from '@/components/ui/Accordion';
+import { FAQSection } from '@/components/ui/FAQSection';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { ShareButton } from '@/components/ui/ShareButton';
 import { DownloaderForm } from './DownloaderForm';
@@ -159,15 +159,7 @@ export function ToolPageView({ tool }: { tool: Tool }) {
       </Section>
 
       {/* FAQ */}
-      <Section variant="white" containerClassName="max-w-3xl">
-        <SectionHeading
-          eyebrow="FAQ"
-          title={<>Common <span className="text-gradient">Questions.</span></>}
-        />
-        <div className="mt-12">
-          <Accordion items={tool.faq} multiple />
-        </div>
-      </Section>
+      <FAQSection items={tool.faq} variant="white" />
 
       {/* ── Similar Tools (related downloads in the same group) ── */}
       {(() => {

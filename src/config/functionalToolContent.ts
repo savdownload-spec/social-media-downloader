@@ -22,6 +22,12 @@ const pdfHowTo = [
   { title: 'Download the result', body: 'Click process and grab your finished PDF — no watermarks, no signup.' },
 ];
 
+const videoHowTo = [
+  { title: 'Upload your video', body: 'Drag an MP4, WEBM, MOV, AVI, or MKV file into the box, or click to browse. Up to 100 MB.' },
+  { title: 'Adjust the settings', body: 'Pick the output format, compression level, or frame rate you want.' },
+  { title: 'Process & download', body: 'Hit the button — your processed file is ready to download in seconds.' },
+];
+
 export const functionalToolContent: Record<string, FunctionalToolContent> = {
   /* ── Image ── */
   'image-compressor': {
@@ -86,6 +92,48 @@ export const functionalToolContent: Record<string, FunctionalToolContent> = {
       { question: 'What is HEIC?', answer: 'HEIC is the high-efficiency format Apple uses for iPhone photos. Many apps and websites still expect JPG.' },
       { question: 'Will I lose quality converting to JPG?', answer: 'Minimal. JPG applies light compression, but at quality 90 the result is visually identical for everyday use.' },
       { question: 'Can I batch convert?', answer: 'Upload one image at a time here. For batches, repeat the quick process for each photo.' },
+    ],
+  },
+
+  /* ── Video ── */
+  'video-converter': {
+    howTo: videoHowTo,
+    faq: [
+      { question: 'Which formats can I convert between?', answer: 'MP4, WEBM, MOV, AVI, and MKV — pick the target container from the format buttons.' },
+      { question: 'Does converting reduce quality?', answer: 'No — the converter re-wraps the video into the new container without re-compressing, so quality is preserved.' },
+      { question: 'Is there a file size limit?', answer: 'Yes — up to 100 MB per video, which covers most short clips and social media exports.' },
+    ],
+  },
+  'video-compressor': {
+    howTo: videoHowTo,
+    faq: [
+      { question: 'What does the CRF slider control?', answer: 'CRF (Constant Rate Factor) controls the quality-to-size trade-off. Lower values mean better quality and larger files; higher values shrink the file more aggressively. 26–30 is a good balance for sharing.' },
+      { question: 'Will the output always be MP4?', answer: 'Yes — compression re-encodes to MP4 (H.264 video, AAC audio) for maximum compatibility across devices and platforms.' },
+      { question: 'How much smaller will my file be?', answer: 'It depends on the source, but a typical phone-recorded video shrinks by 40–70% at the default setting with little visible quality loss.' },
+    ],
+  },
+  'video-to-mp3': {
+    howTo: videoHowTo,
+    faq: [
+      { question: 'What audio bitrates are available?', answer: '128 kbps, 192 kbps, and 320 kbps. 192 kbps is a good default for most listening; choose 320 kbps for music you care about.' },
+      { question: 'Does this work with any video format?', answer: 'Yes — MP4, WEBM, MOV, AVI, and MKV files are all supported as input.' },
+      { question: 'Is the video file kept afterwards?', answer: 'No — only the extracted MP3 is generated and returned. Your uploaded video is discarded immediately after processing.' },
+    ],
+  },
+  'gif-maker': {
+    howTo: videoHowTo,
+    faq: [
+      { question: 'How long can the GIF be?', answer: 'GIFs are capped at the first 10 seconds of your video to keep file sizes reasonable — animated GIFs get large fast.' },
+      { question: 'What does the frame rate slider do?', answer: 'It controls how smooth the animation looks. Lower frame rates (5–10 fps) produce smaller files; higher rates (15–24 fps) look smoother but are larger.' },
+      { question: 'Can I use a video from my phone?', answer: 'Yes — any MP4, WEBM, MOV, AVI, or MKV clip works, including phone recordings.' },
+    ],
+  },
+  'mp4-to-gif': {
+    howTo: videoHowTo,
+    faq: [
+      { question: 'Why is my GIF only 10 seconds?', answer: 'GIF is an inefficient format for motion — a 10-second cap keeps file sizes reasonable enough to share. For longer clips, trim your MP4 first.' },
+      { question: 'Can I control the GIF quality?', answer: 'Yes — the frame rate slider trades smoothness for file size. Lower is smaller, higher looks smoother.' },
+      { question: 'Does the GIF loop automatically?', answer: 'Yes — every GIF produced loops continuously, matching how GIFs are expected to behave everywhere they\'re shared.' },
     ],
   },
 
@@ -181,6 +229,68 @@ export const functionalToolContent: Record<string, FunctionalToolContent> = {
       { question: 'Can I use these gradients commercially?', answer: 'Yes — the output is plain CSS that you own and can use anywhere, including commercial projects.' },
       { question: 'Does it support radial and conic gradients?', answer: 'Yes. Switch the type selector to render radial or conic gradients, with full angle control.' },
       { question: 'Does it work offline?', answer: 'It runs entirely in your browser, so once the page is loaded it works without a network connection.' },
+    ],
+  },
+
+  /* ── SEO ── */
+  'meta-title-generator': {
+    howTo: [
+      { title: 'Enter your topic', body: 'Type the page topic or main keyword, and optionally your brand name.' },
+      { title: 'Generate variants', body: 'Get several title formats — question style, listicle style, brand-first, and more.' },
+      { title: 'Copy your favourite', body: 'Click any title to copy it, ready to paste into your CMS or <title> tag.' },
+    ],
+    faq: [
+      { question: 'What is the ideal meta title length?', answer: 'Aim for 50–60 characters. Titles are automatically trimmed to fit so they don\'t get cut off in search results.' },
+      { question: 'Does this pull real search data?', answer: 'No. Titles are generated from proven copywriting templates, not live search volume — this is a drafting tool, not a keyword-research API.' },
+      { question: 'Is this tool free to use commercially?', answer: 'Yes. Everything runs locally in your browser and titles you generate are yours to use anywhere, including client and commercial work.' },
+    ],
+  },
+  'meta-description-generator': {
+    howTo: [
+      { title: 'Enter your topic', body: 'Type the page topic and, if you like, a short call to action.' },
+      { title: 'Generate variants', body: 'Get several description drafts, each trimmed to fit Google\'s display limit.' },
+      { title: 'Copy your favourite', body: 'Click any description to copy it into your CMS or meta tag.' },
+    ],
+    faq: [
+      { question: 'What is the ideal meta description length?', answer: 'Aim for 150–160 characters. Longer descriptions are automatically trimmed so they don\'t get cut off in search results.' },
+      { question: 'Should every page have a unique description?', answer: 'Yes — duplicate descriptions across pages can hurt how search engines differentiate your content. Generate a fresh one per page.' },
+      { question: 'Does the call-to-action field do anything special?', answer: 'It\'s appended to the end of each draft so you can test different closing lines without retyping the whole description.' },
+    ],
+  },
+  'youtube-tags-generator': {
+    howTo: [
+      { title: 'Enter your video title', body: 'Type the exact title you plan to use for the video.' },
+      { title: 'Generate tags', body: 'Get a list built from your title\'s keywords, common phrase combinations, and popular modifiers like "tutorial" or "for beginners".' },
+      { title: 'Copy and paste', body: 'Copy all tags at once and paste them into YouTube\'s tag field when uploading.' },
+    ],
+    faq: [
+      { question: 'How many tags does YouTube allow?', answer: 'YouTube enforces a 500-character total limit across all tags, not a fixed count. This tool stops adding tags once that budget is used.' },
+      { question: 'Do tags still matter for YouTube SEO?', answer: 'Their weight has diminished compared to title, description, and watch time, but they still help YouTube understand context, especially for niche or misspelled search terms.' },
+      { question: 'Can I edit the generated tags?', answer: 'Yes — treat this as a starting list. Remove any that don\'t fit and add tags specific to your channel or series.' },
+    ],
+  },
+  'keyword-generator': {
+    howTo: [
+      { title: 'Enter a seed keyword', body: 'Type the core topic or product you want keyword ideas for.' },
+      { title: 'Browse by intent', body: 'Ideas are grouped into Informational, Commercial, Comparison, Transactional, and Long-tail buckets.' },
+      { title: 'Copy what fits', body: 'Click any keyword to copy it for use in content briefs, ad groups, or page titles.' },
+    ],
+    faq: [
+      { question: 'Does this show search volume or competition?', answer: 'No. This generates keyword variations from proven modifier patterns (best, how to, vs, near me, etc.) — it does not pull live search-volume data, which typically requires a paid API.' },
+      { question: 'Why are keywords grouped by intent?', answer: 'Matching content to search intent (informational vs. transactional, for example) is one of the strongest levers for ranking and conversion — grouping makes it easy to pick the right angle.' },
+      { question: 'Can I use these for paid ad campaigns?', answer: 'Yes — the Commercial and Transactional groups in particular are commonly used as a starting point for ad group keyword lists.' },
+    ],
+  },
+  'schema-generator': {
+    howTo: [
+      { title: 'Choose a schema type', body: 'Pick Article, Product, FAQPage, HowTo, LocalBusiness, or Review.' },
+      { title: 'Fill in the fields', body: 'Enter the details relevant to that schema type.' },
+      { title: 'Copy the JSON-LD', body: 'Paste the generated code into a <script type="application/ld+json"> tag on your page.' },
+    ],
+    faq: [
+      { question: 'Where do I put the generated code?', answer: 'Paste it inside a <script type="application/ld+json"> tag in your page\'s <head> or body. Most CMSs have a custom-HTML or SEO-plugin field for this.' },
+      { question: 'Will this guarantee rich results in Google?', answer: 'No tool can guarantee rich snippets — Google decides when to display them. Valid structured data simply makes your page eligible.' },
+      { question: 'How do I check my schema is valid?', answer: 'Paste the generated JSON-LD into Google\'s Rich Results Test or the Schema.org validator to confirm it parses correctly before publishing.' },
     ],
   },
 };

@@ -6,7 +6,7 @@
  *
  * Architecture: API Route → ytdlp.ts → yt-dlp binary (or DOWNLOADER_API_URL)
  */
-import { execFile } from 'child_process';
+import { execFile, spawn } from 'child_process';
 import { promisify } from 'util';
 import type { DownloadResult, DownloadFormat } from '@/types';
 
@@ -19,6 +19,7 @@ const MAX_RETRIES   = 2;
 export type YtdlpOptions = {
   audioOnly?:    boolean;
   thumbnailOnly?: boolean;
+  thumbnailViaMetadata?: boolean;
   playlist?:     boolean;
 };
 
@@ -45,9 +46,20 @@ function sanitize(title: string): string {
   return title.replace(/[/\\?%*:|"<>]/g, '-').slice(0, 80);
 }
 
-function proxyUrl(rawUrl: string, filename: string): string {
+// TikTok's web app blocks yt-dlp's default HTTP client (fails with "Unable to
+// extract universal data for rehydration"). Requires TLS-fingerprint
+// impersonation via curl_cffi (free, BSD-licensed) to look like a real
+// browser. Scoped to TikTok only — other extractors don't need it.
+export function needsImpersonation(url: string): boolean {
+  return /tiktok\.com/i.test(url);
+}
+
+function proxyUrl(rawUrl: string, filename: string, extra?: { referer?: string; cookie?: string }): string {
   const base = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  return `${base}/api/proxy?${new URLSearchParams({ url: rawUrl, filename })}`;
+  const params: Record<string, string> = { url: rawUrl, filename };
+  if (extra?.referer) params.ref = extra.referer;
+  if (extra?.cookie) params.cookie = extra.cookie;
+  return `${base}/api/proxy?${new URLSearchParams(params)}`;
 }
 
 /* ─── core yt-dlp runner ─────────────────────────────────────── */
@@ -76,6 +88,7 @@ async function getMeta(url: string): Promise<YtdlpMeta> {
   const args = [
     '--no-playlist', '--no-warnings', '--no-call-home',
     '--socket-timeout', '20', '--retries', '2',
+    ...(needsImpersonation(url) ? ['--impersonate', 'chrome'] : []),
     '--print', template,
     '--', url,
   ];
@@ -108,12 +121,25 @@ async function getMeta(url: string): Promise<YtdlpMeta> {
  * Get the direct stream URL for a specific yt-dlp format selector.
  * Returns empty string if the format is not available.
  */
-async function getFormatUrl(url: string, formatSelector: string): Promise<{ streamUrl: string; filesize: number }> {
+async function getFormatUrl(
+  url: string,
+  formatSelector: string,
+): Promise<{ streamUrl: string; filesize: number; referer?: string; cookie?: string }> {
+  const impersonating = needsImpersonation(url);
+  // TikTok's CDN rejects stream requests that don't carry the exact
+  // Referer + session cookies yt-dlp used during extraction (separate bot
+  // check from the page-extraction challenge). Capture them so the proxy
+  // can replay them when actually fetching the file.
+  const printTemplate = impersonating
+    ? '%(url)s\n---FIELD---\n%(filesize|filesize_approx|0)s\n---FIELD---\n%(http_headers.Referer)s\n---FIELD---\n%(cookies)s'
+    : '%(url)s\n---FIELD---\n%(filesize|filesize_approx|0)s';
+
   const args = [
     '--no-playlist', '--no-warnings', '--no-call-home',
     '--socket-timeout', '20', '--retries', '1',
+    ...(impersonating ? ['--impersonate', 'chrome'] : []),
     '-f', formatSelector,
-    '--print', '%(url)s\n---FIELD---\n%(filesize|filesize_approx|0)s',
+    '--print', printTemplate,
     '--', url,
   ];
 
@@ -125,7 +151,14 @@ async function getFormatUrl(url: string, formatSelector: string): Promise<{ stre
     const parts = stdout.trim().split('\n---FIELD---\n');
     const streamUrl = parts[0]?.trim() || '';
     const filesize  = parseInt(parts[1]?.trim() || '0', 10) || 0;
-    return { streamUrl, filesize };
+    const referer   = parts[2]?.trim();
+    const cookie    = parts[3]?.trim();
+    return {
+      streamUrl,
+      filesize,
+      referer: referer && referer !== 'NA' ? referer : undefined,
+      cookie:  cookie  && cookie  !== 'NA' ? cookie  : undefined,
+    };
   } catch {
     return { streamUrl: '', filesize: 0 };
   }
@@ -136,7 +169,7 @@ async function getFormatUrl(url: string, formatSelector: string): Promise<{ stre
 // Quality tiers — use single-file format selectors only, since --print
 // cannot output a merged DASH stream URL (that requires actual muxing).
 // For each tier: prefer a pre-muxed mp4 → fall back to best mp4 DASH video.
-const VIDEO_TIERS: { label: string; quality: string; selector: string }[] = [
+export const VIDEO_TIERS: { label: string; quality: string; selector: string }[] = [
   { label: 'MP4 2160p (4K)', quality: '2160p', selector: 'bestvideo[height<=2160][ext=mp4][acodec!=none]/bestvideo[height<=2160][ext=mp4]/best[height<=2160]' },
   { label: 'MP4 1440p',      quality: '1440p', selector: 'bestvideo[height<=1440][ext=mp4][acodec!=none]/bestvideo[height<=1440][ext=mp4]/best[height<=1440]' },
   { label: 'MP4 1080p (HD)', quality: '1080p', selector: 'bestvideo[height<=1080][ext=mp4][acodec!=none]/bestvideo[height<=1080][ext=mp4]/best[height<=1080]' },
@@ -146,10 +179,38 @@ const VIDEO_TIERS: { label: string; quality: string; selector: string }[] = [
 ];
 
 // Audio tier for music/podcast downloads
-const AUDIO_TIERS: { label: string; quality: string; ext: string; selector: string }[] = [
+export const AUDIO_TIERS: { label: string; quality: string; ext: string; selector: string }[] = [
   { label: 'M4A 128kbps', quality: '128kbps', ext: 'm4a', selector: 'bestaudio[ext=m4a]/bestaudio' },
   { label: 'WebM Audio',  quality: 'high',    ext: 'webm', selector: 'bestaudio[ext=webm]' },
 ];
+
+// TikTok audio extraction discards the video track, so resolution doesn't
+// matter — use the most permissive selector to avoid failing on videos
+// that don't happen to match a height-capped tier.
+export const TIKTOK_AUDIO_EXTRACT_SELECTOR = 'best';
+
+/** Every format selector this service ever generates — used by the TikTok
+ *  streaming route to reject anything it didn't itself hand out. */
+export const KNOWN_SELECTORS = new Set([
+  ...VIDEO_TIERS.map(t => t.selector),
+  ...AUDIO_TIERS.map(t => t.selector),
+  TIKTOK_AUDIO_EXTRACT_SELECTOR,
+]);
+
+/**
+ * Build a download URL for a TikTok format. TikTok's CDN binds signed
+ * stream URLs to the exact curl_cffi session that resolved them — a
+ * separate later fetch (even with identical headers/cookies/TLS
+ * impersonation) gets a 403. The only reliable fix is to have yt-dlp
+ * download the bytes itself, in one shot, and stream them straight through
+ * our own API instead of ever exposing a TikTok CDN URL to the browser.
+ */
+function ttStreamUrl(pageUrl: string, selector: string, filename: string, opts?: { extractAudio?: boolean }): string {
+  const base = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const params: Record<string, string> = { url: pageUrl, selector, filename };
+  if (opts?.extractAudio) params.audio = '1';
+  return `${base}/api/tools/tiktok/stream?${new URLSearchParams(params)}`;
+}
 
 /* ─── main resolver ─────────────────────────────────────────── */
 
@@ -165,6 +226,9 @@ export async function resolveWithYtdlp(
     // Thumbnail-only: no yt-dlp needed, direct CDN
     if (options.thumbnailOnly) return resolveThumbnail(url);
 
+    // Thumbnail via metadata: platform has no guessable CDN pattern
+    if (options.thumbnailViaMetadata) return resolveThumbnailViaMetadata(url);
+
     // Step 1: get metadata (fast, small output)
     const meta = await getMeta(url);
     const title     = meta.title;
@@ -175,17 +239,30 @@ export async function resolveWithYtdlp(
 
     const formats: DownloadFormat[] = [];
 
-    if (options.audioOnly) {
+    if (options.audioOnly && needsImpersonation(url)) {
+      // TikTok has no separate audio-only stream — it only serves muxed
+      // video+audio MP4. Extract the audio track via FFmpeg from the best
+      // muxed stream instead of probing for a bestaudio format that
+      // doesn't exist on this platform.
+      formats.push({
+        label:    'MP3 192kbps',
+        quality:  '192kbps',
+        extension: 'mp3',
+        url:      ttStreamUrl(url, TIKTOK_AUDIO_EXTRACT_SELECTOR, `${sanitize(title)}.mp3`, { extractAudio: true }),
+        hasAudio: true,
+        hasVideo: false,
+      });
+    } else if (options.audioOnly) {
       // Audio-only mode: fetch best audio streams
       for (const tier of AUDIO_TIERS) {
-        const { streamUrl, filesize } = await getFormatUrl(url, tier.selector);
+        const { streamUrl, filesize, referer, cookie } = await getFormatUrl(url, tier.selector);
         if (!streamUrl || streamUrl === 'NA') continue;
         formats.push({
           label:    tier.label,
           quality:  tier.quality,
           extension: tier.ext,
           size:     formatBytes(filesize),
-          url:      proxyUrl(streamUrl, `${sanitize(title)}.${tier.ext}`),
+          url:      proxyUrl(streamUrl, `${sanitize(title)}.${tier.ext}`, { referer, cookie }),
           hasAudio: true,
           hasVideo: false,
         });
@@ -198,26 +275,50 @@ export async function resolveWithYtdlp(
         VIDEO_TIERS.map(tier => getFormatUrl(url, tier.selector)),
       );
 
+      let smallestRawStreamUrl = '';
       for (let i = 0; i < VIDEO_TIERS.length; i++) {
         const tier   = VIDEO_TIERS[i]!;
         const result = tierResults[i];
         if (result?.status !== 'fulfilled') continue;
-        const { streamUrl, filesize } = result.value;
+        const { streamUrl, filesize, referer, cookie } = result.value;
         if (!streamUrl || streamUrl === 'NA') continue;
+
+        // Track the raw (unproxied) URL of the smallest resolved tier — used
+        // below to feed a fast GIF conversion for x-gif-downloader.
+        smallestRawStreamUrl = streamUrl;
 
         formats.push({
           label:    tier.label,
           quality:  tier.quality,
           extension: 'mp4',
           size:     formatBytes(filesize),
-          url:      proxyUrl(streamUrl, `${sanitize(title)}.mp4`),
+          url:      needsImpersonation(url)
+            ? ttStreamUrl(url, tier.selector, `${sanitize(title)}.mp4`)
+            : proxyUrl(streamUrl, `${sanitize(title)}.mp4`, { referer, cookie }),
           hasAudio: true,
           hasVideo: true,
         });
       }
 
+      // X GIF Downloader: X stores "GIFs" as silent MP4s. In addition to the
+      // MP4 formats above, offer a real animated .gif produced on demand by
+      // converting the smallest resolved stream through FFmpeg.
+      if (toolSlug === 'x-gif-downloader' && smallestRawStreamUrl) {
+        formats.push({
+          label:    'Animated GIF',
+          quality:  'gif',
+          extension: 'gif',
+          url:      `/api/tools/video/url-to-gif?${new URLSearchParams({
+            url: smallestRawStreamUrl,
+            filename: `${sanitize(title)}.gif`,
+          })}`,
+          hasAudio: false,
+          hasVideo: false,
+        });
+      }
+
       // Always add best audio (M4A)
-      const { streamUrl: audioUrl, filesize: audioSize } =
+      const { streamUrl: audioUrl, filesize: audioSize, referer: audioReferer, cookie: audioCookie } =
         await getFormatUrl(url, AUDIO_TIERS[0]!.selector);
       if (audioUrl && audioUrl !== 'NA') {
         formats.push({
@@ -225,7 +326,9 @@ export async function resolveWithYtdlp(
           quality:  'best',
           extension: 'm4a',
           size:     formatBytes(audioSize),
-          url:      proxyUrl(audioUrl, `${sanitize(title)}.m4a`),
+          url:      needsImpersonation(url)
+            ? ttStreamUrl(url, AUDIO_TIERS[0]!.selector, `${sanitize(title)}.m4a`)
+            : proxyUrl(audioUrl, `${sanitize(title)}.m4a`, { referer: audioReferer, cookie: audioCookie }),
           hasAudio: true,
           hasVideo: false,
         });
@@ -291,6 +394,35 @@ async function resolveThumbnail(url: string): Promise<DownloadResult> {
     thumbnail: formats[0]?.url || `${base}/hqdefault.jpg`,
     platform:  'youtube',
     formats,
+  };
+}
+
+/**
+ * Thumbnail resolver for platforms with no predictable CDN URL pattern
+ * (unlike YouTube's img.youtube.com). Reuses yt-dlp's own metadata
+ * extraction — its `thumbnail` field is already a direct CDN image URL.
+ */
+async function resolveThumbnailViaMetadata(url: string): Promise<DownloadResult> {
+  const meta = await getMeta(url);
+  if (!meta.thumbnail) {
+    return { ok: false, error: 'No thumbnail was found for this URL.' };
+  }
+  return {
+    ok: true,
+    title:     meta.title || 'Thumbnail',
+    thumbnail: meta.thumbnail,
+    author:    meta.uploader || undefined,
+    platform:  meta.platform || 'tiktok',
+    formats: [
+      {
+        label: 'Thumbnail JPG',
+        quality: 'original',
+        extension: 'jpg',
+        url: proxyUrl(meta.thumbnail, `${sanitize(meta.title || 'thumbnail')}.jpg`),
+        hasAudio: false,
+        hasVideo: false,
+      },
+    ],
   };
 }
 

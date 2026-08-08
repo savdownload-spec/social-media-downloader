@@ -1,7 +1,7 @@
 import type { ComponentType } from 'react';
 import {
-  MonitorPlay, Film, ListVideo, Image, Music, Video, Music2, Clapperboard,
-  Camera, UserRound, Tv, ImageDown,
+  MonitorPlay, Film, ListVideo, Image, Images, Music, Video, Music2, Clapperboard,
+  Camera, UserRound, Tv, ImageDown, Repeat,
   Eraser, Maximize2, Wand2, Minimize2, Scaling, RefreshCw, FileImage,
   FileVideo, Files, Scissors, FileArchive, FileText, FileType,
   Sparkles, Type, Hash, MessageSquareText,
@@ -50,6 +50,7 @@ const downloaders: CatalogTool[] = [
   { slug: 'tiktok-video-downloader', name: 'TikTok Video Downloader', group: 'Downloaders', description: 'Save TikToks in HD without the watermark.', icon: Video, tile: TILE.slate },
   { slug: 'tiktok-to-mp3', name: 'TikTok MP3 Downloader', group: 'Downloaders', description: 'Extract the sound from any TikTok as MP3.', icon: Music2, tile: TILE.cyan },
   { slug: 'tiktok-thumbnail-downloader', name: 'TikTok Thumbnail Downloader', group: 'Downloaders', description: 'Download the cover thumbnail of any TikTok.', icon: Image, tile: TILE.teal },
+  { slug: 'tiktok-photo-downloader', name: 'TikTok Photo Downloader', group: 'Downloaders', description: 'Save TikTok photo slideshows in full resolution.', icon: Images, tile: TILE.teal },
   { slug: 'instagram-reels-downloader', name: 'Instagram Reels Downloader', group: 'Downloaders', description: 'Save Instagram Reels in crisp HD.', icon: Clapperboard, tile: TILE.fuchsia },
   { slug: 'instagram-video-downloader', name: 'Instagram Video Downloader', group: 'Downloaders', description: 'Download any public Instagram video post.', icon: Video, tile: TILE.pink },
   { slug: 'instagram-photo-downloader', name: 'Instagram Photo Downloader', group: 'Downloaders', description: 'Save Instagram photos and carousels in full resolution.', icon: Image, tile: TILE.rose },
@@ -58,6 +59,7 @@ const downloaders: CatalogTool[] = [
   { slug: 'facebook-video-downloader', name: 'Facebook Video Downloader', group: 'Downloaders', description: 'Download Facebook videos in HD or SD.', icon: Tv, tile: TILE.blue },
   { slug: 'facebook-reels-downloader', name: 'Facebook Reels Downloader', group: 'Downloaders', description: 'Save Facebook Reels without the watermark.', icon: Film, tile: TILE.indigo },
   { slug: 'x-video-downloader', name: 'X (Twitter) Video Downloader', group: 'Downloaders', description: 'Download videos from X (Twitter) in HD.', icon: MonitorPlay, tile: TILE.slate },
+  { slug: 'x-gif-downloader', name: 'X (Twitter) GIF Downloader', group: 'Downloaders', description: 'Save GIFs from X as MP4 or a real animated GIF.', icon: Repeat, tile: TILE.slate },
   { slug: 'pinterest-video-downloader', name: 'Pinterest Video Downloader', group: 'Downloaders', description: 'Save Pinterest videos and Idea Pins in HD.', icon: Video, tile: TILE.red },
   { slug: 'pinterest-image-downloader', name: 'Pinterest Image Downloader', group: 'Downloaders', description: 'Download Pinterest images in original resolution.', icon: ImageDown, tile: TILE.rose },
 ];

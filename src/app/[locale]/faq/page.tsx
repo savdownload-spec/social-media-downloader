@@ -40,7 +40,7 @@ export default function FaqPage() {
           .
         </p>
       </Container>
-      <FAQ />
+      <FAQ showHeading={false} showFooter={false} />
     </>
   );
 }

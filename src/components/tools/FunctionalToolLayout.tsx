@@ -1,7 +1,7 @@
 import { Zap } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { Section, SectionHeading } from '@/components/layout/Section';
-import { Accordion } from '@/components/ui/Accordion';
+import { FAQSection } from '@/components/ui/FAQSection';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { ShareButton } from '@/components/ui/ShareButton';
 import { getCatalogTool, fallbackIcon, catalog } from '@/config/catalog';
@@ -124,15 +124,7 @@ export function FunctionalToolLayout({ tool, children }: Props) {
             </div>
           </Section>
 
-          <Section variant="default" containerClassName="max-w-3xl">
-            <SectionHeading
-              eyebrow="FAQ"
-              title={<>Common <span className="text-gradient">Questions.</span></>}
-            />
-            <div className="mt-12">
-              <Accordion items={content.faq} multiple />
-            </div>
-          </Section>
+          <FAQSection items={content.faq} variant="default" />
         </>
       )}
 

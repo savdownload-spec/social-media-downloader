@@ -24,6 +24,7 @@ const ALLOWED_HOSTS = [
   'ytimg.com',             // YouTube images/thumbnails
   'tiktokcdn.com',         // TikTok CDN
   'tiktokv.com',
+  'tiktok.com',            // TikTok video streams (e.g. v19-webapp-prime.tiktok.com)
   'musical.ly',
   'cdninstagram.com',      // Instagram CDN
   'fbcdn.net',             // Facebook CDN
@@ -55,6 +56,11 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const targetUrl = searchParams.get('url');
   const filename  = searchParams.get('filename') || 'download';
+  // Some CDNs (e.g. TikTok) bind signed stream URLs to the exact Referer and
+  // session cookies present at extraction time and 403 anything else. When
+  // the resolver captured them, replay them here instead of generic headers.
+  const referer   = searchParams.get('ref');
+  const cookie    = searchParams.get('cookie');
 
   if (!targetUrl) {
     return new NextResponse('Missing url parameter.', { status: 400 });
@@ -67,9 +73,11 @@ export async function GET(req: Request) {
   try {
     const upstream = await fetch(targetUrl, {
       headers: {
-        // Pass a generic UA to avoid bot detection
-        'User-Agent': 'Mozilla/5.0 (compatible; SavDown/1.0)',
-        'Referer':    new URL(targetUrl).origin,
+        'User-Agent': referer
+          ? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          : 'Mozilla/5.0 (compatible; SavDown/1.0)',
+        'Referer': referer || new URL(targetUrl).origin,
+        ...(cookie ? { Cookie: cookie } : {}),
       },
       signal: AbortSignal.timeout(30_000),
     });

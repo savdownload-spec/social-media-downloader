@@ -27,23 +27,25 @@ export function Newsletter() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      if (!res.ok) {
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data?.ok) {
         if (res.status === 429) {
-          warning(t('contact.toasts.slowDown'), t('contact.toasts.tooManyRequests'));
+          warning(t('contact.toasts.slowDown') || 'Slow down', t('contact.toasts.tooManyRequests') || 'Too many requests');
         } else {
-          errorToast(t('newsletter.errorTitle') || 'Subscription failed', t('newsletter.error'));
+          errorToast(t('newsletter.errorTitle') || 'Subscription failed', data?.error ?? (t('newsletter.error') || 'Please try again.'));
         }
         setState('err');
-        setError(t('newsletter.error'));
+        setError(data?.error ?? (t('newsletter.error') || 'Subscription failed'));
         return;
       }
       setState('ok');
       setEmail('');
-      success(t('contact.toasts.success'), t('newsletter.success'));
+      success(t('contact.toasts.success') || 'Success', t('newsletter.success') || "You're subscribed!");
     } catch {
-      errorToast(t('contact.toasts.networkError'), t('contact.toasts.networkErrorDesc'));
+      errorToast(t('contact.toasts.networkError') || 'Network error', t('contact.toasts.networkErrorDesc') || 'Could not reach server.');
       setState('err');
-      setError(t('newsletter.error'));
+      setError(t('newsletter.error') || 'Network error');
     }
   };
 
@@ -82,7 +84,7 @@ export function Newsletter() {
             </div>
             {error && <p className="mt-3 text-sm text-red-300">{error}</p>}
             {state === 'ok' && (
-              <p className="mt-3 text-sm text-accent">{t('newsletter.success')}</p>
+              <p className="mt-3 text-sm text-accent">{t('newsletter.success') || "You're subscribed!"}</p>
             )}
           </div>
         </div>

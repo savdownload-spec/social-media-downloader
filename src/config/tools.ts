@@ -593,6 +593,66 @@ export const tools: Tool[] = [
   },
 
   /* ─────────────────────────────────────────────────────────────────
+     TikTok Thumbnail Downloader
+  ───────────────────────────────────────────────────────────────── */
+  {
+    slug: 'tiktok-thumbnail-downloader',
+    platform: 'tiktok',
+    name: 'TikTok Thumbnail Downloader',
+    shortName: 'TikTok Thumbnail',
+    headline: 'Download The Cover Image From Any TikTok.',
+    subheadline: 'Grab the thumbnail/cover frame TikTok generates for a video, in full resolution.',
+    description:
+      'Download the cover thumbnail image from any public TikTok video. Free, fast, no watermark.',
+    keywords: ['tiktok thumbnail downloader', 'tiktok cover image', 'download tiktok thumbnail'],
+    placeholder: 'https://tiktok.com/@user/video/…',
+    urlPattern: /^(https?:\/\/)?(www\.|vm\.|vt\.)?tiktok\.com\/.+/i,
+    outputKind: 'image',
+    supportedFormats: ['JPG'],
+    featured: false,
+    trending: false,
+    faq: [
+      {
+        question: 'What image does the TikTok Thumbnail Downloader save?',
+        answer: 'It saves the cover frame TikTok automatically generates for the video (or the custom cover the creator selected). This is the same image shown on the video\'s tile before it starts playing.',
+      },
+      {
+        question: 'Do I need to log in to TikTok to download a thumbnail?',
+        answer: 'No. Paste the public video URL into SavDown and the cover image downloads directly, no TikTok account or login required.',
+      },
+      {
+        question: 'What resolution is the TikTok thumbnail saved at?',
+        answer: 'SavDown downloads the original cover image at the resolution TikTok stores it, typically matching the video\'s native resolution (commonly 1080×1920 for portrait videos).',
+      },
+      {
+        question: 'Does SavDown support vm.tiktok.com and vt.tiktok.com short links?',
+        answer: 'Yes. Short links are automatically resolved to the full video before the cover image is extracted.',
+      },
+      {
+        question: 'Can I download the thumbnail from a private TikTok video?',
+        answer: 'No. Only publicly visible videos can be processed. Private and friend-only videos are not accessible without TikTok account authentication.',
+      },
+      {
+        question: 'What file format is the thumbnail saved in?',
+        answer: 'The thumbnail is saved as a JPG file, which is universally compatible with every device and image viewer.',
+      },
+      {
+        question: 'Why would I want to download a TikTok cover image?',
+        answer: 'Creators reference cover designs for inspiration, archive cover art for their own videos, or save a cover to reuse as a thumbnail on another platform (with appropriate rights).',
+      },
+      {
+        question: 'Does SavDown store the thumbnail after I download it?',
+        answer: 'No. The image is fetched directly from TikTok\'s servers and streamed to your browser. Nothing is retained on SavDown\'s infrastructure.',
+      },
+    ],
+    howTo: [
+      { title: 'Copy The TikTok Link', body: 'Tap Share, then Copy Link on the video.' },
+      { title: 'Paste It Above', body: 'Drop the link into SavDown.' },
+      { title: 'Download The Cover', body: 'Save the thumbnail image to your device.' },
+    ],
+  },
+
+  /* ─────────────────────────────────────────────────────────────────
      8. Instagram Reels Downloader
   ───────────────────────────────────────────────────────────────── */
   {

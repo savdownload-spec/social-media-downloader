@@ -37,6 +37,14 @@ const THUMBNAIL_TOOLS = new Set([
 ]);
 
 /**
+ * Tools whose platform has no predictable CDN thumbnail URL pattern
+ * (unlike YouTube's img.youtube.com) — resolved via yt-dlp metadata instead.
+ */
+const METADATA_THUMBNAIL_TOOLS = new Set([
+  'tiktok-thumbnail-downloader',
+]);
+
+/**
  * Tools that want audio-only extraction from yt-dlp.
  */
 const AUDIO_ONLY_TOOLS = new Set([
@@ -129,6 +137,10 @@ async function dispatch(toolSlug: string, url: string): Promise<DownloadResult> 
 
   if (THUMBNAIL_TOOLS.has(toolSlug)) {
     return resolveWithYtdlp(url, toolSlug, { thumbnailOnly: true });
+  }
+
+  if (METADATA_THUMBNAIL_TOOLS.has(toolSlug)) {
+    return resolveWithYtdlp(url, toolSlug, { thumbnailViaMetadata: true });
   }
 
   if (AUDIO_ONLY_TOOLS.has(toolSlug)) {

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Check, Sparkles, Zap, Film, Music, Wand2, Coins } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
-import { Accordion } from '@/components/ui/Accordion';
+import { FAQSection } from '@/components/ui/FAQSection';
 import { buildMetadata } from '@/lib/seo';
 
 export const metadata = buildMetadata({
@@ -197,15 +197,7 @@ export default function PricingPage() {
       </section>
 
       {/* FAQ */}
-      <section className="py-20 bg-white border-t border-border-light">
-        <Container className="max-w-3xl">
-          <div className="text-center mb-12">
-            <p className="text-sm font-semibold uppercase tracking-wider text-gradient inline-block mb-3">Pricing FAQ</p>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Good Questions.</h2>
-          </div>
-          <Accordion items={faqs.map((f) => ({ question: f.q, answer: f.a }))} multiple />
-        </Container>
-      </section>
+      <FAQSection items={faqs.map((f) => ({ question: f.q, answer: f.a }))} variant="white" />
     </>
   );
 }

@@ -18,9 +18,11 @@ import type { ComponentType } from 'react';
 import { ColorPickerTool } from '@/components/tools/ColorPickerTool';
 import { GradientGeneratorTool } from '@/components/tools/GradientGeneratorTool';
 import { ImageTool } from '@/components/tools/ImageTool';
+import { VideoTool } from '@/components/tools/VideoTool';
 import { PdfTool } from '@/components/tools/PdfTool';
 import { QrGeneratorTool } from '@/components/tools/QrGeneratorTool';
 import { QrScannerTool } from '@/components/tools/QrScannerTool';
+import { SeoTool } from '@/components/tools/SeoTool';
 
 /** Props every functional-tool component accepts. */
 export type FunctionalToolProps = {
@@ -48,6 +50,13 @@ const functionalTools: Record<string, FunctionalToolEntry> = {
   'webp-converter':    { Component: ImageTool },
   'heic-to-jpg':       { Component: ImageTool },
 
+  /* ── Video tools (FFmpeg) ────────────────────────────────────── */
+  'video-converter':   { Component: VideoTool },
+  'video-compressor':  { Component: VideoTool },
+  'video-to-mp3':      { Component: VideoTool },
+  'gif-maker':         { Component: VideoTool },
+  'mp4-to-gif':        { Component: VideoTool },
+
   /* ── PDF tools (pdf-lib + Sharp) ─────────────────────────────── */
   'merge-pdf':         { Component: PdfTool },
   'split-pdf':         { Component: PdfTool },
@@ -62,6 +71,13 @@ const functionalTools: Record<string, FunctionalToolEntry> = {
   /* ── Utility tools (client-only) ─────────────────────────────── */
   'color-picker':      { Component: ColorPickerTool },
   'gradient-generator':{ Component: GradientGeneratorTool },
+
+  /* ── SEO tools (local templates/logic, client-only) ──────────── */
+  'meta-title-generator':       { Component: SeoTool },
+  'meta-description-generator': { Component: SeoTool },
+  'youtube-tags-generator':     { Component: SeoTool },
+  'keyword-generator':          { Component: SeoTool },
+  'schema-generator':           { Component: SeoTool },
 };
 
 /** Returns the live tool entry for a slug, or undefined if it isn't built yet. */
