@@ -9,6 +9,7 @@ import {
   QrCode, ScanLine, Pipette, Blend, Download,
 } from 'lucide-react';
 import { toolsBySlug } from '@/config/tools';
+import { getFunctionalTool } from '@/config/functionalTools';
 
 export type ToolGroup = 'Downloaders' | 'Image' | 'Video' | 'PDF' | 'AI' | 'SEO' | 'Utility';
 
@@ -146,9 +147,15 @@ export function getCatalogTool(slug: string): CatalogTool | undefined {
   return catalogBySlug.get(slug);
 }
 
-/** A tool is live (has a working page) when a full config exists for it. */
+/**
+ * A tool is live (has a working page) when either a downloader config
+ * exists for it (tools.ts) or a functional-tool component is registered
+ * for it (functionalTools.ts) — checking only one registry marked every
+ * non-downloader tool (image/video/PDF/QR/SEO/utility) as "Coming Soon"
+ * even though its page worked fine.
+ */
 export function isToolAvailable(slug: string): boolean {
-  return toolsBySlug.has(slug);
+  return toolsBySlug.has(slug) || !!getFunctionalTool(slug);
 }
 
 export const fallbackIcon = Download;

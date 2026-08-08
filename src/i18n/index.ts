@@ -24,13 +24,21 @@ export function useTranslation() {
   // Proxy: try t() first (strings), fall back to raw for arrays/objects
   function translate(key: string): any {
     const raw = getRaw(key);
-    if (Array.isArray(raw) || (raw && typeof raw === 'object' && !Array.isArray(raw) && typeof raw !== 'string')) {
+    // next-intl's default behavior for a missing message is to return the
+    // key itself (a truthy string) rather than throwing or returning
+    // undefined — that silently breaks every `t(key) || fallback` call site
+    // across the app whenever a locale is missing a key, showing the raw
+    // "some.dotted.key" string in the UI instead of the intended fallback.
+    // Checking the raw messages object first (where a missing key is
+    // genuinely undefined) lets callers' `||` fallbacks work correctly.
+    if (raw === undefined) return undefined;
+    if (Array.isArray(raw) || (typeof raw === 'object' && !Array.isArray(raw))) {
       return raw;
     }
     try {
       return t(key as any);
     } catch {
-      return raw ?? key;
+      return raw;
     }
   }
 
