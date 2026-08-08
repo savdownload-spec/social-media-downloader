@@ -89,6 +89,7 @@ export async function GET(req: Request) {
         headers: {
           'Content-Type':        'video/mp4',
           'Content-Disposition': `attachment; filename="${filename}"`,
+          'Content-Length':      String(buffer.length),
           'Cache-Control':       'no-store',
         },
       });
@@ -110,6 +111,7 @@ export async function GET(req: Request) {
       headers: {
         'Content-Type':        'audio/mpeg',
         'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Length':      String(buffer.length),
         'Cache-Control':       'no-store',
       },
     });

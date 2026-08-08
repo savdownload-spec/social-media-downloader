@@ -62,6 +62,18 @@ function proxyUrl(rawUrl: string, filename: string, extra?: { referer?: string; 
   return `${base}/api/proxy?${new URLSearchParams(params)}`;
 }
 
+/**
+ * Most platforms only serve resolutions above ~360p as separate video-only
+ * and audio-only streams — no single CDN URL has both. Point the download
+ * link at /api/download/merge, which has yt-dlp mux the matching pair
+ * server-side into one real (non-silent) MP4, instead of handing back a
+ * raw video-only stream URL.
+ */
+function mergeDownloadUrl(pageUrl: string, height: number, filename: string): string {
+  const base = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  return `${base}/api/download/merge?${new URLSearchParams({ url: pageUrl, height: String(height), filename })}`;
+}
+
 /* ─── core yt-dlp runner ─────────────────────────────────────── */
 
 interface YtdlpMeta {
@@ -124,15 +136,20 @@ async function getMeta(url: string): Promise<YtdlpMeta> {
 async function getFormatUrl(
   url: string,
   formatSelector: string,
-): Promise<{ streamUrl: string; filesize: number; referer?: string; cookie?: string }> {
+): Promise<{ streamUrl: string; filesize: number; height?: number; referer?: string; cookie?: string }> {
   const impersonating = needsImpersonation(url);
   // TikTok's CDN rejects stream requests that don't carry the exact
   // Referer + session cookies yt-dlp used during extraction (separate bot
   // check from the page-extraction challenge). Capture them so the proxy
   // can replay them when actually fetching the file.
+  //
+  // %(height)s is always requested: a "height<=2160" selector will happily
+  // fall back to whatever the video's actual max height is (e.g. 1080p) —
+  // the caller needs the real resolved height to dedupe/relabel tiers that
+  // all silently landed on the same underlying stream.
   const printTemplate = impersonating
-    ? '%(url)s\n---FIELD---\n%(filesize|filesize_approx|0)s\n---FIELD---\n%(http_headers.Referer)s\n---FIELD---\n%(cookies)s'
-    : '%(url)s\n---FIELD---\n%(filesize|filesize_approx|0)s';
+    ? '%(url)s\n---FIELD---\n%(filesize|filesize_approx|0)s\n---FIELD---\n%(height|0)s\n---FIELD---\n%(http_headers.Referer)s\n---FIELD---\n%(cookies)s'
+    : '%(url)s\n---FIELD---\n%(filesize|filesize_approx|0)s\n---FIELD---\n%(height|0)s';
 
   const args = [
     '--no-playlist', '--no-warnings', '--no-call-home',
@@ -151,11 +168,13 @@ async function getFormatUrl(
     const parts = stdout.trim().split('\n---FIELD---\n');
     const streamUrl = parts[0]?.trim() || '';
     const filesize  = parseInt(parts[1]?.trim() || '0', 10) || 0;
-    const referer   = parts[2]?.trim();
-    const cookie    = parts[3]?.trim();
+    const height    = parseInt(parts[2]?.trim() || '0', 10) || undefined;
+    const referer   = parts[3]?.trim();
+    const cookie    = parts[4]?.trim();
     return {
       streamUrl,
       filesize,
+      height,
       referer: referer && referer !== 'NA' ? referer : undefined,
       cookie:  cookie  && cookie  !== 'NA' ? cookie  : undefined,
     };
@@ -166,16 +185,25 @@ async function getFormatUrl(
 
 /* ─── video quality tiers ────────────────────────────────────── */
 
-// Quality tiers — use single-file format selectors only, since --print
-// cannot output a merged DASH stream URL (that requires actual muxing).
-// For each tier: prefer a pre-muxed mp4 → fall back to best mp4 DASH video.
+// Quality tiers used to PROBE which resolutions actually exist for a given
+// video (and their real height, for accurate labeling — see labelForHeight).
+// These selectors are video-only-aware: most platforms (YouTube especially)
+// only serve anything above ~360p as separate video-only DASH streams, with
+// no single URL containing both audio and video. The actual download later
+// goes through /api/download/merge, which has yt-dlp mux the matching
+// video+audio pair server-side — these selectors are only used to discover
+// what heights genuinely exist, never to hand back a raw (possibly silent)
+// stream URL directly.
 export const VIDEO_TIERS: { label: string; quality: string; selector: string }[] = [
-  { label: 'MP4 2160p (4K)', quality: '2160p', selector: 'bestvideo[height<=2160][ext=mp4][acodec!=none]/bestvideo[height<=2160][ext=mp4]/best[height<=2160]' },
-  { label: 'MP4 1440p',      quality: '1440p', selector: 'bestvideo[height<=1440][ext=mp4][acodec!=none]/bestvideo[height<=1440][ext=mp4]/best[height<=1440]' },
-  { label: 'MP4 1080p (HD)', quality: '1080p', selector: 'bestvideo[height<=1080][ext=mp4][acodec!=none]/bestvideo[height<=1080][ext=mp4]/best[height<=1080]' },
-  { label: 'MP4 720p',       quality: '720p',  selector: 'bestvideo[height<=720][ext=mp4][acodec!=none]/bestvideo[height<=720][ext=mp4]/best[height<=720]'   },
-  { label: 'MP4 480p',       quality: '480p',  selector: 'bestvideo[height<=480][ext=mp4][acodec!=none]/bestvideo[height<=480][ext=mp4]/best[height<=480]'   },
-  { label: 'MP4 360p',       quality: '360p',  selector: 'best[height<=360][ext=mp4]/bestvideo[height<=360][ext=mp4]/best[height<=360]'                      },
+  { label: 'MP4 4320p (8K)', quality: '4320p', selector: 'bestvideo[height<=4320][ext=mp4]/bestvideo[height<=4320]' },
+  { label: 'MP4 2160p (4K)', quality: '2160p', selector: 'bestvideo[height<=2160][ext=mp4]/bestvideo[height<=2160]' },
+  { label: 'MP4 1440p',      quality: '1440p', selector: 'bestvideo[height<=1440][ext=mp4]/bestvideo[height<=1440]' },
+  { label: 'MP4 1080p (HD)', quality: '1080p', selector: 'bestvideo[height<=1080][ext=mp4]/bestvideo[height<=1080]' },
+  { label: 'MP4 720p',       quality: '720p',  selector: 'bestvideo[height<=720][ext=mp4]/bestvideo[height<=720]'   },
+  { label: 'MP4 480p',       quality: '480p',  selector: 'bestvideo[height<=480][ext=mp4]/bestvideo[height<=480]'   },
+  { label: 'MP4 360p',       quality: '360p',  selector: 'bestvideo[height<=360][ext=mp4]/bestvideo[height<=360]/best[height<=360][ext=mp4]' },
+  { label: 'MP4 240p',       quality: '240p',  selector: 'bestvideo[height<=240][ext=mp4]/bestvideo[height<=240]'   },
+  { label: 'MP4 144p',       quality: '144p',  selector: 'bestvideo[height<=144][ext=mp4]/bestvideo[height<=144]'   },
 ];
 
 // Audio tier for music/podcast downloads
@@ -183,6 +211,24 @@ export const AUDIO_TIERS: { label: string; quality: string; ext: string; selecto
   { label: 'M4A 128kbps', quality: '128kbps', ext: 'm4a', selector: 'bestaudio[ext=m4a]/bestaudio' },
   { label: 'WebM Audio',  quality: 'high',    ext: 'webm', selector: 'bestaudio[ext=webm]' },
 ];
+
+/**
+ * Map a yt-dlp-resolved actual height to a display label. A tier selector
+ * like "height<=2160" happily falls back to the video's real max height
+ * (e.g. 1080p) when nothing higher exists — this maps what yt-dlp actually
+ * gave us, not what tier we asked for, so we never label a 1080p stream as
+ * "4K".
+ */
+function labelForHeight(height: number): { label: string; quality: string } {
+  if (height >= 4320) return { label: 'MP4 4320p (8K)', quality: '4320p' };
+  if (height >= 2160) return { label: 'MP4 2160p (4K)', quality: '2160p' };
+  if (height >= 1440) return { label: 'MP4 1440p',       quality: '1440p' };
+  if (height >= 1080) return { label: 'MP4 1080p (HD)',  quality: '1080p' };
+  if (height >= 720)  return { label: 'MP4 720p',        quality: '720p' };
+  if (height >= 480)  return { label: 'MP4 480p',        quality: '480p' };
+  if (height >= 360)  return { label: 'MP4 360p',         quality: '360p' };
+  return { label: `MP4 ${height}p`, quality: `${height}p` };
+}
 
 // TikTok audio extraction discards the video track, so resolution doesn't
 // matter — use the most permissive selector to avoid failing on videos
@@ -276,25 +322,43 @@ export async function resolveWithYtdlp(
       );
 
       let smallestRawStreamUrl = '';
+      // A "height<=2160" selector silently falls back to the video's real
+      // max height (e.g. 1080p) when nothing higher exists — without this,
+      // every unavailable higher tier would re-list that same stream
+      // mislabeled as 4K/1440p. Dedupe on the *displayed* quality bucket
+      // (not the raw height) since two slightly different raw heights
+      // (e.g. 480 and 576) can still land in the same "480p" bucket.
+      const seenQuality = new Set<string>();
       for (let i = 0; i < VIDEO_TIERS.length; i++) {
         const tier   = VIDEO_TIERS[i]!;
         const result = tierResults[i];
         if (result?.status !== 'fulfilled') continue;
-        const { streamUrl, filesize, referer, cookie } = result.value;
+        const { streamUrl, filesize, height } = result.value;
         if (!streamUrl || streamUrl === 'NA') continue;
+
+        const { label, quality } = height ? labelForHeight(height) : tier;
+        if (seenQuality.has(quality)) continue;
+        seenQuality.add(quality);
 
         // Track the raw (unproxied) URL of the smallest resolved tier — used
         // below to feed a fast GIF conversion for x-gif-downloader.
         smallestRawStreamUrl = streamUrl;
 
+        // TikTok's "bestvideo" formats already have audio embedded (TikTok
+        // doesn't split video/audio into separate DASH tracks the way
+        // YouTube does), so its own stream route can serve them directly.
+        // Everywhere else, height above ~360p is very likely video-only —
+        // route through the merge endpoint so the download actually has sound.
+        const mergeHeight = height || parseInt(quality, 10) || 1080;
+
         formats.push({
-          label:    tier.label,
-          quality:  tier.quality,
+          label,
+          quality,
           extension: 'mp4',
           size:     formatBytes(filesize),
           url:      needsImpersonation(url)
             ? ttStreamUrl(url, tier.selector, `${sanitize(title)}.mp4`)
-            : proxyUrl(streamUrl, `${sanitize(title)}.mp4`, { referer, cookie }),
+            : mergeDownloadUrl(url, mergeHeight, `${sanitize(title)}.mp4`),
           hasAudio: true,
           hasVideo: true,
         });
@@ -317,22 +381,9 @@ export async function resolveWithYtdlp(
         });
       }
 
-      // Always add best audio (M4A)
-      const { streamUrl: audioUrl, filesize: audioSize, referer: audioReferer, cookie: audioCookie } =
-        await getFormatUrl(url, AUDIO_TIERS[0]!.selector);
-      if (audioUrl && audioUrl !== 'NA') {
-        formats.push({
-          label:    'M4A Audio',
-          quality:  'best',
-          extension: 'm4a',
-          size:     formatBytes(audioSize),
-          url:      needsImpersonation(url)
-            ? ttStreamUrl(url, AUDIO_TIERS[0]!.selector, `${sanitize(title)}.m4a`)
-            : proxyUrl(audioUrl, `${sanitize(title)}.m4a`, { referer: audioReferer, cookie: audioCookie }),
-          hasAudio: true,
-          hasVideo: false,
-        });
-      }
+      // Note: no bonus audio-only track here by design — a video downloader
+      // should only offer video files. Audio extraction is a separate,
+      // dedicated tool (youtube-to-mp3, tiktok-to-mp3, etc.).
     }
 
     if (!formats.length) {

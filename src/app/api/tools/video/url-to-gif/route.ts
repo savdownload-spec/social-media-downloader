@@ -34,11 +34,13 @@ export async function GET(req: Request) {
   }
 
   const base = filename.replace(/\.[^.]+$/, '');
-  return new NextResponse(Buffer.from(result.buffer), {
+  const buffer = Buffer.from(result.buffer);
+  return new NextResponse(buffer, {
     status: 200,
     headers: {
       'Content-Type':        result.mimeType,
       'Content-Disposition': `attachment; filename="${base}.gif"`,
+      'Content-Length':      String(buffer.length),
       'Cache-Control':       'no-store',
     },
   });

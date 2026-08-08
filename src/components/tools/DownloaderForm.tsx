@@ -2,12 +2,75 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, Loader2, AlertCircle, Play } from 'lucide-react';
+import { Download, Loader2, AlertCircle, Play, Check } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { CopyButton } from '@/components/ui/CopyButton';
 import { useToast } from '@/components/ui/Toast';
-import type { DownloadResult } from '@/types';
+import type { DownloadResult, DownloadFormat } from '@/types';
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+/**
+ * Downloads a file with visible progress instead of a plain <a href download>
+ * (which gives no feedback while the server is still generating the file —
+ * common for on-demand muxed/converted downloads that take several seconds
+ * before any bytes are ready). Streams the response, tracks bytes received
+ * against Content-Length when available, then saves via a Blob.
+ */
+async function downloadWithProgress(
+  url: string,
+  fallbackFilename: string,
+  onProgress: (pct: number | null, receivedBytes: number) => void,
+): Promise<void> {
+  const res = await fetch(url);
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.error || 'Download failed.');
+  }
+
+  const disposition = res.headers.get('content-disposition') || '';
+  const nameMatch = disposition.match(/filename="([^"]+)"/);
+  const filename = nameMatch?.[1] || fallbackFilename;
+
+  const total = parseInt(res.headers.get('content-length') || '0', 10);
+  const reader = res.body?.getReader();
+
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+
+  if (reader) {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        chunks.push(value);
+        received += value.length;
+        onProgress(total > 0 ? Math.min(99, Math.round((received / total) * 100)) : null, received);
+      }
+    }
+  } else {
+    // Streaming reader unavailable — fall back to a single buffered read.
+    const buf = await res.arrayBuffer();
+    chunks.push(new Uint8Array(buf));
+    received = buf.byteLength;
+  }
+
+  onProgress(100, received);
+
+  const blob = new Blob(chunks as BlobPart[]);
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(blobUrl);
+}
 
 /**
  * A serializable subset of a Tool. The full Tool contains a RegExp
@@ -28,7 +91,28 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [error, setError] = useState('');
   const [result, setResult] = useState<Extract<DownloadResult, { ok: true }> | null>(null);
+  const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
+  const [downloadPct, setDownloadPct] = useState<number | null>(null);
+  const [downloadedBytes, setDownloadedBytes] = useState(0);
   const { success, error: errorToast, warning } = useToast();
+
+  const handleDownload = useCallback(async (f: DownloadFormat) => {
+    const key = f.label + f.quality;
+    setDownloadingKey(key);
+    setDownloadPct(0);
+    setDownloadedBytes(0);
+    try {
+      await downloadWithProgress(f.url, `${tool.name}.${f.extension}`, (pct, bytes) => {
+        setDownloadPct(pct);
+        setDownloadedBytes(bytes);
+      });
+    } catch (e) {
+      errorToast('Download failed', e instanceof Error ? e.message : 'Please try again.');
+    } finally {
+      setDownloadingKey(null);
+      setDownloadPct(null);
+    }
+  }, [tool.name, errorToast]);
 
   useEffect(() => {
     const q = params.get('url');
@@ -165,20 +249,41 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
                   <p className="mt-1 text-sm text-text-muted">by {result.author}</p>
                 )}
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {result.formats.map((f) => (
-                    <a
-                      key={f.label + f.quality}
-                      href={f.url}
-                      download
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-text text-white text-sm font-medium hover:bg-text/90 active:scale-[0.98] transition-all"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      {f.label}
-                      {f.size && <span className="text-white/60 text-xs">· {f.size}</span>}
-                    </a>
-                  ))}
+                  {result.formats.map((f) => {
+                    const key = f.label + f.quality;
+                    const isDownloading = downloadingKey === key;
+                    const isOtherDownloading = downloadingKey !== null && !isDownloading;
+                    const isDone = isDownloading && downloadPct === 100;
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => handleDownload(f)}
+                        disabled={isOtherDownloading}
+                        className="relative inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-text text-white text-sm font-medium hover:bg-text/90 active:scale-[0.98] transition-all overflow-hidden disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {isDownloading && (
+                          <span
+                            className="absolute inset-y-0 left-0 bg-primary/50 transition-[width] duration-200"
+                            style={{
+                              width: downloadPct !== null ? `${downloadPct}%` : '100%',
+                              ...(downloadPct === null ? { animation: 'pulse 1.4s ease-in-out infinite' } : {}),
+                            }}
+                          />
+                        )}
+                        <span className="relative z-10 flex items-center gap-2">
+                          {isDownloading ? (
+                            isDone ? <Check className="w-3.5 h-3.5" /> : <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Download className="w-3.5 h-3.5" />
+                          )}
+                          {isDownloading
+                            ? (downloadPct !== null ? `${downloadPct}%` : `${formatBytes(downloadedBytes)}…`)
+                            : f.label}
+                          {!isDownloading && f.size && <span className="text-white/60 text-xs">· {f.size}</span>}
+                        </span>
+                      </button>
+                    );
+                  })}
                   {result.formats.length > 0 && (
                     <CopyButton
                       value={result.formats[0].url}
