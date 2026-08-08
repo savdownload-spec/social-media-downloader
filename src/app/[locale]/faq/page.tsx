@@ -33,7 +33,7 @@ export default function FaqPage() {
           Everything You Might Wonder.
         </h1>
         <p className="mt-4 text-text-muted leading-relaxed">
-          Can't find your question? Reach us on the{' '}
+          Can&apos;t find your question? Reach us on the{' '}
           <a href="/contact" className="text-primary underline underline-offset-4">
             contact page
           </a>

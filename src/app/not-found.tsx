@@ -14,7 +14,7 @@ export default function NotFound() {
           This Page Slipped Away.
         </h1>
         <p className="mt-4 text-text-muted leading-relaxed">
-          The link you followed may be broken, or the page has moved. Let's get you
+          The link you followed may be broken, or the page has moved. Let&apos;s get you
           back to something useful.
         </p>
         <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">

@@ -110,7 +110,7 @@ export default function DmcaPage() {
             icon={<Mail className="w-5 h-5" />}
             tile="bg-rose-50 text-rose-600"
             title="Where to send"
-            description={<>Submit notices via our <InfoCtaLink text="contact form" href="/contact" /> with subject line "DMCA Notice", or email our designated agent at <a href="mailto:dmca@savdown.com" className="font-medium text-primary underline underline-offset-4">dmca@savdown.com</a>.</>}
+            description={<>Submit notices via our <InfoCtaLink text="contact form" href="/contact" /> with subject line &quot;DMCA Notice&quot;, or email our designated agent at <a href="mailto:dmca@savdown.com" className="font-medium text-primary underline underline-offset-4">dmca@savdown.com</a>.</>}
           />
           <InfoBlock
             icon={<Scale className="w-5 h-5" />}
@@ -135,7 +135,7 @@ export default function DmcaPage() {
 
       <InfoCallout
         title="Need to file a notice?"
-        body={<>Use our contact form with the subject "DMCA Notice" and we will route it to the designated agent immediately.</>}
+        body={<>Use our contact form with the subject &quot;DMCA Notice&quot; and we will route it to the designated agent immediately.</>}
         cta={{ label: 'File a notice', href: '/contact' }}
       />
     </>

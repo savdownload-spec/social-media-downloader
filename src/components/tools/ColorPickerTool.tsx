@@ -15,6 +15,10 @@ type ColorResult = {
   hsl: string;
 };
 
+/** The EyeDropper API has no official TS lib types yet (Chrome/Edge 95+ only). */
+type EyeDropperResult = { sRGBHex: string };
+type EyeDropperConstructor = new () => { open: () => Promise<EyeDropperResult> };
+
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const clean = hex.replace('#', '');
   return {
@@ -56,8 +60,7 @@ export function ColorPickerTool() {
 
   /* ── EyeDropper API ── */
   const pickFromScreen = useCallback(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const EyeDropper = (window as any).EyeDropper;
+    const EyeDropper = (window as unknown as { EyeDropper?: EyeDropperConstructor }).EyeDropper;
     if (!EyeDropper) {
       errToast('Not supported', 'Your browser does not support the EyeDropper API. Try Chrome 95+ or Edge 95+.');
       return;

@@ -78,7 +78,7 @@ function SearchInner() {
 
       <p className="mt-6 text-sm text-text-muted">
         {results.length} result{results.length === 1 ? '' : 's'}
-        {query && <> for "<span className="text-text">{query}</span>"</>}
+        {query && <> for &quot;<span className="text-text">{query}</span>&quot;</>}
       </p>
 
       <div className="mt-6 space-y-3">

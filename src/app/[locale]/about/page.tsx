@@ -161,7 +161,7 @@ export default function AboutPage() {
               Our Mission
             </span>
             <blockquote className="text-2xl md:text-4xl font-bold tracking-tight text-text leading-snug">
-              &ldquo;To make digital media handling effortless, transparent, and respectful of every user's time and data.&rdquo;
+              &ldquo;To make digital media handling effortless, transparent, and respectful of every user&apos;s time and data.&rdquo;
             </blockquote>
             <p className="mt-6 text-text-muted text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
               Every feature we ship adheres to a strict standard: zero cognitive load, instant execution, and absolute respect for personal privacy.
