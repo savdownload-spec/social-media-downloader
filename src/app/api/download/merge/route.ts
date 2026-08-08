@@ -70,8 +70,11 @@ export async function GET(req: Request) {
         '--', pageUrl,
       ], { timeout: DOWNLOAD_TIMEOUT, maxBuffer: 10 * 1024 * 1024 });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      const friendly = msg.includes('Requested format is not available')
+      const execErr = err as (Error & { stderr?: string }) | undefined;
+      const msg = execErr?.stderr || (err instanceof Error ? err.message : String(err));
+      const friendly = msg.includes('Sign in to confirm') || msg.includes('not a bot')
+        ? 'The platform is temporarily rate-limiting automated requests. Please try again in a few minutes.'
+        : msg.includes('Requested format is not available')
         ? 'This quality is not available for this video.'
         : msg.includes('Private video') || msg.includes('private')
         ? 'This video is private and cannot be downloaded.'

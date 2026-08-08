@@ -393,7 +393,14 @@ export async function resolveWithYtdlp(
     return { ok: true, title, thumbnail, author, duration, platform, formats };
 
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    // Node's execFile rejection .message is "Command failed: <full binary
+    // path and args>\n<stderr>" — that leaks internal server paths/flags to
+    // the client. Prefer .stderr (yt-dlp's own clean error line) when present.
+    const execErr = err as (Error & { stderr?: string }) | undefined;
+    const msg = execErr?.stderr || (err instanceof Error ? err.message : String(err));
+
+    if (msg.includes('Sign in to confirm') || msg.includes('not a bot'))
+      return { ok: false, error: 'The platform is temporarily rate-limiting automated requests. Please try again in a few minutes.' };
     if (msg.includes('Private video') || msg.includes('private'))
       return { ok: false, error: 'This video is private and cannot be downloaded.' };
     if (msg.includes('not available') || msg.includes('removed'))
@@ -402,7 +409,9 @@ export async function resolveWithYtdlp(
       return { ok: false, error: 'This content is not available in the server region.' };
     if (msg.includes('Unsupported URL'))
       return { ok: false, error: 'This URL is not supported.' };
-    return { ok: false, error: `Could not process this URL. ${msg.slice(0, 160)}` };
+
+    // Never leak internal paths or command-line details in the fallback.
+    return { ok: false, error: 'Could not process this URL. The platform may be temporarily unavailable — please try again shortly.' };
   }
 }
 

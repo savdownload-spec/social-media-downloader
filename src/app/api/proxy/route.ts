@@ -108,8 +108,7 @@ export async function GET(req: Request) {
           : {}),
       },
     });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return new NextResponse(`Proxy error: ${msg}`, { status: 502 });
+  } catch {
+    return new NextResponse('Could not fetch this file. Please try again.', { status: 502 });
   }
 }

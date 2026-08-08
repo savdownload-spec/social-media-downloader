@@ -194,7 +194,9 @@ export async function processVideo(
     if (msg.includes('Invalid data found') || msg.includes('moov atom not found')) {
       return { ok: false, error: 'This file could not be read as a valid video.' };
     }
-    return { ok: false, error: `Video processing failed: ${msg.slice(0, 200)}` };
+    // Never leak internal binary paths/command details (execFile's rejection
+    // .message is "Command failed: <full path and args>\n<stderr>").
+    return { ok: false, error: 'Video processing failed. Please try a different file.' };
   }
 }
 
@@ -239,9 +241,9 @@ export async function urlToGif(
       originalSize: 0,
       outputSize: buffer.length,
     };
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return { ok: false, error: `GIF conversion failed: ${msg.slice(0, 160)}` };
+  } catch {
+    // Never leak internal binary paths/command details to the client.
+    return { ok: false, error: 'GIF conversion failed. Please try again.' };
   } finally {
     await rm(dir, { recursive: true, force: true }).catch(() => {});
   }
