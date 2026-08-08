@@ -17,10 +17,16 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import type { DownloadResult, DownloadFormat } from '@/types';
+import { getGalleryDlBin } from '@/lib/binaryPaths';
 
 const execFileAsync = promisify(execFile);
 
-const GDL_BIN     = process.env.GALLERY_DL_BIN     || 'gallery-dl';
+// Unlike yt-dlp/ffmpeg, gallery-dl has no official standalone binary release
+// (Python-only, no PyInstaller artifact), so it can't be bundled into a
+// serverless deployment the same way — it needs GALLERY_DL_BIN pointing at
+// an install on a persistent server (VPS/Docker/sidecar), or it falls back
+// to expecting `gallery-dl` on PATH, which won't exist on Vercel.
+const GDL_BIN     = getGalleryDlBin();
 const GDL_TIMEOUT = parseInt(process.env.GALLERY_DL_TIMEOUT_MS || '30000', 10);
 const MAX_RETRIES = 2;
 

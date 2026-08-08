@@ -28,14 +28,16 @@ import path from 'path';
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { needsImpersonation, KNOWN_SELECTORS } from '@/lib/ytdlp';
+import { getYtdlpBin, getFfmpegBin } from '@/lib/binaryPaths';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
 
 const execFileAsync = promisify(execFile);
 
-const YTDLP_BIN      = process.env.YTDLP_BIN  || 'yt-dlp';
-const FFMPEG_BIN      = process.env.FFMPEG_BIN || 'ffmpeg';
+const YTDLP_BIN      = getYtdlpBin();
+const FFMPEG_BIN      = getFfmpegBin();
 const DOWNLOAD_TIMEOUT = parseInt(process.env.YTDLP_TIMEOUT_MS || '45000', 10) * 2; // real download, not metadata — allow more time
 
 export async function GET(req: Request) {

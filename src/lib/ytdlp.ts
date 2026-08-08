@@ -9,10 +9,11 @@
 import { execFile, spawn } from 'child_process';
 import { promisify } from 'util';
 import type { DownloadResult, DownloadFormat } from '@/types';
+import { getYtdlpBin } from '@/lib/binaryPaths';
 
 const execFileAsync = promisify(execFile);
 
-const YTDLP_BIN     = process.env.YTDLP_BIN     || 'yt-dlp';
+const YTDLP_BIN     = getYtdlpBin();
 const YTDLP_TIMEOUT = parseInt(process.env.YTDLP_TIMEOUT_MS || '45000', 10);
 const MAX_RETRIES   = 2;
 

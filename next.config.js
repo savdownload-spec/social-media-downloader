@@ -28,6 +28,15 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
+    // The bundled yt-dlp Linux binary (bin/) and ffmpeg-static's downloaded
+    // binary aren't detected by Next.js's default file tracing (they're
+    // read via a runtime-computed path, not a static import), so Vercel's
+    // build would silently omit them from the serverless function bundle
+    // without this — every downloader/video route would fail in
+    // production despite working locally.
+    outputFileTracingIncludes: {
+      '/api/**/*': ['./bin/**/*', './node_modules/ffmpeg-static/**/*'],
+    },
   },
 };
 

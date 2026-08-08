@@ -21,14 +21,18 @@ import { tmpdir } from 'os';
 import path from 'path';
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
+import { getYtdlpBin, getFfmpegBin } from '@/lib/binaryPaths';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+// This does a real download + FFmpeg merge, which can take well past
+// Vercel's default 10s — extend as far as the plan allows.
+export const maxDuration = 300;
 
 const execFileAsync = promisify(execFile);
 
-const YTDLP_BIN        = process.env.YTDLP_BIN  || 'yt-dlp';
-const FFMPEG_BIN        = process.env.FFMPEG_BIN || 'ffmpeg';
+const YTDLP_BIN        = getYtdlpBin();
+const FFMPEG_BIN        = getFfmpegBin();
 const DOWNLOAD_TIMEOUT   = parseInt(process.env.YTDLP_TIMEOUT_MS || '45000', 10) * 2; // real download, not metadata
 
 export async function GET(req: Request) {

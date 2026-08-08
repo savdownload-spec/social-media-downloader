@@ -16,10 +16,11 @@ import { randomUUID } from 'crypto';
 import { mkdtemp, readFile, writeFile, rm } from 'fs/promises';
 import { tmpdir } from 'os';
 import path from 'path';
+import { getFfmpegBin } from '@/lib/binaryPaths';
 
 const execFileAsync = promisify(execFile);
 
-const FFMPEG_BIN     = process.env.FFMPEG_BIN     || 'ffmpeg';
+const FFMPEG_BIN     = getFfmpegBin();
 const FFMPEG_TIMEOUT = parseInt(process.env.FFMPEG_TIMEOUT_MS || '60000', 10);
 const MAX_INPUT_BYTES = 100 * 1024 * 1024; // 100 MB
 // GIF encoding is inefficient for noisy/high-motion footage — a busy 10s
