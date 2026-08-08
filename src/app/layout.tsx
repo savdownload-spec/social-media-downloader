@@ -24,6 +24,7 @@ export const metadata: Metadata = {
     creator: siteConfig.twitterHandle,
   },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+  manifest: '/manifest.webmanifest',
   icons: {
     icon: [
       { url: '/icon-16.png', sizes: '16x16', type: 'image/png' },
@@ -34,6 +35,11 @@ export const metadata: Metadata = {
     ],
     shortcut: '/icon-32.png',
     apple: '/icon-180.png',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: siteConfig.name,
   },
 };
 

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>You're offline — SavDown</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+    background: #F7F7FB;
+    color: #0F0B1E;
+  }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    max-width: 380px;
+    width: 100%;
+    text-align: center;
+  }
+  .logo {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    margin: 0 auto 24px;
+    box-shadow: 0 16px 40px -10px rgb(124 58 237 / 0.35);
+  }
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+  }
+  p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #6B7280;
+    margin: 0 0 24px;
+  }
+  button {
+    appearance: none;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 16px;
+    background: linear-gradient(120deg, #6366F1 0%, #8B5CF6 50%, #D946EF 100%);
+    box-shadow: 0 10px 40px -8px rgb(124 58 237 / 0.35);
+  }
+  button:active { transform: scale(0.98); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <img class="logo" src="/icon-192.png" alt="SavDown" width="64" height="64" />
+    <h1>You're offline</h1>
+    <p>SavDown needs a connection to fetch and process links. Reconnect and try again — your place in the app will be right where you left it.</p>
+    <button onclick="location.reload()">Try again</button>
+  </div>
+</body>
+</html>

@@ -5,6 +5,8 @@ import { AdBanner } from '@/components/layout/AdBanner';
 import { Footer } from '@/components/layout/Footer';
 import { ToastProvider } from '@/components/ui/Toast';
 import { ConfirmProvider } from '@/components/ui/ConfirmProvider';
+import { InstallProvider } from '@/components/pwa/InstallProvider';
+import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations } from 'next-intl/server';
 import { siteConfig } from '@/config/site';
@@ -71,10 +73,13 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <ToastProvider>
             <ConfirmProvider>
-              <Header />
-              <AdBanner />
-              <main className="min-h-[calc(100vh-4rem)]">{children}</main>
-              <Footer />
+              <InstallProvider>
+                <ServiceWorkerRegister />
+                <Header />
+                <AdBanner />
+                <main className="min-h-[calc(100vh-4rem)]">{children}</main>
+                <Footer />
+              </InstallProvider>
             </ConfirmProvider>
           </ToastProvider>
         </NextIntlClientProvider>

@@ -2,17 +2,19 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Search, Zap } from 'lucide-react';
+import { Menu, X, Search, Zap, Download } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { LanguageSelector } from '@/components/ui/LanguageSelector';
 import { Container } from './Container';
 import { MegaMenu } from './MegaMenu';
 import { MobileNav } from './MobileNav';
 import { useTranslation } from '@/i18n';
+import { useInstallPwa } from '@/components/pwa/InstallProvider';
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const t = useTranslation();
+  const { canInstall, openSheet } = useInstallPwa();
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-border-light">
@@ -31,6 +33,17 @@ export function Header() {
         {/* Desktop right actions */}
         <div className="hidden md:flex items-center gap-2 shrink-0">
           <LanguageSelector variant="header" />
+          {canInstall && (
+            <button
+              type="button"
+              onClick={openSheet}
+              aria-label="Install app"
+              title="Install SavDown"
+              className="w-10 h-10 rounded-full hover:bg-primary-light/60 flex items-center justify-center transition-colors"
+            >
+              <Download className="w-4 h-4 text-text-muted" />
+            </button>
+          )}
           <Link
             href="/search"
             aria-label={t('common.search')}
@@ -79,6 +92,15 @@ export function Header() {
                   <Search className="w-4 h-4" /> {t('common.search')}
                 </Link>
               </div>
+              {canInstall && (
+                <button
+                  type="button"
+                  onClick={() => { setMobileOpen(false); openSheet(); }}
+                  className="flex items-center gap-2 w-full px-0.5 py-3 mb-1 border-b border-border-light text-sm font-medium text-text-muted hover:text-text transition-colors"
+                >
+                  <Download className="w-4 h-4" /> Install App
+                </button>
+              )}
               <MobileNav close={() => setMobileOpen(false)} />
             </Container>
           </motion.div>
