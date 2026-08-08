@@ -1,20 +1,25 @@
 import { notFound } from 'next/navigation';
 import { toolsBySlug } from '@/config/tools';
-import { catalog, getCatalogTool } from '@/config/catalog';
+import { getCatalogTool } from '@/config/catalog';
 import { getFunctionalTool, isFunctionalTool } from '@/config/functionalTools';
 import { ToolPageView } from '@/components/tools/ToolPage';
 import { GenericToolPage } from '@/components/tools/GenericToolPage';
 import { FunctionalToolLayout } from '@/components/tools/FunctionalToolLayout';
 import { buildMetadata } from '@/lib/seo';
 
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-  // Union of catalog slugs and any functional tools not surfaced in the catalog.
-  const slugs = new Set<string>(catalog.map((t) => t.slug));
-  for (const slug of toolsBySlug.keys()) slugs.add(slug);
-  return Array.from(slugs, (slug) => ({ slug }));
-}
+// This route used generateStaticParams() + dynamicParams = false to try to
+// prerender every tool page at build time, but it only ever returned
+// { slug } — never { locale } — and no ancestor route defines its own
+// generateStaticParams for the [locale] segment either. Without a locale to
+// pair each slug with, Next.js can't actually prerender any of these
+// (confirmed: a real `next build` produced zero prerendered tool pages),
+// and dynamicParams = false then hard-404d every single one of them in
+// production — completely inaccessible despite working fine in `next dev`,
+// which bypasses this restriction entirely. Rendering this route fully
+// dynamically sidesteps the whole static/locale-enumeration problem — the
+// page's real work already happens client-side via /api/download anyway,
+// so there's no meaningful caching benefit being given up.
+export const dynamic = 'force-dynamic';
 
 export function generateMetadata({ params }: { params: { slug: string } }) {
   const tool = toolsBySlug.get(params.slug);
