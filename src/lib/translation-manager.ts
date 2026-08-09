@@ -103,6 +103,12 @@ function constructOnce(): void {
  * Construction itself also completes before .goog-te-combo is actually in
  * the DOM. Both delays are handled by polling for the *outcome*
  * (.goog-te-combo existing) rather than assuming either step is instant.
+ *
+ * Note this only waits for the bare <select> element to exist — it does
+ * NOT guarantee its <option> list is fully populated yet (Google adds
+ * those asynchronously afterward). Callers that need a specific language
+ * to be selectable must wait for that themselves — see
+ * waitForLanguageOption() below, used by translatePage().
  */
 export function loadGoogleTranslateScript(): Promise<void> {
   if (typeof window === 'undefined') return Promise.resolve();
@@ -123,20 +129,105 @@ export function loadGoogleTranslateScript(): Promise<void> {
   return widgetReadyPromise;
 }
 
+const OPTION_POLL_INTERVAL_MS = 100;
+const OPTION_POLL_MAX_MS = 5_000;
+
+/**
+ * Waits for `<option value="lang">` to actually exist in the combo before
+ * the caller sets `.value` and dispatches — the bare <select> element
+ * appears in the DOM well before Google finishes populating its ~130+
+ * <option> elements. Assigning `.value` to a language that isn't a real
+ * option yet is silently ignored by the browser (no error, no effect),
+ * and — critically — an unselected <select> then reports its *first*
+ * option as `.value` on next read. Google's own change handler trusted
+ * that read, meaning a premature dispatch didn't just fail to switch
+ * language: it made Google actually translate the page into whatever
+ * language happens to sort first in its list (observed: Abkhaz), not a
+ * silent no-op. Returns true once the option exists, false if it never
+ * appeared within the timeout (caller should skip dispatching in that
+ * case rather than risk the same failure mode).
+ */
+async function waitForLanguageOption(select: HTMLSelectElement, lang: string): Promise<boolean> {
+  const deadline = Date.now() + OPTION_POLL_MAX_MS;
+  while (Date.now() < deadline) {
+    if (Array.from(select.options).some((o) => o.value === lang)) return true;
+    await new Promise((resolve) => setTimeout(resolve, OPTION_POLL_INTERVAL_MS));
+  }
+  return false;
+}
+
+// The only RTL language in config/languages.ts today — extend this if a
+// second one (he, fa, ur, ...) is ever added to the supported list.
+const RTL_LANGUAGES = new Set(['ar']);
+
+// How long to keep correcting document.documentElement.lang/dir if Google's
+// widget overwrites them again after we set them — see the comment below.
+const LANG_GUARD_MS = 6_000;
+let activeLangGuard: MutationObserver | null = null;
+
+// translatePage() waits on two async steps (widget ready, target option
+// populated) that can together take a few seconds. If the user switches
+// languages again before an earlier call's wait finishes, that earlier
+// call must not go on to apply its now-outdated language once it finally
+// resolves — e.g. the automatic translatePage('en') fired on every mount
+// (to preload the widget) can still be waiting when a fresh visitor picks
+// Arabic within that window, and was observed silently reverting their
+// choice back to English moments later. Only the most recently requested
+// language is allowed to actually apply.
+let latestRequestedLang: string | null = null;
+
 export async function translatePage(lang: string): Promise<void> {
+  latestRequestedLang = lang;
   try {
     await loadGoogleTranslateScript();
+    if (latestRequestedLang !== lang) return;
 
     const select = document.querySelector('.goog-te-combo') as HTMLSelectElement | null;
-    if (select) {
+    const optionOk = select ? await waitForLanguageOption(select, lang) : false;
+    if (select && optionOk && latestRequestedLang === lang) {
       // Always dispatch, even if select.value already equals lang: Google's
       // widget can silently pre-set the dropdown's value from the
       // `googtrans` cookie during its own initialization (a returning
       // visitor who translated before) without actually applying the
       // visible translation — skipping the dispatch in that case left the
-      // page stuck in English despite the dropdown "agreeing" with it.
+      // page stuck in English despite the dropdown "agreeing" with it. The
+      // combo's own option list includes 'en' (the page's source
+      // language), and dispatching it genuinely reverts the translated DOM
+      // back to the original English text — verified directly; this is
+      // not a no-op.
       select.value = lang;
       select.dispatchEvent(new Event('change', { bubbles: true }));
+
+      // Don't rely solely on Google's widget to set
+      // document.documentElement.lang: it only does so while *actively
+      // applying* a non-source translation, and — confirmed via direct
+      // tracing — asynchronously overwrites it again shortly after
+      // (presumably as part of its own internal processing of the change
+      // event), even after we set the correct value first. Reverting to
+      // the source language ('en') is hit hardest: Google's own onChange
+      // handler clears the combo's selection entirely, and the browser
+      // falls back to reporting the first <option> of its (alphabetically
+      // sorted) language list — observed leaving `lang` stuck on "ab"
+      // (Abkhaz) well after the page had visibly and correctly reverted to
+      // English. A short-lived MutationObserver corrects any further
+      // change to `lang` for a few seconds, so our value wins the race
+      // regardless of exactly when Google's internal write lands.
+      document.documentElement.lang = lang;
+      document.documentElement.dir = RTL_LANGUAGES.has(lang) ? 'rtl' : 'ltr';
+
+      // Only one guard active at a time — a rapid second language switch
+      // should retarget the correction to the new language, not leave the
+      // old observer fighting it back to the previous one.
+      activeLangGuard?.disconnect();
+      const observer = new MutationObserver(() => {
+        if (document.documentElement.lang !== lang) document.documentElement.lang = lang;
+      });
+      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+      activeLangGuard = observer;
+      setTimeout(() => {
+        if (activeLangGuard === observer) activeLangGuard = null;
+        observer.disconnect();
+      }, LANG_GUARD_MS);
     }
   } catch {
     // Translation failed — page remains in English

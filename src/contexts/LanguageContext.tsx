@@ -74,28 +74,31 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       // No navigation here — URLs no longer carry a locale segment, so
       // switching languages is purely a client-side visual swap via the
       // Google Translate widget (already preloaded by the effect below,
-      // so this should apply in well under a second).
-      if (code !== 'en') {
-        setIsTranslating(true);
-        loadGoogleTranslateScript()
-          .then(() => translatePage(code))
-          .finally(() => setIsTranslating(false));
-      }
+      // so this should apply in well under a second). This always runs,
+      // including for English: the widget's own dropdown has an 'en'
+      // option that genuinely reverts translated content back to the
+      // original text — skipping the call for English (as before) left
+      // the page stuck showing the previous language until a full reload.
+      setIsTranslating(true);
+      loadGoogleTranslateScript()
+        .then(() => translatePage(code))
+        .finally(() => setIsTranslating(false));
     },
     [language.code]
   );
 
   // Restore the stored language after mount (see the useState comment above
   // for why this can't happen during the initial synchronous render).
+  // localStorage — not the googtrans cookie — is the single source of
+  // truth for the user's chosen language; this always reconciles the
+  // cookie to match it (clearing it for English), so a stale cookie from
+  // an earlier session can never make Google's widget silently
+  // auto-translate the page to a language the user didn't actually pick.
   useEffect(() => {
     const stored = getStoredLanguage();
-    if (stored !== 'en') {
-      const targetLang = languages.find((l) => l.code === stored);
-      if (targetLang) {
-        setLanguageState(targetLang);
-        setGoogtransCookie('en', stored);
-      }
-    }
+    const targetLang = languages.find((l) => l.code === stored) ?? languages[0];
+    setLanguageState(targetLang);
+    setGoogtransCookie('en', stored);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -103,12 +106,28 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   // initialized by the time a user picks a non-English language — the
   // script + Google's internal async bootstrap is the slow part (can take
   // several seconds), while actually driving an already-ready widget's
-  // dropdown is near-instant. Only trigger the visible translation swap
-  // when the current language is non-English.
+  // dropdown is near-instant. Always drives the combo to match the
+  // current language (English included, see translatePage/setLanguage)
+  // rather than trusting whatever state the widget initialized itself
+  // into from its own cookie.
   useEffect(() => {
-    loadGoogleTranslateScript().then(() => {
-      if (language.code !== 'en') translatePage(language.code);
-    });
+    loadGoogleTranslateScript().then(() => translatePage(language.code));
+  }, [language.code]);
+
+  // Cross-tab sync: `storage` only fires in *other* tabs than the one that
+  // made the change, so this picks up a language switch made elsewhere
+  // without needing any broadcast/reload machinery of our own.
+  useEffect(() => {
+    function handleStorage(e: StorageEvent) {
+      if (e.key !== STORAGE_KEY) return;
+      const code = e.newValue && languages.some((l) => l.code === e.newValue) ? e.newValue : 'en';
+      if (code === language.code) return;
+      setLanguageState(languages.find((l) => l.code === code) ?? languages[0]);
+      setGoogtransCookie('en', code);
+      loadGoogleTranslateScript().then(() => translatePage(code));
+    }
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, [language.code]);
 
   const value: LanguageContextType = {
