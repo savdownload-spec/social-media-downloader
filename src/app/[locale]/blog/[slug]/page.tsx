@@ -6,15 +6,18 @@ import { buildMetadata, jsonLd } from '@/lib/seo';
 import { formatDate } from '@/lib/utils';
 import { siteConfig } from '@/config/site';
 import { getLocale, getTranslations } from 'next-intl/server';
-import { blogPosts } from '@/config/blog';
 
 type Props = { params: { slug: string; locale: string } };
 
-export function generateStaticParams() {
-  // We should generate params for all locales and all slugs
-  // But for simplicity in this sandbox, we'll just use the base slugs
-  return blogPosts.map((p) => ({ slug: p.slug }));
-}
+// This page calls getLocale()/getTranslations() (dynamic, per-request APIs)
+// while generateStaticParams() only ever returned { slug } — never
+// { locale } — with no ancestor route providing its own locale params
+// either. That combination made Next.js bail from static generation with a
+// DYNAMIC_SERVER_USAGE error, which surfaced as a raw 500 in production
+// (same root cause already found and fixed on /tools/[slug]). Rendering
+// fully dynamic sidesteps it — this page reads locale-specific content at
+// request time regardless, so there's no static-generation benefit lost.
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: Props) {
   const locale = params.locale;

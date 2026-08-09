@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Globe, ChevronDown } from 'lucide-react';
-import { useLocale } from 'next-intl';
 import { usePathname, useRouter } from '@/navigation';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { languages } from '@/config/languages';
 
 type LanguageSelectorProps = {
@@ -12,14 +12,11 @@ type LanguageSelectorProps = {
 
 export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) {
   const [open, setOpen] = useState(false);
-  const locale = useLocale();
+  const { language, setLanguage, isTranslating } = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
   const ref = useRef<HTMLDivElement>(null);
 
-  const currentLanguage = languages.find(l => l.code === locale) || languages[0];
-
-  // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
@@ -29,11 +26,10 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
   }, []);
 
   const handleLanguageSelect = (langCode: string) => {
-    router.replace(pathname, { locale: langCode });
+    setLanguage(langCode);
     setOpen(false);
   };
 
-  // Footer variant — simple inline display
   if (variant === 'footer') {
     return (
       <div className="relative" ref={ref}>
@@ -44,7 +40,7 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
           aria-expanded={open}
         >
           <Globe className="w-4 h-4" />
-          <span>{currentLanguage.label}</span>
+          <span>{isTranslating ? '...' : language.label}</span>
           <ChevronDown className="w-3 h-3" />
         </button>
 
@@ -55,7 +51,7 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
                 key={lang.code}
                 onClick={() => handleLanguageSelect(lang.code)}
                 className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm text-left transition-colors ${
-                  lang.code === locale
+                  lang.code === language.code
                     ? 'text-white bg-white/10'
                     : 'text-ink-muted hover:text-white hover:bg-white/5'
                 }`}
@@ -70,7 +66,6 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
     );
   }
 
-  // Header variant — compact pill
   return (
     <div className="relative" ref={ref}>
       <button
@@ -80,7 +75,7 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
         aria-expanded={open}
       >
         <Globe className="w-4 h-4" />
-        <span className="hidden lg:inline">{currentLanguage.label}</span>
+        <span className="hidden lg:inline">{isTranslating ? '...' : language.label}</span>
         <ChevronDown className="w-3.5 h-3.5" />
       </button>
 
@@ -91,7 +86,7 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
               key={lang.code}
               onClick={() => handleLanguageSelect(lang.code)}
               className={`w-full flex items-center gap-2.5 px-4 py-2 text-sm text-left transition-colors ${
-                lang.code === locale
+                lang.code === language.code
                   ? 'text-primary bg-primary-light/50'
                   : 'text-text-muted hover:text-text hover:bg-surface'
               }`}

@@ -11,8 +11,8 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations } from 'next-intl/server';
 import { siteConfig } from '@/config/site';
 import { jsonLd } from '@/lib/seo';
-// Import locales from the server-side config (not the client barrel)
 import { locales } from '@/config/locales';
+import { LanguageProvider } from '@/contexts/LanguageContext';
 import { Metadata } from 'next';
 
 const inter = Inter({
@@ -71,17 +71,19 @@ export default async function LocaleLayout({
     <html lang={locale} className={`${inter.variable} ${jakarta.variable}`}>
       <body className="font-sans bg-surface text-text antialiased">
         <NextIntlClientProvider messages={messages}>
-          <ToastProvider>
-            <ConfirmProvider>
-              <InstallProvider>
-                <ServiceWorkerRegister />
-                <Header />
-                <AdBanner />
-                <main className="min-h-[calc(100vh-4rem)]">{children}</main>
-                <Footer />
-              </InstallProvider>
-            </ConfirmProvider>
-          </ToastProvider>
+          <LanguageProvider initialLocale={locale}>
+            <ToastProvider>
+              <ConfirmProvider>
+                <InstallProvider>
+                  <ServiceWorkerRegister />
+                  <Header />
+                  <AdBanner />
+                  <main className="min-h-[calc(100vh-4rem)]">{children}</main>
+                  <Footer />
+                </InstallProvider>
+              </ConfirmProvider>
+            </ToastProvider>
+          </LanguageProvider>
         </NextIntlClientProvider>
       </body>
     </html>
