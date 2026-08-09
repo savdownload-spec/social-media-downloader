@@ -51,8 +51,14 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
     // Portaled content no longer moves with the page when a scrollable
     // ancestor scrolls, so close on scroll rather than continuously
     // re-anchoring it — simpler and standard behavior for lightweight
-    // dropdowns like this one.
-    function handleScroll() {
+    // dropdowns like this one. But the menu's own list is itself
+    // scrollable (max-h + overflow-y-auto, since there are more languages
+    // than fit on screen at once) — scroll listeners are registered with
+    // `capture: true` so they see that internal scroll too, which must be
+    // ignored or the list would close itself the instant a user tried to
+    // scroll through it.
+    function handleScroll(e: Event) {
+      if (menuRef.current?.contains(e.target as Node)) return;
       setOpen(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
