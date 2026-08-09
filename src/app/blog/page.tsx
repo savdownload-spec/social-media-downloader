@@ -1,22 +1,13 @@
 import Link from 'next/link';
 import { Container } from '@/components/layout/Container';
 import { formatDate } from '@/lib/utils';
-import { getLocale } from 'next-intl/server';
 import { getTranslations } from 'next-intl/server';
+import blogEn from '@/i18n/translations/blog/en.json';
 
 export default async function BlogPage() {
-  const locale = await getLocale();
   const t = await getTranslations('blog');
-  
-  let posts: any[] = [];
-  try {
-    const mod = (await import(`@/i18n/translations/blog/${locale}.json`)) as any;
-    posts = mod.default?.posts ?? mod.posts ?? [];
-  } catch {
-    const mod = (await import(`@/i18n/translations/blog/en.json`)) as any;
-    posts = mod.default?.posts ?? mod.posts ?? [];
-  }
 
+  const posts: any[] = (blogEn as any).posts ?? [];
   const [featured, ...rest] = posts;
 
   return (

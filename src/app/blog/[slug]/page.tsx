@@ -5,30 +5,23 @@ import { Container } from '@/components/layout/Container';
 import { buildMetadata, jsonLd } from '@/lib/seo';
 import { formatDate } from '@/lib/utils';
 import { siteConfig } from '@/config/site';
-import { getLocale, getTranslations } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
+import blogEn from '@/i18n/translations/blog/en.json';
 
-type Props = { params: { slug: string; locale: string } };
+type Props = { params: { slug: string } };
 
-// This page calls getLocale()/getTranslations() (dynamic, per-request APIs)
-// while generateStaticParams() only ever returned { slug } — never
-// { locale } — with no ancestor route providing its own locale params
-// either. That combination made Next.js bail from static generation with a
+// This page previously called getLocale()/getTranslations() while
+// generateStaticParams() only ever returned { slug } — never { locale } —
+// with no ancestor route providing its own locale params either. That
+// combination made Next.js bail from static generation with a
 // DYNAMIC_SERVER_USAGE error, which surfaced as a raw 500 in production
-// (same root cause already found and fixed on /tools/[slug]). Rendering
-// fully dynamic sidesteps it — this page reads locale-specific content at
-// request time regardless, so there's no static-generation benefit lost.
+// (same root cause already found and fixed on /tools/[slug]). Locale
+// routing is gone now, but kept force-dynamic rather than reintroducing
+// generateStaticParams for this route — no static-generation benefit lost.
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: Props) {
-  const locale = params.locale;
-  let posts: any[] = [];
-  try {
-    const mod = (await import(`@/i18n/translations/blog/${locale}.json`)) as any;
-    posts = mod.default?.posts ?? mod.posts ?? [];
-  } catch {
-    const mod = (await import(`@/i18n/translations/blog/en.json`)) as any;
-    posts = mod.default?.posts ?? mod.posts ?? [];
-  }
+  const posts: any[] = (blogEn as any).posts ?? [];
   const post = posts.find((p: any) => p.slug === params.slug);
   return buildMetadata({
     title: post.title,
@@ -101,18 +94,9 @@ function renderContent(content: string) {
 }
 
 export default async function BlogPostPage({ params }: Props) {
-  const locale = await getLocale();
   const t = await getTranslations('blog');
-  
-  let posts: any[] = [];
-  try {
-    const mod = (await import(`@/i18n/translations/blog/${locale}.json`)) as any;
-    posts = mod.default?.posts ?? mod.posts ?? [];
-  } catch {
-    const mod = (await import(`@/i18n/translations/blog/en.json`)) as any;
-    posts = mod.default?.posts ?? mod.posts ?? [];
-  }
 
+  const posts: any[] = (blogEn as any).posts ?? [];
   const post = posts.find((p: any) => p.slug === params.slug);
   if (!post) return notFound();
 

@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Globe, ChevronDown } from 'lucide-react';
-import { usePathname, useRouter } from '@/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { languages } from '@/config/languages';
 
@@ -13,8 +12,6 @@ type LanguageSelectorProps = {
 export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) {
   const [open, setOpen] = useState(false);
   const { language, setLanguage, isTranslating } = useLanguage();
-  const router = useRouter();
-  const pathname = usePathname();
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

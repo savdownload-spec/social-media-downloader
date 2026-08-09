@@ -1,7 +1,6 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { usePathname, useRouter } from '@/navigation';
 import { languages } from '@/config/languages';
 import { loadGoogleTranslateScript, translatePage } from '@/lib/translation-manager';
 
@@ -42,12 +41,6 @@ function setStoredLanguage(code: string) {
   }
 }
 
-function getGoogtransCookie(): string | null {
-  if (typeof document === 'undefined') return null;
-  const match = document.cookie.match(/googtrans=([^;]+)/);
-  return match ? match[1] : null;
-}
-
 function setGoogtransCookie(sourceLang: string, targetLang: string) {
   if (sourceLang === targetLang) {
     document.cookie = `${GOOGTRANS_COOKIE}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
@@ -57,26 +50,16 @@ function setGoogtransCookie(sourceLang: string, targetLang: string) {
   document.cookie = `${GOOGTRANS_COOKIE}=${value}; path=/; max-age=${60 * 60 * 24 * 365}`;
 }
 
-function getUrlLocale(): string {
-  if (typeof window === 'undefined') return 'en';
-  const segments = window.location.pathname.split('/').filter(Boolean);
-  if (segments.length > 0 && languages.some((l) => l.code === segments[0])) {
-    return segments[0];
-  }
-  return 'en';
-}
-
-export function LanguageProvider({ children, initialLocale }: { children: ReactNode; initialLocale?: string }) {
-  const router = useRouter();
-  const pathname = usePathname();
+export function LanguageProvider({ children }: { children: ReactNode }) {
   const [isTranslating, setIsTranslating] = useState(false);
-  const [language, setLanguageState] = useState<Language>(() => {
-    const stored = getStoredLanguage();
-    const urlLocale = initialLocale || getUrlLocale();
-    // Prefer stored language, fall back to URL locale, then default to English
-    const code = stored !== 'en' ? stored : (urlLocale !== 'en' ? urlLocale : 'en');
-    return languages.find((l) => l.code === code) || languages[0];
-  });
+  // Always start from English on both the server render and the client's
+  // first hydration pass — reading localStorage here would make the
+  // client's initial render diverge from the server-rendered HTML (the
+  // server has no localStorage), which forces React to discard and fully
+  // re-render the tree client-side on every load for a returning
+  // non-English user. The stored language is restored a tick later, after
+  // mount, in the effect below.
+  const [language, setLanguageState] = useState<Language>(languages[0]);
 
   const setLanguage = useCallback(
     async (code: string) => {
@@ -86,59 +69,46 @@ export function LanguageProvider({ children, initialLocale }: { children: ReactN
       const targetLang = languages.find((l) => l.code === code)!;
       setLanguageState(targetLang);
       setStoredLanguage(code);
-
       setGoogtransCookie('en', code);
 
-      const segments = pathname.split('/').filter(Boolean);
-      if (segments.length > 0 && languages.some((l) => l.code === segments[0])) {
-        segments.shift();
-      }
-      const newPath = `/${code}${segments.length > 0 ? '/' + segments.join('/') : ''}`;
-
-      router.push(newPath);
-
-      // Kick off translation loading directly here rather than relying
-      // solely on the effect below — router.push() re-renders the [locale]
-      // layout for the new segment, which can remount this provider before
-      // the effect for the old instance gets a chance to run. The
-      // translation-manager module's own promise/flag state lives outside
-      // React entirely, so calling this eagerly (in addition to the
-      // mount-time effect, which still covers direct navigation to a
-      // non-English URL) is safe and not redundant work.
+      // No navigation here — URLs no longer carry a locale segment, so
+      // switching languages is purely a client-side visual swap via the
+      // Google Translate widget (already preloaded by the effect below,
+      // so this should apply in well under a second).
       if (code !== 'en') {
         setIsTranslating(true);
         loadGoogleTranslateScript()
-          .then(() => {
-            setTimeout(() => translatePage(code), 800);
-          })
+          .then(() => translatePage(code))
           .finally(() => setIsTranslating(false));
       }
     },
-    [language.code, pathname, router]
+    [language.code]
   );
 
-  // Sync with stored language on mount
+  // Restore the stored language after mount (see the useState comment above
+  // for why this can't happen during the initial synchronous render).
   useEffect(() => {
     const stored = getStoredLanguage();
-    const initialCode = (() => {
-      const c = getStoredLanguage();
-      return languages.find((l) => l.code === c)?.code || 'en';
-    })();
-    if (stored !== initialCode && languages.some((l) => l.code === stored)) {
-      const targetLang = languages.find((l) => l.code === stored)!;
-      setLanguageState(targetLang);
-      setGoogtransCookie('en', stored);
+    if (stored !== 'en') {
+      const targetLang = languages.find((l) => l.code === stored);
+      if (targetLang) {
+        setLanguageState(targetLang);
+        setGoogtransCookie('en', stored);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Load Google Translate script and apply translation for non-English locales
+  // Preload the widget on every mount (even for English) so it's already
+  // initialized by the time a user picks a non-English language — the
+  // script + Google's internal async bootstrap is the slow part (can take
+  // several seconds), while actually driving an already-ready widget's
+  // dropdown is near-instant. Only trigger the visible translation swap
+  // when the current language is non-English.
   useEffect(() => {
-    if (language.code !== 'en') {
-      loadGoogleTranslateScript().then(() => {
-        setTimeout(() => translatePage(language.code), 800);
-      });
-    }
+    loadGoogleTranslateScript().then(() => {
+      if (language.code !== 'en') translatePage(language.code);
+    });
   }, [language.code]);
 
   const value: LanguageContextType = {

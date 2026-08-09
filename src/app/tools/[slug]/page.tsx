@@ -9,16 +9,17 @@ import { buildMetadata } from '@/lib/seo';
 
 // This route used generateStaticParams() + dynamicParams = false to try to
 // prerender every tool page at build time, but it only ever returned
-// { slug } — never { locale } — and no ancestor route defines its own
-// generateStaticParams for the [locale] segment either. Without a locale to
-// pair each slug with, Next.js can't actually prerender any of these
+// { slug } — never { locale }, back when this route lived under a
+// [locale] segment — and no ancestor route defined its own
+// generateStaticParams for that segment either. Without a locale to pair
+// each slug with, Next.js couldn't actually prerender any of these
 // (confirmed: a real `next build` produced zero prerendered tool pages),
 // and dynamicParams = false then hard-404d every single one of them in
 // production — completely inaccessible despite working fine in `next dev`,
-// which bypasses this restriction entirely. Rendering this route fully
-// dynamically sidesteps the whole static/locale-enumeration problem — the
-// page's real work already happens client-side via /api/download anyway,
-// so there's no meaningful caching benefit being given up.
+// which bypasses this restriction entirely. Locale routing is gone now,
+// but kept force-dynamic rather than reintroducing generateStaticParams —
+// the page's real work already happens client-side via /api/download
+// anyway, so there's no meaningful caching benefit being given up.
 export const dynamic = 'force-dynamic';
 
 export function generateMetadata({ params }: { params: { slug: string } }) {

@@ -13,21 +13,15 @@ import { FAQ } from '@/components/home/FAQ';
 import { Newsletter } from '@/components/home/Newsletter';
 import { jsonLd, faqSchema } from '@/lib/seo';
 import { getTranslations } from 'next-intl/server';
+import blogEn from '@/i18n/translations/blog/en.json';
 
 export const revalidate = 3600;
 
-export default async function HomePage({ params: { locale } }: { params: { locale: string } }) {
-  const t = await getTranslations({ locale, namespace: 'faqs' });
+export default async function HomePage() {
+  const t = await getTranslations('faqs');
   const faqs = (t.raw as any)('items') ?? [];
-  
-  let posts: any[] = [];
-  try {
-    const mod = (await import(`@/i18n/translations/blog/${locale}.json`)) as any;
-    posts = mod.default?.posts ?? mod.posts ?? [];
-  } catch {
-    const mod = (await import(`@/i18n/translations/blog/en.json`)) as any;
-    posts = mod.default?.posts ?? mod.posts ?? [];
-  }
+
+  const posts: any[] = (blogEn as any).posts ?? [];
 
   return (
     <>

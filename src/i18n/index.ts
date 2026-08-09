@@ -44,7 +44,3 @@ export function useTranslation() {
 
   return translate;
 }
-
-// Re-export from shared config so components can import from @/i18n
-export { locales } from '@/config/locales';
-export type { Locale } from '@/config/locales';

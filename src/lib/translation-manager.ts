@@ -128,20 +128,17 @@ export async function translatePage(lang: string): Promise<void> {
     await loadGoogleTranslateScript();
 
     const select = document.querySelector('.goog-te-combo') as HTMLSelectElement | null;
-    if (select && select.value !== lang) {
+    if (select) {
+      // Always dispatch, even if select.value already equals lang: Google's
+      // widget can silently pre-set the dropdown's value from the
+      // `googtrans` cookie during its own initialization (a returning
+      // visitor who translated before) without actually applying the
+      // visible translation — skipping the dispatch in that case left the
+      // page stuck in English despite the dropdown "agreeing" with it.
       select.value = lang;
       select.dispatchEvent(new Event('change', { bubbles: true }));
     }
   } catch {
     // Translation failed — page remains in English
   }
-}
-
-export function getCurrentGoogleLanguage(): string | null {
-  if (typeof document === 'undefined') return null;
-  const cookie = document.cookie.match(/googtrans=([^;]+)/);
-  if (!cookie) return null;
-  // Format: /en/es or /auto/en
-  const parts = cookie[1].replace(/^\//, '').split('/');
-  return parts[parts.length - 1] || null;
 }
