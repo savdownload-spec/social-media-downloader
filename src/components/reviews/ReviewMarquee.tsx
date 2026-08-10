@@ -12,11 +12,24 @@ type MarqueeRowProps = {
   onPauseChange: (paused: boolean) => void;
 };
 
+// The track is built as [content, content] and animated by translating
+// exactly -50%, so the second copy lines up perfectly with the first as it
+// scrolls off — that's what makes the loop seamless. If `items` is short
+// (a handful of featured reviews, common early on), that "content" block
+// is narrower than the viewport, so the visible track — even doubled for
+// the loop — leaves a blank gap before it repeats. Repeating the source
+// items enough times first guarantees the track is comfortably wider than
+// any reasonable viewport before the loop-doubling happens, regardless of
+// how few reviews exist.
+const MIN_ITEMS_PER_LOOP = 8;
+
 function MarqueeRow({ items, speed, direction, paused, onPauseChange }: MarqueeRowProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [contentWidth, setContentWidth] = useState(0);
 
-  const duplicated = [...items, ...items];
+  const repeatFactor = Math.max(1, Math.ceil(MIN_ITEMS_PER_LOOP / items.length));
+  const content = Array.from({ length: repeatFactor }, () => items).flat();
+  const duplicated = [...content, ...content];
 
   useEffect(() => {
     const track = trackRef.current;
@@ -112,10 +125,18 @@ export function ReviewMarquee({ reviews }: ReviewMarqueeProps) {
 
   if (reviews.length === 0) return null;
 
-  const rowSize = Math.ceil(reviews.length / 3);
-  const row1 = reviews.slice(0, rowSize);
-  const row2 = reviews.slice(rowSize, rowSize * 2);
-  const row3 = reviews.slice(rowSize * 2);
+  // Cap at 3 rows, but don't split into more rows than there's real variety
+  // for — a row built from only one or two unique reviews just repeats the
+  // same card on loop, which reads as broken rather than lively. Fewer,
+  // fuller rows look better than three sparse ones.
+  const MIN_ITEMS_PER_ROW = 3;
+  const numRows = Math.min(3, Math.max(1, Math.floor(reviews.length / MIN_ITEMS_PER_ROW)));
+  const rowSize = Math.ceil(reviews.length / numRows);
+  const rows = Array.from({ length: numRows }, (_, i) => reviews.slice(i * rowSize, (i + 1) * rowSize)).filter(
+    (row) => row.length > 0,
+  );
+  const speeds = [40, 55, 35];
+  const directions: Array<'left' | 'right'> = ['left', 'right', 'left'];
 
   return (
     <div className="space-y-5">
@@ -130,33 +151,16 @@ export function ReviewMarquee({ reviews }: ReviewMarqueeProps) {
       `}</style>
 
       <div className="space-y-5">
-        {row1.length > 0 && (
+        {rows.map((row, i) => (
           <MarqueeRow
-            items={row1}
-            speed={40}
-            direction="left"
-            paused={pausedRows.has(0)}
-            onPauseChange={(p) => togglePause(0, p)}
+            key={i}
+            items={row}
+            speed={speeds[i % speeds.length]}
+            direction={directions[i % directions.length]}
+            paused={pausedRows.has(i)}
+            onPauseChange={(p) => togglePause(i, p)}
           />
-        )}
-        {row2.length > 0 && (
-          <MarqueeRow
-            items={row2}
-            speed={55}
-            direction="right"
-            paused={pausedRows.has(1)}
-            onPauseChange={(p) => togglePause(1, p)}
-          />
-        )}
-        {row3.length > 0 && (
-          <MarqueeRow
-            items={row3}
-            speed={35}
-            direction="left"
-            paused={pausedRows.has(2)}
-            onPauseChange={(p) => togglePause(2, p)}
-          />
-        )}
+        ))}
       </div>
     </div>
   );
