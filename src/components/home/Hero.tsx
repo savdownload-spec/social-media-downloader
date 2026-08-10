@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, Check, Star, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, Database, ShieldCheck, Star, Sparkles, Users } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { HeroToolkit } from '@/components/home/HeroToolkit';
 import { useTranslation } from '@/i18n';
@@ -17,10 +17,39 @@ export function Hero() {
   ];
 
   const heroStats = [
-    { value: '2M+', label: t('hero.trusted') },
-    { value: '100%', label: t('hero.stats.free') },
-    { value: '0', label: t('hero.stats.dataStored') },
-    { value: '4.9', label: t('hero.stats.rating'), star: true },
+    {
+      value: '2M+',
+      label: t('hero.trusted'),
+      detail: 'Creators choose SavDown',
+      icon: Users,
+      iconClass: 'text-violet-600',
+      iconBg: 'bg-violet-50',
+    },
+    {
+      value: '100%',
+      label: t('hero.stats.free'),
+      detail: 'No paywall, no catch',
+      icon: ShieldCheck,
+      iconClass: 'text-emerald-600',
+      iconBg: 'bg-emerald-50',
+    },
+    {
+      value: '0',
+      label: t('hero.stats.dataStored'),
+      detail: 'Your files stay yours',
+      icon: Database,
+      iconClass: 'text-sky-600',
+      iconBg: 'bg-sky-50',
+    },
+    {
+      value: '4.9',
+      label: t('hero.stats.rating'),
+      detail: 'Loved by the community',
+      icon: Star,
+      iconClass: 'text-amber-600',
+      iconBg: 'bg-amber-50',
+      star: true,
+    },
   ];
 
   return (
@@ -84,20 +113,45 @@ export function Hero() {
           <HeroToolkit />
         </div>
 
-        {/* Generic stat bar */}
-        <div className="reveal mt-14 max-w-2xl mx-auto" style={{ animationDelay: '0.24s' }}>
-          <dl className="grid grid-cols-4 rounded-2xl border border-border bg-white/60 backdrop-blur shadow-soft divide-x divide-border-light overflow-hidden">
-            {heroStats.map((s) => (
-              <div key={s.label} className="px-3 py-5 text-center">
-                <dt className="sr-only">{s.label}</dt>
-                <dd className="text-2xl md:text-3xl font-bold tracking-tight text-gradient font-display inline-flex items-center justify-center gap-1">
-                  {s.value}
-                  {s.star && <Star className="w-4 h-4 text-amber-400 fill-current" />}
-                </dd>
-                <p className="mt-1 text-xs md:text-sm text-text-muted">{s.label}</p>
+        {/* Trust proof strip */}
+        <div className="reveal mt-14 max-w-4xl mx-auto" style={{ animationDelay: '0.24s' }}>
+          <div className="rounded-[1.75rem] border border-border bg-white/70 backdrop-blur shadow-soft p-2.5 md:p-3">
+            <div className="flex flex-col gap-3 px-3 pb-2 pt-1 md:flex-row md:items-end md:justify-between md:px-4 md:pb-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Why users trust SavDown</p>
+                <p className="mt-1 text-sm text-text-muted">Simple, private, and built for everyday creators.</p>
               </div>
-            ))}
-          </dl>
+              <span className="hidden h-px flex-1 bg-gradient-to-r from-border-light via-border to-transparent md:ml-8 md:block" aria-hidden />
+            </div>
+
+            <dl className="grid grid-cols-2 overflow-hidden rounded-2xl border border-border-light bg-white/65 md:grid-cols-4">
+              {heroStats.map((s, index) => {
+                const Icon = s.icon;
+                return (
+                  <div
+                    key={s.label}
+                    className={`group relative flex min-h-[118px] flex-col justify-between gap-4 p-4 transition-colors duration-200 hover:bg-primary-light/30 md:min-h-[126px] md:p-5 ${index < 2 ? 'border-b border-border-light md:border-b-0' : ''} ${index < heroStats.length - 1 ? 'md:border-r' : ''}`}
+                  >
+                    <dt className="sr-only">{s.label}</dt>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className={`inline-flex h-8 w-8 items-center justify-center rounded-xl transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:scale-105 ${s.iconBg}`}>
+                        <Icon className={`h-4 w-4 ${s.iconClass}`} strokeWidth={1.9} />
+                      </div>
+                      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary/25 transition-colors duration-200 group-hover:bg-primary" aria-hidden />
+                    </div>
+                    <div>
+                      <dd className="inline-flex items-center gap-1 text-2xl font-bold tracking-tight text-gradient font-display md:text-3xl">
+                        {s.value}
+                        {s.star && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 md:h-4 md:w-4" />}
+                      </dd>
+                      <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.13em] text-text-muted">{s.label}</p>
+                      <p className="mt-1 text-xs text-text-subtle">{s.detail}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </dl>
+          </div>
         </div>
       </Container>
     </section>
