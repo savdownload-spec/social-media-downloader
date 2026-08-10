@@ -1,7 +1,10 @@
 import type { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import GitHubProvider from 'next-auth/providers/github';
+import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from './prisma';
+import { verifyPassword } from './passwords';
+import { loginSchema } from './auth/validators';
 
 const adminEmails = (process.env.ADMIN_EMAILS || '')
   .split(',')
@@ -28,12 +31,41 @@ if (process.env.GITHUB_ID && process.env.GITHUB_SECRET) {
   );
 }
 
+providers.push(
+  CredentialsProvider({
+    name: 'Email and Password',
+    credentials: {
+      email: { label: 'Email', type: 'email' },
+      password: { label: 'Password', type: 'password' },
+    },
+    async authorize(credentials) {
+      const parsed = loginSchema.safeParse(credentials);
+      if (!parsed.success) return null;
+
+      const user = await prisma.user.findUnique({
+        where: { email: parsed.data.email },
+      });
+      if (!user?.password) return null;
+
+      const valid = await verifyPassword(parsed.data.password, user.password);
+      if (!valid) return null;
+
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+      };
+    },
+  }),
+);
+
 export const authOptions: NextAuthOptions = {
   providers,
   secret: process.env.NEXTAUTH_SECRET,
   session: { strategy: 'jwt' },
   pages: {
-    signIn: '/',
+    signIn: '/login',
   },
   callbacks: {
     async jwt({ token, user }) {

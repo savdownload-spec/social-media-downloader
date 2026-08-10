@@ -1,10 +1,11 @@
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { Container } from '@/components/layout/Container';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { buildMetadata } from '@/lib/seo';
-import { Users, Download as DownloadIcon, Mail, TrendingUp } from 'lucide-react';
+import { Users, Download as DownloadIcon, Mail, TrendingUp, MessageSquare, ArrowRight } from 'lucide-react';
 
 export const metadata = buildMetadata({
   title: 'Admin',
@@ -31,7 +32,7 @@ export default async function AdminPage() {
     );
   }
 
-  const [totalDownloads, totalUsers, totalSubs, byTool, recentDownloads] = await Promise.all([
+  const [totalDownloads, totalUsers, totalSubs, byTool, recentDownloads, pendingReviews] = await Promise.all([
     prisma.download.count(),
     prisma.user.count(),
     prisma.newsletterSubscriber.count(),
@@ -46,6 +47,7 @@ export default async function AdminPage() {
       take: 20,
       select: { id: true, tool: true, platform: true, createdAt: true, status: true },
     }),
+    prisma.review.count({ where: { status: 'PENDING' } }),
   ]);
 
   const stats = [
@@ -63,7 +65,27 @@ export default async function AdminPage() {
         Signed in as {session.user?.email}
       </p>
 
-      <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <Link
+        href="/admin/reviews"
+        className="mt-8 flex items-center justify-between gap-4 p-5 bg-white border border-border rounded-2xl shadow-soft hover:border-primary/30 hover:shadow-soft-lg transition-all group"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-primary-light flex items-center justify-center shrink-0">
+            <MessageSquare className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <p className="font-semibold text-text">Manage Reviews</p>
+            <p className="text-sm text-text-muted">
+              {pendingReviews > 0
+                ? `${pendingReviews} review${pendingReviews === 1 ? '' : 's'} awaiting moderation`
+                : 'Approve, reject, edit, and feature reviews'}
+            </p>
+          </div>
+        </div>
+        <ArrowRight className="w-4 h-4 text-text-subtle group-hover:translate-x-0.5 transition-transform shrink-0" />
+      </Link>
+
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
           <div key={s.label} className="p-6 bg-white border border-border rounded-2xl shadow-soft">
             <div className="w-9 h-9 rounded-xl bg-surface flex items-center justify-center mb-4">

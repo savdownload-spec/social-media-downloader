@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Search, Zap, Download } from 'lucide-react';
+import { Menu, X, Search, Zap, Download, User } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { Logo } from '@/components/ui/Logo';
 import { LanguageSelector } from '@/components/ui/LanguageSelector';
 import { Container } from './Container';
@@ -15,6 +16,8 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const t = useTranslation();
   const { canInstall, openSheet } = useInstallPwa();
+  const { data: session } = useSession();
+  const accountHref = session ? '/account' : '/login';
 
   return (
     <header className="sticky top-0 z-50 glass border-b border-border-light">
@@ -33,6 +36,14 @@ export function Header() {
         {/* Desktop right actions */}
         <div className="hidden md:flex items-center gap-2 shrink-0">
           <LanguageSelector variant="header" />
+          <Link
+            href={accountHref}
+            aria-label={session ? 'Account' : 'Log in'}
+            title={session ? 'Account' : 'Log in'}
+            className="w-10 h-10 rounded-full hover:bg-primary-light/60 flex items-center justify-center transition-colors"
+          >
+            <User className="w-4 h-4 text-text-muted" />
+          </Link>
           {canInstall && (
             <button
               type="button"
@@ -88,9 +99,14 @@ export function Header() {
             <Container className="py-3">
               <div className="flex items-center justify-between pb-3 border-b border-border-light mb-1">
                 <LanguageSelector variant="header" />
-                <Link href="/search" onClick={() => setMobileOpen(false)} className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text">
-                  <Search className="w-4 h-4" /> {t('common.search')}
-                </Link>
+                <div className="flex items-center gap-4">
+                  <Link href="/search" onClick={() => setMobileOpen(false)} className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text">
+                    <Search className="w-4 h-4" /> {t('common.search')}
+                  </Link>
+                  <Link href={accountHref} onClick={() => setMobileOpen(false)} className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text">
+                    <User className="w-4 h-4" /> {session ? 'Account' : 'Log in'}
+                  </Link>
+                </div>
               </div>
               {canInstall && (
                 <button

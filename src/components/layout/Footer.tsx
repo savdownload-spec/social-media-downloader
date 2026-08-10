@@ -166,7 +166,7 @@ export function Footer() {
             © {new Date().getFullYear()} {siteConfig.name}. {t('footer.copyright')}
           </p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
-            {siteConfig.footerLinks.Legal.map((link) => {
+            {siteConfig.legalLinks.map((link) => {
               const translatedLabel = t(`footer.${link.label.toLowerCase().replace(' ', '')}`) || link.label;
               return (
                 <Link

@@ -85,11 +85,16 @@ export const siteConfig = {
       { label: 'Contact Us', href: '/contact' },
     ],
     Legal: [
-      { label: 'Privacy Policy', href: '/privacy' },
-      { label: 'Terms of Service', href: '/terms' },
-      { label: 'Cookie Policy', href: '/cookies' },
-      { label: 'DMCA', href: '/dmca' },
-      { label: 'Sitemap', href: '/sitemap.xml' },
+      { label: 'Customer Reviews', href: '/reviews' },
+      { label: 'Sign In', href: '/login' },
     ],
   },
+  /** Policy links rendered in the footer's bottom bar (kept out of the column grid). */
+  legalLinks: [
+    { label: 'Privacy Policy', href: '/privacy' },
+    { label: 'Terms of Service', href: '/terms' },
+    { label: 'Cookie Policy', href: '/cookies' },
+    { label: 'DMCA', href: '/dmca' },
+    { label: 'Sitemap', href: '/sitemap.xml' },
+  ],
 } as const;

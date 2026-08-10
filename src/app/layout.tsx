@@ -12,6 +12,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations } from 'next-intl/server';
 import { siteConfig } from '@/config/site';
 import { LanguageProvider } from '@/contexts/LanguageContext';
+import { Providers } from '@/components/providers';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -98,21 +99,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" className={`${inter.variable} ${jakarta.variable}`}>
       <body className="font-sans bg-surface text-text antialiased">
-        <NextIntlClientProvider messages={messages}>
-          <LanguageProvider>
-            <ToastProvider>
-              <ConfirmProvider>
-                <InstallProvider>
-                  <ServiceWorkerRegister />
-                  <Header />
-                  <AdBanner />
-                  <main className="min-h-[calc(100vh-4rem)]">{children}</main>
-                  <Footer />
-                </InstallProvider>
-              </ConfirmProvider>
-            </ToastProvider>
-          </LanguageProvider>
-        </NextIntlClientProvider>
+        <Providers>
+          <NextIntlClientProvider messages={messages}>
+            <LanguageProvider>
+              <ToastProvider>
+                <ConfirmProvider>
+                  <InstallProvider>
+                    <ServiceWorkerRegister />
+                    <Header />
+                    <AdBanner />
+                    <main className="min-h-[calc(100vh-4rem)]">{children}</main>
+                    <Footer />
+                  </InstallProvider>
+                </ConfirmProvider>
+              </ToastProvider>
+            </LanguageProvider>
+          </NextIntlClientProvider>
+        </Providers>
       </body>
     </html>
   );
