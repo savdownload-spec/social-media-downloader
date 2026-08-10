@@ -28,6 +28,22 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      # actions/setup-node's Node 20 bundles npm v10, but package-lock.json
+      # is generated locally with whatever npm version development happens
+      # to have (currently v11, tracked in package.json's "packageManager"
+      # field). npm ci is strict about lockfile format across major
+      # versions, so that skew intermittently breaks CI with a misleading
+      # "Missing: X from lock file" error even though nothing is actually
+      # wrong with the dependency tree. Installing the exact npm version
+      # recorded in package.json — read dynamically, not hardcoded here —
+      # keeps CI and local installs permanently in sync: bump npm locally,
+      # update packageManager, and CI follows automatically.
+      - name: Align npm version with package.json's packageManager field
+        run: |
+          NPM_VERSION=$(node -p "require('./package.json').packageManager.split('@')[1]")
+          npm install -g "npm@$NPM_VERSION"
+          npm -v
+
       - name: Install dependencies
         run: npm ci
 
