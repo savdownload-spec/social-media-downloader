@@ -1,12 +1,15 @@
 // Prisma schema for Social Media Downloader
-// Development: SQLite | Production: PostgreSQL
+// PostgreSQL everywhere (dev and production point at separate databases,
+// e.g. two Neon branches, via DATABASE_URL) — Vercel's serverless functions
+// have no persistent filesystem, so SQLite cannot provide real persistence
+// in production.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
