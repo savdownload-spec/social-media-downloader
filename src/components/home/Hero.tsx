@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowRight, Check, Database, ShieldCheck, Star, Sparkles, Users } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { HeroToolkit } from '@/components/home/HeroToolkit';
+import { UniversalUrlInput } from '@/components/home/UniversalUrlInput';
 import { useTranslation } from '@/i18n';
 
 export function Hero() {
@@ -96,6 +97,7 @@ export function Hero() {
             </Link>
           </div>
 
+          <UniversalUrlInput />
           <div className="mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
             {trustBadges.map((b) => (
               <span key={b} className="inline-flex items-center gap-1.5 text-sm font-medium text-text-muted">
