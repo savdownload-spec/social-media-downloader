@@ -1,4 +1,4 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
 
 export const registerSchema = z.object({
   name: z.string().trim().min(2, 'Name must be at least 2 characters.').max(60, 'Name is too long.'),
@@ -32,12 +32,11 @@ export const resetPasswordSchema = z.object({
 
 export const reviewCreateSchema = z.object({
   rating: z.number().int('Rating must be a whole number.').min(1, 'Rating must be at least 1.').max(5, 'Rating must be at most 5.'),
-  review: z.string().trim().min(10, 'Review must be at least 10 characters.').max(1000, 'Review must be under 1000 characters.'),
-  role: z.string().trim().max(60, 'Role is too long.').optional().nullable(),
-  company: z.string().trim().max(80, 'Company is too long.').optional().nullable(),
+  review: z.string().trim().min(10, 'Review must be at least 10 characters.').max(500, 'Review must be under 500 characters.'),
+  role: z.string().trim().min(1, 'Role is required.').max(60, 'Role is too long.'),
+  company: z.string().trim().min(1, 'Company or organization is required.').max(80, 'Company is too long.'),
   platform: z
-    .enum(['direct', 'google', 'trustpilot', 'producthunt', 'facebook', 'g2', 'x', 'linkedin'])
-    .default('direct'),
+    .enum(['google', 'youtube', 'tiktok', 'instagram', 'facebook', 'x', 'reddit', 'friend', 'blog', 'other']),
 });
 
 export const reviewUpdateSchema = z
@@ -48,7 +47,7 @@ export const reviewUpdateSchema = z
       .min(1, 'Rating must be at least 1.')
       .max(5, 'Rating must be at most 5.')
       .optional(),
-    review: z.string().trim().min(10, 'Review must be at least 10 characters.').max(1000, 'Review must be under 1000 characters.').optional(),
+    review: z.string().trim().min(10, 'Review must be at least 10 characters.').max(1000, 'Review must be under 1000 characters.').optional().optional(),
     role: z.string().trim().max(60, 'Role is too long.').nullable().optional(),
     company: z.string().trim().max(80, 'Company is too long.').nullable().optional(),
   })
@@ -100,3 +99,5 @@ export type RegisterInput = z.infer<typeof registerSchema>;
 export type ReviewCreateInput = z.infer<typeof reviewCreateSchema>;
 export type ReviewUpdateInput = z.infer<typeof reviewUpdateSchema>;
 export type AdminEditInput = z.infer<typeof adminEditSchema>;
+
+
