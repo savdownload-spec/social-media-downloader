@@ -1,6 +1,6 @@
 'use client';
 /**
- * SEO Tools — 100% client-side, local template/algorithmic generation.
+ * SEO Tools, 100% client-side, local template/algorithmic generation.
  * One component serves all five SEO-generator slugs; the `slug` prop
  * selects which generator and input layout to render. No backend required.
  */

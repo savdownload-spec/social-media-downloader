@@ -50,7 +50,7 @@ function sanitize(title: string): string {
 // TikTok's web app blocks yt-dlp's default HTTP client (fails with "Unable to
 // extract universal data for rehydration"). Requires TLS-fingerprint
 // impersonation via curl_cffi (free, BSD-licensed) to look like a real
-// browser. Scoped to TikTok only — other extractors don't need it.
+// browser. Scoped to TikTok only, other extractors don't need it.
 export function needsImpersonation(url: string): boolean {
   return /tiktok\.com/i.test(url);
 }
@@ -65,7 +65,7 @@ function proxyUrl(rawUrl: string, filename: string, extra?: { referer?: string; 
 
 /**
  * Most platforms only serve resolutions above ~360p as separate video-only
- * and audio-only streams — no single CDN URL has both. Point the download
+ * and audio-only streams, no single CDN URL has both. Point the download
  * link at /api/download/merge, which has yt-dlp mux the matching pair
  * server-side into one real (non-silent) MP4, instead of handing back a
  * raw video-only stream URL.
@@ -111,7 +111,7 @@ async function getMeta(url: string): Promise<YtdlpMeta> {
     try {
       const { stdout } = await execFileAsync(YTDLP_BIN, args, {
         timeout: YTDLP_TIMEOUT,
-        maxBuffer: 512 * 1024, // 512 KB — plenty for metadata
+        maxBuffer: 512 * 1024, // 512 KB, plenty for metadata
       });
       const [title = '', thumbnail = '', uploader = '', durationStr = '', platform = ''] =
         stdout.trim().split('\n---FIELD---\n').map(s => s.trim());
@@ -145,7 +145,7 @@ async function getFormatUrl(
   // can replay them when actually fetching the file.
   //
   // %(height)s is always requested: a "height<=2160" selector will happily
-  // fall back to whatever the video's actual max height is (e.g. 1080p) —
+  // fall back to whatever the video's actual max height is (e.g. 1080p),
   // the caller needs the real resolved height to dedupe/relabel tiers that
   // all silently landed on the same underlying stream.
   const printTemplate = impersonating
@@ -187,12 +187,12 @@ async function getFormatUrl(
 /* ─── video quality tiers ────────────────────────────────────── */
 
 // Quality tiers used to PROBE which resolutions actually exist for a given
-// video (and their real height, for accurate labeling — see labelForHeight).
+// video (and their real height, for accurate labeling, see labelForHeight).
 // These selectors are video-only-aware: most platforms (YouTube especially)
 // only serve anything above ~360p as separate video-only DASH streams, with
 // no single URL containing both audio and video. The actual download later
 // goes through /api/download/merge, which has yt-dlp mux the matching
-// video+audio pair server-side — these selectors are only used to discover
+// video+audio pair server-side, these selectors are only used to discover
 // what heights genuinely exist, never to hand back a raw (possibly silent)
 // stream URL directly.
 export const VIDEO_TIERS: { label: string; quality: string; selector: string }[] = [
@@ -216,7 +216,7 @@ export const AUDIO_TIERS: { label: string; quality: string; ext: string; selecto
 /**
  * Map a yt-dlp-resolved actual height to a display label. A tier selector
  * like "height<=2160" happily falls back to the video's real max height
- * (e.g. 1080p) when nothing higher exists — this maps what yt-dlp actually
+ * (e.g. 1080p) when nothing higher exists, this maps what yt-dlp actually
  * gave us, not what tier we asked for, so we never label a 1080p stream as
  * "4K".
  */
@@ -232,11 +232,11 @@ function labelForHeight(height: number): { label: string; quality: string } {
 }
 
 // TikTok audio extraction discards the video track, so resolution doesn't
-// matter — use the most permissive selector to avoid failing on videos
+// matter, use the most permissive selector to avoid failing on videos
 // that don't happen to match a height-capped tier.
 export const TIKTOK_AUDIO_EXTRACT_SELECTOR = 'best';
 
-/** Every format selector this service ever generates — used by the TikTok
+/** Every format selector this service ever generates, used by the TikTok
  *  streaming route to reject anything it didn't itself hand out. */
 export const KNOWN_SELECTORS = new Set([
   ...VIDEO_TIERS.map(t => t.selector),
@@ -246,7 +246,7 @@ export const KNOWN_SELECTORS = new Set([
 
 /**
  * Build a download URL for a TikTok format. TikTok's CDN binds signed
- * stream URLs to the exact curl_cffi session that resolved them — a
+ * stream URLs to the exact curl_cffi session that resolved them, a
  * separate later fetch (even with identical headers/cookies/TLS
  * impersonation) gets a 403. The only reliable fix is to have yt-dlp
  * download the bytes itself, in one shot, and stream them straight through
@@ -287,7 +287,7 @@ export async function resolveWithYtdlp(
     const formats: DownloadFormat[] = [];
 
     if (options.audioOnly && needsImpersonation(url)) {
-      // TikTok has no separate audio-only stream — it only serves muxed
+      // TikTok has no separate audio-only stream, it only serves muxed
       // video+audio MP4. Extract the audio track via FFmpeg from the best
       // muxed stream instead of probing for a bestaudio format that
       // doesn't exist on this platform.
@@ -324,7 +324,7 @@ export async function resolveWithYtdlp(
 
       let smallestRawStreamUrl = '';
       // A "height<=2160" selector silently falls back to the video's real
-      // max height (e.g. 1080p) when nothing higher exists — without this,
+      // max height (e.g. 1080p) when nothing higher exists, without this,
       // every unavailable higher tier would re-list that same stream
       // mislabeled as 4K/1440p. Dedupe on the *displayed* quality bucket
       // (not the raw height) since two slightly different raw heights
@@ -341,14 +341,14 @@ export async function resolveWithYtdlp(
         if (seenQuality.has(quality)) continue;
         seenQuality.add(quality);
 
-        // Track the raw (unproxied) URL of the smallest resolved tier — used
+        // Track the raw (unproxied) URL of the smallest resolved tier, used
         // below to feed a fast GIF conversion for x-gif-downloader.
         smallestRawStreamUrl = streamUrl;
 
         // TikTok's "bestvideo" formats already have audio embedded (TikTok
         // doesn't split video/audio into separate DASH tracks the way
         // YouTube does), so its own stream route can serve them directly.
-        // Everywhere else, height above ~360p is very likely video-only —
+        // Everywhere else, height above ~360p is very likely video-only,
         // route through the merge endpoint so the download actually has sound.
         const mergeHeight = height || parseInt(quality, 10) || 1080;
 
@@ -382,7 +382,7 @@ export async function resolveWithYtdlp(
         });
       }
 
-      // Note: no bonus audio-only track here by design — a video downloader
+      // Note: no bonus audio-only track here by design, a video downloader
       // should only offer video files. Audio extraction is a separate,
       // dedicated tool (youtube-to-mp3, tiktok-to-mp3, etc.).
     }
@@ -395,7 +395,7 @@ export async function resolveWithYtdlp(
 
   } catch (err) {
     // Node's execFile rejection .message is "Command failed: <full binary
-    // path and args>\n<stderr>" — that leaks internal server paths/flags to
+    // path and args>\n<stderr>", that leaks internal server paths/flags to
     // the client. Prefer .stderr (yt-dlp's own clean error line) when present.
     const execErr = err as (Error & { stderr?: string }) | undefined;
     const msg = execErr?.stderr || (err instanceof Error ? err.message : String(err));
@@ -412,7 +412,7 @@ export async function resolveWithYtdlp(
       return { ok: false, error: 'This URL is not supported.' };
 
     // Never leak internal paths or command-line details in the fallback.
-    return { ok: false, error: 'Could not process this URL. The platform may be temporarily unavailable — please try again shortly.' };
+    return { ok: false, error: 'Could not process this URL. The platform may be temporarily unavailable, please try again shortly.' };
   }
 }
 
@@ -461,7 +461,7 @@ async function resolveThumbnail(url: string): Promise<DownloadResult> {
 /**
  * Thumbnail resolver for platforms with no predictable CDN URL pattern
  * (unlike YouTube's img.youtube.com). Reuses yt-dlp's own metadata
- * extraction — its `thumbnail` field is already a direct CDN image URL.
+ * extraction, its `thumbnail` field is already a direct CDN image URL.
  */
 async function resolveThumbnailViaMetadata(url: string): Promise<DownloadResult> {
   const meta = await getMeta(url);

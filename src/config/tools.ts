@@ -66,7 +66,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Do I need to install any software or browser extension?',
-        answer: 'No installation needed. SavDown runs entirely in your browser — desktop, tablet, or mobile. There is nothing to install, no Chrome extension, and no app to download.',
+        answer: 'No installation needed. SavDown runs entirely in your browser, desktop, tablet, or mobile. There is nothing to install, no Chrome extension, and no app to download.',
       },
       {
         question: 'Does SavDown add a watermark to downloaded videos?',
@@ -74,7 +74,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Will the video quality be lower than on YouTube?',
-        answer: 'No. SavDown routes the original stream directly to your device. The file you download is bit-for-bit identical to what YouTube serves — no re-encoding, no quality loss.',
+        answer: 'No. SavDown routes the original stream directly to your device. The file you download is bit-for-bit identical to what YouTube serves, no re-encoding, no quality loss.',
       },
       {
         question: 'Can I download a YouTube playlist or multiple videos at once?',
@@ -82,7 +82,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'How do I download a YouTube video on my iPhone or Android phone?',
-        answer: 'Open the YouTube video, tap Share, then Copy Link. Open SavDown in your mobile browser, paste the link, pick a format, and tap Download. The file saves directly to your phone\'s storage or Files app — no app install required.',
+        answer: 'Open the YouTube video, tap Share, then Copy Link. Open SavDown in your mobile browser, paste the link, pick a format, and tap Download. The file saves directly to your phone\'s storage or Files app, no app install required.',
       },
       {
         question: 'Does downloading YouTube videos work on private or age-restricted videos?',
@@ -143,7 +143,7 @@ export const tools: Tool[] = [
     faq: [
       {
         question: 'Are YouTube Shorts saved in the original vertical (9:16) format?',
-        answer: 'Yes. SavDown preserves the full 1080×1920 vertical resolution and 9:16 aspect ratio exactly as published by the creator — no cropping, no black bars, no format conversion.',
+        answer: 'Yes. SavDown preserves the full 1080×1920 vertical resolution and 9:16 aspect ratio exactly as published by the creator, no cropping, no black bars, no format conversion.',
       },
       {
         question: 'Does SavDown add a watermark to downloaded YouTube Shorts?',
@@ -163,7 +163,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Can I also extract the audio from a YouTube Short as MP3?',
-        answer: 'Yes. After pasting the Shorts URL you can choose the MP3 audio option to save just the soundtrack — useful for trending sounds and background music.',
+        answer: 'Yes. After pasting the Shorts URL you can choose the MP3 audio option to save just the soundtrack, useful for trending sounds and background music.',
       },
       {
         question: 'What is the difference between a YouTube Short and a regular YouTube video?',
@@ -179,7 +179,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Why does the downloaded Short appear as an MP4 rather than a Shorts file?',
-        answer: 'MP4 is the universal video container that plays on every device and app, from your phone gallery to professional editing software. There is no special "Shorts format" — YouTube itself stores Shorts as MP4.',
+        answer: 'MP4 is the universal video container that plays on every device and app, from your phone gallery to professional editing software. There is no special "Shorts format", YouTube itself stores Shorts as MP4.',
       },
       {
         question: 'Does SavDown store or share the Shorts I download?',
@@ -231,7 +231,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Do I need to log in to YouTube to download thumbnails?',
-        answer: 'No login is required. Any public YouTube video URL — including youtu.be short links and Shorts URLs — works without authentication.',
+        answer: 'No login is required. Any public YouTube video URL, including youtu.be short links and Shorts URLs, works without authentication.',
       },
       {
         question: 'In what file format are YouTube thumbnails saved?',
@@ -383,7 +383,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Do I need the TikTok app or an account to download videos?',
-        answer: 'Neither. Just paste the public video URL into SavDown — no TikTok login, no SavDown account, and no app installation required.',
+        answer: 'Neither. Just paste the public video URL into SavDown, no TikTok login, no SavDown account, and no app installation required.',
       },
       {
         question: 'What quality does a downloaded TikTok video have?',
@@ -407,7 +407,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Can I also extract just the audio from a TikTok video?',
-        answer: 'Yes. Select the MP3 option to extract the audio track from any public TikTok video — ideal for saving trending sounds, voiceovers, or background music.',
+        answer: 'Yes. Select the MP3 option to extract the audio track from any public TikTok video, ideal for saving trending sounds, voiceovers, or background music.',
       },
       {
         question: 'Why would I want the watermarked version instead of the clean one?',
@@ -427,7 +427,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'What should I do if my TikTok link does not work?',
-        answer: 'Make sure the video is still publicly visible — deleted, private, or region-restricted TikToks cannot be downloaded. Try copying the link again directly from the TikTok app Share menu to ensure the URL is complete.',
+        answer: 'Make sure the video is still publicly visible, deleted, private, or region-restricted TikToks cannot be downloaded. Try copying the link again directly from the TikTok app Share menu to ensure the URL is complete.',
       },
       {
         question: 'Can I download TikTok LIVE recordings?',
@@ -463,7 +463,7 @@ export const tools: Tool[] = [
     faq: [
       {
         question: 'Can I save the audio from any public TikTok as an MP3?',
-        answer: 'Yes. Paste the URL of any public TikTok video and SavDown extracts the audio track and saves it as a clean MP3 file — no video, no watermark, just the sound.',
+        answer: 'Yes. Paste the URL of any public TikTok video and SavDown extracts the audio track and saves it as a clean MP3 file, no video, no watermark, just the sound.',
       },
       {
         question: 'Does the MP3 include the TikTok audio watermark?',
@@ -491,11 +491,11 @@ export const tools: Tool[] = [
       },
       {
         question: 'How long does converting a TikTok to MP3 take?',
-        answer: 'Audio extraction is typically faster than full video downloads — most TikToks are converted in 2–4 seconds. Longer TikToks (up to 10 minutes) may take up to 10 seconds.',
+        answer: 'Audio extraction is typically faster than full video downloads, most TikToks are converted in 2–4 seconds. Longer TikToks (up to 10 minutes) may take up to 10 seconds.',
       },
       {
         question: 'Can I download the original soundtrack from a TikTok Duet?',
-        answer: 'Yes. The MP3 extracted from a Duet includes the full mixed audio — both the original creator\'s audio and the duetting creator\'s audio exactly as heard in the video.',
+        answer: 'Yes. The MP3 extracted from a Duet includes the full mixed audio, both the original creator\'s audio and the duetting creator\'s audio exactly as heard in the video.',
       },
       {
         question: 'Do I need to create an account to convert TikTok to MP3?',
@@ -507,7 +507,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Can I extract MP3 from a TikTok photo slideshow?',
-        answer: 'Yes. TikTok photo posts often have background music. SavDown extracts the audio track from the slideshow just like a regular video — paste the link and choose MP3.',
+        answer: 'Yes. TikTok photo posts often have background music. SavDown extracts the audio track from the slideshow just like a regular video, paste the link and choose MP3.',
       },
     ],
     howTo: [
@@ -567,7 +567,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Can I also download the background music from a TikTok photo post?',
-        answer: 'Yes. Use the TikTok to MP3 tool — paste the same photo post URL and choose MP3 to extract the audio background track separately from the images.',
+        answer: 'Yes. Use the TikTok to MP3 tool, paste the same photo post URL and choose MP3 to extract the audio background track separately from the images.',
       },
       {
         question: 'Is there a limit to how many photos I can download from a single slideshow?',
@@ -782,7 +782,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Do downloaded Instagram Stories include music or stickers?',
-        answer: 'Yes. The downloaded file is the fully rendered Story video that Instagram serves — it includes background music, text overlays, stickers, and GIFs exactly as the creator published it.',
+        answer: 'Yes. The downloaded file is the fully rendered Story video that Instagram serves, it includes background music, text overlays, stickers, and GIFs exactly as the creator published it.',
       },
       {
         question: 'Does SavDown add a watermark to downloaded Stories?',
@@ -866,7 +866,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Are the EXIF metadata and original file properties preserved?',
-        answer: 'Instagram strips most EXIF metadata (camera model, GPS, etc.) when photos are uploaded. The downloaded JPG will have the same metadata state as what Instagram stores — typically minimal EXIF data.',
+        answer: 'Instagram strips most EXIF metadata (camera model, GPS, etc.) when photos are uploaded. The downloaded JPG will have the same metadata state as what Instagram stores, typically minimal EXIF data.',
       },
       {
         question: 'Does the ZIP file for a carousel maintain the original post order?',
@@ -917,7 +917,7 @@ export const tools: Tool[] = [
     faq: [
       {
         question: 'Can I view and download an Instagram profile picture in full size?',
-        answer: 'Yes. Instagram crops and shrinks profile photos to a small circle in the app. SavDown retrieves the full-resolution version Instagram stores — typically 320×320 HD — and lets you save it as a JPG.',
+        answer: 'Yes. Instagram crops and shrinks profile photos to a small circle in the app. SavDown retrieves the full-resolution version Instagram stores, typically 320×320 HD, and lets you save it as a JPG.',
       },
       {
         question: 'Do I need to follow the account to download their profile picture?',
@@ -933,10 +933,10 @@ export const tools: Tool[] = [
       },
       {
         question: 'What is the maximum resolution for an Instagram profile picture?',
-        answer: 'Instagram caps profile photos at 320×320 pixels on its public API. SavDown downloads at this full 320×320 resolution. The circular crop you see in the app is just a display effect — the actual stored image is square.',
+        answer: 'Instagram caps profile photos at 320×320 pixels on its public API. SavDown downloads at this full 320×320 resolution. The circular crop you see in the app is just a display effect, the actual stored image is square.',
       },
       {
-        question: 'How do I use this tool — do I enter a username or a URL?',
+        question: 'How do I use this tool, do I enter a username or a URL?',
         answer: 'Both work. You can paste the full profile URL (instagram.com/username) or just type the username handle. SavDown resolves either input to the correct profile.',
       },
       {
@@ -1084,7 +1084,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'What resolution are Facebook Reels downloaded in?',
-        answer: 'SavDown downloads Facebook Reels at the highest resolution Facebook provides for the Reel — typically HD (720p or 1080p for vertical content). An SD option is also available for smaller file sizes.',
+        answer: 'SavDown downloads Facebook Reels at the highest resolution Facebook provides for the Reel, typically HD (720p or 1080p for vertical content). An SD option is also available for smaller file sizes.',
       },
       {
         question: 'How do I find the link to a Facebook Reel?',
@@ -1175,7 +1175,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Does downloading Pinterest videos work on iPhone and Android?',
-        answer: 'Yes. Open your mobile browser, paste the Pinterest pin link into SavDown, tap Download, and the MP4 saves to your device storage — no app or extension needed.',
+        answer: 'Yes. Open your mobile browser, paste the Pinterest pin link into SavDown, tap Download, and the MP4 saves to your device storage, no app or extension needed.',
       },
       {
         question: 'Does SavDown add a watermark to downloaded Pinterest videos?',
@@ -1234,7 +1234,7 @@ export const tools: Tool[] = [
     faq: [
       {
         question: 'What resolution will I get when downloading a Pinterest image?',
-        answer: 'SavDown fetches the original, highest-resolution version that Pinterest stores for the pin — typically the full image the creator or brand uploaded, which can range from 600px wide up to several thousand pixels depending on the source.',
+        answer: 'SavDown fetches the original, highest-resolution version that Pinterest stores for the pin, typically the full image the creator or brand uploaded, which can range from 600px wide up to several thousand pixels depending on the source.',
       },
       {
         question: 'Do I need a Pinterest account to download pin images?',
@@ -1242,7 +1242,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'What image formats does SavDown support for Pinterest downloads?',
-        answer: 'Pinterest images are stored as JPG or PNG depending on what the original creator uploaded. SavDown serves whichever format the original pin uses — you get the native file with no format conversion.',
+        answer: 'Pinterest images are stored as JPG or PNG depending on what the original creator uploaded. SavDown serves whichever format the original pin uses, you get the native file with no format conversion.',
       },
       {
         question: 'How do I copy the link to a Pinterest image pin?',
@@ -1262,7 +1262,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Does SavDown work with pin.it short links for image pins?',
-        answer: 'Yes. Short links from pin.it resolve to the full pinterest.com pin URL automatically. Paste the short link directly — no manual expansion needed.',
+        answer: 'Yes. Short links from pin.it resolve to the full pinterest.com pin URL automatically. Paste the short link directly, no manual expansion needed.',
       },
       {
         question: 'Can I save Pinterest infographics and tall/long-form pin images at full size?',
@@ -1313,7 +1313,7 @@ export const tools: Tool[] = [
     faq: [
       {
         question: 'Does SavDown work with both x.com and twitter.com links?',
-        answer: 'Yes. SavDown accepts links from both x.com and the legacy twitter.com domain. Both redirect to the same content and are handled identically — just paste whichever URL you have.',
+        answer: 'Yes. SavDown accepts links from both x.com and the legacy twitter.com domain. Both redirect to the same content and are handled identically, just paste whichever URL you have.',
       },
       {
         question: 'Can I download X (Twitter) videos without an account?',
@@ -1325,7 +1325,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Can I also download X GIFs as video files?',
-        answer: 'Yes. X stores GIFs as MP4 files internally. SavDown can download them as MP4 or convert them back to a true animated GIF file — choose whichever format suits your use case.',
+        answer: 'Yes. X stores GIFs as MP4 files internally. SavDown can download them as MP4 or convert them back to a true animated GIF file, choose whichever format suits your use case.',
       },
       {
         question: 'How do I get the link to an X post with a video?',
@@ -1349,7 +1349,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Does SavDown support mobile.x.com and mobile.twitter.com links?',
-        answer: 'Yes. Mobile-formatted X/Twitter links are automatically normalised to the standard URL format before processing. All variants — desktop, mobile, and legacy — are supported.',
+        answer: 'Yes. Mobile-formatted X/Twitter links are automatically normalised to the standard URL format before processing. All variants, desktop, mobile, and legacy, are supported.',
       },
       {
         question: 'How large are downloaded X video files?',
@@ -1413,7 +1413,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'How do I tell if an X post contains a GIF vs. a regular video?',
-        answer: 'GIFs on X loop continuously without a play/pause button or progress bar — they behave like animated images. Regular videos show a play button and a progress bar at the bottom. SavDown correctly identifies both types and offers the appropriate download formats.',
+        answer: 'GIFs on X loop continuously without a play/pause button or progress bar, they behave like animated images. Regular videos show a play button and a progress bar at the bottom. SavDown correctly identifies both types and offers the appropriate download formats.',
       },
       {
         question: 'Will the GIF file be large?',

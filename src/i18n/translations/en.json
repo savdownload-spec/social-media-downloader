@@ -74,7 +74,7 @@
   },
   "catalog": {
     "title": "All Tools",
-    "subtitle": "The complete toolkit — social media downloaders plus image, video, PDF, AI, SEO, and utility tools.",
+    "subtitle": "The complete toolkit, social media downloaders plus image, video, PDF, AI, SEO, and utility tools.",
     "footerDesc": "Every tool you need, in one place. Free, no signup, no watermarks.",
     "groups": {
       "Downloaders": "Downloaders",
@@ -128,7 +128,7 @@
     "hero": {
       "eyebrow": "About SavDown",
       "title": "Tools Should Feel Calm.",
-      "lead": "SavDown started with a simple observation: every downloader we tried was plastered with ads, dark patterns, and shady popups. We wanted the opposite — a tool that felt like Apple's calmest apps."
+      "lead": "SavDown started with a simple observation: every downloader we tried was plastered with ads, dark patterns, and shady popups. We wanted the opposite, a tool that felt like Apple's calmest apps."
     },
     "stats": {
       "items": [
@@ -160,13 +160,13 @@
         { "title": "Respect Your Attention", "body": "No aggressive ads, no dark patterns, no popups. We design tools that help, not distract." },
         { "title": "Privacy by Default", "body": "Everything runs in your browser. We store nothing, track nothing, and never ask for personal data." },
         { "title": "Speed Without Compromise", "body": "Paste a link, get your file. No signup walls, no rate limits, no waiting for email confirmations." },
-        { "title": "Craft Over Growth", "body": "We add platforms only when we can do them right — never for the sake of a longer feature list." }
+        { "title": "Craft Over Growth", "body": "We add platforms only when we can do them right, never for the sake of a longer feature list." }
       ]
     },
     "platformsSection": {
       "eyebrow": "Platforms",
       "title": "Every Platform You Love.",
-      "description": "We support the services people actually use — and we add new ones only when we can do them right.",
+      "description": "We support the services people actually use, and we add new ones only when we can do them right.",
       "items": [
         "YouTube", "YouTube Shorts", "TikTok", "Instagram Reels", "Instagram Stories", "Instagram Photos", "Facebook", "Facebook Reels", "Pinterest Videos", "Pinterest Images", "X (Twitter) Videos", "X (Twitter) GIFs"
       ]
@@ -177,7 +177,7 @@
       "description": "A short history of how SavDown grew from a weekend project into a full toolkit platform.",
       "milestones": [
         { "year": "2024", "title": "First line of code", "body": "A small team, frustrated by ad-filled downloaders, started building the alternative." },
-        { "year": "2025", "title": "Beta launch", "body": "SavDown went live with YouTube, TikTok, and Instagram support — fast, free, and clean." },
+        { "year": "2025", "title": "Beta launch", "body": "SavDown went live with YouTube, TikTok, and Instagram support, fast, free, and clean." },
         { "year": "2025", "title": "Platform expansion", "body": "Added Facebook, Pinterest, and X. Introduced thumbnail grabbers and MP3 extraction." },
         { "year": "2026", "title": "The toolkit era", "body": "Expanded into Image, Video, PDF, AI, SEO, and Utility categories, all under one roof." }
       ]
@@ -185,7 +185,7 @@
     "teamSection": {
       "eyebrow": "Who's Behind It",
       "title": "A Small Team, Big Standards.",
-      "description": "We are a tight group of designers and engineers who love clean tools. SavDown is funded through an upcoming Pro upgrade — never by selling your data.",
+      "description": "We are a tight group of designers and engineers who love clean tools. SavDown is funded through an upcoming Pro upgrade, never by selling your data.",
       "members": [
         { "role": "Design", "body": "Obsessed with clarity. Every pixel earns its place." },
         { "role": "Engineering", "body": "Fast, reliable, and secure. No shortcuts on infrastructure." },
@@ -219,7 +219,7 @@
     },
     "toasts": {
       "slowDown": "Slow down!",
-      "tooManyRequests": "Too many requests — please wait a moment.",
+      "tooManyRequests": "Too many requests, please wait a moment.",
       "failed": "Send failed",
       "networkError": "Network error",
       "networkErrorDesc": "Could not reach the server. Check your connection and try again.",
@@ -241,7 +241,7 @@
   "legal": {
     "privacy": {
       "title": "Privacy Policy",
-      "subtitle": "How SavDown handles your data — clearly, honestly, and with respect for your privacy.",
+      "subtitle": "How SavDown handles your data, clearly, honestly, and with respect for your privacy.",
       "lastUpdated": "Last updated: January 2026"
     },
     "terms": {
@@ -440,12 +440,12 @@
   "cookiesPage": {
     "metadata": {
       "title": "Cookie Policy",
-      "description": "How SavDown uses cookies and similar technologies — minimally, transparently, and only when needed."
+      "description": "How SavDown uses cookies and similar technologies, minimally, transparently, and only when needed."
     },
     "eyebrow": "Legal",
     "title": "Cookie Policy.",
     "titleHighlight": "Cookie",
-    "description": "Cookies are small text files stored on your device when you visit a website. SavDown uses the minimum number necessary to make the service work well — nothing more.",
+    "description": "Cookies are small text files stored on your device when you visit a website. SavDown uses the minimum number necessary to make the service work well, nothing more.",
     "meta": "Last updated: January 2026",
     "highlights": {
       "minimalCookies": "Minimal cookies",
@@ -499,14 +499,14 @@
     ],
     "callout": {
       "title": "Questions about cookies?",
-      "body": "Read our privacy policy or reach out — we are happy to explain anything in plain English.",
+      "body": "Read our privacy policy or reach out, we are happy to explain anything in plain English.",
       "cta": "Read privacy policy"
     }
   },
   "dmcaPage": {
     "metadata": {
       "title": "DMCA Policy",
-      "description": "SavDown's DMCA takedown policy and how to submit a notice — clear, fast, and creator-friendly."
+      "description": "SavDown's DMCA takedown policy and how to submit a notice, clear, fast, and creator-friendly."
     },
     "eyebrow": "Legal",
     "title": "DMCA Policy.",
@@ -560,7 +560,7 @@
   "privacyPage": {
     "metadata": {
       "title": "Privacy Policy",
-      "description": "How SavDown handles your data — clearly, honestly, and with respect for your privacy."
+      "description": "How SavDown handles your data, clearly, honestly, and with respect for your privacy."
     },
     "eyebrow": "Legal",
     "title": "Your Privacy, Respected.",
@@ -580,7 +580,7 @@
     "principles": [
       { "title": "We never store your downloads", "description": "The media files you download stream directly from the source. They never touch our disk." },
       { "title": "We do not track you", "description": "No cross-site trackers, no ad pixels, no fingerprinting. We never sell or share your data." },
-      { "title": "Minimal data only", "description": "We collect the bare minimum needed to operate the service — and clearly explain each piece." },
+      { "title": "Minimal data only", "description": "We collect the bare minimum needed to operate the service, and clearly explain each piece." },
       { "title": "You are in control", "description": "Access, correct, or delete your data at any time. We respond to requests within 30 days." }
     ],
     "collectSection": {
@@ -590,9 +590,9 @@
     },
     "collect": [
       { "title": "URLs you paste", "body": "Only for the duration of resolving your download. We cache metadata (title, thumbnail, formats) for up to 30 minutes to speed up repeat requests, then discard it." },
-      { "title": "Anonymous usage data", "body": "IP address hash, user agent, tool used, and timestamp — used only for rate limiting and aggregate analytics. Never linked back to you." },
+      { "title": "Anonymous usage data", "body": "IP address hash, user agent, tool used, and timestamp, used only for rate limiting and aggregate analytics. Never linked back to you." },
       { "title": "Account data (if you sign in)", "body": "Email, name, and profile image from your OAuth provider. Nothing more. We never ask for passwords." },
-      { "title": "Newsletter data (if you subscribe)", "body": "Just your email — used to send you the calm monthly update and absolutely nothing else." }
+      { "title": "Newsletter data (if you subscribe)", "body": "Just your email, used to send you the calm monthly update and absolutely nothing else." }
     ],
     "notCollectSection": {
       "eyebrow": "What we do not collect",
@@ -611,31 +611,31 @@
       "title": "Cookies, retention, and partners."
     },
     "detailBlocks": [
-      { "title": "Cookies", "description": "We use essential cookies for sign-in and rate limiting. Optional analytics only if you consent — see our Cookie Policy for the full list." },
+      { "title": "Cookies", "description": "We use essential cookies for sign-in and rate limiting. Optional analytics only if you consent, see our Cookie Policy for the full list." },
       { "title": "Data retention", "description": "Download logs are kept for 90 days for abuse prevention, then deleted. Account data lives as long as your account exists." },
       { "title": "Third parties", "description": "We use OAuth providers (Google, GitHub) for sign-in, Vercel for delivery, and a media-resolver micro-service. None of them receive personal data beyond what their function requires." }
     ],
     "rightsSection": {
       "eyebrow": "Your rights",
       "title": "You own your data. Always.",
-      "body": "We make it easy to exercise your rights — no support tickets, no waiting on hold."
+      "body": "We make it easy to exercise your rights, no support tickets, no waiting on hold."
     },
     "rights": [
       { "title": "Right to access", "body": "Ask what data we hold on you and we will send you a copy." },
       { "title": "Right to correct", "body": "See something wrong? We will fix inaccurate information within 30 days." },
-      { "title": "Right to delete", "body": "One email and your account and all related data are gone — no hoops, no friction." },
+      { "title": "Right to delete", "body": "One email and your account and all related data are gone, no hoops, no friction." },
       { "title": "Right to opt out", "body": "Decline optional analytics cookies, refuse marketing emails, and turn off anything non-essential." }
     ],
     "callout": {
       "title": "Privacy questions? Just ask.",
-      "body": "Reach us via the contact page and we will respond within 30 days — usually much faster.",
+      "body": "Reach us via the contact page and we will respond within 30 days, usually much faster.",
       "cta": "Contact us"
     }
   },
   "termsPage": {
     "metadata": {
       "title": "Terms of Service",
-      "description": "The terms you agree to when using SavDown — written in plain English."
+      "description": "The terms you agree to when using SavDown, written in plain English."
     },
     "eyebrow": "Legal",
     "title": "Terms of Service.",
@@ -684,7 +684,7 @@
       "title": "The fine print, kept readable."
     },
     "otherBlocks": [
-      { "title": "Intellectual property", "description": "SavDown does not host, store, or claim ownership over any downloaded content. All content remains the property of its original creators. SavDown is a tool — how you use it is your responsibility." },
+      { "title": "Intellectual property", "description": "SavDown does not host, store, or claim ownership over any downloaded content. All content remains the property of its original creators. SavDown is a tool, how you use it is your responsibility." },
       { "title": "Service availability", "description": "We aim for 99.9% uptime but make no guarantees. The service is provided 'as is' without warranty of any kind. We may modify, suspend, or discontinue any part of the service at any time." },
       { "title": "Rate limits", "description": "We enforce rate limits to keep the service fair for everyone. Excessive automated use may result in temporary or permanent blocks." },
       { "title": "Liability", "description": "SavDown is not liable for any damages arising from your use of the service, including but not limited to copyright infringement claims resulting from your downloads. You use the service at your own risk." }
@@ -700,7 +700,7 @@
     },
     "callout": {
       "title": "Questions about these terms?",
-      "body": "Reach us anytime — we are happy to clarify anything in plain English.",
+      "body": "Reach us anytime, we are happy to clarify anything in plain English.",
       "cta": "Contact us"
     }
   },
@@ -791,7 +791,7 @@
       },
       {
         "question": "What are the AI tools?",
-        "answer": "We are building smart, AI-powered features — think auto-captions, smart trimming, and format suggestions. Pro members get early access as they roll out."
+        "answer": "We are building smart, AI-powered features, think auto-captions, smart trimming, and format suggestions. Pro members get early access as they roll out."
       }
     ]
   },
@@ -893,10 +893,10 @@
     "freeTierForever": "Free tier forever",
     "cancelAnytime": "Cancel any time",
     "resourcesTitle": "Everything you need to know.",
-    "resourcesSubtitle": "Documentation, support, and legal — all in one place.",
+    "resourcesSubtitle": "Documentation, support, and legal, all in one place.",
     "resourcesEyebrow": "Resources",
     "aboutTitle": "The team building SavDown.",
-    "aboutSubtitle": "Fast, private, free — that's our promise.",
+    "aboutSubtitle": "Fast, private, free, that's our promise.",
     "aboutEyebrow": "Company",
     "followUs": "Follow us:",
     "groupMeta": {
@@ -917,7 +917,7 @@
       "faq":       { "label": "FAQ",             "desc": "Quick answers to common questions." },
       "blog":      { "label": "Blog & Guides",   "desc": "How-to articles and platform tips." },
       "search":    { "label": "Search Tools",    "desc": "Find exactly the tool you need fast." },
-      "contact":   { "label": "Contact Us",      "desc": "Reach the team — we reply quickly." },
+      "contact":   { "label": "Contact Us",      "desc": "Reach the team, we reply quickly." },
       "privacy":   { "label": "Privacy Policy",  "desc": "How we handle your data." },
       "terms":     { "label": "Terms of Service","desc": "Platform guidelines and usage rules." }
     },
@@ -927,7 +927,7 @@
       "pricing": { "label": "Pricing",        "desc": "Free tier, Pro plan, and credit packs." },
       "privacy": { "label": "Privacy Policy", "desc": "We never sell your data." },
       "terms":   { "label": "Terms",          "desc": "Usage rules and platform guidelines." },
-      "careers": { "label": "Careers",        "desc": "We're hiring — come build the future." }
+      "careers": { "label": "Careers",        "desc": "We're hiring, come build the future." }
     },
     "footerLinks": {
       "sitemap": "Sitemap",
@@ -946,7 +946,7 @@
     "viewAllTools":     "View All Tools",
     "fullPricingDetails": "Full Pricing Details",
     "viewAllArticles":  "View All Articles",
-    "getStartedFree":   "Get Started — It's Free",
+    "getStartedFree":   "Get Started, It's Free",
     "pricingPlans": {
       "free":    { "name": "Free",    "desc": "30 credits/day, all tools, no watermarks." },
       "pro":     { "name": "Pro",     "desc": "1,500 credits/month, 4K, batch, AI access." },

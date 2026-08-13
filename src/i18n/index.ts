@@ -26,7 +26,7 @@ export function useTranslation() {
     const raw = getRaw(key);
     // next-intl's default behavior for a missing message is to return the
     // key itself (a truthy string) rather than throwing or returning
-    // undefined — that silently breaks every `t(key) || fallback` call site
+    // undefined, which silently breaks every `t(key) || fallback` call site
     // across the app whenever a locale is missing a key, showing the raw
     // "some.dotted.key" string in the UI instead of the intended fallback.
     // Checking the raw messages object first (where a missing key is

@@ -5,14 +5,14 @@
  * resolved them via yt-dlp's --impersonate. A separate later fetch (even one
  * that replays the same headers/cookies/TLS fingerprint) gets rejected with
  * a 403. The only reliable fix is to have yt-dlp download the bytes itself,
- * in the same invocation, and hand the file back to the browser — so this
+ * in the same invocation, and hand the file back to the browser, so this
  * route re-runs the resolution + download in one shot instead of reusing a
  * previously-resolved CDN URL.
  *
  * TikTok also has no separate audio-only stream (only muxed video+audio),
  * so `audio=1` runs the downloaded file through FFmpeg to extract an MP3.
  *
- * Downloads to a temp file rather than piping live — TikTok videos are a
+ * Downloads to a temp file rather than piping live, TikTok videos are a
  * few MB at most, and this avoids partial/broken HTTP responses when
  * extraction fails mid-stream (matches the temp-file pattern in
  * src/lib/videoService.ts).
@@ -38,7 +38,7 @@ const execFileAsync = promisify(execFile);
 
 const YTDLP_BIN      = getYtdlpBin();
 const FFMPEG_BIN      = getFfmpegBin();
-const DOWNLOAD_TIMEOUT = parseInt(process.env.YTDLP_TIMEOUT_MS || '45000', 10) * 2; // real download, not metadata — allow more time
+const DOWNLOAD_TIMEOUT = parseInt(process.env.YTDLP_TIMEOUT_MS || '45000', 10) * 2; // real download, not metadata, allow more time
 
 export async function GET(req: Request) {
   const ip = getClientId(req);

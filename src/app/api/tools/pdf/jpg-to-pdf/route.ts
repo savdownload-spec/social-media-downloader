@@ -1,6 +1,6 @@
 /**
  * POST /api/tools/pdf/jpg-to-pdf
- * Body: multipart/form-data — one or more "files" fields (images)
+ * Body: multipart/form-data, one or more "files" fields (images)
  * Response: PDF binary
  */
 import { NextResponse } from 'next/server';

@@ -45,7 +45,7 @@ const FEATURED_SLUGS = [
 ];
 
 /* ═══════════════════════════════════════════════════════════
-   TOOLS PANEL  — clean 3-zone layout
+   TOOLS PANEL , clean 3-zone layout
 ═══════════════════════════════════════════════════════════ */
 function ToolsPanel({ close }: { close: () => void }) {
   const t = useTranslation();
@@ -315,7 +315,7 @@ function BlogPanel({ close }: { close: () => void }) {
         ))}
       </div>
 
-      {/* posts — featured + grid */}
+      {/* posts, featured + grid */}
       <div className="flex gap-4">
         {/* featured */}
         {posts[0] && (
@@ -476,7 +476,7 @@ type NavId = 'tools' | 'pricing' | 'blog' | 'resources' | 'about';
 
 const NAV_IDS: NavId[] = ['tools', 'pricing', 'blog', 'resources', 'about'];
 
-/* Width of each panel — centered on viewport */
+/* Width of each panel, centered on viewport */
 const PANEL_WIDTH: Record<NavId, string> = {
   tools:     'w-[920px]',
   pricing:   'w-[760px]',
@@ -501,13 +501,13 @@ export function MegaMenu() {
   const navRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  /* mount guard — portal needs document */
+  /* mount guard, portal needs document */
   useEffect(() => { setMounted(true); }, []);
 
   /* close on route change */
   useEffect(() => { setActive(null); }, [pathname]);
 
-  /* close on outside click — check both nav and portal panel */
+  /* close on outside click, check both nav and portal panel */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       const target = e.target as Node;
@@ -545,7 +545,7 @@ export function MegaMenu() {
 
   const close = useCallback(() => setActive(null), []);
 
-  /* Portal content — lives in document.body, outside the sticky header */
+  /* Portal content, lives in document.body, outside the sticky header */
   const portal = (
     <AnimatePresence>
       {active && (
@@ -563,7 +563,7 @@ export function MegaMenu() {
             aria-hidden
           />
 
-          {/* Panel — viewport-centered; x:'-50%' in variants keeps centering during scale/y animation */}
+          {/* Panel, viewport-centered; x:'-50%' in variants keeps centering during scale/y animation */}
           <motion.div
             id="mega-menu-panel"
             key={active}
@@ -596,7 +596,7 @@ export function MegaMenu() {
 
   return (
     <>
-      {/* Nav trigger buttons — stay inside the header */}
+      {/* Nav trigger buttons, stay inside the header */}
       <div ref={navRef} className="flex items-center gap-0.5">
         {NAV_IDS.map((id) => {
           const isActive = active === id;
@@ -624,7 +624,7 @@ export function MegaMenu() {
         })}
       </div>
 
-      {/* Portal renders into document.body — bypasses sticky/transform stacking context */}
+      {/* Portal renders into document.body, bypasses sticky/transform stacking context */}
       {mounted && createPortal(portal, document.body)}
     </>
   );

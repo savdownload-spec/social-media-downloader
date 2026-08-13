@@ -1,6 +1,6 @@
 /**
  * POST /api/tools/pdf/compress
- * Body: multipart/form-data — single "file" field
+ * Body: multipart/form-data, single "file" field
  * Response: compressed PDF binary
  */
 import { NextResponse } from 'next/server';

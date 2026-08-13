@@ -1,6 +1,6 @@
 'use client';
 /**
- * QrScannerTool — client UI for decoding a QR code from an uploaded image.
+ * QrScannerTool, client UI for decoding a QR code from an uploaded image.
  *
  * Architecture: Frontend → /api/tools/qr/scan → jsqr + Sharp
  */
@@ -131,7 +131,7 @@ export function QrScannerTool(_props: FunctionalToolProps) {
                 <Upload className="w-6 h-6 text-primary" />
               </span>
               <p className="font-semibold text-text">Drop a QR image here, or click to browse</p>
-              <p className="text-xs text-text-subtle">JPG · PNG · WEBP · GIF — up to 10 MB</p>
+              <p className="text-xs text-text-subtle">JPG · PNG · WEBP · GIF, up to 10 MB</p>
             </div>
           )}
         </div>

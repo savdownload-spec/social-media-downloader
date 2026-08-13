@@ -1,6 +1,6 @@
 /**
  * Local, template-based SEO content generators. Everything here is pure
- * string logic — no network calls, no external API, no server needed.
+ * string logic, no network calls, no external API, no server needed.
  * Runs entirely in the browser.
  */
 
@@ -9,10 +9,10 @@
 const TITLE_TEMPLATES = [
   (t: string, b: string) => `${cap(t)}${b ? ` | ${b}` : ''}`,
   (t: string, b: string) => `${cap(t)}: The Complete Guide${b ? ` | ${b}` : ''}`,
-  (t: string) => `${cap(t)} — Everything You Need To Know`,
+  (t: string) => `${cap(t)}, Everything You Need To Know`,
   (t: string, b: string) => `Best ${cap(t)} in ${new Date().getFullYear()}${b ? ` | ${b}` : ''}`,
   (t: string) => `How To ${cap(t)}: A Step-By-Step Guide`,
-  (t: string, b: string) => `${cap(t)} Explained${b ? ` — ${b}` : ''}`,
+  (t: string, b: string) => `${cap(t)} Explained${b ? `, ${b}` : ''}`,
   (t: string) => `${cap(t)}: Tips, Tricks & Tools`,
   (t: string, b: string) => `${b ? `${b}: ` : ''}${cap(t)}`,
 ];
@@ -36,7 +36,7 @@ export function generateMetaTitles(topic: string, brand = ''): string[] {
 const DESCRIPTION_TEMPLATES = [
   (t: string, c: string) => `Discover everything about ${t}. Clear explanations, practical tips, and expert insight. ${c}`,
   (t: string, c: string) => `Looking for ${t}? This guide covers what you need to know, step by step. ${c}`,
-  (t: string, c: string) => `A complete, up-to-date guide to ${t} — what it is, why it matters, and how to get started. ${c}`,
+  (t: string, c: string) => `A complete, up-to-date guide to ${t}, what it is, why it matters, and how to get started. ${c}`,
   (t: string, c: string) => `Everything you need on ${t} in one place: tips, examples, and answers to common questions. ${c}`,
   (t: string, c: string) => `Get a clear, no-fluff breakdown of ${t}. Practical advice you can use today. ${c}`,
   (t: string, c: string) => `${cap(t)}, explained simply. Learn the essentials and avoid common mistakes. ${c}`,

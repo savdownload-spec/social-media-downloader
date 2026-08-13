@@ -17,7 +17,7 @@ type ModalProps = {
   open: boolean;
   /** Called when the user dismisses (Esc, backdrop click, or close button). */
   onClose: () => void;
-  /** Optional headline — renders as an H2. */
+  /** Optional headline, renders as an H2. */
   title?: ReactNode;
   /** Optional supporting text under the title. */
   description?: ReactNode;

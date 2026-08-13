@@ -174,7 +174,7 @@ export function ToolPageView({ tool }: { tool: Tool }) {
             <SectionHeading
               eyebrow={`More ${meta.group === 'Downloaders' ? 'downloaders' : `${meta.group.toLowerCase()} tools`}`}
               title={<>Try <span className="text-gradient">Another Tool.</span></>}
-              description="More from the same category — every tool on SavDown is free, no signup, no watermarks."
+              description="More from the same category, every tool on SavDown is free, no signup, no watermarks."
             />
             <div className="mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {related.map((r) => {
