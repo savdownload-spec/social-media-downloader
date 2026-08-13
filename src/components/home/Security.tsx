@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { ArrowUpRight, EyeOff, Lock, ServerOff, ShieldCheck } from 'lucide-react';
 import { Section } from '@/components/layout/Section';
@@ -13,11 +15,12 @@ export function Security() {
     { icon: Lock, title: t('security.points.2.title'), body: t('security.points.2.body') },
   ];
 
-  const stats = [
-    { value: '0', label: t('security.zeroRetention.stat0') },
-    { value: 'None', label: t('security.zeroRetention.stat1') },
-    { value: 'None', label: t('security.zeroRetention.stat2') },
-    { value: 'HTTPS', label: t('security.zeroRetention.stat3') },
+  const statValues = ['0', 'None', 'None', 'HTTPS'];
+  const statLabelKeys = [
+    'security.zeroRetention.stat0',
+    'security.zeroRetention.stat1',
+    'security.zeroRetention.stat2',
+    'security.zeroRetention.stat3',
   ];
 
   return (
@@ -98,10 +101,10 @@ export function Security() {
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10"><div className="h-full w-[86%] rounded-full bg-gradient-brand" /></div>
                 </div>
                 <div className="relative divide-y divide-white/[0.08]">
-                  {stats.map((stat) => (
-                    <div key={stat.label} className="flex items-center justify-between py-3 text-xs">
-                      <span className="text-ink-subtle">{stat.label}</span>
-                      <span className="font-semibold">{stat.value} <em className="ml-1 text-[9px] font-normal not-italic text-emerald-300">clear</em></span>
+                  {statLabelKeys.map((key, index) => (
+                    <div key={key} className="flex items-center justify-between py-3 text-xs">
+                      <span className="text-ink-subtle">{t(key)}</span>
+                      <span className="font-semibold">{statValues[index]} <em className="ml-1 text-[9px] font-normal not-italic text-emerald-300">clear</em></span>
                     </div>
                   ))}
                 </div>
