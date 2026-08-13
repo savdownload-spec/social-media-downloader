@@ -2,7 +2,7 @@ export const homeFaqs = [
   {
     question: 'Is SavDown free?',
     answer:
-      'Yes, every downloader on SavDown is free to use with no signup, no watermarks, and no download caps.',
+      'Yes. Create a free account and you get a daily allowance of SavCredits, enough for everyday downloading, with no watermarks and no card required. If you need more than the daily allowance, you can top up with a credit pack or move to a paid plan.',
   },
   {
     question: 'Do you save my downloads?',

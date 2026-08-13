@@ -19,7 +19,7 @@ const imageHowTo = [
 const pdfHowTo = [
   { title: 'Upload your file(s)', body: 'Drag in one or more PDFs or images. Everything stays in your browser until you process.' },
   { title: 'Choose your options', body: 'Set ranges for splitting or arrange pages in the order you want.' },
-  { title: 'Download the result', body: 'Click process and grab your finished PDF — no watermarks, no signup.' },
+  { title: 'Download the result', body: 'Click process and grab your finished PDF — no watermarks, covered by your daily credits.' },
 ];
 
 const videoHowTo = [

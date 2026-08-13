@@ -43,7 +43,7 @@ export const tools: Tool[] = [
     headline: 'Save YouTube Videos In Stunning Quality.',
     subheadline: 'Paste any YouTube link. Pick a format. Download in seconds.',
     description:
-      'Download YouTube videos in MP4 up to 4K. Fast, private, and free with no watermarks and no signup.',
+      'Download YouTube videos in MP4 up to 4K. Fast, private, and free with no watermarks and free daily credits.',
     keywords: ['youtube video downloader', 'youtube mp4', 'download youtube video', 'yt downloader'],
     placeholder: 'https://youtube.com/watch?v=…',
     urlPattern: /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/i,
@@ -54,7 +54,7 @@ export const tools: Tool[] = [
     faq: [
       {
         question: 'Is the YouTube video downloader completely free?',
-        answer: 'Yes. SavDown is 100% free with no hidden charges, no subscription, and no account required. Just paste a link and download.',
+        answer: 'Yes, free to use. Create a free account and you get a daily allowance of SavCredits, which covers everyday downloading with no card required. If you need more, you can top up with a one-time credit pack or move to a paid plan.',
       },
       {
         question: 'What video resolutions can I download from YouTube?',
@@ -155,7 +155,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Can I download YouTube Shorts on my phone without an app?',
-        answer: 'Yes. Open the Short, tap Share → Copy link, then open SavDown in your mobile browser, paste the link, and download. No app, no extension, and no account needed.',
+        answer: 'Yes. Open the Short, tap Share → Copy link, then open SavDown in your mobile browser, sign in, paste the link, and download. No app and no extension required.',
       },
       {
         question: 'Do I need a YouTube account to download Shorts?',
@@ -175,7 +175,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Is downloading YouTube Shorts free?',
-        answer: 'Completely free. There is no limit on how many Shorts you can download and no paid tier is required to access the Shorts downloader.',
+        answer: 'Free with your daily SavCredits, and every plan including the free one can use the Shorts downloader. Heavy users can top up with a credit pack.',
       },
       {
         question: 'Why does the downloaded Short appear as an MP4 rather than a Shorts file?',
@@ -288,7 +288,7 @@ export const tools: Tool[] = [
     headline: 'Turn YouTube Videos Into MP3 Audio.',
     subheadline: 'Extract crisp, high-bitrate audio from any YouTube video in seconds.',
     description:
-      'Convert YouTube videos to MP3 audio in high quality. Fast, free, and no signup required.',
+      'Convert YouTube videos to MP3 audio in high quality. Fast, free, with daily credits included.',
     keywords: ['youtube to mp3', 'youtube mp3 converter', 'download youtube audio', 'yt to mp3'],
     placeholder: 'https://youtube.com/watch?v=…',
     urlPattern: /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/i,
@@ -303,7 +303,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Is the YouTube to MP3 converter free to use?',
-        answer: 'Yes. Converting YouTube videos to MP3 is completely free on SavDown with no daily limits, no account creation, and no credit card required.',
+        answer: 'Yes. Converting YouTube videos to MP3 is covered by your free daily SavCredits, with no credit card required.',
       },
       {
         question: 'Does the audio quality depend on the YouTube video quality?',
@@ -452,7 +452,7 @@ export const tools: Tool[] = [
     headline: 'Save The Sound From Any TikTok.',
     subheadline: 'Grab the original audio or trending sound from a TikTok as a clean MP3.',
     description:
-      'Download TikTok audio and trending sounds as MP3. No watermark, no signup, free.',
+      'Download TikTok audio and trending sounds as MP3. No watermark, free daily credits.',
     keywords: ['tiktok to mp3', 'tiktok audio downloader', 'download tiktok sound', 'tiktok mp3'],
     placeholder: 'https://tiktok.com/@user/video/…',
     urlPattern: /^(https?:\/\/)?(www\.|vm\.|vt\.)?tiktok\.com\/.+/i,
@@ -499,7 +499,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Do I need to create an account to convert TikTok to MP3?',
-        answer: 'No account, email, or phone number is needed. The TikTok to MP3 converter is open and free to everyone with no registration barrier.',
+        answer: 'A free account is needed so your credits have somewhere to live, but no payment details are. Signing up takes an email address and nothing else.',
       },
       {
         question: 'Will the MP3 have the video\'s title as its file name?',
@@ -575,7 +575,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Do I need to be logged in to TikTok to download photo posts?',
-        answer: 'No account or login is required. Any public TikTok photo post can be downloaded by pasting the URL directly into SavDown.',
+        answer: 'Sign in with a free account, then paste the URL of any public TikTok photo post to download it.',
       },
       {
         question: 'What file format are TikTok photos saved in?',
@@ -1065,7 +1065,7 @@ export const tools: Tool[] = [
     headline: 'Download Facebook Reels In HD.',
     subheadline: 'Save short-form Facebook Reels without the watermark.',
     description:
-      'Download Facebook Reels in HD MP4. No watermark, no signup, works with public Reels.',
+      'Download Facebook Reels in HD MP4. No watermark, works with any public Reel.',
     keywords: ['facebook reels downloader', 'download facebook reels', 'fb reels downloader'],
     placeholder: 'https://facebook.com/reel/…',
     urlPattern: /^(https?:\/\/)?(www\.|m\.|web\.)?(facebook\.com|fb\.watch)\/.+/i,
@@ -1223,7 +1223,7 @@ export const tools: Tool[] = [
     headline: 'Save Pinterest Images In Full Size.',
     subheadline: 'Download any pin image in its original, highest resolution.',
     description:
-      'Download Pinterest images and pins in original resolution. Free, fast, no signup.',
+      'Download Pinterest images and pins in original resolution. Free, fast, no watermarks.',
     keywords: ['pinterest image downloader', 'download pinterest images', 'save pinterest pin'],
     placeholder: 'https://pinterest.com/pin/… or https://pin.it/…',
     urlPattern: /^(https?:\/\/)?(www\.)?(pinterest\.com|pin\.it)\/.+/i,
@@ -1386,7 +1386,7 @@ export const tools: Tool[] = [
     headline: 'Download GIFs From X As GIF Or MP4.',
     subheadline: 'Grab any GIF from X (Twitter) and save it as a true GIF or MP4.',
     description:
-      'Download GIFs from X (Twitter) as a real GIF or MP4. Free, fast, and no signup.',
+      'Download GIFs from X (Twitter) as a real GIF or MP4. Free, fast, no watermarks.',
     keywords: ['x gif downloader', 'twitter gif downloader', 'download twitter gif'],
     placeholder: 'https://x.com/user/status/…',
     urlPattern: /^(https?:\/\/)?(www\.|mobile\.)?(x\.com|twitter\.com)\/.+/i,

@@ -27,6 +27,7 @@ import { tmpdir } from 'os';
 import path from 'path';
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
+import { requireCredits, JOB_COST } from '@/lib/credits';
 import { needsImpersonation, KNOWN_SELECTORS } from '@/lib/ytdlp';
 import { getYtdlpBin, getFfmpegBin } from '@/lib/binaryPaths';
 
@@ -46,6 +47,10 @@ export async function GET(req: Request) {
   if (!rl.success) {
     return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
   }
+
+  // Credits are spent only once the job below succeeds.
+  const gate = await requireCredits({ cost: JOB_COST.proxyDownload });
+  if (!gate.ok) return gate.response;
 
   const { searchParams } = new URL(req.url);
   const pageUrl      = searchParams.get('url');
@@ -86,6 +91,7 @@ export async function GET(req: Request) {
 
     if (!extractAudio) {
       const buffer = await readFile(videoPath);
+      await gate.spend('TikTok video download');
       return new NextResponse(buffer, {
         status: 200,
         headers: {
@@ -108,6 +114,7 @@ export async function GET(req: Request) {
     }
 
     const buffer = await readFile(mp3Path);
+    await gate.spend('TikTok audio download');
     return new NextResponse(buffer, {
       status: 200,
       headers: {

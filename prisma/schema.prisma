@@ -10,7 +10,15 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // Runtime queries go through Neon's pooled endpoint (host contains
+  // "-pooler"), which is what serverless functions need — each invocation
+  // opens its own connection and the direct endpoint runs out.
+  url       = env("DATABASE_URL")
+  // Schema changes need a direct connection: the pooler is PgBouncer in
+  // transaction mode, where DDL does not work reliably. This is REQUIRED —
+  // Prisma fails to load the schema at all if DIRECT_URL is missing, so it
+  // must be set in every environment, including Vercel.
+  directUrl = env("DIRECT_URL")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -18,23 +26,94 @@ datasource db {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model User {
-  id            String     @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String?
-  email         String?    @unique
+  email         String?   @unique
   emailVerified DateTime?
   image         String?
-  role          String     @default("USER")
+  role          String    @default("USER")
   password      String?
   jobTitle      String?
   company       String?
   bio           String?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // ── Billing ────────────────────────────────────────────────────────────────
+  // `plan` is the entitlement the user currently has; it is derived from Stripe
+  // by the webhook and is never trusted from the client.
+  stripeCustomerId   String?   @unique
+  plan               String    @default("FREE") // FREE | PRO | MAX | LIFETIME
+  /// Allowance that refills each period and does NOT roll over. Free users get
+  /// a daily refill, paid plans a monthly one — `planCreditsResetAt` marks when
+  /// the current allowance expires.
+  planCredits        Int       @default(0)
+  planCreditsResetAt DateTime?
+  /// Credits bought outright in a pack. These never expire and never reset.
+  purchasedCredits   Int       @default(0)
 
   accounts      Account[]
   sessions      Session[]
   downloads     Download[]
   reviews       Review[]
+  subscriptions Subscription[]
+  creditLedger  CreditTransaction[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Billing
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Mirror of the Stripe subscription, kept in sync by the webhook so the app
+/// never has to call Stripe on a page render.
+model Subscription {
+  id                   String    @id @default(cuid())
+  userId               String
+  stripeSubscriptionId String    @unique
+  stripePriceId        String
+  /// active | trialing | past_due | canceled | unpaid | incomplete
+  status               String
+  plan                 String // PRO | MAX
+  interval             String // month | year
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+/// Append-only audit trail of every credit movement, so a balance can always be
+/// explained and a webhook replay can be detected.
+model CreditTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  /// Positive to grant, negative to spend.
+  amount      Int
+  /// purchase | plan_refill | plan_grant | spend | refund | adjustment
+  kind        String
+  /// Which bucket moved: plan | purchased
+  bucket      String   @default("purchased")
+  description String?
+  /// Stripe event / session / invoice id. Unique so replays cannot double-grant.
+  externalId  String?  @unique
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+/// Idempotency guard for the Stripe webhook: Stripe retries deliveries, and an
+/// event that has already been recorded here is acknowledged without replaying
+/// its side effects.
+model ProcessedStripeEvent {
+  id          String   @id // the Stripe event id
+  type        String
+  processedAt DateTime @default(now())
 }
 
 model Account {
@@ -77,17 +156,17 @@ model VerificationToken {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Download {
-  id         String    @id @default(cuid())
-  platform   String
-  tool       String
-  sourceUrl  String
-  status     String    @default("success")
-  userId     String?
-  ipHash     String?
-  userAgent  String?
-  createdAt  DateTime  @default(now())
+  id        String   @id @default(cuid())
+  platform  String
+  tool      String
+  sourceUrl String
+  status    String   @default("success")
+  userId    String?
+  ipHash    String?
+  userAgent String?
+  createdAt DateTime @default(now())
 
-  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([tool, createdAt])
   @@index([platform, createdAt])
@@ -146,29 +225,29 @@ model ContactMessage {
 }
 
 model Review {
-  id          String    @id @default(cuid())
-  userId      String?
-  name        String
-  email       String?
-  role        String?
-  company     String?
-  platform    String    @default("direct")
-  rating      Int
-  review      String
+  id         String    @id @default(cuid())
+  userId     String?
+  name       String
+  email      String?
+  role       String?
+  company    String?
+  platform   String    @default("direct")
+  rating     Int
+  review     String
   // Source of truth: PENDING | APPROVED | REJECTED
-  status      String    @default("PENDING")
+  status     String    @default("PENDING")
   // Mirrors status === 'APPROVED' — kept for backward compatibility with
   // existing queries that reference `approved`.
-  approved    Boolean   @default(false)
-  featured    Boolean   @default(false)
-  verified    Boolean   @default(false)
-  sourceUrl   String?
-  photo       String?
-  approvedAt  DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  approved   Boolean   @default(false)
+  featured   Boolean   @default(false)
+  verified   Boolean   @default(false)
+  sourceUrl  String?
+  photo      String?
+  approvedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
-  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([status, featured, createdAt])
   @@index([approved, featured, createdAt])

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { toolsBySlug } from '@/config/tools';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
+import { requireCredits } from '@/lib/credits';
 import { cacheJson } from '@/lib/redis';
 import { prisma } from '@/lib/prisma';
 import { sha256 } from '@/lib/utils';
@@ -70,7 +71,13 @@ export async function POST(req: Request) {
     );
   }
 
-  /* ── 2. Validate body ── */
+  /* ── 2. Require an account (free: this only reads metadata) ──
+     The credit is spent later, when the file is actually delivered by
+     /api/proxy or /api/download/merge, so looking up formats costs nothing. */
+  const gate = await requireCredits({ cost: 0 });
+  if (!gate.ok) return gate.response;
+
+  /* ── 3. Validate body ── */
   let body: z.infer<typeof BodySchema>;
   try {
     body = BodySchema.parse(await req.json());
@@ -81,7 +88,7 @@ export async function POST(req: Request) {
     );
   }
 
-  /* ── 3. Look up tool ── */
+  /* ── 4. Look up tool ── */
   const tool = toolsBySlug.get(body.tool);
   if (!tool) {
     return NextResponse.json<DownloadResult>(
@@ -96,14 +103,14 @@ export async function POST(req: Request) {
     );
   }
 
-  /* ── 4. Cache → resolve ── */
+  /* ── 5. Cache → resolve ── */
   const cacheKey = `dl:v2:${tool.slug}:${await sha256(body.url)}`;
 
   const result = await cacheJson<DownloadResult>(cacheKey, 60 * 30, async () =>
     dispatch(tool.slug, body.url),
   );
 
-  /* ── 5. Log download (non-blocking) ── */
+  /* ── 6. Log download (non-blocking) ── */
   if (result.ok) {
     void prisma.download
       .create({
@@ -112,6 +119,7 @@ export async function POST(req: Request) {
           tool:      tool.slug,
           sourceUrl: body.url,
           status:    'success',
+          userId:    gate.userId,
           ipHash:    await sha256(ip),
           userAgent: req.headers.get('user-agent') ?? null,
         },

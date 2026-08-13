@@ -15,6 +15,7 @@ import { NextResponse } from 'next/server';
 import sharp from 'sharp';
 import jsQR from 'jsqr';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
+import { requireCredits, JOB_COST } from '@/lib/credits';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -26,6 +27,10 @@ export async function POST(req: Request) {
   const rl = await ratelimit(`qrscan:${ip}`, { limit: 30, windowSeconds: 60 });
   if (!rl.success) return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
 
+
+  // Credits are spent only once the job below succeeds.
+  const gate = await requireCredits({ cost: JOB_COST.qrTool });
+  if (!gate.ok) return gate.response;
   let formData: FormData;
   try { formData = await req.formData(); }
   catch { return NextResponse.json({ error: 'Expected multipart/form-data.' }, { status: 400 }); }
@@ -54,6 +59,8 @@ export async function POST(req: Request) {
         { status: 422 },
       );
     }
+
+    await gate.spend('QR scan');
 
     return NextResponse.json({
       ok:   true,

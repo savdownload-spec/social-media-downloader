@@ -21,6 +21,7 @@ import { tmpdir } from 'os';
 import path from 'path';
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
+import { requireCredits, costForHeight } from '@/lib/credits';
 import { getYtdlpBin, getFfmpegBin } from '@/lib/binaryPaths';
 
 export const runtime = 'nodejs';
@@ -55,6 +56,12 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Invalid quality.' }, { status: 400 });
   }
 
+  // Charged after the merge succeeds, so a failed render costs nothing. The
+  // cost depends on the resolution actually requested — 4K counts double.
+  const cost = costForHeight(height);
+  const gate = await requireCredits({ cost });
+  if (!gate.ok) return gate.response;
+
   const dir     = await mkdtemp(path.join(tmpdir(), 'savdown-merge-'));
   const outPath = path.join(dir, `v-${randomUUID()}.mp4`);
 
@@ -87,6 +94,7 @@ export async function GET(req: Request) {
     }
 
     const buffer = await readFile(outPath);
+    await gate.spend(`${height}p download`);
     return new NextResponse(buffer, {
       status: 200,
       headers: {

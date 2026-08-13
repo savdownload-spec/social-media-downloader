@@ -1,5 +1,7 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
+import { Coins } from 'lucide-react';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Container } from '@/components/layout/Container';
@@ -17,6 +19,27 @@ export const metadata = buildMetadata({
 });
 
 export const dynamic = 'force-dynamic';
+
+/** Entry point to the billing page, alongside the other account panels. */
+function BillingCard() {
+  return (
+    <div className="rounded-2xl border border-border bg-white p-6 shadow-soft">
+      <div className="flex items-center gap-2">
+        <Coins className="h-4 w-4 flex-shrink-0 text-primary" />
+        <h2 className="text-sm font-semibold text-text">Plan &amp; credits</h2>
+      </div>
+      <p className="mt-2 text-sm text-text-muted">
+        See your credit balance, change your plan, or download invoices.
+      </p>
+      <Link
+        href="/account/billing"
+        className="mt-4 inline-flex w-full items-center justify-center rounded-2xl border border-border bg-white px-5 py-2.5 text-sm font-semibold text-text transition-all hover:border-primary/40 hover:bg-primary-light/40"
+      >
+        Open billing
+      </Link>
+    </div>
+  );
+}
 
 export default async function AccountPage() {
   const session = await getServerSession(authOptions);
@@ -78,6 +101,7 @@ export default async function AccountPage() {
               <MyReviews reviews={reviews as MyReview[]} />
             </div>
             <div className="space-y-6">
+              <BillingCard />
               <DangerZone email={user.email ?? ''} />
             </div>
           </div>
