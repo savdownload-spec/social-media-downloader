@@ -45,7 +45,7 @@ const FEATURED_SLUGS = [
 ];
 
 /* ═══════════════════════════════════════════════════════════
-   TOOLS PANEL  — clean 3-zone layout
+   TOOLS PANEL , clean 3-zone layout
 ═══════════════════════════════════════════════════════════ */
 function ToolsPanel({ close }: { close: () => void }) {
   const t = useTranslation();
@@ -315,7 +315,7 @@ function BlogPanel({ close }: { close: () => void }) {
         ))}
       </div>
 
-      {/* posts — featured + grid */}
+      {/* posts, featured + grid */}
       <div className="flex gap-4">
         {/* featured */}
         {posts[0] && (
@@ -361,8 +361,8 @@ function BlogPanel({ close }: { close: () => void }) {
    RESOURCES PANEL
 ═══════════════════════════════════════════════════════════ */
 const RESOURCE_LINK_CONFIG = [
-  { key: 'faq',     icon: HelpCircle,    href: '/faq',     color: 'text-violet-600 bg-violet-50'  },
-  { key: 'blog',    icon: BookOpen,      href: '/blog',    color: 'text-sky-600 bg-sky-50'        },
+  { key: 'faq',     icon: HelpCircle,    href: '/faq',    color: 'text-violet-600 bg-violet-50'  },
+  { key: 'blog',    icon: BookOpen,      href: '/blog',   color: 'text-sky-600 bg-sky-50'        },
   { key: 'search',  icon: Search,        href: '/search',  color: 'text-emerald-600 bg-emerald-50'},
   { key: 'contact', icon: MessageCircle, href: '/contact', color: 'text-pink-600 bg-pink-50'      },
   { key: 'privacy', icon: Shield,        href: '/privacy', color: 'text-slate-600 bg-slate-100'   },
@@ -415,9 +415,9 @@ function ResourcesPanel({ close }: { close: () => void }) {
    ABOUT PANEL
 ═══════════════════════════════════════════════════════════ */
 const ABOUT_LINK_CONFIG = [
-  { key: 'about',   icon: Info,     href: '/about',   color: 'text-violet-600 bg-violet-50'   },
+  { key: 'about',   icon: Info,     href: '/about',  color: 'text-violet-600 bg-violet-50'   },
   { key: 'contact', icon: Mail,     href: '/contact', color: 'text-sky-600 bg-sky-50'         },
-  { key: 'pricing', icon: Sparkles, href: '/pricing', color: 'text-fuchsia-600 bg-fuchsia-50' },
+  { key: 'pricing', icon: Sparkles, href: '/pricing',color: 'text-fuchsia-600 bg-fuchsia-50' },
   { key: 'privacy', icon: Shield,   href: '/privacy', color: 'text-emerald-600 bg-emerald-50' },
   { key: 'terms',   icon: FileText, href: '/terms',   color: 'text-orange-600 bg-orange-50'   },
   { key: 'careers', icon: Users,    href: '/contact', color: 'text-rose-600 bg-rose-50'        },
@@ -475,8 +475,15 @@ function AboutPanel({ close }: { close: () => void }) {
 type NavId = 'tools' | 'pricing' | 'blog' | 'resources' | 'about';
 
 const NAV_IDS: NavId[] = ['tools', 'pricing', 'blog', 'resources', 'about'];
+const PARENT_HREF: Record<NavId, string> = {
+  tools: '/tools',
+  pricing: '/pricing',
+  blog: '/blog',
+  resources: '/faq',
+  about: '/about',
+};
 
-/* Width of each panel — centered on viewport */
+/* Width of each panel, centered on viewport */
 const PANEL_WIDTH: Record<NavId, string> = {
   tools:     'w-[920px]',
   pricing:   'w-[760px]',
@@ -501,13 +508,13 @@ export function MegaMenu() {
   const navRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  /* mount guard — portal needs document */
+  /* mount guard, portal needs document */
   useEffect(() => { setMounted(true); }, []);
 
   /* close on route change */
   useEffect(() => { setActive(null); }, [pathname]);
 
-  /* close on outside click — check both nav and portal panel */
+  /* close on outside click, check both nav and portal panel */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       const target = e.target as Node;
@@ -545,7 +552,7 @@ export function MegaMenu() {
 
   const close = useCallback(() => setActive(null), []);
 
-  /* Portal content — lives in document.body, outside the sticky header */
+  /* Portal content, lives in document.body, outside the sticky header */
   const portal = (
     <AnimatePresence>
       {active && (
@@ -563,7 +570,7 @@ export function MegaMenu() {
             aria-hidden
           />
 
-          {/* Panel — viewport-centered; x:'-50%' in variants keeps centering during scale/y animation */}
+          {/* Panel, viewport-centered; x:'-50%' in variants keeps centering during scale/y animation */}
           <motion.div
             id="mega-menu-panel"
             key={active}
@@ -580,7 +587,11 @@ export function MegaMenu() {
               zIndex: 100,
             }}
             className={`${PANEL_WIDTH[active]} ${PANEL_HEIGHT[active]} bg-white rounded-2xl border border-border-light shadow-[0_16px_64px_-12px_rgba(0,0,0,0.2)] overflow-hidden`}
-            role="dialog"
+            // Not role="dialog": focus is never moved into this panel and it
+            // is not trapped, so announcing a dialog would set an expectation
+            // the panel does not meet. It is a disclosure region revealed by
+            // the nav item that controls it.
+            role="group"
             aria-label={`${active} menu`}
           >
             {active === 'tools'     && <ToolsPanel     close={close} />}
@@ -596,35 +607,45 @@ export function MegaMenu() {
 
   return (
     <>
-      {/* Nav trigger buttons — stay inside the header */}
+      {/* Nav trigger buttons, stay inside the header */}
       <div ref={navRef} className="flex items-center gap-0.5">
         {NAV_IDS.map((id) => {
           const isActive = active === id;
           const label = t(`mobileNav.sections.${id}`) as string;
           return (
-            <button
+            <Link
               key={id}
+              href={PARENT_HREF[id]}
               onMouseEnter={() => open(id)}
               onMouseLeave={scheduleClose}
               onFocus={() => open(id)}
               onBlur={scheduleClose}
-              onClick={() => (isActive ? close() : open(id))}
+              onClick={close}
+              // No aria-haspopup: activating this navigates to the section's
+              // page, it does not open the panel — the panel opens on hover
+              // and focus. Announcing a popup would promise the wrong action.
+              // aria-expanded + aria-controls still describe the panel that
+              // focusing this item reveals.
               aria-expanded={isActive}
-              aria-haspopup="true"
+              aria-controls={isActive ? 'mega-menu-panel' : undefined}
               className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                 isActive ? 'text-text bg-surface' : 'text-text-muted hover:text-text hover:bg-surface/60'
               }`}
             >
               {label}
-              <motion.span animate={{ rotate: isActive ? 180 : 0 }} transition={{ duration: 0.16 }}>
+              <motion.span
+                animate={{ rotate: isActive ? 180 : 0 }}
+                transition={{ duration: 0.16 }}
+                aria-hidden
+              >
                 <ChevronDown className="w-3.5 h-3.5 opacity-50" />
               </motion.span>
-            </button>
+            </Link>
           );
         })}
       </div>
 
-      {/* Portal renders into document.body — bypasses sticky/transform stacking context */}
+      {/* Portal renders into document.body, bypasses sticky/transform stacking context */}
       {mounted && createPortal(portal, document.body)}
     </>
   );

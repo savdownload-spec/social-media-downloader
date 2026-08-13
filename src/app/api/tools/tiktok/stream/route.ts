@@ -5,14 +5,14 @@
  * resolved them via yt-dlp's --impersonate. A separate later fetch (even one
  * that replays the same headers/cookies/TLS fingerprint) gets rejected with
  * a 403. The only reliable fix is to have yt-dlp download the bytes itself,
- * in the same invocation, and hand the file back to the browser — so this
+ * in the same invocation, and hand the file back to the browser, so this
  * route re-runs the resolution + download in one shot instead of reusing a
  * previously-resolved CDN URL.
  *
  * TikTok also has no separate audio-only stream (only muxed video+audio),
  * so `audio=1` runs the downloaded file through FFmpeg to extract an MP3.
  *
- * Downloads to a temp file rather than piping live — TikTok videos are a
+ * Downloads to a temp file rather than piping live, TikTok videos are a
  * few MB at most, and this avoids partial/broken HTTP responses when
  * extraction fails mid-stream (matches the temp-file pattern in
  * src/lib/videoService.ts).
@@ -27,6 +27,7 @@ import { tmpdir } from 'os';
 import path from 'path';
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
+import { requireCredits, JOB_COST } from '@/lib/credits';
 import { needsImpersonation, KNOWN_SELECTORS } from '@/lib/ytdlp';
 import { getYtdlpBin, getFfmpegBin } from '@/lib/binaryPaths';
 
@@ -38,7 +39,7 @@ const execFileAsync = promisify(execFile);
 
 const YTDLP_BIN      = getYtdlpBin();
 const FFMPEG_BIN      = getFfmpegBin();
-const DOWNLOAD_TIMEOUT = parseInt(process.env.YTDLP_TIMEOUT_MS || '45000', 10) * 2; // real download, not metadata — allow more time
+const DOWNLOAD_TIMEOUT = parseInt(process.env.YTDLP_TIMEOUT_MS || '45000', 10) * 2; // real download, not metadata, allow more time
 
 export async function GET(req: Request) {
   const ip = getClientId(req);
@@ -46,6 +47,10 @@ export async function GET(req: Request) {
   if (!rl.success) {
     return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
   }
+
+  // Credits are spent only once the job below succeeds.
+  const gate = await requireCredits({ cost: JOB_COST.proxyDownload });
+  if (!gate.ok) return gate.response;
 
   const { searchParams } = new URL(req.url);
   const pageUrl      = searchParams.get('url');
@@ -86,6 +91,7 @@ export async function GET(req: Request) {
 
     if (!extractAudio) {
       const buffer = await readFile(videoPath);
+      await gate.spend('TikTok video download');
       return new NextResponse(buffer, {
         status: 200,
         headers: {
@@ -108,6 +114,7 @@ export async function GET(req: Request) {
     }
 
     const buffer = await readFile(mp3Path);
+    await gate.spend('TikTok audio download');
     return new NextResponse(buffer, {
       status: 200,
       headers: {

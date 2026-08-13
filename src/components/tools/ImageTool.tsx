@@ -1,6 +1,6 @@
 'use client';
 /**
- * ImageTool — client UI for all Sharp-based image operations.
+ * ImageTool, client UI for all Sharp-based image operations.
  * One component serves all eight image-tool slugs; the `slug` prop selects
  * which operation is sent to POST /api/tools/image.
  *
@@ -187,7 +187,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
                 <Upload className="w-6 h-6 text-primary" />
               </span>
               <p className="font-semibold text-text">Drop an image here, or click to browse</p>
-              <p className="text-xs text-text-subtle">JPG · PNG · WEBP · GIF · HEIC — up to 25 MB</p>
+              <p className="text-xs text-text-subtle">JPG · PNG · WEBP · GIF · HEIC, up to 25 MB</p>
             </div>
           )}
         </div>

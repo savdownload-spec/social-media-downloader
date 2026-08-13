@@ -19,6 +19,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import QRCode from 'qrcode';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
+import { requireCredits, JOB_COST } from '@/lib/credits';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -38,6 +39,10 @@ export async function POST(req: Request) {
   const rl = await ratelimit(`qr:${ip}`, { limit: 60, windowSeconds: 60 });
   if (!rl.success) return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
 
+
+  // Credits are spent only once the job below succeeds.
+  const gate = await requireCredits({ cost: JOB_COST.qrTool });
+  if (!gate.ok) return gate.response;
   let body: z.infer<typeof Schema>;
   try {
     const raw = await req.json();
@@ -67,6 +72,7 @@ export async function POST(req: Request) {
         type: 'svg',
       } as QRCode.QRCodeToStringOptions);
 
+      await gate.spend('QR code (SVG)');
       return new NextResponse(svg, {
         headers: {
           'Content-Type':        'image/svg+xml',
@@ -83,15 +89,17 @@ export async function POST(req: Request) {
         type: 'image/png',
       } as QRCode.QRCodeToDataURLOptions);
 
+      await gate.spend('QR code (base64)');
       return NextResponse.json({ ok: true, dataUrl });
     }
 
-    // PNG (default) — toBuffer uses 'png'
+    // PNG (default), toBuffer uses 'png'
     const pngBuffer = await QRCode.toBuffer(body.text, {
       ...rendererOpts,
       type: 'png',
     } as QRCode.QRCodeToBufferOptions);
 
+    await gate.spend('QR code (PNG)');
     return new NextResponse(pngBuffer.buffer as ArrayBuffer, {
       headers: {
         'Content-Type':        'image/png',

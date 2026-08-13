@@ -30,7 +30,7 @@ export type ResolvedEmail =
 
 /**
  * Sends an email via SMTP when configured. In development (or any deployment
- * without SMTP_* vars) the message is NOT sent — it is returned so the caller
+ * without SMTP_* vars) the message is NOT sent, it is returned so the caller
  * can log/display it, keeping the flow testable without an email provider.
  */
 export async function sendEmail(args: SendEmailArgs): Promise<ResolvedEmail> {

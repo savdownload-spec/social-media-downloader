@@ -13,6 +13,7 @@
  */
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
+import { requireCredits, JOB_COST } from '@/lib/credits';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -70,6 +71,11 @@ export async function GET(req: Request) {
     return new NextResponse('Host not allowed.', { status: 403 });
   }
 
+  // This route hands over the actual file, so it is where the credit is spent.
+  // Errors stay plain text to match the rest of this route's responses.
+  const gate = await requireCredits({ cost: JOB_COST.proxyDownload, plainText: true });
+  if (!gate.ok) return gate.response;
+
   try {
     const upstream = await fetch(targetUrl, {
       headers: {
@@ -95,6 +101,9 @@ export async function GET(req: Request) {
 
     // Sanitise filename
     const safeFilename = filename.replace(/[/\\?%*:|"<>]/g, '-').slice(0, 200);
+
+    // Charged once the upstream has accepted and the body is on its way.
+    await gate.spend(`Download — ${safeFilename}`);
 
     return new NextResponse(upstream.body, {
       status: 200,

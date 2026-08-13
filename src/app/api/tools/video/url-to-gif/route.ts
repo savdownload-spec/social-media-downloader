@@ -8,6 +8,7 @@
  */
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
+import { requireCredits, JOB_COST } from '@/lib/credits';
 import { urlToGif } from '@/lib/videoService';
 
 export const runtime = 'nodejs';
@@ -19,6 +20,10 @@ export async function GET(req: Request) {
   if (!rl.success) {
     return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
   }
+
+  // Credits are spent only once the job below succeeds.
+  const gate = await requireCredits({ cost: JOB_COST.videoTool });
+  if (!gate.ok) return gate.response;
 
   const { searchParams } = new URL(req.url);
   const sourceUrl = searchParams.get('url');
@@ -35,6 +40,7 @@ export async function GET(req: Request) {
 
   const base = filename.replace(/\.[^.]+$/, '');
   const buffer = Buffer.from(result.buffer);
+  await gate.spend('URL to GIF');
   return new NextResponse(buffer, {
     status: 200,
     headers: {

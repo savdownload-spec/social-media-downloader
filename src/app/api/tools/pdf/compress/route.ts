@@ -1,10 +1,11 @@
 /**
  * POST /api/tools/pdf/compress
- * Body: multipart/form-data — single "file" field
+ * Body: multipart/form-data, single "file" field
  * Response: compressed PDF binary
  */
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
+import { requireCredits, JOB_COST } from '@/lib/credits';
 import { compressPdf } from '@/lib/pdfService';
 
 export const runtime = 'nodejs';
@@ -15,6 +16,10 @@ export async function POST(req: Request) {
   const rl = await ratelimit(`pdf:${ip}`, { limit: 20, windowSeconds: 60 });
   if (!rl.success) return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
 
+
+  // Credits are spent only once the job below succeeds.
+  const gate = await requireCredits({ cost: JOB_COST.pdfTool });
+  if (!gate.ok) return gate.response;
   let formData: FormData;
   try { formData = await req.formData(); }
   catch { return NextResponse.json({ error: 'Expected multipart/form-data.' }, { status: 400 }); }
@@ -29,6 +34,7 @@ export async function POST(req: Request) {
   const origName = fileEntry.name.replace(/[/\\?%*:|"<>]/g, '-');
   const outName  = origName.replace(/\.pdf$/i, '-compressed.pdf');
 
+  await gate.spend('PDF compress');
   return new NextResponse(Buffer.from(result.buffers[0]!.buffer), {
     headers: {
       'Content-Type':        'application/pdf',

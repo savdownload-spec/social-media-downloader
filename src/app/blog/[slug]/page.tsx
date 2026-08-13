@@ -11,13 +11,13 @@ import blogEn from '@/i18n/translations/blog/en.json';
 type Props = { params: { slug: string } };
 
 // This page previously called getLocale()/getTranslations() while
-// generateStaticParams() only ever returned { slug } — never { locale } —
+// generateStaticParams() only ever returned { slug }, never { locale },
 // with no ancestor route providing its own locale params either. That
 // combination made Next.js bail from static generation with a
 // DYNAMIC_SERVER_USAGE error, which surfaced as a raw 500 in production
 // (same root cause already found and fixed on /tools/[slug]). Locale
 // routing is gone now, but kept force-dynamic rather than reintroducing
-// generateStaticParams for this route — no static-generation benefit lost.
+// generateStaticParams for this route, no static-generation benefit lost.
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: Props) {

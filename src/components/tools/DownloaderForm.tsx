@@ -16,7 +16,7 @@ function formatBytes(bytes: number): string {
 
 /**
  * Downloads a file with visible progress instead of a plain <a href download>
- * (which gives no feedback while the server is still generating the file —
+ * (which gives no feedback while the server is still generating the file,
  * common for on-demand muxed/converted downloads that take several seconds
  * before any bytes are ready). Streams the response, tracks bytes received
  * against Content-Length when available, then saves via a Blob.
@@ -53,7 +53,7 @@ async function downloadWithProgress(
       }
     }
   } else {
-    // Streaming reader unavailable — fall back to a single buffered read.
+    // Streaming reader unavailable, fall back to a single buffered read.
     const buf = await res.arrayBuffer();
     chunks.push(new Uint8Array(buf));
     received = buf.byteLength;
@@ -156,7 +156,7 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
 
         // Toast for rate-limited or network-level errors
         if (res.status === 429) {
-          warning('Slow down!', 'Too many requests — please wait a moment before trying again.');
+          warning('Slow down!', 'Too many requests, please wait a moment before trying again.');
         } else {
           errorToast('Download failed', message);
         }

@@ -15,7 +15,7 @@ import { useTranslation } from '@/i18n';
 type SectionId = 'tools' | 'pricing' | 'blog' | 'resources' | 'about';
 const SECTION_IDS: SectionId[] = ['tools', 'pricing', 'blog', 'resources', 'about'];
 
-/* static icon/color config — labels come from i18n */
+/* static icon/color config, labels come from i18n */
 const RESOURCE_CONFIG = [
   { key: 'faq',     icon: HelpCircle, href: '/faq',     color: 'text-violet-600 bg-violet-50'   },
   { key: 'blog',    icon: BookOpen,   href: '/blog',    color: 'text-sky-600 bg-sky-50'         },

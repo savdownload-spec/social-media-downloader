@@ -1,112 +1,149 @@
 'use client';
 
-import { Check, X, Smartphone, Laptop, Tablet, Chrome, Globe, Compass } from 'lucide-react';
+import {
+  Check,
+  Chrome,
+  Compass,
+  Globe2,
+  Laptop,
+  MonitorSmartphone,
+  Smartphone,
+  Zap,
+} from 'lucide-react';
 import { Section, SectionHeading } from '@/components/layout/Section';
 import { Reveal } from '@/components/ui/Reveal';
 import { useTranslation } from '@/i18n';
 
-const deviceIcons = [Smartphone, Tablet, Laptop];
-const browserIcons = [Chrome, Compass, Globe, Globe, Globe, Globe];
+/**
+ * Card structure is fixed; only the heading of each card is translated. The
+ * items themselves (Windows, macOS, Chrome…) are product names, which stay
+ * as-is in every language.
+ */
+const compatibilityCards = [
+  { id: 'desktop', fallback: 'Desktop', icon: Laptop, items: ['Windows', 'macOS', 'Linux'] },
+  { id: 'mobile', fallback: 'Mobile', icon: Smartphone, items: ['iPhone', 'Android', 'iPad'] },
+  {
+    id: 'browsers',
+    fallback: 'Browsers',
+    icon: Globe2,
+    items: ['Chrome', 'Safari', 'Firefox', 'Edge', 'Brave', 'Opera'],
+  },
+] as const;
+
+const browserIcons = [Chrome, Compass, Globe2, Globe2, Globe2, Globe2];
+
+const benefitsFallback = [
+  'No software required',
+  'Works in modern browsers',
+  'Mobile friendly',
+  'Desktop friendly',
+  'Fast browser-based experience',
+];
 
 export function Compatibility() {
   const t = useTranslation();
 
-  const devices = (t('compatibility.devices') as unknown as string[]).map((label, i) => ({
-    icon: deviceIcons[i],
-    label,
-  }));
-
-  const browsers = (t('compatibility.browsers') as unknown as string[]).map((label, i) => ({
-    icon: browserIcons[i],
-    label,
-  }));
-
-  const comparison = (t('compatibility.features') as unknown as string[]).map((feature, i) => ({
-    feature,
-    others: i === 4, // "Always free" is true for others
-    savdown: true,
-  }));
+  const benefits = (t('compatibility.benefits') as string[] | undefined) ?? benefitsFallback;
 
   return (
     <Section variant="default" id="compatibility">
       <SectionHeading
-        eyebrow={t('compatibility.eyebrow')}
+        eyebrow={t('compatibility.eyebrow') || 'Works everywhere'}
         title={
           <>
-            Any Device, Any Browser, <span className="text-gradient">{t('compatibility.title')}</span>
+            {t('compatibility.title') || 'One Tool. Every Device.'}{' '}
+            <span className="text-gradient">
+              {t('compatibility.titleAccent') || 'Every Browser.'}
+            </span>
           </>
         }
-        description={t('compatibility.description')}
+        description={
+          t('compatibility.description') ||
+          'Use SavDown wherever you are. No special software required, just open your browser and download.'
+        }
       />
 
-      <div className="mt-16 grid grid-cols-1 lg:grid-cols-5 gap-6">
-        {/* Devices + browsers */}
-        <Reveal className="lg:col-span-2">
-          <div className="h-full rounded-2xl bg-white border border-border shadow-soft p-8">
-            <h3 className="font-bold text-text">{t('compatibility.deviceTitle')}</h3>
-            <ul className="mt-4 space-y-3">
-              {devices.map((d) => (
-                <li key={d.label} className="flex items-center gap-3 text-sm text-text-muted">
-                  <span className="w-9 h-9 rounded-xl bg-primary-light flex items-center justify-center text-primary">
-                    <d.icon className="w-4 h-4" />
+      <div className="mt-14 grid grid-cols-1 gap-5 md:grid-cols-3">
+        {compatibilityCards.map((card, index) => {
+          const Icon = card.icon;
+          const title = t(`compatibility.cardTitles.${card.id}`) || card.fallback;
+          return (
+            <Reveal key={card.id} delay={index * 0.08}>
+              <article className="group h-full rounded-2xl border border-border bg-white p-6 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-light text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+                    <Icon className="h-6 w-6" strokeWidth={1.8} />
+                  </div>
+                  <span className="rounded-full border border-primary/15 bg-primary-light px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
+                    {t('compatibility.ready') || 'Ready'}
                   </span>
-                  {d.label}
-                </li>
-              ))}
-            </ul>
-
-            <h3 className="mt-8 font-bold text-text">{t('compatibility.browserTitle')}</h3>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {browsers.map((b) => (
-                <span
-                  key={b.label}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface border border-border-light text-xs font-medium text-text-muted"
-                >
-                  <b.icon className="w-3.5 h-3.5" />
-                  {b.label}
-                </span>
-              ))}
-            </div>
-          </div>
-        </Reveal>
-
-        {/* Quality comparison */}
-        <Reveal delay={0.1} className="lg:col-span-3">
-          <div className="h-full rounded-2xl bg-white border border-border shadow-soft overflow-hidden">
-            <div className="grid grid-cols-[1fr_auto_auto] items-center gap-4 px-6 md:px-8 py-4 border-b border-border-light bg-surface/60">
-              <span className="text-sm font-bold text-text">{t('compatibility.downloadQuality')}</span>
-              <span className="w-20 text-center text-xs font-semibold text-text-subtle uppercase tracking-wide">{t('compatibility.others')}</span>
-              <span className="w-20 text-center text-xs font-semibold text-primary uppercase tracking-wide">{t('compatibility.savdown')}</span>
-            </div>
-            <ul>
-              {comparison.map((row) => (
-                <li
-                  key={row.feature}
-                  className="grid grid-cols-[1fr_auto_auto] items-center gap-4 px-6 md:px-8 py-4 border-b border-border-light last:border-0"
-                >
-                  <span className="text-sm text-text">{row.feature}</span>
-                  <span className="w-20 flex justify-center">
-                    {row.others ? (
-                      <Check className="w-5 h-5 text-accent" />
-                    ) : (
-                      <X className="w-5 h-5 text-text-subtle/60" />
-                    )}
-                  </span>
-                  <span className="w-20 flex justify-center">
-                    {row.savdown ? (
-                      <span className="w-6 h-6 rounded-full bg-accent-light flex items-center justify-center">
-                        <Check className="w-4 h-4 text-accent-hover" />
-                      </span>
-                    ) : (
-                      <X className="w-5 h-5 text-text-subtle/60" />
-                    )}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </Reveal>
+                </div>
+                <h3 className="mt-6 text-lg font-bold text-text">{title}</h3>
+                <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3">
+                  {card.items.map((item, itemIndex) => {
+                    const ItemIcon = card.id === 'browsers' ? browserIcons[itemIndex] : Check;
+                    return (
+                      <li key={item} className="flex items-center gap-2 text-sm text-text-muted">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-light text-primary">
+                          <ItemIcon className="h-3 w-3" strokeWidth={2.2} />
+                        </span>
+                        {item}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </article>
+            </Reveal>
+          );
+        })}
       </div>
+
+      <Reveal delay={0.12} className="mt-5">
+        <div className="grid gap-6 rounded-2xl border border-primary/15 bg-gradient-to-br from-primary-light/70 via-white to-white p-6 md:grid-cols-[1.1fr_1fr] md:items-center md:p-8">
+          <div>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-primary shadow-sm">
+                <MonitorSmartphone className="h-5 w-5" strokeWidth={1.8} />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+                  {t('compatibility.statusEyebrow') || 'Compatibility status'}
+                </p>
+                <p className="mt-1 text-sm font-semibold text-text">
+                  {t('compatibility.statusTitle') || 'Browser-based by design'}
+                </p>
+              </div>
+            </div>
+            <p className="mt-5 max-w-xl text-sm leading-6 text-text-muted">
+              {t('compatibility.statusBody') ||
+                'Nothing to install. Nothing complicated. Just open SavDown and get started.'}
+            </p>
+          </div>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {benefits.map((benefit, index) => (
+              <li
+                key={benefit}
+                className={`flex items-center gap-2.5 text-sm text-text-muted ${
+                  index === benefits.length - 1 ? 'sm:col-span-2' : ''
+                }`}
+              >
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-light text-accent-hover">
+                  <Check className="h-3 w-3" strokeWidth={2.8} />
+                </span>
+                {benefit}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </Reveal>
+
+      <Reveal
+        delay={0.16}
+        className="mt-6 flex items-center justify-center gap-2 text-xs font-medium text-text-subtle"
+      >
+        <Zap className="h-3.5 w-3.5 text-primary" />
+        {t('compatibility.footnote') || 'No downloads. No setup. Just a fast, simple experience.'}
+      </Reveal>
     </Section>
   );
 }

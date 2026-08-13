@@ -8,7 +8,7 @@ import { buildMetadata } from '@/lib/seo';
 
 export const metadata = buildMetadata({
   title: 'Cookie Policy',
-  description: 'How SavDown uses cookies and similar technologies — minimally, transparently, and only when needed.',
+  description: 'How SavDown uses cookies and similar technologies, minimally, transparently, and only when needed.',
   path: '/cookies',
 });
 
@@ -34,7 +34,7 @@ export default function CookiesPage() {
       <InfoPageHero
         eyebrow="Legal"
         title={<>Cookie <span className="text-gradient">Policy.</span></>}
-        description="Cookies are small text files stored on your device when you visit a website. SavDown uses the minimum number necessary to make the service work well — nothing more."
+        description="Cookies are small text files stored on your device when you visit a website. SavDown uses the minimum number necessary to make the service work well, nothing more."
         meta="Last updated: January 2026"
         highlights={[
           { icon: <ShieldCheck className="w-3.5 h-3.5 text-accent" />, label: 'Minimal cookies' },
@@ -158,7 +158,7 @@ export default function CookiesPage() {
 
       <InfoCallout
         title="Questions about cookies?"
-        body={<>Read our privacy policy or reach out — we are happy to explain anything in plain English.</>}
+        body={<>Read our privacy policy or reach out, we are happy to explain anything in plain English.</>}
         cta={{ label: 'Read privacy policy', href: '/privacy' }}
       />
     </>

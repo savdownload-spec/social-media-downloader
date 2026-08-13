@@ -19,7 +19,7 @@ export function ServiceWorkerRegister() {
 
     const register = () => {
       navigator.serviceWorker.register('/sw.js').catch(() => {
-        /* offline support is a progressive enhancement — fail silently */
+        /* offline support is a progressive enhancement, fail silently */
       });
     };
 

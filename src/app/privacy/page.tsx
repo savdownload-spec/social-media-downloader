@@ -9,7 +9,7 @@ import { buildMetadata } from '@/lib/seo';
 
 export const metadata = buildMetadata({
   title: 'Privacy Policy',
-  description: 'How SavDown handles your data — clearly, honestly, and with respect for your privacy.',
+  description: 'How SavDown handles your data, clearly, honestly, and with respect for your privacy.',
   path: '/privacy',
 });
 
@@ -30,7 +30,7 @@ const principles = [
     icon: <Database className="w-5 h-5" />,
     tile: 'bg-sky-50 text-sky-600',
     title: 'Minimal data only',
-    description: 'We collect the bare minimum needed to operate the service — and clearly explain each piece.',
+    description: 'We collect the bare minimum needed to operate the service, and clearly explain each piece.',
   },
   {
     icon: <UserCheck className="w-5 h-5" />,
@@ -42,15 +42,15 @@ const principles = [
 
 const collect = [
   { icon: <Server className="w-5 h-5" />, tile: 'bg-amber-50 text-amber-600', title: 'URLs you paste', body: 'Only for the duration of resolving your download. We cache metadata (title, thumbnail, formats) for up to 30 minutes to speed up repeat requests, then discard it.' },
-  { icon: <Globe className="w-5 h-5" />, tile: 'bg-indigo-50 text-indigo-600', title: 'Anonymous usage data', body: 'IP address hash, user agent, tool used, and timestamp — used only for rate limiting and aggregate analytics. Never linked back to you.' },
+  { icon: <Globe className="w-5 h-5" />, tile: 'bg-indigo-50 text-indigo-600', title: 'Anonymous usage data', body: 'IP address hash, user agent, tool used, and timestamp, used only for rate limiting and aggregate analytics. Never linked back to you.' },
   { icon: <UserCheck className="w-5 h-5" />, tile: 'bg-rose-50 text-rose-600', title: 'Account data (if you sign in)', body: 'Email, name, and profile image from your OAuth provider. Nothing more. We never ask for passwords.' },
-  { icon: <Mail className="w-5 h-5" />, tile: 'bg-fuchsia-50 text-fuchsia-600', title: 'Newsletter data (if you subscribe)', body: 'Just your email — used to send you the calm monthly update and absolutely nothing else.' },
+  { icon: <Mail className="w-5 h-5" />, tile: 'bg-fuchsia-50 text-fuchsia-600', title: 'Newsletter data (if you subscribe)', body: 'Just your email, used to send you the calm monthly update and absolutely nothing else.' },
 ];
 
 const rights = [
   { icon: <Eye className="w-5 h-5" />, tile: 'bg-sky-50 text-sky-600', title: 'Right to access', body: 'Ask what data we hold on you and we will send you a copy.' },
   { icon: <FileText className="w-5 h-5" />, tile: 'bg-indigo-50 text-indigo-600', title: 'Right to correct', body: 'See something wrong? We will fix inaccurate information within 30 days.' },
-  { icon: <Trash2 className="w-5 h-5" />, tile: 'bg-rose-50 text-rose-600', title: 'Right to delete', body: 'One email and your account and all related data are gone — no hoops, no friction.' },
+  { icon: <Trash2 className="w-5 h-5" />, tile: 'bg-rose-50 text-rose-600', title: 'Right to delete', body: 'One email and your account and all related data are gone, no hoops, no friction.' },
   { icon: <Cookie className="w-5 h-5" />, tile: 'bg-amber-50 text-amber-600', title: 'Right to opt out', body: 'Decline optional analytics cookies, refuse marketing emails, and turn off anything non-essential.' },
 ];
 
@@ -142,7 +142,7 @@ export default function PrivacyPage() {
         </div>
       </NarrowContent>
 
-      {/* Cookies, retention, third parties — three columns */}
+      {/* Cookies, retention, third parties, three columns */}
       <NarrowContent className="pb-8">
         <p className="text-sm font-semibold uppercase tracking-wider text-gradient inline-block mb-3">In detail</p>
         <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-text">
@@ -155,7 +155,7 @@ export default function PrivacyPage() {
             icon={<Cookie className="w-5 h-5" />}
             tile="bg-amber-50 text-amber-600"
             title="Cookies"
-            description="We use essential cookies for sign-in and rate limiting. Optional analytics only if you consent — see our Cookie Policy for the full list."
+            description="We use essential cookies for sign-in and rate limiting. Optional analytics only if you consent, see our Cookie Policy for the full list."
           />
           <InfoBlock
             icon={<Clock className="w-5 h-5" />}
@@ -179,7 +179,7 @@ export default function PrivacyPage() {
           You own your data. Always.
         </h2>
         <p className="mt-4 text-text-muted leading-relaxed">
-          We make it easy to exercise your rights — no support tickets, no waiting on hold.
+          We make it easy to exercise your rights, no support tickets, no waiting on hold.
         </p>
       </NarrowContent>
       <NarrowContent className="pb-16">
@@ -198,7 +198,7 @@ export default function PrivacyPage() {
 
       <InfoCallout
         title="Privacy questions? Just ask."
-        body={<>Reach us via the contact page and we will respond within 30 days — usually much faster.</>}
+        body={<>Reach us via the contact page and we will respond within 30 days, usually much faster.</>}
         cta={{ label: 'Contact us', href: '/contact' }}
       />
     </>

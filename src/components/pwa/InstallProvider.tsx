@@ -18,7 +18,7 @@ type InstallContextValue = {
   canInstall: boolean;
   /** The app is already installed / running standalone. */
   isInstalled: boolean;
-  /** iOS Safari — no native prompt exists, so we show manual instructions instead. */
+  /** iOS Safari, no native prompt exists, so we show manual instructions instead. */
   isIOS: boolean;
   /** Android/Chromium native `beforeinstallprompt` is available. */
   hasNativePrompt: boolean;

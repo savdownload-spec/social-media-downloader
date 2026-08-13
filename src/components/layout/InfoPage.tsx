@@ -10,7 +10,7 @@ type InfoPageHeroProps = {
   description: ReactNode;
   /** Optional small badge under the title (e.g. "Last updated: ...") */
   meta?: ReactNode;
-  /** Hero highlight chips — small pills rendered under the description. */
+  /** Hero highlight chips, small pills rendered under the description. */
   highlights?: { icon?: ReactNode; label: string }[];
 };
 
@@ -76,7 +76,7 @@ type InfoBlockProps = {
 };
 
 /**
- * A "feature card" used in info pages — the icon tile, title, and content
+ * A "feature card" used in info pages, the icon tile, title, and content
  * slot keep a consistent shape across About, Privacy, Terms, DMCA, and Cookies.
  */
 export function InfoBlock({ icon, tile, title, description, children }: InfoBlockProps) {

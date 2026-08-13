@@ -14,10 +14,10 @@ type MarqueeRowProps = {
 
 // The track is built as [content, content] and animated by translating
 // exactly -50%, so the second copy lines up perfectly with the first as it
-// scrolls off — that's what makes the loop seamless. If `items` is short
+// scrolls off, that's what makes the loop seamless. If `items` is short
 // (a handful of featured reviews, common early on), that "content" block
-// is narrower than the viewport, so the visible track — even doubled for
-// the loop — leaves a blank gap before it repeats. Repeating the source
+// is narrower than the viewport, so the visible track, even doubled for
+// the loop, leaves a blank gap before it repeats. Repeating the source
 // items enough times first guarantees the track is comfortably wider than
 // any reasonable viewport before the loop-doubling happens, regardless of
 // how few reviews exist.
@@ -126,7 +126,7 @@ export function ReviewMarquee({ reviews }: ReviewMarqueeProps) {
   if (reviews.length === 0) return null;
 
   // Cap at 3 rows, but don't split into more rows than there's real variety
-  // for — a row built from only one or two unique reviews just repeats the
+  // for, a row built from only one or two unique reviews just repeats the
   // same card on loop, which reads as broken rather than lively. Fewer,
   // fuller rows look better than three sparse ones.
   const MIN_ITEMS_PER_ROW = 3;

@@ -2,12 +2,12 @@ export const siteConfig = {
   name: 'SavDown',
   tagline: 'The Free Video Downloader',
   description:
-    'SavDown is a fast, free video downloader for YouTube, TikTok, Instagram, Facebook, Pinterest, and X. No watermarks, no signup, with AI-powered tools on the way.',
+    'SavDown is a fast, free video downloader for YouTube, TikTok, Instagram, Facebook, Pinterest, and X. No watermarks, free daily credits, with AI-powered tools on the way.',
   url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
   ogImage: '/og-default.svg',
   twitterHandle: '@SavDownload',
   footerDescription:
-    'SavDown is the fast, private way to save videos, reels, and thumbnails from the platforms you use every day. No watermarks, no signup, no clutter.',
+    'SavDown is the fast, private way to save videos, reels, and thumbnails from the platforms you use every day. No watermarks, no clutter, free daily credits.',
   social: [
     { label: 'Facebook', href: 'https://www.facebook.com/profile.php?id=61592887680787', icon: 'facebook' },
     { label: 'Instagram', href: 'https://www.instagram.com/savdownload/?hl=en', icon: 'instagram' },

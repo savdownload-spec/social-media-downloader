@@ -1,10 +1,11 @@
 /**
  * POST /api/tools/pdf/merge
- * Body: multipart/form-data — multiple fields named "files"
+ * Body: multipart/form-data, multiple fields named "files"
  * Response: merged PDF
  */
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
+import { requireCredits, JOB_COST } from '@/lib/credits';
 import { mergePdfs } from '@/lib/pdfService';
 
 export const runtime = 'nodejs';
@@ -15,6 +16,10 @@ export async function POST(req: Request) {
   const rl = await ratelimit(`pdf:${ip}`, { limit: 20, windowSeconds: 60 });
   if (!rl.success) return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
 
+
+  // Credits are spent only once the job below succeeds.
+  const gate = await requireCredits({ cost: JOB_COST.pdfTool });
+  if (!gate.ok) return gate.response;
   let formData: FormData;
   try { formData = await req.formData(); }
   catch { return NextResponse.json({ error: 'Expected multipart/form-data.' }, { status: 400 }); }
@@ -31,6 +36,7 @@ export async function POST(req: Request) {
   const result = await mergePdfs(buffers);
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 422 });
 
+  await gate.spend('PDF merge');
   return new NextResponse(Buffer.from(result.buffers[0]!.buffer), {
     headers: {
       'Content-Type':        'application/pdf',

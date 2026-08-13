@@ -46,7 +46,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     // Suppresses Chrome's own native "Translate this page?" prompt, which
     // otherwise pops up on top of our own language dropdown once the
-    // Google Website Translator widget swaps the visible text — Google's
+    // Google Website Translator widget swaps the visible text, Google's
     // documented fix for sites that drive the widget themselves rather
     // than relying on the browser's automatic offer.
     other: {

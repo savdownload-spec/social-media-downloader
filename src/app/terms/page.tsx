@@ -9,7 +9,7 @@ import { buildMetadata } from '@/lib/seo';
 
 export const metadata = buildMetadata({
   title: 'Terms of Service',
-  description: 'The terms you agree to when using SavDown — written in plain English.',
+  description: 'The terms you agree to when using SavDown, written in plain English.',
   path: '/terms',
 });
 
@@ -138,7 +138,7 @@ export default function TermsPage() {
             icon={<BookOpen className="w-5 h-5" />}
             tile="bg-violet-50 text-violet-600"
             title="Intellectual property"
-            description="SavDown does not host, store, or claim ownership over any downloaded content. All content remains the property of its original creators. SavDown is a tool — how you use it is your responsibility."
+            description="SavDown does not host, store, or claim ownership over any downloaded content. All content remains the property of its original creators. SavDown is a tool, how you use it is your responsibility."
           />
           <InfoBlock
             icon={<RefreshCw className="w-5 h-5" />}
@@ -187,7 +187,7 @@ export default function TermsPage() {
 
       <InfoCallout
         title="Questions about these terms?"
-        body={<>Reach us anytime — we are happy to clarify anything in plain English.</>}
+        body={<>Reach us anytime, we are happy to clarify anything in plain English.</>}
         cta={{ label: 'Contact us', href: '/contact' }}
       />
     </>
