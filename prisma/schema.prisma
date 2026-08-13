@@ -253,3 +253,63 @@ model Review {
   @@index([approved, featured, createdAt])
   @@index([userId])
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Append-only record of every significant admin action.
+model AuditLog {
+  id          String   @id @default(cuid())
+  adminId     String
+  adminEmail  String
+  action      String   // e.g. "user.suspend", "credit.add", "review.approve"
+  targetType  String?  // "User" | "Review" | "Subscription" | ...
+  targetId    String?
+  detail      Json?    // arbitrary extra context (old/new values, reason)
+  ip          String?
+  createdAt   DateTime @default(now())
+
+  @@index([adminId, createdAt])
+  @@index([targetType, targetId])
+  @@index([action, createdAt])
+}
+
+/// Admin-managed per-tool configuration (status, free limit, credit cost).
+model ToolConfig {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  category    String
+  status      String   @default("LIVE") // LIVE | COMING_SOON | MAINTENANCE | DISABLED
+  creditCost  Int      @default(0)
+  freeLimit   Int      @default(0)       // 0 = unlimited
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+}
+
+/// Key-value store for admin-configurable settings.
+model AdminSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+/// Affiliate tracking.
+model Affiliate {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  code             String   @unique
+  commissionRate   Float    @default(0.2)  // 20 %
+  status           String   @default("PENDING") // PENDING | ACTIVE | SUSPENDED
+  totalClicks      Int      @default(0)
+  totalSignups     Int      @default(0)
+  totalConversions Int      @default(0)
+  totalRevenue     Float    @default(0)
+  totalCommission  Float    @default(0)
+  paidOut          Float    @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([status])
+}

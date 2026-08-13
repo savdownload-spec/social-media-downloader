@@ -1,15 +1,12 @@
-import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import { getServerSession } from 'next-auth';
-import { Container } from '@/components/layout/Container';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { buildMetadata } from '@/lib/seo';
-import { Users, Download as DownloadIcon, Mail, TrendingUp, MessageSquare, ArrowRight } from 'lucide-react';
+import { AdminDashboard } from '@/components/admin/AdminDashboard';
 
 export const metadata = buildMetadata({
-  title: 'Admin',
-  description: 'Admin dashboard',
+  title: 'Admin Dashboard',
+  description: 'SavDown admin dashboard',
   path: '/admin',
   noIndex: true,
 });
@@ -18,123 +15,85 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);
-  const role = (session?.user as { role?: string } | undefined)?.role;
 
-  if (!session) redirect('/');
-  if (role !== 'ADMIN') {
-    return (
-      <Container className="py-24 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight">Access denied</h1>
-        <p className="mt-4 text-text-muted">
-          You need admin privileges to view this page.
-        </p>
-      </Container>
-    );
-  }
+  const now = new Date();
+  const today    = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const week     = new Date(today); week.setDate(week.getDate() - 7);
+  const month    = new Date(today); month.setDate(month.getDate() - 30);
 
-  const [totalDownloads, totalUsers, totalSubs, byTool, recentDownloads, pendingReviews] = await Promise.all([
-    prisma.download.count(),
+  const [
+    totalUsers,
+    newUsersToday,
+    newUsersMonth,
+    totalDownloads,
+    downloadsToday,
+    downloadsMonth,
+    pendingReviews,
+    totalReviews,
+    activeSubscriptions,
+    totalCreditsUsed,
+    creditsUsedToday,
+    topTools,
+    recentActivity,
+    dailyDownloads,
+    usersByPlan,
+  ] = await Promise.all([
     prisma.user.count(),
-    prisma.newsletterSubscriber.count(),
+    prisma.user.count({ where: { createdAt: { gte: today } } }),
+    prisma.user.count({ where: { createdAt: { gte: month } } }),
+    prisma.download.count(),
+    prisma.download.count({ where: { createdAt: { gte: today } } }),
+    prisma.download.count({ where: { createdAt: { gte: month } } }),
+    prisma.review.count({ where: { status: 'PENDING' } }),
+    prisma.review.count(),
+    prisma.subscription.count({ where: { status: 'active' } }),
+    prisma.creditTransaction.aggregate({ _sum: { amount: true }, where: { kind: 'spend' } }),
+    prisma.creditTransaction.aggregate({ _sum: { amount: true }, where: { kind: 'spend', createdAt: { gte: today } } }),
     prisma.download.groupBy({
-      by: ['tool'],
-      _count: { tool: true },
-      orderBy: { _count: { tool: 'desc' } },
-      take: 10,
+      by: ['tool'], _count: { tool: true },
+      orderBy: { _count: { tool: 'desc' } }, take: 8,
     }),
     prisma.download.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 20,
+      orderBy: { createdAt: 'desc' }, take: 15,
       select: { id: true, tool: true, platform: true, createdAt: true, status: true },
     }),
-    prisma.review.count({ where: { status: 'PENDING' } }),
+    // last 7 days of downloads for bar chart
+    Promise.all(
+      Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(today); d.setDate(d.getDate() - (6 - i));
+        const next = new Date(d); next.setDate(next.getDate() + 1);
+        return prisma.download.count({ where: { createdAt: { gte: d, lt: next } } })
+          .then((c) => ({ label: d.toLocaleDateString('en', { weekday: 'short' }), value: c }));
+      })
+    ),
+    prisma.user.groupBy({ by: ['plan'], _count: { plan: true } }),
   ]);
 
-  const stats = [
-    { label: 'Total downloads', value: totalDownloads.toLocaleString(), icon: DownloadIcon, tone: 'text-primary' },
-    { label: 'Registered users', value: totalUsers.toLocaleString(), icon: Users, tone: 'text-accent-hover' },
-    { label: 'Newsletter subscribers', value: totalSubs.toLocaleString(), icon: Mail, tone: 'text-text' },
-    { label: 'Top tool', value: byTool[0]?.tool ?? '-', icon: TrendingUp, tone: 'text-primary' },
-  ];
+  const stats = {
+    totalUsers,
+    newUsersToday,
+    newUsersMonth,
+    totalDownloads,
+    downloadsToday,
+    downloadsMonth,
+    pendingReviews,
+    totalReviews,
+    activeSubscriptions,
+    totalCreditsUsed: Math.abs(totalCreditsUsed._sum.amount ?? 0),
+    creditsUsedToday: Math.abs(creditsUsedToday._sum.amount ?? 0),
+  };
 
   return (
-    <Container className="py-16">
-      <p className="text-sm font-medium text-primary mb-3">Admin</p>
-      <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">Dashboard</h1>
-      <p className="mt-3 text-text-muted">
-        Signed in as {session.user?.email}
-      </p>
-
-      <Link
-        href="/admin/reviews"
-        className="mt-8 flex items-center justify-between gap-4 p-5 bg-white border border-border rounded-2xl shadow-soft hover:border-primary/30 hover:shadow-soft-lg transition-all group"
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-primary-light flex items-center justify-center shrink-0">
-            <MessageSquare className="w-4 h-4 text-primary" />
-          </div>
-          <div>
-            <p className="font-semibold text-text">Manage Reviews</p>
-            <p className="text-sm text-text-muted">
-              {pendingReviews > 0
-                ? `${pendingReviews} review${pendingReviews === 1 ? '' : 's'} awaiting moderation`
-                : 'Approve, reject, edit, and feature reviews'}
-            </p>
-          </div>
-        </div>
-        <ArrowRight className="w-4 h-4 text-text-subtle group-hover:translate-x-0.5 transition-transform shrink-0" />
-      </Link>
-
-      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((s) => (
-          <div key={s.label} className="p-6 bg-white border border-border rounded-2xl shadow-soft">
-            <div className="w-9 h-9 rounded-xl bg-surface flex items-center justify-center mb-4">
-              <s.icon className={`w-4 h-4 ${s.tone}`} />
-            </div>
-            <p className="text-sm text-text-muted">{s.label}</p>
-            <p className="mt-1 text-2xl font-semibold text-text tracking-tight">{s.value}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="p-6 bg-white border border-border rounded-2xl shadow-soft">
-          <h2 className="font-semibold text-text mb-4">Top tools</h2>
-          <div className="space-y-3">
-            {byTool.length === 0 ? (
-              <p className="text-sm text-text-muted">No downloads yet.</p>
-            ) : (
-              byTool.map((row) => (
-                <div key={row.tool} className="flex items-center justify-between text-sm">
-                  <span className="text-text">{row.tool}</span>
-                  <span className="text-text-muted">{row._count.tool.toLocaleString()}</span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className="p-6 bg-white border border-border rounded-2xl shadow-soft">
-          <h2 className="font-semibold text-text mb-4">Recent activity</h2>
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {recentDownloads.length === 0 ? (
-              <p className="text-sm text-text-muted">No activity yet.</p>
-            ) : (
-              recentDownloads.map((d) => (
-                <div key={d.id} className="flex items-center justify-between text-sm py-1">
-                  <div>
-                    <p className="text-text">{d.tool}</p>
-                    <p className="text-xs text-text-subtle">{d.platform}</p>
-                  </div>
-                  <span className="text-xs text-text-muted">
-                    {new Date(d.createdAt).toLocaleString()}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-    </Container>
+    <AdminDashboard
+      stats={stats}
+      topTools={topTools.map((r) => ({ tool: r.tool, count: r._count.tool }))}
+      recentActivity={recentActivity.map((d) => ({
+        ...d,
+        createdAt: d.createdAt.toISOString(),
+      }))}
+      dailyDownloads={dailyDownloads}
+      usersByPlan={usersByPlan.map((r) => ({ plan: r.plan, count: r._count.plan }))}
+      adminEmail={session?.user?.email ?? ''}
+    />
   );
 }
