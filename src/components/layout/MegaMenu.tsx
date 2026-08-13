@@ -361,8 +361,8 @@ function BlogPanel({ close }: { close: () => void }) {
    RESOURCES PANEL
 ═══════════════════════════════════════════════════════════ */
 const RESOURCE_LINK_CONFIG = [
-  { key: 'faq',     icon: HelpCircle,    href: '/faq',     color: 'text-violet-600 bg-violet-50'  },
-  { key: 'blog',    icon: BookOpen,      href: '/blog',    color: 'text-sky-600 bg-sky-50'        },
+  { key: 'faq',     icon: HelpCircle,    href: '/faq',    color: 'text-violet-600 bg-violet-50'  },
+  { key: 'blog',    icon: BookOpen,      href: '/blog',   color: 'text-sky-600 bg-sky-50'        },
   { key: 'search',  icon: Search,        href: '/search',  color: 'text-emerald-600 bg-emerald-50'},
   { key: 'contact', icon: MessageCircle, href: '/contact', color: 'text-pink-600 bg-pink-50'      },
   { key: 'privacy', icon: Shield,        href: '/privacy', color: 'text-slate-600 bg-slate-100'   },
@@ -415,9 +415,9 @@ function ResourcesPanel({ close }: { close: () => void }) {
    ABOUT PANEL
 ═══════════════════════════════════════════════════════════ */
 const ABOUT_LINK_CONFIG = [
-  { key: 'about',   icon: Info,     href: '/about',   color: 'text-violet-600 bg-violet-50'   },
+  { key: 'about',   icon: Info,     href: '/about',  color: 'text-violet-600 bg-violet-50'   },
   { key: 'contact', icon: Mail,     href: '/contact', color: 'text-sky-600 bg-sky-50'         },
-  { key: 'pricing', icon: Sparkles, href: '/pricing', color: 'text-fuchsia-600 bg-fuchsia-50' },
+  { key: 'pricing', icon: Sparkles, href: '/pricing',color: 'text-fuchsia-600 bg-fuchsia-50' },
   { key: 'privacy', icon: Shield,   href: '/privacy', color: 'text-emerald-600 bg-emerald-50' },
   { key: 'terms',   icon: FileText, href: '/terms',   color: 'text-orange-600 bg-orange-50'   },
   { key: 'careers', icon: Users,    href: '/contact', color: 'text-rose-600 bg-rose-50'        },
@@ -475,6 +475,13 @@ function AboutPanel({ close }: { close: () => void }) {
 type NavId = 'tools' | 'pricing' | 'blog' | 'resources' | 'about';
 
 const NAV_IDS: NavId[] = ['tools', 'pricing', 'blog', 'resources', 'about'];
+const PARENT_HREF: Record<NavId, string> = {
+  tools: '/tools',
+  pricing: '/pricing',
+  blog: '/blog',
+  resources: '/faq',
+  about: '/about',
+};
 
 /* Width of each panel — centered on viewport */
 const PANEL_WIDTH: Record<NavId, string> = {
@@ -602,13 +609,14 @@ export function MegaMenu() {
           const isActive = active === id;
           const label = t(`mobileNav.sections.${id}`) as string;
           return (
-            <button
+            <Link
               key={id}
+              href={PARENT_HREF[id]}
               onMouseEnter={() => open(id)}
               onMouseLeave={scheduleClose}
               onFocus={() => open(id)}
               onBlur={scheduleClose}
-              onClick={() => (isActive ? close() : open(id))}
+              onClick={close}
               aria-expanded={isActive}
               aria-haspopup="true"
               className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
@@ -619,7 +627,7 @@ export function MegaMenu() {
               <motion.span animate={{ rotate: isActive ? 180 : 0 }} transition={{ duration: 0.16 }}>
                 <ChevronDown className="w-3.5 h-3.5 opacity-50" />
               </motion.span>
-            </button>
+            </Link>
           );
         })}
       </div>
