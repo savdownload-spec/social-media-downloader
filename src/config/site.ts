@@ -83,10 +83,10 @@ export const siteConfig = {
     Company: [
       { label: 'About Us', href: '/about' },
       { label: 'Contact Us', href: '/contact' },
-    ],
-    Legal: [
       { label: 'Customer Reviews', href: '/reviews' },
       { label: 'Sign In', href: '/login' },
+      { label: 'My Account', href: '/account' },
+      { label: 'Billing', href: '/account/billing' },
     ],
   },
   /** Policy links rendered in the footer's bottom bar (kept out of the column grid). */
