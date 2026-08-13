@@ -587,7 +587,11 @@ export function MegaMenu() {
               zIndex: 100,
             }}
             className={`${PANEL_WIDTH[active]} ${PANEL_HEIGHT[active]} bg-white rounded-2xl border border-border-light shadow-[0_16px_64px_-12px_rgba(0,0,0,0.2)] overflow-hidden`}
-            role="dialog"
+            // Not role="dialog": focus is never moved into this panel and it
+            // is not trapped, so announcing a dialog would set an expectation
+            // the panel does not meet. It is a disclosure region revealed by
+            // the nav item that controls it.
+            role="group"
             aria-label={`${active} menu`}
           >
             {active === 'tools'     && <ToolsPanel     close={close} />}
@@ -617,14 +621,23 @@ export function MegaMenu() {
               onFocus={() => open(id)}
               onBlur={scheduleClose}
               onClick={close}
+              // No aria-haspopup: activating this navigates to the section's
+              // page, it does not open the panel — the panel opens on hover
+              // and focus. Announcing a popup would promise the wrong action.
+              // aria-expanded + aria-controls still describe the panel that
+              // focusing this item reveals.
               aria-expanded={isActive}
-              aria-haspopup="true"
+              aria-controls={isActive ? 'mega-menu-panel' : undefined}
               className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                 isActive ? 'text-text bg-surface' : 'text-text-muted hover:text-text hover:bg-surface/60'
               }`}
             >
               {label}
-              <motion.span animate={{ rotate: isActive ? 180 : 0 }} transition={{ duration: 0.16 }}>
+              <motion.span
+                animate={{ rotate: isActive ? 180 : 0 }}
+                transition={{ duration: 0.16 }}
+                aria-hidden
+              >
                 <ChevronDown className="w-3.5 h-3.5 opacity-50" />
               </motion.span>
             </Link>

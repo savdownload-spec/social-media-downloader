@@ -382,33 +382,26 @@
   },
   "compatibility": {
     "eyebrow": "Works everywhere",
-    "title": "Any Device, Any Browser, The Same Clean Result.",
-    "description": "There is nothing to install. If it opens a browser, it runs SavDown, and every download comes out at the same high quality.",
-    "deviceTitle": "Device Compatibility",
-    "browserTitle": "Browser Compatibility",
-    "downloadQuality": "Download Quality",
-    "others": "Others",
-    "savdown": "SavDown",
-    "devices": [
-      "iPhone & Android",
-      "iPad & tablets",
-      "Windows, Mac & Linux"
+    "title": "One Tool. Every Device.",
+    "titleAccent": "Every Browser.",
+    "description": "Use SavDown wherever you are. No special software required, just open your browser and download.",
+    "ready": "Ready",
+    "cardTitles": {
+      "desktop": "Desktop",
+      "mobile": "Mobile",
+      "browsers": "Browsers"
+    },
+    "statusEyebrow": "Compatibility status",
+    "statusTitle": "Browser-based by design",
+    "statusBody": "Nothing to install. Nothing complicated. Just open SavDown and get started.",
+    "benefits": [
+      "No software required",
+      "Works in modern browsers",
+      "Mobile friendly",
+      "Desktop friendly",
+      "Fast browser-based experience"
     ],
-    "browsers": [
-      "Chrome",
-      "Safari",
-      "Firefox",
-      "Edge",
-      "Brave",
-      "Opera"
-    ],
-    "features": [
-      "Watermark-free output",
-      "Resolution up to 4K",
-      "No signup required",
-      "No pop-up ads or fake buttons",
-      "Always free"
-    ]
+    "footnote": "No downloads. No setup. Just a fast, simple experience."
   },
   "testimonials": {
     "eyebrow": "Loved by creators",
