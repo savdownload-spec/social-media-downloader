@@ -3,8 +3,6 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "env": {
-    "NEXTAUTH_URL": "https://savdown.com",
-    "NEXT_PUBLIC_SITE_URL": "https://savdown.com",
     "NEXT_PUBLIC_SITE_NAME": "SavDown"
   }
 }
