@@ -85,7 +85,7 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
           <SectionHeading
             eyebrow="Key features"
             title={<>Built To <span className="text-gradient">Do The Job Right.</span></>}
-            description="Every feature exists because someone needed it — and every one of them ships by default, free."
+            description="Every feature exists because someone needed it, and every one of them ships by default, free."
           />
         </div>
         <div className="mt-14 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">

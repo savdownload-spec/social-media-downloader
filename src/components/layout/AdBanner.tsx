@@ -7,7 +7,7 @@ import { Container } from './Container';
 /**
  * Reserved horizontal ad slot shown just below the header on every page
  * except the homepage. Mobile gets its own compact size (320x100, a real IAB
- * mobile banner) rather than a squeezed-down leaderboard — the 970x250 unit
+ * mobile banner) rather than a squeezed-down leaderboard, the 970x250 unit
  * only ever renders at tablet/desktop widths, so labelling it that way on a
  * phone would be misleading. Styled as a premium placement opportunity, not
  * a broken/empty dev box.

@@ -1,6 +1,6 @@
 'use client';
 /**
- * VideoTool — client UI for all FFmpeg-based video operations.
+ * VideoTool, client UI for all FFmpeg-based video operations.
  * One component serves five catalog slugs; the `slug` prop selects which
  * operation is sent to POST /api/tools/video.
  *
@@ -177,7 +177,7 @@ export function VideoTool({ slug }: FunctionalToolProps) {
                 <Upload className="w-6 h-6 text-primary" />
               </span>
               <p className="font-semibold text-text">Drop a video here, or click to browse</p>
-              <p className="text-xs text-text-subtle">MP4 · WEBM · MOV · AVI · MKV — up to 100 MB</p>
+              <p className="text-xs text-text-subtle">MP4 · WEBM · MOV · AVI · MKV, up to 100 MB</p>
             </div>
           )}
         </div>

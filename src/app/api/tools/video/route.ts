@@ -25,7 +25,7 @@ const VALID_OPS = new Set(['convert', 'compress', 'to-mp3', 'to-gif']);
 const VALID_FORMATS = new Set(['mp4', 'webm', 'mov', 'avi', 'mkv']);
 
 export async function POST(req: Request) {
-  /* ── rate limit (video processing is heavier — tighter limit) ── */
+  /* ── rate limit (video processing is heavier, tighter limit) ── */
   const ip = getClientId(req);
   const rl = await ratelimit(`vid:${ip}`, { limit: 10, windowSeconds: 60 });
   if (!rl.success) {

@@ -272,12 +272,12 @@ export const pricingFaqs = [
   {
     question: 'Can I cancel?',
     answer:
-      'Yes. Open the billing page in your account to cancel in one click — your plan stays active until the end of the period you already paid for, and you are not charged again. Credit packs and the Lifetime plan are one-time purchases, so there is no subscription to cancel.',
+      'Yes. Open the billing page in your account to cancel in one click. Your plan stays active until the end of the period you already paid for, and you are not charged again. Credit packs and the Lifetime plan are one-time purchases, so there is no subscription to cancel.',
   },
   {
     question: 'Can I buy credits without subscribing?',
     answer:
-      'Yes, that is exactly what the credit packs are for. They are a one-time purchase with no recurring charge, they never expire, and they stack on top of whatever plan you are on — including the Free plan.',
+      'Yes, that is exactly what the credit packs are for. They are a one-time purchase with no recurring charge, they never expire, and they stack on top of whatever plan you are on, including the Free plan.',
   },
   {
     question: 'What is the Lifetime plan?',

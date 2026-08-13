@@ -1,6 +1,6 @@
 /**
  * POST /api/tools/pdf/merge
- * Body: multipart/form-data — multiple fields named "files"
+ * Body: multipart/form-data, multiple fields named "files"
  * Response: merged PDF
  */
 import { NextResponse } from 'next/server';

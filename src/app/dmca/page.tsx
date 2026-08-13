@@ -8,7 +8,7 @@ import { buildMetadata } from '@/lib/seo';
 
 export const metadata = buildMetadata({
   title: 'DMCA Policy',
-  description: 'SavDown\'s DMCA takedown policy and how to submit a notice — clear, fast, and creator-friendly.',
+  description: 'SavDown\'s DMCA takedown policy and how to submit a notice, clear, fast, and creator-friendly.',
   path: '/dmca',
 });
 

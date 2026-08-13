@@ -1,6 +1,6 @@
 'use client';
 /**
- * Gradient Generator Tool — 100% client-side.
+ * Gradient Generator Tool, 100% client-side.
  * Generates CSS linear/radial/conic gradients with full customisation.
  * No backend required.
  */

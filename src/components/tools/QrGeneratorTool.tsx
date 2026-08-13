@@ -1,6 +1,6 @@
 'use client';
 /**
- * QrGeneratorTool — client UI for the qrcode library.
+ * QrGeneratorTool, client UI for the qrcode library.
  *
  * Architecture: Frontend → /api/tools/qr/generate → qrcode (node)
  *

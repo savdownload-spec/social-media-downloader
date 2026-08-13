@@ -15,10 +15,10 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#7C3AED',
     categories: ['utilities', 'productivity', 'photo'],
     icons: [
-      // 'any' icons keep their transparent background — most launchers
+      // 'any' icons keep their transparent background, most launchers
       // place these on their own plate/circle. 'maskable' icons must be a
       // separate, fully opaque asset with the logo kept inside a safe
-      // zone — reusing the transparent 'any' icon for 'maskable' left a
+      // zone, reusing the transparent 'any' icon for 'maskable' left a
       // transparent edge that showed the system's background color
       // (black in dark mode) bleeding through around the logo once the
       // OS applied its mask shape.

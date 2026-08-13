@@ -29,7 +29,7 @@ const PER_CATEGORY_LIMIT = 10;
  * Each category shows up to `PER_CATEGORY_LIMIT` tools by default; categories
  * that overflow get their own "See More" button that toggles the rest with a
  * smooth height + opacity animation. Every tool link stays in the DOM at all
- * times (collapsed links are only visually hidden) so SEO is preserved — the
+ * times (collapsed links are only visually hidden) so SEO is preserved, the
  * section is server-rendered, all 56 links are crawlable.
  */
 export function FooterToolGrid() {

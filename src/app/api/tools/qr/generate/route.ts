@@ -93,7 +93,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, dataUrl });
     }
 
-    // PNG (default) — toBuffer uses 'png'
+    // PNG (default), toBuffer uses 'png'
     const pngBuffer = await QRCode.toBuffer(body.text, {
       ...rendererOpts,
       type: 'png',

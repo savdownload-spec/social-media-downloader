@@ -43,7 +43,7 @@ export default function AboutPage() {
                   Digital Media & AI Utilities, <span className="text-gradient">Refined for Clarity.</span>
                 </h1>
                 <p className="mt-6 text-lg md:text-xl text-text-muted leading-relaxed max-w-2xl mx-auto lg:mx-0 font-normal">
-                  SavDown is engineered as a calm, uncompromising workspace for saving media, processing files, and leveraging AI tools—free from ads, popups, and unnecessary clutter.
+                  SavDown is engineered as a calm, uncompromising workspace for saving media, processing files, and leveraging AI tools,free from ads, popups, and unnecessary clutter.
                 </p>
                 <div className="mt-8 flex flex-wrap items-center justify-center lg:justify-start gap-4">
                   <Link

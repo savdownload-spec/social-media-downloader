@@ -130,7 +130,7 @@
 
 /* ── Suppress Google Translate's own UI chrome ──────────────────────
    The language switcher uses Google's Website Translator widget purely
-   as a translation engine (see src/lib/translation-manager.ts) — our own
+   as a translation engine (see src/lib/translation-manager.ts), our own
    dropdown is the only language control users should see. Google's
    widget otherwise injects a top banner bar ("Translated into: X | Show
    original") and a hover tooltip with translation-rating buttons on every
@@ -138,11 +138,11 @@
    elements with obfuscated, version-specific classnames (e.g.
    `VIpgJd-ZVi9od-ORHb-OEVmcd`) rather than the legacy documented
    `.goog-te-banner-frame`/`.goog-te-balloon-frame` classes, so we target
-   `iframe.skiptranslate` instead — `skiptranslate` is the one stable
+   `iframe.skiptranslate` instead, `skiptranslate` is the one stable
    marker Google attaches to every UI frame it injects, confirmed via
    live DOM inspection. Legacy selectors are kept as a defensive fallback
    in case an older/different widget build is served. !important is
-   required — Google's own inline/injected styles otherwise take
+   required, Google's own inline/injected styles otherwise take
    precedence. */
 iframe.skiptranslate,
 .goog-te-banner-frame,

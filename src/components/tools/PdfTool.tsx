@@ -1,6 +1,6 @@
 'use client';
 /**
- * PdfTool — client UI for all pdf-lib-based PDF operations.
+ * PdfTool, client UI for all pdf-lib-based PDF operations.
  * One component serves all five PDF-tool slugs; the `slug` prop selects the
  * endpoint and controls shown.
  *
@@ -209,7 +209,7 @@ export function PdfTool({ slug }: FunctionalToolProps) {
             <p className="font-semibold text-text">
               {isMulti ? `Drop ${acceptLabel} here, or click to browse` : `Drop a ${acceptLabel} file here, or click to browse`}
             </p>
-            <p className="text-xs text-text-subtle">{isMulti ? 'Add multiple files — order matters' : 'Up to 50 MB per file'}</p>
+            <p className="text-xs text-text-subtle">{isMulti ? 'Add multiple files, order matters' : 'Up to 50 MB per file'}</p>
           </div>
         </div>
       )}

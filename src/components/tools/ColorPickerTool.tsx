@@ -1,6 +1,6 @@
 'use client';
 /**
- * Color Picker Tool — client-side only, uses the browser EyeDropper API
+ * Color Picker Tool, client-side only, uses the browser EyeDropper API
  * where available and falls back to a file-upload + canvas colour sampler.
  *
  * No backend required.
@@ -71,7 +71,7 @@ export function ColorPickerTool() {
       setColor(buildResult(result.sRGBHex));
       success('Color picked!', result.sRGBHex);
     } catch {
-      // User cancelled — ignore
+      // User cancelled, ignore
     }
   }, [errToast, success]);
 

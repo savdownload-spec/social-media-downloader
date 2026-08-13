@@ -150,7 +150,7 @@ export function getCatalogTool(slug: string): CatalogTool | undefined {
 /**
  * A tool is live (has a working page) when either a downloader config
  * exists for it (tools.ts) or a functional-tool component is registered
- * for it (functionalTools.ts) — checking only one registry marked every
+ * for it (functionalTools.ts), checking only one registry marked every
  * non-downloader tool (image/video/PDF/QR/SEO/utility) as "Coming Soon"
  * even though its page worked fine.
  */

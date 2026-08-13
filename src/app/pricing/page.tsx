@@ -10,7 +10,7 @@ import { buildMetadata } from '@/lib/seo';
 export const metadata = buildMetadata({
   title: 'Pricing',
   description:
-    'SavDown is free to use every day. Upgrade only if you need more — Pro, Max, one-time credit packs, or a single Lifetime payment.',
+    'SavDown is free to use every day. Upgrade only if you need more: Pro, Max, one-time credit packs, or a single Lifetime payment.',
   path: '/pricing',
   keywords: ['savdown pricing', 'video downloader pricing', 'download credits', 'pro plan'],
 });

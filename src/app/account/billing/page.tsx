@@ -119,7 +119,7 @@ export default async function BillingPage({
                 {subscription.currentPeriodEnd
                   ? `on ${subscription.currentPeriodEnd.toLocaleDateString()}`
                   : 'at the end of the current period'}
-                {subscription.status === 'past_due' && ' — your last payment failed.'}
+                {subscription.status === 'past_due' && '. Your last payment failed.'}
               </p>
             )}
           </div>

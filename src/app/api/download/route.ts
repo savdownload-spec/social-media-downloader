@@ -39,7 +39,7 @@ const THUMBNAIL_TOOLS = new Set([
 
 /**
  * Tools whose platform has no predictable CDN thumbnail URL pattern
- * (unlike YouTube's img.youtube.com) — resolved via yt-dlp metadata instead.
+ * (unlike YouTube's img.youtube.com), resolved via yt-dlp metadata instead.
  */
 const METADATA_THUMBNAIL_TOOLS = new Set([
   'tiktok-thumbnail-downloader',

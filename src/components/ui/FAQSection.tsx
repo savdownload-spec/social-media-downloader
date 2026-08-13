@@ -20,7 +20,7 @@ type FAQSectionProps = {
 /**
  * The single FAQ block used across the whole site.
  *
- * Every page — home, tool pages, functional tools, pricing, /faq — renders this
+ * Every page, home, tool pages, functional tools, pricing, /faq, renders this
  * so the heading, spacing, accordion behaviour (one item open at a time) and the
  * reveal animation are identical everywhere. Only the questions themselves are
  * page-specific.

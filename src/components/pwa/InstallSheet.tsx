@@ -11,7 +11,7 @@ const benefits = [
 ];
 
 /**
- * Shared install UI — used both for the automatic mobile bottom-sheet and the
+ * Shared install UI, used both for the automatic mobile bottom-sheet and the
  * manual "Install App" entry point in the header. Content branches on what
  * the platform actually supports: a real native prompt (Android/Chromium) vs
  * manual Add to Home Screen steps (iOS Safari, which exposes no install API).
