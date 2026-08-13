@@ -155,7 +155,7 @@ export default async function BillingPage({
             </p>
             {ledger.length === 0 ? (
               <p className="mt-4 text-sm text-text-muted">
-                Nothing yet. Your free daily credits do not appear here — only purchases and
+                Nothing yet. Your free daily credits do not appear here, only purchases and
                 plan refills do.
               </p>
             ) : (
