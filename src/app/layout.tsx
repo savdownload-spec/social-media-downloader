@@ -13,6 +13,8 @@ import { getMessages, getTranslations } from 'next-intl/server';
 import { siteConfig } from '@/config/site';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { Providers } from '@/components/providers';
+import { PricingProvider } from '@/components/pricing/PricingProvider';
+import { getPricingConfig } from '@/lib/pricing-server';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -94,13 +96,14 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const messages = await getMessages();
+  const [messages, pricing] = await Promise.all([getMessages(), getPricingConfig()]);
 
   return (
     <html lang="en" className={`${inter.variable} ${jakarta.variable}`}>
       <body className="font-sans bg-surface text-text antialiased">
         <Providers>
           <NextIntlClientProvider messages={messages}>
+            <PricingProvider value={pricing}>
             <LanguageProvider>
               <ToastProvider>
                 <ConfirmProvider>
@@ -114,6 +117,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </ConfirmProvider>
               </ToastProvider>
             </LanguageProvider>
+            </PricingProvider>
           </NextIntlClientProvider>
         </Providers>
       </body>

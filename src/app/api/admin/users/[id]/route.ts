@@ -33,7 +33,7 @@ const patchSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('suspend') }),
   z.object({ action: z.literal('restore') }),
   z.object({ action: z.literal('delete') }),
-  z.object({ action: z.literal('changePlan'), plan: z.enum(['FREE', 'PRO', 'MAX', 'LIFETIME']) }),
+  z.object({ action: z.literal('changePlan'), plan: z.enum(['FREE', 'PRO', 'LIFETIME']) }),
   z.object({ action: z.literal('addCredits'), amount: z.number().int().positive(), reason: z.string().min(3) }),
   z.object({ action: z.literal('removeCredits'), amount: z.number().int().positive(), reason: z.string().min(3) }),
 ]);

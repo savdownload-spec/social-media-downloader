@@ -5,7 +5,8 @@ import { PricingTabs } from '@/components/pricing/PricingTabs';
 import { TrustStrip } from '@/components/pricing/TrustStrip';
 import { ComparisonTable } from '@/components/pricing/ComparisonTable';
 import { HowCreditsWork } from '@/components/pricing/HowCreditsWork';
-import { pricingFaqs } from '@/config/pricing';
+import { buildPricingFaqs } from '@/config/pricing';
+import { getPricingConfig } from '@/lib/pricing-server';
 import { buildMetadata } from '@/lib/seo';
 
 export const metadata = buildMetadata({
@@ -16,7 +17,10 @@ export const metadata = buildMetadata({
   keywords: ['savdown pricing', 'video downloader pricing', 'download credits', 'pro plan'],
 });
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const config = await getPricingConfig();
+  const faqs = buildPricingFaqs(config);
+
   return (
     <>
       {/* Hero */}
@@ -47,7 +51,7 @@ export default function PricingPage() {
       <HowCreditsWork />
       <ComparisonTable />
 
-      <FAQSection items={pricingFaqs} variant="white" />
+      <FAQSection items={faqs} variant="white" />
     </>
   );
 }

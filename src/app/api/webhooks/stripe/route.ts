@@ -96,15 +96,17 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   if (item.kind === 'lifetime') {
+    // Lifetime is a large but FINITE bank: grant the credits once into the
+    // never-expiring purchased balance (not a monthly-resetting allowance) and
+    // set the tier for premium access. When the balance runs low the user tops
+    // up with a credit pack — this is what protects against unlimited liability.
     await grantCredits({
       userId,
       amount: item.credits,
       kind: 'plan_grant',
-      bucket: 'plan',
+      bucket: 'purchased',
       description: 'Lifetime plan activated',
       externalId: session.id,
-      resetPlanCredits: true,
-      planCreditsResetAt: addMonths(new Date(), 1),
       tier: 'LIFETIME',
     });
     return;

@@ -15,6 +15,8 @@ import {
 import { catalog, toolGroups, type ToolGroup } from '@/config/catalog';
 import { blogPostsByDate } from '@/config/blog';
 import { isToolAvailable } from '@/config/catalog';
+import { usePricing } from '@/components/pricing/PricingProvider';
+import { derivePlan, deriveLifetime } from '@/config/pricing';
 
 /* ─── animation ─────────────────────────────────────────────── */
 const panelVariants = {
@@ -189,74 +191,85 @@ function ToolsPanel({ close }: { close: () => void }) {
 /* ═══════════════════════════════════════════════════════════
    PRICING PANEL
 ═══════════════════════════════════════════════════════════ */
-const PRICING_PLAN_KEYS = ['free', 'pro', 'credits'] as const;
-const PRICING_PRICES = { free: '$0', pro: '$9', credits: '$19' };
-const PRICING_HREFS  = { free: '/#tools', pro: '/contact', credits: '/contact' };
-const PRICING_ICONS  = { free: Zap, pro: Sparkles, credits: Coins };
-const PRICING_ICON_COLORS = {
-  free:    { iconColor: 'text-emerald-600', iconBg: 'bg-emerald-50' },
-  pro:     { iconColor: 'text-primary',     iconBg: 'bg-primary-light' },
-  credits: { iconColor: 'text-amber-600',   iconBg: 'bg-amber-50' },
+const PRICING_TILE_STYLES: Record<string, { icon: typeof Zap; iconColor: string; iconBg: string }> = {
+  free:     { icon: Zap,      iconColor: 'text-emerald-600', iconBg: 'bg-emerald-50' },
+  pro:      { icon: Sparkles, iconColor: 'text-primary',     iconBg: 'bg-primary-light' },
+  lifetime: { icon: Coins,    iconColor: 'text-amber-600',   iconBg: 'bg-amber-50' },
 };
 
+/**
+ * Reads pricing from the shared PricingProvider (seeded server-side from the DB
+ * source of truth) — so the dropdown can never show a stale price. Shows the
+ * two subscription tiers plus Lifetime, all derived from the same model as the
+ * pricing page.
+ */
 function PricingPanel({ close }: { close: () => void }) {
   const t = useTranslation();
+  const config = usePricing();
+
+  const free = config.plans.find((p) => p.id === 'free');
+  const pro = config.plans.find((p) => p.id === 'pro');
+  const freeV = free ? derivePlan(free, 'monthly') : null;
+  const proV = pro ? derivePlan(pro, 'monthly') : null;
+  const ltV = deriveLifetime(config.lifetime);
+
+  const tiles = [
+    freeV && { id: 'free', name: freeV.name, price: freeV.price, period: 'forever', credits: freeV.credits, href: freeV.ctaHref, cta: freeV.ctaLabel, highlight: false },
+    proV && { id: 'pro', name: proV.name, price: proV.price, period: '/mo', credits: proV.credits, href: proV.ctaHref, cta: proV.ctaLabel, highlight: true },
+    { id: 'lifetime', name: ltV.name, price: ltV.price, period: 'one-time', credits: ltV.credits, href: ltV.ctaHref, cta: ltV.ctaLabel, highlight: false },
+  ].filter(Boolean) as {
+    id: string; name: string; price: string; period: string; credits: string; href: string; cta: string; highlight: boolean;
+  }[];
+
   return (
     <div className="p-7">
       {/* header */}
       <div className="flex items-end justify-between mb-6">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{t('nav.pricing')}</p>
-          <h3 className="text-xl font-bold text-text">{t('megaMenu.pricingTitle')}</h3>
-          <p className="text-sm text-text-muted mt-1">{t('megaMenu.pricingSubtitle')}</p>
+          <h3 className="text-xl font-bold text-text">{t('megaMenu.pricingTitle') || 'Simple, transparent pricing'}</h3>
+          <p className="text-sm text-text-muted mt-1">{t('megaMenu.pricingSubtitle') || 'Start free. Upgrade when you need more.'}</p>
         </div>
         <Link href="/pricing" onClick={close} className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline shrink-0 mb-1">
-          {t('megaMenu.fullDetails')} <ArrowRight className="w-3.5 h-3.5" />
+          {t('megaMenu.fullDetails') || 'Full details'} <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
 
-      {/* plan cards */}
+      {/* plan tiles */}
       <div className="grid grid-cols-3 gap-4">
-        {PRICING_PLAN_KEYS.map((key) => {
-          const plan = t(`megaMenu.pricingPlans.${key}`) as unknown as { name: string; period: string; desc: string; cta: string; features: string[] };
-          const PIcon = PRICING_ICONS[key];
-          const { iconColor, iconBg } = PRICING_ICON_COLORS[key];
-          const highlight = key === 'pro';
+        {tiles.map((tile) => {
+          const style = PRICING_TILE_STYLES[tile.id] ?? PRICING_TILE_STYLES.free;
+          const PIcon = style.icon;
           return (
-            <div key={key} className={`relative flex flex-col rounded-2xl p-5 border transition-all ${
-              highlight
+            <div key={tile.id} className={`relative flex flex-col rounded-2xl p-5 border transition-all ${
+              tile.highlight
                 ? 'border-primary/30 bg-gradient-to-b from-primary-light/40 to-white shadow-soft-md'
                 : 'border-border bg-white hover:border-primary/20 hover:shadow-soft'
             }`}>
-              {highlight && (
+              {tile.highlight && (
                 <div className="absolute -top-3 inset-x-0 flex justify-center">
                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-brand text-white text-[11px] font-bold shadow-glow">
-                    <Star className="w-3 h-3" /> {t('megaMenu.mostPopular')}
+                    <Star className="w-3 h-3" /> {t('megaMenu.mostPopular') || 'Most Popular'}
                   </span>
                 </div>
               )}
-              <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center mb-4`}>
-                <PIcon className={`w-5 h-5 ${iconColor}`} />
+              <div className={`w-10 h-10 rounded-xl ${style.iconBg} flex items-center justify-center mb-4`}>
+                <PIcon className={`w-5 h-5 ${style.iconColor}`} />
               </div>
-              <p className="font-bold text-text text-base">{plan?.name}</p>
+              <p className="font-bold text-text text-base">{tile.name}</p>
               <div className="flex items-baseline gap-1 mt-1 mb-1">
-                <span className="text-3xl font-extrabold text-text">{PRICING_PRICES[key]}</span>
-                <span className="text-xs text-text-muted">{plan?.period}</span>
+                <span className="text-3xl font-extrabold text-text">{tile.price}</span>
+                <span className="text-xs text-text-muted">{tile.period}</span>
               </div>
-              <p className="text-xs text-text-muted leading-relaxed mb-4">{plan?.desc}</p>
-              <ul className="space-y-2 mb-5 flex-1">
-                {(plan?.features ?? []).map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-text-muted">
-                    <Check className="w-4 h-4 text-accent shrink-0" /> {f}
-                  </li>
-                ))}
-              </ul>
-              <Link href={PRICING_HREFS[key]} onClick={close} className={`inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                highlight
+              <p className="text-xs text-text-muted leading-relaxed mb-5 flex items-center gap-1.5">
+                <Coins className="w-3.5 h-3.5 text-primary shrink-0" /> {tile.credits}
+              </p>
+              <Link href={tile.href} onClick={close} className={`mt-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                tile.highlight
                   ? 'bg-gradient-brand text-white shadow-glow hover:opacity-90'
                   : 'bg-white border border-border text-text hover:border-primary/40 hover:text-primary'
               }`}>
-                {plan?.cta} <ArrowRight className="w-3.5 h-3.5" />
+                {tile.cta} <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           );
@@ -265,9 +278,9 @@ function PricingPanel({ close }: { close: () => void }) {
 
       {/* trust row */}
       <div className="mt-5 pt-5 border-t border-border-light flex items-center gap-8 text-xs text-text-muted">
-        <span className="flex items-center gap-2"><Lock className="w-4 h-4 text-accent" /> {t('megaMenu.noCreditCard')}</span>
-        <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-accent" /> {t('megaMenu.freeTierForever')}</span>
-        <span className="flex items-center gap-2"><Shield className="w-4 h-4 text-accent" /> {t('megaMenu.cancelAnytime')}</span>
+        <span className="flex items-center gap-2"><Lock className="w-4 h-4 text-accent" /> {t('megaMenu.noCreditCard') || 'No credit card to start'}</span>
+        <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-accent" /> {t('megaMenu.freeTierForever') || 'Free tier forever'}</span>
+        <span className="flex items-center gap-2"><Shield className="w-4 h-4 text-accent" /> {t('megaMenu.cancelAnytime') || 'Cancel anytime'}</span>
       </div>
     </div>
   );

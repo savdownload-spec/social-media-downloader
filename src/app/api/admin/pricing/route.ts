@@ -3,53 +3,44 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { writeAuditLog } from '@/lib/admin';
-import { z } from 'zod';
+import { DEFAULT_PRICING } from '@/config/pricing';
+import {
+  PRICING_SETTING_KEY,
+  pricingConfigSchema,
+  revalidatePricing,
+} from '@/lib/pricing-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const PRICING_KEY = 'pricing_config';
+function forbidden() {
+  return NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403 });
+}
 
-const pricingSchema = z.object({
-  plans: z.array(z.object({
-    id:       z.string(),
-    name:     z.string(),
-    price:    z.number(),
-    yearlyPrice: z.number().optional(),
-    credits:  z.number(),
-    features: z.array(z.string()),
-    popular:  z.boolean().optional(),
-  })),
-  creditPacks: z.array(z.object({
-    id:      z.string(),
-    credits: z.number(),
-    price:   z.number(),
-    bonus:   z.number().optional(),
-  })),
-});
-
-function forbidden() { return NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403 }); }
-
-const DEFAULT_PRICING = {
-  plans: [
-    { id: 'free',     name: 'Free',     price: 0,   credits: 10,   features: ['10 credits/day', 'All free tools', 'No signup required'],                                 popular: false },
-    { id: 'pro',      name: 'Pro',      price: 9,   yearlyPrice: 7,  credits: 500,  features: ['500 credits/month', 'All tools', 'No watermarks', 'Priority support'],    popular: true  },
-    { id: 'max',      name: 'Max',      price: 19,  yearlyPrice: 15, credits: 2000, features: ['2000 credits/month', 'All tools', 'Bulk downloads', 'API access'],        popular: false },
-    { id: 'lifetime', name: 'Lifetime', price: 149, credits: 99999, features: ['Unlimited credits', 'All tools forever', 'Lifetime updates', 'Priority support'],       popular: false },
-  ],
-  creditPacks: [
-    { id: 'pack_100',  credits: 100,  price: 2,  bonus: 0  },
-    { id: 'pack_500',  credits: 500,  price: 8,  bonus: 50 },
-    { id: 'pack_1500', credits: 1500, price: 20, bonus: 250 },
-  ],
-};
-
+/**
+ * The admin pricing API. GET returns the current model (falling back to the
+ * default when the stored value is missing or from an older shape); PUT
+ * validates against the shared schema, stores it, and revalidates the pricing
+ * cache so every public surface picks up the change on the next load.
+ *
+ * This reads/writes the SAME `pricing_config` row and shares the SAME schema
+ * and default as `@/lib/pricing-server`, so admin and public can never diverge.
+ */
 export async function GET() {
   const session = await getServerSession(authOptions);
   if ((session?.user as { role?: string })?.role !== 'ADMIN') return forbidden();
 
-  const setting = await prisma.adminSetting.findUnique({ where: { key: PRICING_KEY } });
-  const config = setting ? JSON.parse(setting.value) : DEFAULT_PRICING;
+  const setting = await prisma.adminSetting.findUnique({ where: { key: PRICING_SETTING_KEY } });
+  let config = DEFAULT_PRICING;
+  if (setting) {
+    try {
+      const parsed = pricingConfigSchema.safeParse(JSON.parse(setting.value));
+      if (parsed.success) config = parsed.data;
+    } catch {
+      // Malformed or older stored shape → serve the default so the admin can
+      // save a clean copy over it.
+    }
+  }
   return NextResponse.json({ ok: true, data: config });
 }
 
@@ -59,16 +50,30 @@ export async function PUT(req: NextRequest) {
   if (admin?.role !== 'ADMIN') return forbidden();
 
   const body = await req.json().catch(() => null);
-  const parsed = pricingSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ ok: false, error: 'Invalid pricing data', details: parsed.error.flatten() }, { status: 400 });
+  const parsed = pricingConfigSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { ok: false, error: 'Invalid pricing data', details: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
 
   await prisma.adminSetting.upsert({
-    where:  { key: PRICING_KEY },
+    where: { key: PRICING_SETTING_KEY },
     update: { value: JSON.stringify(parsed.data) },
-    create: { key: PRICING_KEY, value: JSON.stringify(parsed.data) },
+    create: { key: PRICING_SETTING_KEY, value: JSON.stringify(parsed.data) },
   });
 
-  await writeAuditLog({ adminId: admin.id!, adminEmail: admin.email!, action: 'pricing.update', targetType: 'AdminSetting', targetId: PRICING_KEY });
+  await writeAuditLog({
+    adminId: admin.id!,
+    adminEmail: admin.email!,
+    action: 'pricing.update',
+    targetType: 'AdminSetting',
+    targetId: PRICING_SETTING_KEY,
+  });
+
+  // Bust the cached pricing so the public site reflects the change.
+  revalidatePricing();
 
   return NextResponse.json({ ok: true, data: parsed.data });
 }

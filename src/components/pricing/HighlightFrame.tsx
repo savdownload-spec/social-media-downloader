@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import type { PlanHighlight } from '@/config/pricing';
+
+/** 'none' = plain bordered card; 'popular'/'value' = gradient border + badge. */
+export type FrameVariant = 'none' | 'popular' | 'value';
 
 /**
  * The premium border + badge treatment shared by the highlighted plan, credit
@@ -20,7 +22,7 @@ import type { PlanHighlight } from '@/config/pricing';
  *     tied to savings without being confused with "most popular".
  */
 const VARIANTS: Record<
-  Exclude<PlanHighlight, 'none'>,
+  Exclude<FrameVariant, 'none'>,
   { border: string; glow: string; badge: string }
 > = {
   popular: {
@@ -41,7 +43,7 @@ export function HighlightFrame({
   className,
   children,
 }: {
-  variant: PlanHighlight;
+  variant: FrameVariant;
   badge?: string;
   /** Classes for the inner white surface (padding etc.). */
   className?: string;

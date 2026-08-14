@@ -9,7 +9,7 @@ import { prisma } from '@/lib/prisma';
  * webhook looks up what Stripe says was bought, not what a client asked for.
  */
 
-export type PlanTier = 'FREE' | 'PRO' | 'MAX' | 'LIFETIME';
+export type PlanTier = 'FREE' | 'PRO' | 'LIFETIME';
 
 export type PurchasableKind = 'subscription' | 'pack' | 'lifetime';
 
@@ -40,8 +40,10 @@ export type Purchasable = {
   productDescription: string;
 };
 
-const PRO_BLURB = '1,500 SavCredits every month, 4K downloads, batch jobs and priority speed.';
-const MAX_BLURB = '3,500 SavCredits every month, the largest batch sizes and priority support.';
+// Amounts here must match src/config/pricing.ts (the public display) — see the
+// note there. Kept in sync manually since this file is the future-checkout
+// catalogue and that file is the public display.
+const PRO_BLURB = '1,000 SavCredits every month, 4K downloads, batch jobs and priority processing.';
 
 export const PURCHASABLES: Purchasable[] = [
   {
@@ -50,9 +52,9 @@ export const PURCHASABLES: Purchasable[] = [
     label: 'Pro (monthly)',
     priceEnv: 'STRIPE_PRICE_PRO_MONTHLY',
     tier: 'PRO',
-    credits: 1500,
+    credits: 1000,
     interval: 'month',
-    amountCents: 900,
+    amountCents: 999,
     currency: 'usd',
     productName: 'SavDown Pro',
     productDescription: PRO_BLURB,
@@ -63,72 +65,46 @@ export const PURCHASABLES: Purchasable[] = [
     label: 'Pro (yearly)',
     priceEnv: 'STRIPE_PRICE_PRO_YEARLY',
     tier: 'PRO',
-    credits: 1500,
+    credits: 1000,
     interval: 'year',
-    // Ten months' worth — the "2 months free" claim on the pricing page.
-    amountCents: 9000,
+    // ~26% less than twelve monthly payments — see the yearly saving in config.
+    amountCents: 8900,
     currency: 'usd',
     productName: 'SavDown Pro',
     productDescription: PRO_BLURB,
   },
   {
-    id: 'max-monthly',
-    kind: 'subscription',
-    label: 'Max (monthly)',
-    priceEnv: 'STRIPE_PRICE_MAX_MONTHLY',
-    tier: 'MAX',
-    credits: 3500,
-    interval: 'month',
-    amountCents: 1500,
-    currency: 'usd',
-    productName: 'SavDown Max',
-    productDescription: MAX_BLURB,
-  },
-  {
-    id: 'max-yearly',
-    kind: 'subscription',
-    label: 'Max (yearly)',
-    priceEnv: 'STRIPE_PRICE_MAX_YEARLY',
-    tier: 'MAX',
-    credits: 3500,
-    interval: 'year',
-    amountCents: 15000,
-    currency: 'usd',
-    productName: 'SavDown Max',
-    productDescription: MAX_BLURB,
-  },
-  {
     id: 'pack-starter',
     kind: 'pack',
-    label: 'Starter pack, 1,000 credits',
+    label: 'Starter pack, 300 credits',
     priceEnv: 'STRIPE_PRICE_PACK_STARTER',
-    credits: 1000,
-    amountCents: 900,
+    credits: 300,
+    amountCents: 500,
     currency: 'usd',
     productName: 'SavDown Credits: Starter',
+    productDescription: '300 SavCredits. One-time purchase, never expires.',
+  },
+  {
+    id: 'pack-creator',
+    kind: 'pack',
+    label: 'Creator pack, 1,000 credits',
+    priceEnv: 'STRIPE_PRICE_PACK_CREATOR',
+    credits: 1000,
+    amountCents: 1400,
+    currency: 'usd',
+    productName: 'SavDown Credits: Creator',
     productDescription: '1,000 SavCredits. One-time purchase, never expires.',
   },
   {
-    id: 'pack-standard',
+    id: 'pack-power',
     kind: 'pack',
-    label: 'Standard pack, 3,000 credits',
-    priceEnv: 'STRIPE_PRICE_PACK_STANDARD',
+    label: 'Power pack, 3,000 credits',
+    priceEnv: 'STRIPE_PRICE_PACK_POWER',
     credits: 3000,
-    amountCents: 1900,
+    amountCents: 3600,
     currency: 'usd',
-    productName: 'SavDown Credits: Standard',
+    productName: 'SavDown Credits: Power',
     productDescription: '3,000 SavCredits. One-time purchase, never expires.',
-  },
-  {
-    id: 'pack-bulk',
-    kind: 'pack',
-    label: 'Bulk pack, 8,000 credits',
-    priceEnv: 'STRIPE_PRICE_PACK_BULK',
-    credits: 8000,
-    amountCents: 4500,
-    currency: 'usd',
-    productName: 'SavDown Credits: Bulk',
-    productDescription: '8,000 SavCredits. One-time purchase, never expires.',
   },
   {
     id: 'lifetime',
@@ -136,12 +112,12 @@ export const PURCHASABLES: Purchasable[] = [
     label: 'Lifetime',
     priceEnv: 'STRIPE_PRICE_LIFETIME',
     tier: 'LIFETIME',
-    credits: 3500,
+    credits: 30000,
     amountCents: 19900,
     currency: 'usd',
     productName: 'SavDown Lifetime',
     productDescription:
-      '3,500 SavCredits refreshed every month, forever, plus every Max feature. One-time payment.',
+      '30,000 lifetime SavCredits that never expire, plus lifetime access to premium features. One-time payment.',
   },
 ];
 
@@ -242,10 +218,12 @@ function isUniqueViolation(error: unknown): boolean {
 
 /** Credits included with each tier's allowance period. */
 export const TIER_ALLOWANCE: Record<PlanTier, { credits: number; period: 'day' | 'month' }> = {
-  FREE: { credits: 30, period: 'day' },
-  PRO: { credits: 1500, period: 'month' },
-  MAX: { credits: 3500, period: 'month' },
-  LIFETIME: { credits: 3500, period: 'month' },
+  FREE: { credits: 10, period: 'day' },
+  PRO: { credits: 1000, period: 'month' },
+  // Lifetime is a fixed one-time bank, not a renewing allowance — it is granted
+  // once into the (never-expiring) purchased balance, so it is not self-renewed
+  // in getBillingSummary. This entry is only a display reference.
+  LIFETIME: { credits: 30000, period: 'month' },
 };
 
 export type BillingSummary = {
@@ -260,11 +238,10 @@ export type BillingSummary = {
  * Reads a user's balances, refilling the allowance first if its period has
  * rolled over.
  *
- * Free and lifetime allowances renew without any Stripe activity, so they are
- * refreshed lazily on read rather than by a scheduled job — that keeps the
- * promise on the pricing page true with no extra infrastructure. Paid
- * subscription refills stay with `invoice.paid`, which is the only event that
- * proves the period was actually paid for.
+ * The Free daily allowance renews without any Stripe activity, so it is
+ * refreshed lazily on read rather than by a scheduled job. Paid subscription
+ * refills stay with `invoice.paid` (the only event that proves the period was
+ * paid for); Lifetime is granted once as a finite, never-expiring bank.
  */
 export async function getBillingSummary(userId: string): Promise<BillingSummary | null> {
   const user = await prisma.user.findUnique({
@@ -280,7 +257,9 @@ export async function getBillingSummary(userId: string): Promise<BillingSummary 
 
   const tier = user.plan as PlanTier;
   const due = !user.planCreditsResetAt || user.planCreditsResetAt.getTime() <= Date.now();
-  const selfRenewing = tier === 'FREE' || tier === 'LIFETIME';
+  // Only Free self-renews on read (a daily allowance). Lifetime is a finite
+  // bank granted once; Pro is refilled by the paid `invoice.paid` webhook.
+  const selfRenewing = tier === 'FREE';
 
   if (due && selfRenewing) {
     const allowance = TIER_ALLOWANCE[tier];

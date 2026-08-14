@@ -1,14 +1,13 @@
 import Link from 'next/link';
 import { Check, Coins, Infinity as InfinityIcon } from 'lucide-react';
 import { HighlightFrame } from '@/components/pricing/HighlightFrame';
-import { lifetime, WAITLIST_CTA } from '@/config/pricing';
+import type { LifetimeView } from '@/config/pricing';
 
 /**
- * The one-time long-term offer. A single wide, premium card so it reads as a
- * distinct option — and the fair-use note (a FINITE credit bank, not
- * unlimited) sits right under the benefits, not buried in the FAQ.
+ * The one-time long-term offer. A single wide premium card, with the fair-use
+ * note (a FINITE credit bank, not unlimited) right under the benefits.
  */
-export function LifetimeCard() {
+export function LifetimeCard({ lifetime }: { lifetime: LifetimeView }) {
   return (
     <div className="mx-auto max-w-3xl">
       <HighlightFrame variant="value" badge="LIFETIME" className="p-8 md:p-10">
@@ -25,16 +24,17 @@ export function LifetimeCard() {
             </div>
 
             <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-accent-light px-2.5 py-1 text-xs font-semibold text-accent-hover">
-              <Coins className="h-3.5 w-3.5 flex-shrink-0" /> {lifetime.creditsLabel}
+              <Coins className="h-3.5 w-3.5 flex-shrink-0" /> {lifetime.credits}
             </div>
+            <p className="mt-1.5 text-xs text-text-subtle">{lifetime.perThousand}</p>
 
             <p className="mt-4 text-sm leading-relaxed text-text-muted">{lifetime.tagline}</p>
 
             <Link
-              href={WAITLIST_CTA.href}
+              href={lifetime.ctaHref}
               className="mt-6 flex w-full items-center justify-center rounded-2xl bg-gradient-brand bg-[length:200%_200%] py-3 font-semibold text-white shadow-glow-lg transition-all hover:bg-[position:100%_50%]"
             >
-              {WAITLIST_CTA.label}
+              {lifetime.ctaLabel}
             </Link>
           </div>
 

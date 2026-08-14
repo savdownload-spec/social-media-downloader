@@ -86,38 +86,134 @@
       "Utility": "Utility Tools"
     },
     "tools": {
-      "youtube-video-downloader": { "name": "YouTube Video Downloader", "description": "Save YouTube videos in up to 4K, watermark-free." },
-      "youtube-shorts-downloader": { "name": "YouTube Shorts Downloader", "description": "Grab vertical YouTube Shorts in original quality." },
-      "youtube-playlist-downloader": { "name": "YouTube Playlist Downloader", "description": "Download an entire YouTube playlist in one go." },
-      "youtube-thumbnail-downloader": { "name": "YouTube Thumbnail Downloader", "description": "Grab any YouTube thumbnail in full resolution." },
-      "youtube-to-mp3": { "name": "YouTube MP3 Downloader", "description": "Convert YouTube videos into high-quality MP3 audio." },
-      "tiktok-video-downloader": { "name": "TikTok Video Downloader", "description": "Save TikToks in HD without the watermark." },
-      "tiktok-to-mp3": { "name": "TikTok MP3 Downloader", "description": "Extract the sound from any TikTok as MP3." },
-      "tiktok-thumbnail-downloader": { "name": "TikTok Thumbnail Downloader", "description": "Download the cover thumbnail of any TikTok." },
-      "instagram-reels-downloader": { "name": "Instagram Reels Downloader", "description": "Save Instagram Reels in crisp HD." },
-      "instagram-video-downloader": { "name": "Instagram Video Downloader", "description": "Download any public Instagram video post." },
-      "instagram-photo-downloader": { "name": "Instagram Photo Downloader", "description": "Save Instagram photos and carousels in full resolution." },
-      "instagram-story-downloader": { "name": "Instagram Story Downloader", "description": "Download public Instagram Stories before they disappear." },
-      "instagram-profile-picture-downloader": { "name": "Instagram Profile Picture Downloader", "description": "View and save Instagram profile pictures in HD." },
-      "facebook-video-downloader": { "name": "Facebook Video Downloader", "description": "Download Facebook videos in HD or SD." },
-      "facebook-reels-downloader": { "name": "Facebook Reels Downloader", "description": "Save Facebook Reels without the watermark." },
-      "x-video-downloader": { "name": "X (Twitter) Video Downloader", "description": "Download videos from X (Twitter) in HD." },
-      "pinterest-video-downloader": { "name": "Pinterest Video Downloader", "description": "Save Pinterest videos and Idea Pins in HD." },
-      "pinterest-image-downloader": { "name": "Pinterest Image Downloader", "description": "Download Pinterest images in original resolution." },
-      "background-remover": { "name": "Background Remover", "description": "Remove the background from any image in one click." },
-      "image-upscaler": { "name": "Image Upscaler", "description": "Upscale images to higher resolution without losing detail." },
-      "image-enhancer": { "name": "Image Enhancer", "description": "Sharpen, brighten, and enhance photos automatically." },
-      "image-compressor": { "name": "Image Compressor", "description": "Shrink image file size while keeping quality." },
-      "image-resizer": { "name": "Image Resizer", "description": "Resize images to any dimension in seconds." },
-      "image-converter": { "name": "Image Converter", "description": "Convert images between formats effortlessly." },
-      "video-converter": { "name": "Video Converter", "description": "Convert videos between popular formats." },
-      "video-compressor": { "name": "Video Compressor", "description": "Compress videos to a smaller size without losing quality." },
-      "video-to-mp3": { "name": "Video to MP3", "description": "Extract audio from any video as MP3." },
-      "merge-pdf": { "name": "Merge PDF", "description": "Combine multiple PDFs into a single file." },
-      "split-pdf": { "name": "Split PDF", "description": "Split a PDF into separate pages or files." },
-      "compress-pdf": { "name": "Compress PDF", "description": "Reduce PDF file size while keeping quality." },
-      "qr-code-generator": { "name": "QR Code Generator", "description": "Create custom QR codes for anything." },
-      "qr-code-scanner": { "name": "QR Code Scanner", "description": "Scan and decode QR codes instantly." }
+      "youtube-video-downloader": {
+        "name": "YouTube Video Downloader",
+        "description": "Save YouTube videos in up to 4K, watermark-free."
+      },
+      "youtube-shorts-downloader": {
+        "name": "YouTube Shorts Downloader",
+        "description": "Grab vertical YouTube Shorts in original quality."
+      },
+      "youtube-playlist-downloader": {
+        "name": "YouTube Playlist Downloader",
+        "description": "Download an entire YouTube playlist in one go."
+      },
+      "youtube-thumbnail-downloader": {
+        "name": "YouTube Thumbnail Downloader",
+        "description": "Grab any YouTube thumbnail in full resolution."
+      },
+      "youtube-to-mp3": {
+        "name": "YouTube MP3 Downloader",
+        "description": "Convert YouTube videos into high-quality MP3 audio."
+      },
+      "tiktok-video-downloader": {
+        "name": "TikTok Video Downloader",
+        "description": "Save TikToks in HD without the watermark."
+      },
+      "tiktok-to-mp3": {
+        "name": "TikTok MP3 Downloader",
+        "description": "Extract the sound from any TikTok as MP3."
+      },
+      "tiktok-thumbnail-downloader": {
+        "name": "TikTok Thumbnail Downloader",
+        "description": "Download the cover thumbnail of any TikTok."
+      },
+      "instagram-reels-downloader": {
+        "name": "Instagram Reels Downloader",
+        "description": "Save Instagram Reels in crisp HD."
+      },
+      "instagram-video-downloader": {
+        "name": "Instagram Video Downloader",
+        "description": "Download any public Instagram video post."
+      },
+      "instagram-photo-downloader": {
+        "name": "Instagram Photo Downloader",
+        "description": "Save Instagram photos and carousels in full resolution."
+      },
+      "instagram-story-downloader": {
+        "name": "Instagram Story Downloader",
+        "description": "Download public Instagram Stories before they disappear."
+      },
+      "instagram-profile-picture-downloader": {
+        "name": "Instagram Profile Picture Downloader",
+        "description": "View and save Instagram profile pictures in HD."
+      },
+      "facebook-video-downloader": {
+        "name": "Facebook Video Downloader",
+        "description": "Download Facebook videos in HD or SD."
+      },
+      "facebook-reels-downloader": {
+        "name": "Facebook Reels Downloader",
+        "description": "Save Facebook Reels without the watermark."
+      },
+      "x-video-downloader": {
+        "name": "X (Twitter) Video Downloader",
+        "description": "Download videos from X (Twitter) in HD."
+      },
+      "pinterest-video-downloader": {
+        "name": "Pinterest Video Downloader",
+        "description": "Save Pinterest videos and Idea Pins in HD."
+      },
+      "pinterest-image-downloader": {
+        "name": "Pinterest Image Downloader",
+        "description": "Download Pinterest images in original resolution."
+      },
+      "background-remover": {
+        "name": "Background Remover",
+        "description": "Remove the background from any image in one click."
+      },
+      "image-upscaler": {
+        "name": "Image Upscaler",
+        "description": "Upscale images to higher resolution without losing detail."
+      },
+      "image-enhancer": {
+        "name": "Image Enhancer",
+        "description": "Sharpen, brighten, and enhance photos automatically."
+      },
+      "image-compressor": {
+        "name": "Image Compressor",
+        "description": "Shrink image file size while keeping quality."
+      },
+      "image-resizer": {
+        "name": "Image Resizer",
+        "description": "Resize images to any dimension in seconds."
+      },
+      "image-converter": {
+        "name": "Image Converter",
+        "description": "Convert images between formats effortlessly."
+      },
+      "video-converter": {
+        "name": "Video Converter",
+        "description": "Convert videos between popular formats."
+      },
+      "video-compressor": {
+        "name": "Video Compressor",
+        "description": "Compress videos to a smaller size without losing quality."
+      },
+      "video-to-mp3": {
+        "name": "Video to MP3",
+        "description": "Extract audio from any video as MP3."
+      },
+      "merge-pdf": {
+        "name": "Merge PDF",
+        "description": "Combine multiple PDFs into a single file."
+      },
+      "split-pdf": {
+        "name": "Split PDF",
+        "description": "Split a PDF into separate pages or files."
+      },
+      "compress-pdf": {
+        "name": "Compress PDF",
+        "description": "Reduce PDF file size while keeping quality."
+      },
+      "qr-code-generator": {
+        "name": "QR Code Generator",
+        "description": "Create custom QR codes for anything."
+      },
+      "qr-code-scanner": {
+        "name": "QR Code Scanner",
+        "description": "Scan and decode QR codes instantly."
+      }
     }
   },
   "about": {
@@ -132,10 +228,22 @@
     },
     "stats": {
       "items": [
-        { "value": "100%", "label": "Free" },
-        { "value": "100%", "label": "Browser-Based" },
-        { "value": "0", "label": "Ads Shown" },
-        { "value": "4.9", "label": "Rating" }
+        {
+          "value": "100%",
+          "label": "Free"
+        },
+        {
+          "value": "100%",
+          "label": "Browser-Based"
+        },
+        {
+          "value": "0",
+          "label": "Ads Shown"
+        },
+        {
+          "value": "4.9",
+          "label": "Rating"
+        }
       ]
     },
     "mission": {
@@ -147,20 +255,44 @@
       ]
     },
     "missionHighlights": [
-      { "title": "Global Access", "body": "Available worldwide, no VPN needed, no region locks." },
-      { "title": "Zero Storage", "body": "We never store your files or your personal data." },
-      { "title": "Instant Results", "body": "Most downloads complete in under 5 seconds." },
-      { "title": "Built by Humans", "body": "A small indie team, not a faceless corporation." }
+      {
+        "title": "Global Access",
+        "body": "Available worldwide, no VPN needed, no region locks."
+      },
+      {
+        "title": "Zero Storage",
+        "body": "We never store your files or your personal data."
+      },
+      {
+        "title": "Instant Results",
+        "body": "Most downloads complete in under 5 seconds."
+      },
+      {
+        "title": "Built by Humans",
+        "body": "A small indie team, not a faceless corporation."
+      }
     ],
     "beliefsSection": {
       "eyebrow": "What We Believe",
       "title": "Built on Principles.",
       "description": "Four values that shape every decision we make.",
       "items": [
-        { "title": "Respect Your Attention", "body": "No aggressive ads, no dark patterns, no popups. We design tools that help, not distract." },
-        { "title": "Privacy by Default", "body": "Everything runs in your browser. We store nothing, track nothing, and never ask for personal data." },
-        { "title": "Speed Without Compromise", "body": "Paste a link, get your file. No signup walls, no rate limits, no waiting for email confirmations." },
-        { "title": "Craft Over Growth", "body": "We add platforms only when we can do them right, never for the sake of a longer feature list." }
+        {
+          "title": "Respect Your Attention",
+          "body": "No aggressive ads, no dark patterns, no popups. We design tools that help, not distract."
+        },
+        {
+          "title": "Privacy by Default",
+          "body": "Everything runs in your browser. We store nothing, track nothing, and never ask for personal data."
+        },
+        {
+          "title": "Speed Without Compromise",
+          "body": "Paste a link, get your file. No signup walls, no rate limits, no waiting for email confirmations."
+        },
+        {
+          "title": "Craft Over Growth",
+          "body": "We add platforms only when we can do them right, never for the sake of a longer feature list."
+        }
       ]
     },
     "platformsSection": {
@@ -168,7 +300,18 @@
       "title": "Every Platform You Love.",
       "description": "We support the services people actually use, and we add new ones only when we can do them right.",
       "items": [
-        "YouTube", "YouTube Shorts", "TikTok", "Instagram Reels", "Instagram Stories", "Instagram Photos", "Facebook", "Facebook Reels", "Pinterest Videos", "Pinterest Images", "X (Twitter) Videos", "X (Twitter) GIFs"
+        "YouTube",
+        "YouTube Shorts",
+        "TikTok",
+        "Instagram Reels",
+        "Instagram Stories",
+        "Instagram Photos",
+        "Facebook",
+        "Facebook Reels",
+        "Pinterest Videos",
+        "Pinterest Images",
+        "X (Twitter) Videos",
+        "X (Twitter) GIFs"
       ]
     },
     "journeySection": {
@@ -176,10 +319,26 @@
       "title": "From Idea to Toolkit.",
       "description": "A short history of how SavDown grew from a weekend project into a full toolkit platform.",
       "milestones": [
-        { "year": "2024", "title": "First line of code", "body": "A small team, frustrated by ad-filled downloaders, started building the alternative." },
-        { "year": "2025", "title": "Beta launch", "body": "SavDown went live with YouTube, TikTok, and Instagram support, fast, free, and clean." },
-        { "year": "2025", "title": "Platform expansion", "body": "Added Facebook, Pinterest, and X. Introduced thumbnail grabbers and MP3 extraction." },
-        { "year": "2026", "title": "The toolkit era", "body": "Expanded into Image, Video, PDF, AI, SEO, and Utility categories, all under one roof." }
+        {
+          "year": "2024",
+          "title": "First line of code",
+          "body": "A small team, frustrated by ad-filled downloaders, started building the alternative."
+        },
+        {
+          "year": "2025",
+          "title": "Beta launch",
+          "body": "SavDown went live with YouTube, TikTok, and Instagram support, fast, free, and clean."
+        },
+        {
+          "year": "2025",
+          "title": "Platform expansion",
+          "body": "Added Facebook, Pinterest, and X. Introduced thumbnail grabbers and MP3 extraction."
+        },
+        {
+          "year": "2026",
+          "title": "The toolkit era",
+          "body": "Expanded into Image, Video, PDF, AI, SEO, and Utility categories, all under one roof."
+        }
       ]
     },
     "teamSection": {
@@ -187,16 +346,28 @@
       "title": "A Small Team, Big Standards.",
       "description": "We are a tight group of designers and engineers who love clean tools. SavDown is funded through an upcoming Pro upgrade, never by selling your data.",
       "members": [
-        { "role": "Design", "body": "Obsessed with clarity. Every pixel earns its place." },
-        { "role": "Engineering", "body": "Fast, reliable, and secure. No shortcuts on infrastructure." },
-        { "role": "Support", "body": "Real humans, real responses. We read every message." }
+        {
+          "role": "Design",
+          "body": "Obsessed with clarity. Every pixel earns its place."
+        },
+        {
+          "role": "Engineering",
+          "body": "Fast, reliable, and secure. No shortcuts on infrastructure."
+        },
+        {
+          "role": "Support",
+          "body": "Real humans, real responses. We read every message."
+        }
       ]
     },
     "cta": {
       "eyebrow": "Ready to try?",
       "title": "Start Saving Today.",
       "description": "No signup, no watermarks, no cost. Just paste a link and download.",
-      "button": { "text": "Start downloading", "href": "/#tools" }
+      "button": {
+        "text": "Start downloading",
+        "href": "/#tools"
+      }
     }
   },
   "contact": {
@@ -362,10 +533,22 @@
       "stat2": "Trackers on page",
       "stat3": "Connection",
       "stats": [
-        { "label": "Files stored", "value": "0" },
-        { "label": "Accounts needed", "value": "None" },
-        { "label": "Trackers on page", "value": "None" },
-        { "label": "Connection", "value": "HTTPS" }
+        {
+          "label": "Files stored",
+          "value": "0"
+        },
+        {
+          "label": "Accounts needed",
+          "value": "None"
+        },
+        {
+          "label": "Trackers on page",
+          "value": "None"
+        },
+        {
+          "label": "Connection",
+          "value": "HTTPS"
+        }
       ],
       "cta": "How we protect your data"
     }
@@ -451,10 +634,22 @@
       "body": "These are required for basic functionality and cannot be turned off. They store no personal data beyond what is necessary for the feature they support."
     },
     "essentialCookies": [
-      { "name": "next-auth.session-token", "purpose": "Keeps you signed in across pages." },
-      { "name": "next-auth.csrf-token", "purpose": "Prevents cross-site request forgery." },
-      { "name": "Rate-limit identifiers", "purpose": "Protects the service from abuse." },
-      { "name": "googtrans", "purpose": "Remembers your language preference (Google Translate)." }
+      {
+        "name": "next-auth.session-token",
+        "purpose": "Keeps you signed in across pages."
+      },
+      {
+        "name": "next-auth.csrf-token",
+        "purpose": "Prevents cross-site request forgery."
+      },
+      {
+        "name": "Rate-limit identifiers",
+        "purpose": "Protects the service from abuse."
+      },
+      {
+        "name": "googtrans",
+        "purpose": "Remembers your language preference (Google Translate)."
+      }
     ],
     "essentialHeaders": {
       "cookie": "Cookie",
@@ -466,9 +661,18 @@
       "body": "If enabled, we use privacy-friendly aggregate analytics to understand which tools are used most. You can opt out at any time. We do not use Google Analytics by default."
     },
     "analyticsBlocks": [
-      { "title": "Aggregate only", "description": "We see which tool is popular, not who used it. No per-user profiles, ever." },
-      { "title": "Opt out anytime", "description": "Toggle analytics off from the cookie banner. Your choice is remembered for one year." },
-      { "title": "No cross-site tracking", "description": "We do not run retargeting pixels, ad networks, or third-party trackers of any kind." }
+      {
+        "title": "Aggregate only",
+        "description": "We see which tool is popular, not who used it. No per-user profiles, ever."
+      },
+      {
+        "title": "Opt out anytime",
+        "description": "Toggle analytics off from the cookie banner. Your choice is remembered for one year."
+      },
+      {
+        "title": "No cross-site tracking",
+        "description": "We do not run retargeting pixels, ad networks, or third-party trackers of any kind."
+      }
     ],
     "notUsedSection": {
       "eyebrow": "What we do not use",
@@ -487,8 +691,14 @@
       "title": "You are always in control."
     },
     "choicesBlocks": [
-      { "title": "Browser controls", "description": "You can clear cookies at any time through your browser settings. Note that clearing essential cookies will sign you out." },
-      { "title": "Cookie banner", "description": "The first time you visit, you will see a banner that explains what we use and lets you opt out of anything non-essential." }
+      {
+        "title": "Browser controls",
+        "description": "You can clear cookies at any time through your browser settings. Note that clearing essential cookies will sign you out."
+      },
+      {
+        "title": "Cookie banner",
+        "description": "The first time you visit, you will see a banner that explains what we use and lets you opt out of anything non-essential."
+      }
     ],
     "callout": {
       "title": "Questions about cookies?",
@@ -517,9 +727,18 @@
       "body": "SavDown does not host, store, or index copyrighted content. We are a tool that facilitates user-directed downloads. The actual media resides on the source platforms (YouTube, TikTok, etc.)."
     },
     "contextBlocks": [
-      { "title": "We do not host", "description": "No media file is stored on SavDown's servers. The download streams directly from the source." },
-      { "title": "Public content only", "description": "We only resolve public URLs. Private, restricted, or DRM-protected content is out of scope." },
-      { "title": "Cooperative takedowns", "description": "Valid DMCA notices are actioned within 72 hours and we keep records to handle repeat infringers." }
+      {
+        "title": "We do not host",
+        "description": "No media file is stored on SavDown's servers. The download streams directly from the source."
+      },
+      {
+        "title": "Public content only",
+        "description": "We only resolve public URLs. Private, restricted, or DRM-protected content is out of scope."
+      },
+      {
+        "title": "Cooperative takedowns",
+        "description": "Valid DMCA notices are actioned within 72 hours and we keep records to handle repeat infringers."
+      }
     ],
     "noticeSection": {
       "eyebrow": "How to submit a notice",
@@ -539,10 +758,22 @@
       "title": "Where to send it, and what comes next."
     },
     "processBlocks": [
-      { "title": "Where to send", "description": "Submit notices via our contact form with subject line \"DMCA Notice\", or email our designated agent at dmca@savdown.com." },
-      { "title": "Counter-notices", "description": "If you believe your content was removed in error, you may submit a counter-notice including identification of the material, a statement under penalty of perjury, and consent to jurisdiction." },
-      { "title": "Repeat infringers", "description": "We terminate accounts of users who are found to be repeat infringers, in accordance with the DMCA and applicable law." },
-      { "title": "Response time", "description": "Valid notices are reviewed and actioned within 72 hours. We send a confirmation email once a determination is made." }
+      {
+        "title": "Where to send",
+        "description": "Submit notices via our contact form with subject line \"DMCA Notice\", or email our designated agent at dmca@savdown.com."
+      },
+      {
+        "title": "Counter-notices",
+        "description": "If you believe your content was removed in error, you may submit a counter-notice including identification of the material, a statement under penalty of perjury, and consent to jurisdiction."
+      },
+      {
+        "title": "Repeat infringers",
+        "description": "We terminate accounts of users who are found to be repeat infringers, in accordance with the DMCA and applicable law."
+      },
+      {
+        "title": "Response time",
+        "description": "Valid notices are reviewed and actioned within 72 hours. We send a confirmation email once a determination is made."
+      }
     ],
     "callout": {
       "title": "Need to file a notice?",
@@ -571,10 +802,22 @@
       "body": "These are the principles we measure every decision against. If a feature violates one, we do not ship it."
     },
     "principles": [
-      { "title": "We never store your downloads", "description": "The media files you download stream directly from the source. They never touch our disk." },
-      { "title": "We do not track you", "description": "No cross-site trackers, no ad pixels, no fingerprinting. We never sell or share your data." },
-      { "title": "Minimal data only", "description": "We collect the bare minimum needed to operate the service, and clearly explain each piece." },
-      { "title": "You are in control", "description": "Access, correct, or delete your data at any time. We respond to requests within 30 days." }
+      {
+        "title": "We never store your downloads",
+        "description": "The media files you download stream directly from the source. They never touch our disk."
+      },
+      {
+        "title": "We do not track you",
+        "description": "No cross-site trackers, no ad pixels, no fingerprinting. We never sell or share your data."
+      },
+      {
+        "title": "Minimal data only",
+        "description": "We collect the bare minimum needed to operate the service, and clearly explain each piece."
+      },
+      {
+        "title": "You are in control",
+        "description": "Access, correct, or delete your data at any time. We respond to requests within 30 days."
+      }
     ],
     "collectSection": {
       "eyebrow": "What we collect",
@@ -582,10 +825,22 @@
       "body": "Every data point below serves a specific purpose. If we cannot justify a piece of data, we do not collect it."
     },
     "collect": [
-      { "title": "URLs you paste", "body": "Only for the duration of resolving your download. We cache metadata (title, thumbnail, formats) for up to 30 minutes to speed up repeat requests, then discard it." },
-      { "title": "Anonymous usage data", "body": "IP address hash, user agent, tool used, and timestamp, used only for rate limiting and aggregate analytics. Never linked back to you." },
-      { "title": "Account data (if you sign in)", "body": "Email, name, and profile image from your OAuth provider. Nothing more. We never ask for passwords." },
-      { "title": "Newsletter data (if you subscribe)", "body": "Just your email, used to send you the calm monthly update and absolutely nothing else." }
+      {
+        "title": "URLs you paste",
+        "body": "Only for the duration of resolving your download. We cache metadata (title, thumbnail, formats) for up to 30 minutes to speed up repeat requests, then discard it."
+      },
+      {
+        "title": "Anonymous usage data",
+        "body": "IP address hash, user agent, tool used, and timestamp, used only for rate limiting and aggregate analytics. Never linked back to you."
+      },
+      {
+        "title": "Account data (if you sign in)",
+        "body": "Email, name, and profile image from your OAuth provider. Nothing more. We never ask for passwords."
+      },
+      {
+        "title": "Newsletter data (if you subscribe)",
+        "body": "Just your email, used to send you the calm monthly update and absolutely nothing else."
+      }
     ],
     "notCollectSection": {
       "eyebrow": "What we do not collect",
@@ -604,9 +859,18 @@
       "title": "Cookies, retention, and partners."
     },
     "detailBlocks": [
-      { "title": "Cookies", "description": "We use essential cookies for sign-in and rate limiting. Optional analytics only if you consent, see our Cookie Policy for the full list." },
-      { "title": "Data retention", "description": "Download logs are kept for 90 days for abuse prevention, then deleted. Account data lives as long as your account exists." },
-      { "title": "Third parties", "description": "We use OAuth providers (Google, GitHub) for sign-in, Vercel for delivery, and a media-resolver micro-service. None of them receive personal data beyond what their function requires." }
+      {
+        "title": "Cookies",
+        "description": "We use essential cookies for sign-in and rate limiting. Optional analytics only if you consent, see our Cookie Policy for the full list."
+      },
+      {
+        "title": "Data retention",
+        "description": "Download logs are kept for 90 days for abuse prevention, then deleted. Account data lives as long as your account exists."
+      },
+      {
+        "title": "Third parties",
+        "description": "We use OAuth providers (Google, GitHub) for sign-in, Vercel for delivery, and a media-resolver micro-service. None of them receive personal data beyond what their function requires."
+      }
     ],
     "rightsSection": {
       "eyebrow": "Your rights",
@@ -614,10 +878,22 @@
       "body": "We make it easy to exercise your rights, no support tickets, no waiting on hold."
     },
     "rights": [
-      { "title": "Right to access", "body": "Ask what data we hold on you and we will send you a copy." },
-      { "title": "Right to correct", "body": "See something wrong? We will fix inaccurate information within 30 days." },
-      { "title": "Right to delete", "body": "One email and your account and all related data are gone, no hoops, no friction." },
-      { "title": "Right to opt out", "body": "Decline optional analytics cookies, refuse marketing emails, and turn off anything non-essential." }
+      {
+        "title": "Right to access",
+        "body": "Ask what data we hold on you and we will send you a copy."
+      },
+      {
+        "title": "Right to correct",
+        "body": "See something wrong? We will fix inaccurate information within 30 days."
+      },
+      {
+        "title": "Right to delete",
+        "body": "One email and your account and all related data are gone, no hoops, no friction."
+      },
+      {
+        "title": "Right to opt out",
+        "body": "Decline optional analytics cookies, refuse marketing emails, and turn off anything non-essential."
+      }
     ],
     "callout": {
       "title": "Privacy questions? Just ask.",
@@ -645,9 +921,18 @@
       "title": "The whole agreement in 30 seconds."
     },
     "summaryBlocks": [
-      { "title": "Use SavDown freely", "description": "The service is free for personal, educational, and fair-use downloading of content you have the right to save." },
-      { "title": "Respect creators", "description": "Do not download or redistribute copyrighted content without permission. We follow DMCA takedowns strictly." },
-      { "title": "Use it responsibly", "description": "No scraping, no automation, no abuse. Fair-use rate limits keep the service free for everyone." }
+      {
+        "title": "Use SavDown freely",
+        "description": "The service is free for personal, educational, and fair-use downloading of content you have the right to save."
+      },
+      {
+        "title": "Respect creators",
+        "description": "Do not download or redistribute copyrighted content without permission. We follow DMCA takedowns strictly."
+      },
+      {
+        "title": "Use it responsibly",
+        "description": "No scraping, no automation, no abuse. Fair-use rate limits keep the service free for everyone."
+      }
     ],
     "acceptableSection": {
       "eyebrow": "Acceptable use",
@@ -677,10 +962,22 @@
       "title": "The fine print, kept readable."
     },
     "otherBlocks": [
-      { "title": "Intellectual property", "description": "SavDown does not host, store, or claim ownership over any downloaded content. All content remains the property of its original creators. SavDown is a tool, how you use it is your responsibility." },
-      { "title": "Service availability", "description": "We aim for 99.9% uptime but make no guarantees. The service is provided 'as is' without warranty of any kind. We may modify, suspend, or discontinue any part of the service at any time." },
-      { "title": "Rate limits", "description": "We enforce rate limits to keep the service fair for everyone. Excessive automated use may result in temporary or permanent blocks." },
-      { "title": "Liability", "description": "SavDown is not liable for any damages arising from your use of the service, including but not limited to copyright infringement claims resulting from your downloads. You use the service at your own risk." }
+      {
+        "title": "Intellectual property",
+        "description": "SavDown does not host, store, or claim ownership over any downloaded content. All content remains the property of its original creators. SavDown is a tool, how you use it is your responsibility."
+      },
+      {
+        "title": "Service availability",
+        "description": "We aim for 99.9% uptime but make no guarantees. The service is provided 'as is' without warranty of any kind. We may modify, suspend, or discontinue any part of the service at any time."
+      },
+      {
+        "title": "Rate limits",
+        "description": "We enforce rate limits to keep the service fair for everyone. Excessive automated use may result in temporary or permanent blocks."
+      },
+      {
+        "title": "Liability",
+        "description": "SavDown is not liable for any damages arising from your use of the service, including but not limited to copyright infringement claims resulting from your downloads. You use the service at your own risk."
+      }
     ],
     "moreSection": {
       "eyebrow": "A few more things",
@@ -760,10 +1057,22 @@
       "freeNote": "Every new account starts with free daily credits, no card required."
     },
     "creditCosts": [
-      { "label": "HD / SD video", "cost": "1 credit" },
-      { "label": "4K video", "cost": "2 credits" },
-      { "label": "MP3 audio", "cost": "1 credit" },
-      { "label": "AI tools (soon)", "cost": "3+ credits" }
+      {
+        "label": "HD / SD video",
+        "cost": "1 credit"
+      },
+      {
+        "label": "4K video",
+        "cost": "2 credits"
+      },
+      {
+        "label": "MP3 audio",
+        "cost": "1 credit"
+      },
+      {
+        "label": "AI tools (soon)",
+        "cost": "3+ credits"
+      }
     ],
     "faqSection": {
       "eyebrow": "Pricing FAQ",
@@ -800,15 +1109,51 @@
     "noResults": "Nothing matches that search.",
     "ariaLabel": "Search",
     "staticPages": [
-      { "title": "About", "description": "Who we are and what we stand for.", "category": "Company" },
-      { "title": "Pricing", "description": "Simple credit-based plans for power users.", "category": "Product" },
-      { "title": "Blog", "description": "Guides and stories on downloading media.", "category": "Content" },
-      { "title": "FAQ", "description": "Common questions and answers.", "category": "Support" },
-      { "title": "Contact Us", "description": "Get in touch with us.", "category": "Support" },
-      { "title": "Privacy Policy", "description": "How we handle your data.", "category": "Legal" },
-      { "title": "Terms of Service", "description": "The terms of using SavDown.", "category": "Legal" },
-      { "title": "Cookie Disclaimer", "description": "How we use cookies.", "category": "Legal" },
-      { "title": "DMCA", "description": "Copyright takedown policy.", "category": "Legal" }
+      {
+        "title": "About",
+        "description": "Who we are and what we stand for.",
+        "category": "Company"
+      },
+      {
+        "title": "Pricing",
+        "description": "Simple credit-based plans for power users.",
+        "category": "Product"
+      },
+      {
+        "title": "Blog",
+        "description": "Guides and stories on downloading media.",
+        "category": "Content"
+      },
+      {
+        "title": "FAQ",
+        "description": "Common questions and answers.",
+        "category": "Support"
+      },
+      {
+        "title": "Contact Us",
+        "description": "Get in touch with us.",
+        "category": "Support"
+      },
+      {
+        "title": "Privacy Policy",
+        "description": "How we handle your data.",
+        "category": "Legal"
+      },
+      {
+        "title": "Terms of Service",
+        "description": "The terms of using SavDown.",
+        "category": "Legal"
+      },
+      {
+        "title": "Cookie Disclaimer",
+        "description": "How we use cookies.",
+        "category": "Legal"
+      },
+      {
+        "title": "DMCA",
+        "description": "Copyright takedown policy.",
+        "category": "Legal"
+      }
     ]
   },
   "faqPage": {
@@ -859,10 +1204,22 @@
     "titleHighlight": "Lot Of Reasons",
     "description": "However you work with video, SavDown fits into the moment you need a clean, reliable copy.",
     "items": [
-      { "title": "Creators & Editors", "body": "Pull clean source clips for edits, remixes, and short-form cuts without a watermark in the way." },
-      { "title": "Marketers", "body": "Save reference ads and trending posts to study hooks, pacing, and what is working right now." },
-      { "title": "Students & Educators", "body": "Keep lectures, tutorials, and reference videos for offline study when the connection drops." },
-      { "title": "Personal Archivists", "body": "Back up your own uploads and the moments you never want to lose to an algorithm or a takedown." }
+      {
+        "title": "Creators & Editors",
+        "body": "Pull clean source clips for edits, remixes, and short-form cuts without a watermark in the way."
+      },
+      {
+        "title": "Marketers",
+        "body": "Save reference ads and trending posts to study hooks, pacing, and what is working right now."
+      },
+      {
+        "title": "Students & Educators",
+        "body": "Keep lectures, tutorials, and reference videos for offline study when the connection drops."
+      },
+      {
+        "title": "Personal Archivists",
+        "body": "Back up your own uploads and the moments you never want to lose to an algorithm or a takedown."
+      }
     ]
   },
   "megaMenu": {
@@ -893,34 +1250,86 @@
     "aboutEyebrow": "Company",
     "followUs": "Follow us:",
     "groupMeta": {
-      "Downloaders": { "label": "Downloaders", "desc": "Save videos, audio & images" },
-      "Image":       { "label": "Image Tools", "desc": "Edit, convert & enhance" },
-      "Video":       { "label": "Video Tools", "desc": "Convert, compress & more" },
-      "PDF":         { "label": "PDF Tools",   "desc": "Merge, split & convert PDFs" },
-      "AI":          { "label": "AI Tools",    "desc": "AI-powered creator tools" },
-      "SEO":         { "label": "SEO Tools",   "desc": "Rank higher & get found" },
-      "Utility":     { "label": "Utility",     "desc": "QR codes, colors & more" }
-    },
-    "pricingPlans": {
-      "free":    { "name": "Free",    "period": "forever",   "desc": "Everything for everyday downloads.", "cta": "Get Started",   "features": ["All downloaders", "Up to 1080p HD", "No watermarks", "30 credits/day"] },
-      "pro":     { "name": "Pro",     "period": "/month",    "desc": "For creators who download every day.", "cta": "Join Waitlist", "features": ["Everything in Free", "4K quality", "Batch downloads", "Early AI access"] },
-      "credits": { "name": "Credits", "period": "one-time",  "desc": "Pay once. Credits never expire.", "cta": "Join Waitlist",   "features": ["All Pro features", "3,000 credits", "Never expire", "Top up any time"] }
+      "Downloaders": {
+        "label": "Downloaders",
+        "desc": "Save videos, audio & images"
+      },
+      "Image": {
+        "label": "Image Tools",
+        "desc": "Edit, convert & enhance"
+      },
+      "Video": {
+        "label": "Video Tools",
+        "desc": "Convert, compress & more"
+      },
+      "PDF": {
+        "label": "PDF Tools",
+        "desc": "Merge, split & convert PDFs"
+      },
+      "AI": {
+        "label": "AI Tools",
+        "desc": "AI-powered creator tools"
+      },
+      "SEO": {
+        "label": "SEO Tools",
+        "desc": "Rank higher & get found"
+      },
+      "Utility": {
+        "label": "Utility",
+        "desc": "QR codes, colors & more"
+      }
     },
     "resourceLinks": {
-      "faq":       { "label": "FAQ",             "desc": "Quick answers to common questions." },
-      "blog":      { "label": "Blog & Guides",   "desc": "How-to articles and platform tips." },
-      "search":    { "label": "Search Tools",    "desc": "Find exactly the tool you need fast." },
-      "contact":   { "label": "Contact Us",      "desc": "Reach the team, we reply quickly." },
-      "privacy":   { "label": "Privacy Policy",  "desc": "How we handle your data." },
-      "terms":     { "label": "Terms of Service","desc": "Platform guidelines and usage rules." }
+      "faq": {
+        "label": "FAQ",
+        "desc": "Quick answers to common questions."
+      },
+      "blog": {
+        "label": "Blog & Guides",
+        "desc": "How-to articles and platform tips."
+      },
+      "search": {
+        "label": "Search Tools",
+        "desc": "Find exactly the tool you need fast."
+      },
+      "contact": {
+        "label": "Contact Us",
+        "desc": "Reach the team, we reply quickly."
+      },
+      "privacy": {
+        "label": "Privacy Policy",
+        "desc": "How we handle your data."
+      },
+      "terms": {
+        "label": "Terms of Service",
+        "desc": "Platform guidelines and usage rules."
+      }
     },
     "aboutLinks": {
-      "about":   { "label": "About Us",      "desc": "Our story, mission, and values." },
-      "contact": { "label": "Contact",        "desc": "Support, partnerships, and press." },
-      "pricing": { "label": "Pricing",        "desc": "Free tier, Pro plan, and credit packs." },
-      "privacy": { "label": "Privacy Policy", "desc": "We never sell your data." },
-      "terms":   { "label": "Terms",          "desc": "Usage rules and platform guidelines." },
-      "careers": { "label": "Careers",        "desc": "We're hiring, come build the future." }
+      "about": {
+        "label": "About Us",
+        "desc": "Our story, mission, and values."
+      },
+      "contact": {
+        "label": "Contact",
+        "desc": "Support, partnerships, and press."
+      },
+      "pricing": {
+        "label": "Pricing",
+        "desc": "Free tier, Pro plan, and credit packs."
+      },
+      "privacy": {
+        "label": "Privacy Policy",
+        "desc": "We never sell your data."
+      },
+      "terms": {
+        "label": "Terms",
+        "desc": "Usage rules and platform guidelines."
+      },
+      "careers": {
+        "label": "Careers",
+        "desc": "We're hiring, come build the future."
+      }
     },
     "footerLinks": {
       "sitemap": "Sitemap",
@@ -930,31 +1339,26 @@
   },
   "mobileNav": {
     "sections": {
-      "tools":     "Tools",
-      "pricing":   "Pricing",
-      "blog":      "Blog",
+      "tools": "Tools",
+      "pricing": "Pricing",
+      "blog": "Blog",
       "resources": "Resources",
-      "about":     "About"
+      "about": "About"
     },
-    "viewAllTools":     "View All Tools",
+    "viewAllTools": "View All Tools",
     "fullPricingDetails": "Full Pricing Details",
-    "viewAllArticles":  "View All Articles",
-    "getStartedFree":   "Get Started, It's Free",
-    "pricingPlans": {
-      "free":    { "name": "Free",    "desc": "30 credits/day, all tools, no watermarks." },
-      "pro":     { "name": "Pro",     "desc": "1,500 credits/month, 4K, batch, AI access." },
-      "credits": { "name": "Credits", "desc": "3,000 credits, one-time, never expire." }
-    },
+    "viewAllArticles": "View All Articles",
+    "getStartedFree": "Get Started, It's Free",
     "resourceLinks": {
-      "faq":     "FAQ",
-      "blog":    "Blog & Guides",
-      "search":  "Search Tools",
+      "faq": "FAQ",
+      "blog": "Blog & Guides",
+      "search": "Search Tools",
       "privacy": "Privacy Policy",
-      "terms":   "Terms",
+      "terms": "Terms",
       "cookies": "Cookies"
     },
     "aboutLinks": {
-      "about":   "About Us",
+      "about": "About Us",
       "contact": "Contact",
       "pricing": "Pricing",
       "careers": "Careers"

@@ -1,11 +1,18 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Container } from '@/components/layout/Container';
 import { PlanCard } from '@/components/pricing/PlanCard';
 import { CreditPackCard } from '@/components/pricing/CreditPackCard';
 import { LifetimeCard } from '@/components/pricing/LifetimeCard';
-import { plans, creditPacks, creditPackPerks } from '@/config/pricing';
+import { usePricing } from '@/components/pricing/PricingProvider';
+import {
+  derivePlan,
+  derivePacks,
+  deriveLifetime,
+  creditPackPerks,
+  type BillingPeriod,
+} from '@/config/pricing';
 
 type TabId = 'subscriptions' | 'credits' | 'lifetime';
 
@@ -16,15 +23,29 @@ const TABS: { id: TabId; label: string }[] = [
 ];
 
 /**
- * The pricing switcher. All three panels stay mounted (inactive ones hidden via
- * the `hidden` attribute) so every plan stays in the served HTML for crawlers
- * while the UI shows one category at a time. Arrow keys move between tabs.
+ * The pricing switcher. Subscriptions use ONE Pro card with a Monthly/Yearly
+ * toggle (no duplicate cards); the toggle recomputes price, credits, billing
+ * frequency and the calculated saving from the model. All panels stay mounted
+ * (inactive ones hidden) so every plan is in the served HTML for crawlers.
  */
 export function PricingTabs() {
+  const config = usePricing();
   const [tab, setTab] = useState<TabId>('subscriptions');
+  const [period, setPeriod] = useState<BillingPeriod>('monthly');
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  function onKeyDown(e: React.KeyboardEvent, index: number) {
+  const plans = useMemo(
+    () =>
+      config.plans
+        .filter((p) => p.visible)
+        .sort((a, b) => a.order - b.order)
+        .map((p) => derivePlan(p, period)),
+    [config.plans, period],
+  );
+  const packs = useMemo(() => derivePacks(config.packs), [config.packs]);
+  const lifetime = useMemo(() => deriveLifetime(config.lifetime), [config.lifetime]);
+
+  function onTabKey(e: React.KeyboardEvent, index: number) {
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
     e.preventDefault();
     const next =
@@ -35,7 +56,7 @@ export function PricingTabs() {
 
   return (
     <Container className="pb-4">
-      {/* Tab switcher */}
+      {/* Tabs */}
       <div className="flex justify-center">
         <div
           role="tablist"
@@ -57,11 +78,9 @@ export function PricingTabs() {
                 aria-controls={`pricing-panel-${t.id}`}
                 tabIndex={active ? 0 : -1}
                 onClick={() => setTab(t.id)}
-                onKeyDown={(e) => onKeyDown(e, i)}
+                onKeyDown={(e) => onTabKey(e, i)}
                 className={`rounded-full px-3 py-2.5 text-sm font-semibold transition-all duration-200 sm:px-7 ${
-                  active
-                    ? 'bg-gradient-brand bg-[length:200%_200%] text-white shadow-glow'
-                    : 'text-text-muted hover:text-text'
+                  active ? 'bg-gradient-brand bg-[length:200%_200%] text-white shadow-glow' : 'text-text-muted hover:text-text'
                 }`}
               >
                 {t.label}
@@ -79,8 +98,32 @@ export function PricingTabs() {
         hidden={tab !== 'subscriptions'}
         tabIndex={0}
       >
-        {/* pt-4 gives the Most Popular / Best Value badges room above the cards. */}
-        <div className="mx-auto mt-10 grid max-w-5xl grid-cols-1 gap-6 px-1 pt-4 lg:grid-cols-3 lg:gap-5">
+        {/* Monthly / Yearly toggle */}
+        <div className="mt-8 flex flex-col items-center gap-2.5">
+          <div className="inline-flex gap-1 rounded-full border border-border bg-white p-1 shadow-soft">
+            {(['monthly', 'yearly'] as BillingPeriod[]).map((p) => {
+              const active = period === p;
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPeriod(p)}
+                  aria-pressed={active}
+                  className={`rounded-full px-5 py-2 text-sm font-semibold capitalize transition-all duration-200 ${
+                    active ? 'bg-text text-white shadow-soft-md' : 'text-text-muted hover:text-text'
+                  }`}
+                >
+                  {p}
+                </button>
+              );
+            })}
+          </div>
+          {period === 'yearly' && plans.find((p) => p.valueMessage) && (
+            <p className="text-xs font-bold text-accent-hover">{plans.find((p) => p.valueMessage)?.valueMessage}</p>
+          )}
+        </div>
+
+        <div className="mx-auto mt-8 grid max-w-3xl grid-cols-1 gap-6 px-1 pt-8 sm:grid-cols-2 sm:gap-5">
           {plans.map((plan) => (
             <PlanCard key={plan.id} plan={plan} />
           ))}
@@ -112,8 +155,8 @@ export function PricingTabs() {
           </div>
         </div>
 
-        <div className="mx-auto mt-10 grid max-w-4xl grid-cols-1 gap-6 px-1 pt-4 md:grid-cols-3 md:gap-5">
-          {creditPacks.map((pack) => (
+        <div className="mx-auto mt-10 grid max-w-4xl grid-cols-1 gap-6 px-1 pt-8 md:grid-cols-3 md:gap-5">
+          {packs.map((pack) => (
             <CreditPackCard key={pack.id} pack={pack} />
           ))}
         </div>
@@ -136,8 +179,8 @@ export function PricingTabs() {
           </p>
         </div>
 
-        <div className="mt-10 px-1 pt-4">
-          <LifetimeCard />
+        <div className="mt-10 px-1 pt-8">
+          <LifetimeCard lifetime={lifetime} />
         </div>
       </div>
     </Container>

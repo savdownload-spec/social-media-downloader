@@ -1,30 +1,30 @@
 import Link from 'next/link';
 import { Check, Coins } from 'lucide-react';
 import { HighlightFrame } from '@/components/pricing/HighlightFrame';
-import type { Plan } from '@/config/pricing';
+import type { PlanView } from '@/config/pricing';
 
 /**
- * One subscription card: Free, Pro Monthly (Most Popular) or Pro Yearly
- * (Best Value). Presentational only.
+ * One subscription card (Free or Pro). Consumes a derived PlanView, so all
+ * prices, credits and the calculated yearly saving come from the pricing model.
  */
-export function PlanCard({ plan }: { plan: Plan }) {
-  const highlighted = plan.highlight !== 'none';
+export function PlanCard({ plan }: { plan: PlanView }) {
+  const highlighted = plan.badge !== null;
 
   const cta = highlighted
     ? 'mt-7 flex items-center justify-center w-full py-3 rounded-2xl text-white font-semibold bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all'
     : 'mt-7 flex items-center justify-center w-full py-3 rounded-2xl font-semibold bg-white text-text border border-border hover:border-primary/40 hover:bg-primary-light/40 transition-all';
 
   return (
-    <HighlightFrame variant={plan.highlight} badge={plan.badge} className="p-6 md:p-7">
+    <HighlightFrame variant={plan.badge ?? 'none'} badge={plan.badgeLabel} className="p-6 md:p-7">
       <div className="flex h-full flex-col">
         <h3 className="text-lg font-bold text-text">{plan.name}</h3>
-        <p className="mt-1.5 text-sm text-text-muted leading-relaxed">{plan.tagline}</p>
+        <p className="mt-1.5 text-sm leading-relaxed text-text-muted">{plan.tagline}</p>
 
         <div className="mt-5 flex flex-wrap items-end gap-x-1.5">
           <span className="text-4xl font-bold tracking-tight text-text">{plan.price}</span>
-          <span className="text-sm text-text-muted mb-1">/ {plan.period}</span>
+          <span className="mb-1 text-sm text-text-muted">/ {plan.period}</span>
         </div>
-        {/* Reserve the line so cards with/without a note stay aligned. */}
+        {/* Reserve the line so cards stay aligned whether or not there's a note. */}
         <p className="mt-1 min-h-[1rem] text-xs text-text-subtle">{plan.priceNote ?? ''}</p>
 
         {plan.valueMessage && (
@@ -33,7 +33,7 @@ export function PlanCard({ plan }: { plan: Plan }) {
           </div>
         )}
 
-        <div className="mt-4 rounded-xl bg-surface border border-border-light p-3">
+        <div className="mt-4 rounded-xl border border-border-light bg-surface p-3">
           <div className="flex items-center gap-1.5 text-sm font-semibold text-primary">
             <Coins className="h-4 w-4 flex-shrink-0" /> {plan.credits}
           </div>
@@ -54,8 +54,8 @@ export function PlanCard({ plan }: { plan: Plan }) {
         </ul>
 
         <div className="mt-auto">
-          <Link href={plan.cta.href} className={cta}>
-            {plan.cta.label}
+          <Link href={plan.ctaHref} className={cta}>
+            {plan.ctaLabel}
           </Link>
         </div>
       </div>

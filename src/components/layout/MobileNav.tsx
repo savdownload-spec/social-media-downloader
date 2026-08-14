@@ -4,13 +4,15 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ChevronDown, ArrowRight, Zap, Sparkles,
-  Film, FileText, Search, BookOpen, HelpCircle, Shield, Info, Mail, Users,
+  ChevronDown, ArrowRight, Zap, Sparkles, Coins,
+  FileText, Search, BookOpen, HelpCircle, Shield, Info, Mail, Users,
 } from 'lucide-react';
 import { toolGroups, GROUP_META_MOBILE } from './MobileNavMeta';
 import { catalog } from '@/config/catalog';
 import { blogPostsByDate } from '@/config/blog';
 import { useTranslation } from '@/i18n';
+import { usePricing } from '@/components/pricing/PricingProvider';
+import { derivePlan, deriveLifetime } from '@/config/pricing';
 
 type SectionId = 'tools' | 'pricing' | 'blog' | 'resources' | 'about';
 const SECTION_IDS: SectionId[] = ['tools', 'pricing', 'blog', 'resources', 'about'];
@@ -32,16 +34,37 @@ const ABOUT_CONFIG = [
   { key: 'careers', icon: Users,    href: '/contact', color: 'text-rose-600 bg-rose-50'        },
 ] as const;
 
-const PRICING_CONFIG = [
-  { key: 'free',    price: '$0',  href: '/#tools',  icon: Zap,      color: 'text-emerald-600 bg-emerald-50' },
-  { key: 'pro',     price: '$9',  href: '/contact', icon: Sparkles, color: 'text-primary bg-primary-light'  },
-  { key: 'credits', price: '$19', href: '/contact', icon: Film,     color: 'text-amber-600 bg-amber-50'     },
-] as const;
+// Static icon/colour per plan id; prices/credits come from the shared pricing
+// model so this nav can never drift from the pricing page.
+const PRICING_TILE_STYLE: Record<string, { icon: typeof Zap; color: string }> = {
+  free:     { icon: Zap,      color: 'text-emerald-600 bg-emerald-50' },
+  pro:      { icon: Sparkles, color: 'text-primary bg-primary-light' },
+  lifetime: { icon: Coins,    color: 'text-amber-600 bg-amber-50' },
+};
 
 export function MobileNav({ close }: { close: () => void }) {
   const t = useTranslation();
+  const config = usePricing();
   const [openSection, setOpenSection] = useState<SectionId | null>(null);
   const latest3 = blogPostsByDate.slice(0, 3);
+
+  // Pricing tiles derived from the shared model (Free, Pro, Lifetime).
+  const freePlan = config.plans.find((p) => p.id === 'free');
+  const proPlan = config.plans.find((p) => p.id === 'pro');
+  const ltView = deriveLifetime(config.lifetime);
+  const pricingTiles = [
+    freePlan &&
+      (() => {
+        const v = derivePlan(freePlan, 'monthly');
+        return { id: 'free', name: v.name, price: v.price, period: '', credits: v.credits, href: v.ctaHref };
+      })(),
+    proPlan &&
+      (() => {
+        const v = derivePlan(proPlan, 'monthly');
+        return { id: 'pro', name: v.name, price: v.price, period: '/mo', credits: v.credits, href: v.ctaHref };
+      })(),
+    { id: 'lifetime', name: ltView.name, price: ltView.price, period: '', credits: ltView.credits, href: ltView.ctaHref },
+  ].filter(Boolean) as { id: string; name: string; price: string; period: string; credits: string; href: string }[];
 
   function toggle(id: SectionId) {
     setOpenSection((prev) => (prev === id ? null : id));
@@ -128,30 +151,34 @@ export function MobileNav({ close }: { close: () => void }) {
                   {/* ── PRICING ── */}
                   {id === 'pricing' && (
                     <div className="px-3 pb-3 space-y-2">
-                      {PRICING_CONFIG.map(({ key, price, href, icon: PIcon, color }) => {
-                        const plan = t(`mobileNav.pricingPlans.${key}`) as unknown as { name: string; desc: string };
+                      {pricingTiles.map((tile) => {
+                        const style = PRICING_TILE_STYLE[tile.id] ?? PRICING_TILE_STYLE.free;
+                        const PIcon = style.icon;
                         return (
                           <Link
-                            key={key}
-                            href={href}
+                            key={tile.id}
+                            href={tile.href}
                             onClick={close}
                             className="flex items-center gap-3 px-3 py-3 rounded-xl border border-border bg-white hover:border-primary/20 hover:shadow-soft transition-all"
                           >
-                            <span className={`w-9 h-9 rounded-xl shrink-0 flex items-center justify-center ${color}`}>
+                            <span className={`w-9 h-9 rounded-xl shrink-0 flex items-center justify-center ${style.color}`}>
                               <PIcon className="w-4 h-4" />
                             </span>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-baseline gap-2">
-                                <span className="font-bold text-text text-sm">{plan?.name}</span>
-                                <span className="text-sm font-semibold text-primary">{price}</span>
+                                <span className="font-bold text-text text-sm">{tile.name}</span>
+                                <span className="text-sm font-semibold text-primary">
+                                  {tile.price}
+                                  <span className="text-xs font-normal text-text-muted">{tile.period}</span>
+                                </span>
                               </div>
-                              <p className="text-xs text-text-muted leading-snug truncate">{plan?.desc}</p>
+                              <p className="text-xs text-text-muted leading-snug truncate">{tile.credits}</p>
                             </div>
                           </Link>
                         );
                       })}
                       <Link href="/pricing" onClick={close} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-primary-light/60 text-primary text-sm font-semibold hover:bg-primary-light transition-colors">
-                        <ArrowRight className="w-4 h-4" /> {t('mobileNav.fullPricingDetails')}
+                        <ArrowRight className="w-4 h-4" /> {t('mobileNav.fullPricingDetails') || 'Full pricing details'}
                       </Link>
                     </div>
                   )}

@@ -1,6 +1,9 @@
+'use client';
+
 import { Check, Minus } from 'lucide-react';
 import { Section, SectionHeading } from '@/components/layout/Section';
-import { comparisonColumns, comparisonRows, type ComparisonValue } from '@/config/pricing';
+import { usePricing } from '@/components/pricing/PricingProvider';
+import { buildComparison, comparisonColumns, type ComparisonValue } from '@/config/pricing';
 
 function Cell({ value }: { value: ComparisonValue }) {
   if (value === true) {
@@ -17,10 +20,13 @@ function Cell({ value }: { value: ComparisonValue }) {
 }
 
 /**
- * A compact plan comparison. Kept short and readable on mobile by letting the
- * table scroll inside its own container rather than shrinking the whole page.
+ * A compact plan comparison, built from the pricing model so allowances stay in
+ * step with the plans. Scrolls inside its own container on small screens.
  */
 export function ComparisonTable() {
+  const config = usePricing();
+  const rows = buildComparison(config);
+
   return (
     <Section variant="muted" containerClassName="max-w-4xl">
       <SectionHeading
@@ -42,7 +48,7 @@ export function ComparisonTable() {
             </tr>
           </thead>
           <tbody>
-            {comparisonRows.map((row, i) => (
+            {rows.map((row, i) => (
               <tr key={row.label} className={i % 2 === 0 ? 'bg-white' : 'bg-surface/60'}>
                 <td className="rounded-l-lg px-4 py-3 text-left text-sm font-medium text-text">{row.label}</td>
                 <td className="px-4 py-3 align-middle">
