@@ -77,60 +77,61 @@ export function AdminUserDetail({ user }: { user: UserData }) {
       </div>
 
       <PageHeader
-        eyebrow="User detail"
         title={user.name ?? user.email ?? user.id}
         description={user.email ?? ''}
         actions={
-          <div className="flex items-center gap-2">
-            <button onClick={() => setCreditModal('add')} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-accent-light text-accent hover:bg-accent hover:text-white transition-colors">
-              <Coins className="w-3.5 h-3.5" /> Add Credits
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button onClick={() => setCreditModal('add')} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors">
+              <Coins className="w-3 h-3" /> Add Credits
             </button>
-            <button onClick={() => setCreditModal('remove')} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-surface text-text-muted hover:bg-rose-50 hover:text-rose-600 transition-colors">
-              <Coins className="w-3.5 h-3.5" /> Remove Credits
+            <button onClick={() => setCreditModal('remove')} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-surface text-text-muted hover:bg-rose-50 hover:text-rose-600 transition-colors">
+              <Coins className="w-3 h-3" /> Remove
             </button>
-            <button onClick={() => setPlanModal(true)} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-primary-light text-primary hover:bg-primary hover:text-white transition-colors">
-              <CreditCard className="w-3.5 h-3.5" /> Change Plan
+            <button onClick={() => setPlanModal(true)} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-primary/[0.08] text-primary hover:bg-primary/[0.15] transition-colors">
+              <CreditCard className="w-3 h-3" /> Plan
             </button>
             <button onClick={() => { setNewRole(user.role === 'ADMIN' ? 'ADMIN' : 'USER'); setRoleModal(true); }}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-primary-light text-primary hover:bg-primary hover:text-white transition-colors">
-              <ShieldCheck className="w-3.5 h-3.5" /> Change Role
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-primary/[0.08] text-primary hover:bg-primary/[0.15] transition-colors">
+              <ShieldCheck className="w-3 h-3" /> Role
             </button>
             {user.role === 'SUSPENDED' ? (
-              <button disabled={loading} onClick={() => doAction('restore')} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-accent-light text-accent hover:bg-accent hover:text-white transition-colors">
-                <UserCheck className="w-3.5 h-3.5" /> Restore
+              <button disabled={loading} onClick={() => doAction('restore')} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors disabled:opacity-50">
+                <UserCheck className="w-3 h-3" /> Restore
               </button>
-            ) : (
-              <button disabled={loading} onClick={() => doAction('suspend')} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors">
-                <UserX className="w-3.5 h-3.5" /> Suspend
+            ) : user.role !== 'ADMIN' ? (
+              <button disabled={loading} onClick={() => doAction('suspend')} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors disabled:opacity-50">
+                <UserX className="w-3 h-3" /> Suspend
+              </button>
+            ) : null}
+            {user.role !== 'ADMIN' && (
+              <button disabled={loading} onClick={handleDelete} className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors disabled:opacity-50">
+                <Trash2 className="w-3 h-3" /> Delete
               </button>
             )}
-            <button disabled={loading} onClick={handleDelete} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors">
-              <Trash2 className="w-3.5 h-3.5" /> Delete
-            </button>
           </div>
         }
       />
 
       {/* Info cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
-          { label: 'Plan',            value: <StatusBadge status={user.plan} /> },
-          { label: 'Status',          value: <StatusBadge status={user.role === 'SUSPENDED' ? 'SUSPENDED' : 'ACTIVE'} /> },
-          { label: 'Plan Credits',    value: user.planCredits.toLocaleString() },
-          { label: 'Purchased Credits', value: user.purchasedCredits.toLocaleString() },
+          { label: 'Plan',            value: <StatusBadge status={user.plan} dot /> },
+          { label: 'Status',          value: <StatusBadge status={user.role === 'SUSPENDED' ? 'SUSPENDED' : 'ACTIVE'} dot /> },
+          { label: 'Plan Credits',    value: <span className="tabular-nums">{user.planCredits.toLocaleString()}</span> },
+          { label: 'Purchased Credits', value: <span className="tabular-nums">{user.purchasedCredits.toLocaleString()}</span> },
         ].map(({ label, value }) => (
-          <div key={label} className="bg-white border border-border rounded-2xl p-4 shadow-soft">
-            <p className="text-xs text-text-muted mb-1">{label}</p>
-            <div className="text-sm font-semibold text-text">{value}</div>
+          <div key={label} className="bg-white border border-border-light rounded-xl p-4">
+            <p className="text-[11px] text-text-muted mb-1">{label}</p>
+            <div className="text-[13px] font-semibold text-text">{value}</div>
           </div>
         ))}
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-surface rounded-xl p-1 border border-border w-fit mb-6">
+      <div className="flex gap-1 bg-surface rounded-lg p-1 border border-border-light w-fit mb-6">
         {TABS.map((t) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${tab === t ? 'bg-white text-text shadow-sm' : 'text-text-muted hover:text-text'}`}>
+            className={`px-3 py-1.5 rounded-md text-[12px] font-semibold capitalize transition-all ${tab === t ? 'bg-white text-text shadow-sm border border-border-light' : 'text-text-muted hover:text-text'}`}>
             {t}
           </button>
         ))}
@@ -139,20 +140,21 @@ export function AdminUserDetail({ user }: { user: UserData }) {
       {/* Overview */}
       {tab === 'overview' && (
         <TableCard>
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border-light">
             {[
-              { label: 'ID',            value: user.id },
+              { label: 'ID',            value: <span className="font-mono text-text-subtle text-[11px]">{user.id}</span> },
               { label: 'Name',          value: user.name ?? '—' },
               { label: 'Email',         value: user.email ?? '—' },
               { label: 'Email Verified', value: user.emailVerified ? new Date(user.emailVerified).toLocaleDateString() : 'No' },
-              { label: 'Role',          value: user.role },
-              { label: 'Plan',          value: user.plan },
+              { label: 'Role',          value: <StatusBadge status={user.role} /> },
+              { label: 'Plan',          value: <StatusBadge status={user.plan} /> },
+              { label: 'Credits Reset', value: user.planCreditsResetAt ? new Date(user.planCreditsResetAt).toLocaleString() : '—' },
               { label: 'Joined',        value: new Date(user.createdAt).toLocaleString() },
               { label: 'Last updated',  value: new Date(user.updatedAt).toLocaleString() },
             ].map(({ label, value }) => (
-              <div key={label} className="flex items-center justify-between px-5 py-3.5">
-                <span className="text-sm text-text-muted">{label}</span>
-                <span className="text-sm text-text font-medium">{value}</span>
+              <div key={label} className="flex items-center justify-between px-5 py-3">
+                <span className="text-[13px] text-text-muted">{label}</span>
+                <span className="text-[13px] text-text font-medium">{value}</span>
               </div>
             ))}
           </div>
@@ -171,7 +173,7 @@ export function AdminUserDetail({ user }: { user: UserData }) {
                 <tr key={c.id} className="hover:bg-surface/40">
                   <Td><StatusBadge status={c.kind} /></Td>
                   <Td className="text-text-muted capitalize">{c.bucket}</Td>
-                  <Td className={c.amount < 0 ? 'text-rose-600 font-semibold' : 'text-accent font-semibold'}>
+                  <Td className={`tabular-nums font-semibold ${c.amount < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
                     {c.amount > 0 ? '+' : ''}{c.amount}
                   </Td>
                   <Td className="text-text-muted max-w-xs truncate">{c.description ?? '—'}</Td>
@@ -253,15 +255,15 @@ export function AdminUserDetail({ user }: { user: UserData }) {
           <div>
             <label className="text-xs font-semibold text-text-muted block mb-1">Amount</label>
             <input type="number" min={1} value={creditAmt} onChange={(e) => setCreditAmt(e.target.value)}
-              className="w-full h-10 rounded-xl border border-border px-3 text-sm focus:outline-none focus:border-primary/50" placeholder="e.g. 100" />
+              className="w-full h-10 rounded-lg border border-border-light px-3 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40" placeholder="e.g. 100" />
           </div>
           <div>
             <label className="text-xs font-semibold text-text-muted block mb-1">Reason (required)</label>
             <input value={creditReason} onChange={(e) => setCreditReason(e.target.value)}
-              className="w-full h-10 rounded-xl border border-border px-3 text-sm focus:outline-none focus:border-primary/50" placeholder="e.g. Refund for failed job" />
+              className="w-full h-10 rounded-lg border border-border-light px-3 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40" placeholder="e.g. Refund for failed job" />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button onClick={() => setCreditModal(null)} className="px-4 py-2 rounded-xl text-sm text-text-muted hover:bg-surface transition-colors">Cancel</button>
+            <button onClick={() => setCreditModal(null)} className="px-3 py-1.5 rounded-lg text-[13px] text-text-muted hover:bg-surface transition-colors">Cancel</button>
             <Button onClick={handleCredits} loading={loading} disabled={!creditAmt || !creditReason.trim() || loading} size="sm">
               {creditModal === 'add' ? 'Add Credits' : 'Remove Credits'}
             </Button>
@@ -275,12 +277,12 @@ export function AdminUserDetail({ user }: { user: UserData }) {
           <div>
             <label className="text-xs font-semibold text-text-muted block mb-1">New Plan</label>
             <select value={newPlan} onChange={(e) => setNewPlan(e.target.value)}
-              className="w-full h-10 rounded-xl border border-border px-3 text-sm focus:outline-none focus:border-primary/50 bg-white">
+              className="w-full h-10 rounded-lg border border-border-light px-3 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 bg-white">
               {['FREE', 'PRO', 'MAX', 'LIFETIME'].map((p) => <option key={p}>{p}</option>)}
             </select>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button onClick={() => setPlanModal(false)} className="px-4 py-2 rounded-xl text-sm text-text-muted hover:bg-surface transition-colors">Cancel</button>
+            <button onClick={() => setPlanModal(false)} className="px-3 py-1.5 rounded-lg text-[13px] text-text-muted hover:bg-surface transition-colors">Cancel</button>
             <Button onClick={async () => { await doAction('changePlan', { plan: newPlan }); setPlanModal(false); }} loading={loading} size="sm">
               Change Plan
             </Button>
@@ -294,14 +296,14 @@ export function AdminUserDetail({ user }: { user: UserData }) {
           <div>
             <label className="text-xs font-semibold text-text-muted block mb-1">New Role</label>
             <select value={newRole} onChange={(e) => setNewRole(e.target.value)}
-              className="w-full h-10 rounded-xl border border-border px-3 text-sm focus:outline-none focus:border-primary/50 bg-white">
+              className="w-full h-10 rounded-lg border border-border-light px-3 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 bg-white">
               <option value="USER">USER</option>
               <option value="ADMIN">ADMIN</option>
             </select>
             <p className="mt-2 text-xs text-text-subtle">Administrator access is applied when the user refreshes their session.</p>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <button onClick={() => setRoleModal(false)} className="px-4 py-2 rounded-xl text-sm text-text-muted hover:bg-surface transition-colors">Cancel</button>
+            <button onClick={() => setRoleModal(false)} className="px-3 py-1.5 rounded-lg text-[13px] text-text-muted hover:bg-surface transition-colors">Cancel</button>
             <Button onClick={async () => { await doAction('changeRole', { role: newRole }); setRoleModal(false); }} loading={loading} size="sm">
               Save Role
             </Button>

@@ -1,17 +1,17 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { Download, Flag, BarChart3 } from 'lucide-react';
 import {
   AdminPage, PageHeader, TableCard, Table, Th, Td,
-  EmptyState, TimeFilter,
+  EmptyState, ErrorState, TimeFilter, FilterTab, Skeleton, ActionButton,
 } from './AdminUI';
-import { Download } from 'lucide-react';
 
 const REPORT_TYPES = [
-  { id: 'usage',         label: 'Tool Usage' },
-  { id: 'users',         label: 'User Growth' },
-  { id: 'subscriptions', label: 'Subscriptions' },
-  { id: 'credits',       label: 'Credit Usage' },
+  { id: 'usage',         label: 'Tool Usage',    icon: BarChart3 },
+  { id: 'users',         label: 'User Growth',   icon: BarChart3 },
+  { id: 'subscriptions', label: 'Subscriptions', icon: BarChart3 },
+  { id: 'credits',       label: 'Credit Usage',  icon: BarChart3 },
 ];
 
 export function AdminReportsClient() {
@@ -20,12 +20,15 @@ export function AdminReportsClient() {
   const [rows, setRows]       = useState<Record<string, unknown>[]>([]);
   const [total, setTotal]     = useState(0);
   const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
+    setError(false);
     fetch(`/api/admin/reports?type=${type}&days=${days}`)
       .then((r) => r.json())
-      .then((d) => { if (d.ok) { setRows(d.data.rows); setTotal(d.data.total); } })
+      .then((d) => { if (d.ok) { setRows(d.data.rows); setTotal(d.data.total); } else setError(true); })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [type, days]);
 
@@ -36,67 +39,73 @@ export function AdminReportsClient() {
   }
 
   const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
+  const currentReport = REPORT_TYPES.find((r) => r.id === type);
 
   return (
     <AdminPage>
       <PageHeader
-        eyebrow="Admin"
         title="Reports"
-        description="Export and analyse platform data"
+        description="Generate and export platform analytics"
         actions={
-          <button
-            onClick={exportCSV}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-white border border-border hover:border-primary/40 text-text-muted hover:text-primary transition-all shadow-soft"
-          >
-            <Download className="w-4 h-4" /> Export CSV
-          </button>
+          <ActionButton variant="secondary" icon={Download} onClick={exportCSV}>
+            Export CSV
+          </ActionButton>
         }
       />
 
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="flex gap-2 flex-wrap">
           {REPORT_TYPES.map((r) => (
-            <button key={r.id} onClick={() => setType(r.id)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-                type === r.id ? 'bg-primary text-white shadow-sm' : 'bg-white border border-border text-text-muted hover:text-text'
-              }`}>
-              {r.label}
-            </button>
+            <FilterTab key={r.id} label={r.label} active={type === r.id} onClick={() => setType(r.id)} />
           ))}
         </div>
         <div className="sm:ml-auto"><TimeFilter value={days} onChange={setDays} /></div>
       </div>
 
-      <p className="text-sm text-text-muted mb-4">{total.toLocaleString()} records in the last {days} days</p>
+      <p className="text-[12px] text-text-muted mb-4">{total.toLocaleString()} records in the last {days} days</p>
 
-      <TableCard>
-        {loading ? (
-          <div className="p-8 space-y-3">
-            {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-8 rounded-lg bg-surface animate-pulse" />)}
-          </div>
-        ) : rows.length === 0 ? (
-          <EmptyState message="No data for this period." />
-        ) : (
-          <Table>
-            <thead>
-              <tr>{columns.map((c) => <Th key={c}>{c}</Th>)}</tr>
-            </thead>
-            <tbody>
-              {rows.slice(0, 100).map((row, i) => (
-                <tr key={i} className="hover:bg-surface/40">
-                  {columns.map((c) => (
-                    <Td key={c} className="text-xs font-mono max-w-[200px] truncate">
-                      {String(row[c] ?? '—')}
-                    </Td>
+      {error ? (
+        <ErrorState message="Failed to generate report." onRetry={load} />
+      ) : (
+        <TableCard>
+          {loading ? (
+            <div className="p-4 space-y-2">
+              {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
+            </div>
+          ) : rows.length === 0 ? (
+            <EmptyState
+              icon={Flag}
+              title="No data"
+              message={`No ${currentReport?.label.toLowerCase() ?? 'report'} data for this period.`}
+            />
+          ) : (
+            <>
+              <Table>
+                <thead>
+                  <tr>{columns.map((c) => <Th key={c}>{c.replace(/_/g, ' ')}</Th>)}</tr>
+                </thead>
+                <tbody>
+                  {rows.slice(0, 100).map((row, i) => (
+                    <tr key={i} className="hover:bg-surface/40 transition-colors">
+                      {columns.map((c) => (
+                        <Td key={c} className="text-[12px] font-mono max-w-[200px] truncate text-text-muted">
+                          {String(row[c] ?? '—')}
+                        </Td>
+                      ))}
+                    </tr>
                   ))}
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        )}
-      </TableCard>
-      {rows.length > 100 && (
-        <p className="text-xs text-text-muted mt-3 text-center">Showing first 100 rows. Export CSV for all {total} records.</p>
+                </tbody>
+              </Table>
+              {rows.length > 100 && (
+                <div className="px-4 py-3 border-t border-border-light">
+                  <p className="text-[11px] text-text-muted text-center">
+                    Showing first 100 rows. Export CSV for all {total.toLocaleString()} records.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+        </TableCard>
       )}
     </AdminPage>
   );

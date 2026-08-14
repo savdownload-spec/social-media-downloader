@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { Coins, TrendingUp, TrendingDown, Hash } from 'lucide-react';
 import {
   AdminPage, PageHeader, TableCard, Table, Th, Td,
-  StatusBadge, Pagination, FilterBar, FilterTab, EmptyState,
+  StatusBadge, Pagination, FilterBar, FilterTab, EmptyState, ErrorState,
+  StatCard, Skeleton,
 } from './AdminUI';
 
 const KINDS = ['ALL', 'purchase', 'plan_refill', 'plan_grant', 'spend', 'refund', 'adjustment'];
@@ -24,9 +26,11 @@ export function AdminCreditsClient() {
   const [search, setSearch]   = useState('');
   const [kind, setKind]       = useState('ALL');
   const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
+    setError(false);
     const p = new URLSearchParams({ page: String(page), pageSize: '25' });
     if (search)       p.set('search', search);
     if (kind !== 'ALL') p.set('kind', kind);
@@ -36,65 +40,85 @@ export function AdminCreditsClient() {
         if (d.ok) {
           setTxs(d.data.transactions); setTotal(d.data.total);
           setTotalPages(d.data.totalPages); setSummary(d.data.summary);
-        }
+        } else setError(true);
       })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [page, search, kind]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { setPage(1); }, [search, kind]);
 
+  if (error) return <AdminPage><PageHeader title="Credits" /><ErrorState message="Failed to load credit data." onRetry={load} /></AdminPage>;
+
+  const netRemaining = summary.totalIssued - summary.totalSpent;
+
   return (
     <AdminPage>
-      <PageHeader eyebrow="Admin" title="Credits" description="Credit ledger and manual adjustments" />
+      <PageHeader title="Credits" description="Credit ledger and transaction history" />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        {[
-          { label: 'Total Issued',   value: summary.totalIssued },
-          { label: 'Total Spent',    value: summary.totalSpent },
-          { label: 'Net Remaining',  value: summary.totalIssued - summary.totalSpent },
-          { label: 'Transactions',   value: total },
-        ].map(({ label, value }) => (
-          <div key={label} className="bg-white border border-border rounded-2xl p-4 shadow-soft">
-            <p className="text-xs text-text-muted mb-1">{label}</p>
-            <p className="text-xl font-bold text-text">{value.toLocaleString()}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <StatCard label="Total Issued" value={summary.totalIssued.toLocaleString()} icon={TrendingUp} accent="green" />
+        <StatCard label="Total Spent" value={summary.totalSpent.toLocaleString()} icon={TrendingDown} accent="rose" />
+        <StatCard label="Net Remaining" value={netRemaining.toLocaleString()} icon={Coins} accent="purple" />
+        <StatCard label="Transactions" value={total.toLocaleString()} icon={Hash} accent="blue" />
       </div>
 
-      <FilterBar search={search} onSearch={setSearch} placeholder="Search user or description…">
-        {KINDS.map((k) => <FilterTab key={k} label={k === 'ALL' ? 'All' : k} active={kind === k} onClick={() => setKind(k)} />)}
+      <FilterBar search={search} onSearch={setSearch} placeholder="Search user or description...">
+        {KINDS.map((k) => (
+          <FilterTab
+            key={k}
+            label={k === 'ALL' ? 'All' : k.replace('_', ' ')}
+            active={kind === k}
+            onClick={() => setKind(k)}
+          />
+        ))}
       </FilterBar>
 
       <TableCard>
         <Table>
           <thead>
-            <tr><Th>User</Th><Th>Type</Th><Th>Bucket</Th><Th>Amount</Th><Th>Description</Th><Th>Date</Th></tr>
+            <tr>
+              <Th>User</Th>
+              <Th>Type</Th>
+              <Th>Bucket</Th>
+              <Th className="text-right">Amount</Th>
+              <Th>Description</Th>
+              <Th className="text-right">Date</Th>
+            </tr>
           </thead>
           <tbody>
             {loading ? (
               Array.from({ length: 8 }).map((_, i) => (
-                <tr key={i}><td colSpan={6}><div className="h-10 mx-4 my-1 rounded-lg bg-surface animate-pulse" /></td></tr>
+                <tr key={i}><td colSpan={6} className="px-4 py-3"><Skeleton className="h-5 w-full" /></td></tr>
               ))
             ) : txs.length === 0 ? (
-              <tr><td colSpan={6}><EmptyState message="No transactions." /></td></tr>
+              <tr><td colSpan={6}>
+                <EmptyState
+                  icon={Coins}
+                  title="No transactions"
+                  message={kind !== 'ALL' ? 'No transactions of this type found.' : 'Credit transactions will appear here.'}
+                />
+              </td></tr>
             ) : txs.map((t) => (
-              <tr key={t.id} className="hover:bg-surface/40">
+              <tr key={t.id} className="hover:bg-surface/40 transition-colors">
                 <Td>
                   {t.user ? (
                     <Link href={`/admin/users/${t.user.id}`} className="hover:text-primary transition-colors">
-                      <p className="font-medium">{t.user.name ?? '—'}</p>
-                      <p className="text-xs text-text-muted">{t.user.email}</p>
+                      <p className="font-medium text-text">{t.user.name ?? '—'}</p>
+                      <p className="text-[11px] text-text-muted">{t.user.email}</p>
                     </Link>
-                  ) : <span className="text-text-muted">—</span>}
+                  ) : <span className="text-text-muted">System</span>}
                 </Td>
                 <Td><StatusBadge status={t.kind} /></Td>
-                <Td className="capitalize text-text-muted">{t.bucket}</Td>
-                <Td className={t.amount < 0 ? 'text-rose-600 font-semibold' : 'text-accent font-semibold'}>
-                  {t.amount > 0 ? '+' : ''}{t.amount}
+                <Td><span className="text-[12px] text-text-muted capitalize">{t.bucket}</span></Td>
+                <Td className="text-right">
+                  <span className={`font-semibold tabular-nums ${t.amount < 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                    {t.amount > 0 ? '+' : ''}{t.amount}
+                  </span>
                 </Td>
-                <Td className="text-text-muted max-w-xs truncate">{t.description ?? '—'}</Td>
-                <Td className="text-xs text-text-muted">{new Date(t.createdAt).toLocaleDateString()}</Td>
+                <Td className="text-text-muted max-w-[200px] truncate text-[12px]">{t.description ?? '—'}</Td>
+                <Td className="text-right text-[12px] text-text-muted whitespace-nowrap tabular-nums">{new Date(t.createdAt).toLocaleDateString()}</Td>
               </tr>
             ))}
           </tbody>

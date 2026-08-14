@@ -4,6 +4,7 @@ import './globals.css';
 import { Header } from '@/components/layout/Header';
 import { AdBanner } from '@/components/layout/AdBanner';
 import { Footer } from '@/components/layout/Footer';
+import { PublicShell } from '@/components/layout/PublicShell';
 import { ToastProvider } from '@/components/ui/Toast';
 import { ConfirmProvider } from '@/components/ui/ConfirmProvider';
 import { InstallProvider } from '@/components/pwa/InstallProvider';
@@ -110,11 +111,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 <ConfirmProvider>
                   <InstallProvider>
                     <ServiceWorkerRegister />
-                    <Header />
-                    <AdBanner />
+                    <PublicShell>
+                      <Header />
+                      <AdBanner />
+                    </PublicShell>
                     <main className="min-h-[calc(100vh-4rem)]">{children}</main>
-                    <Footer />
-                    <SupportChat />
+                    <PublicShell>
+                      <Footer />
+                      <SupportChat />
+                    </PublicShell>
                   </InstallProvider>
                 </ConfirmProvider>
               </ToastProvider>

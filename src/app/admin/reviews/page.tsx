@@ -14,9 +14,8 @@ export default function AdminReviewsPage() {
   return (
     <AdminPage>
       <PageHeader
-        eyebrow="Admin"
         title="Reviews"
-        description="Approve, reject, edit, and feature submitted reviews."
+        description="Moderate, edit, and feature customer reviews."
       />
       <AdminReviewsTable />
     </AdminPage>

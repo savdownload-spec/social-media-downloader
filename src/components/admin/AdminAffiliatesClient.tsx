@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { Share2 } from 'lucide-react';
 import {
   AdminPage, PageHeader, TableCard, Table, Th, Td,
-  StatusBadge, Pagination, FilterTab, EmptyState,
+  StatusBadge, Pagination, FilterTab, EmptyState, ErrorState, Skeleton,
 } from './AdminUI';
 import { useToast } from '@/components/ui/Toast';
 
@@ -22,16 +23,19 @@ export function AdminAffiliatesClient() {
   const [totalPages, setTotalPages] = useState(1);
   const [status, setStatus]         = useState('ALL');
   const [loading, setLoading]       = useState(true);
+  const [error, setError]           = useState(false);
   const [actionId, setActionId]     = useState<string | null>(null);
   const { success, error: err }     = useToast();
 
   const load = useCallback(() => {
     setLoading(true);
+    setError(false);
     const p = new URLSearchParams({ page: String(page), pageSize: '25' });
     if (status !== 'ALL') p.set('status', status);
     fetch(`/api/admin/affiliates?${p}`)
       .then((r) => r.json())
-      .then((d) => { if (d.ok) { setAffiliates(d.data.affiliates); setTotal(d.data.total); setTotalPages(d.data.totalPages); } })
+      .then((d) => { if (d.ok) { setAffiliates(d.data.affiliates); setTotal(d.data.total); setTotalPages(d.data.totalPages); } else setError(true); })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [page, status]);
 
@@ -49,51 +53,80 @@ export function AdminAffiliatesClient() {
     setActionId(null);
   }
 
+  if (error) return <AdminPage><PageHeader title="Affiliates" /><ErrorState message="Failed to load affiliate data." onRetry={load} /></AdminPage>;
+
   return (
     <AdminPage>
-      <PageHeader eyebrow="Admin" title="Affiliates" description={`${total.toLocaleString()} affiliates`} />
+      <PageHeader title="Affiliates" description={`${total.toLocaleString()} affiliates`} />
 
-      <div className="flex gap-2 mb-6">
-        {STATUSES.map((s) => <FilterTab key={s} label={s === 'ALL' ? 'All' : s} active={status === s} onClick={() => setStatus(s)} />)}
+      <div className="flex flex-wrap gap-2 mb-5">
+        {STATUSES.map((s) => (
+          <FilterTab
+            key={s}
+            label={s === 'ALL' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()}
+            active={status === s}
+            onClick={() => setStatus(s)}
+          />
+        ))}
       </div>
 
       <TableCard>
         <Table>
           <thead>
             <tr>
-              <Th>Code</Th><Th>Status</Th><Th>Commission</Th>
-              <Th>Clicks</Th><Th>Signups</Th><Th>Conversions</Th>
-              <Th>Revenue</Th><Th>Paid Out</Th><Th>Actions</Th>
+              <Th>Code</Th>
+              <Th>Status</Th>
+              <Th className="text-right">Commission</Th>
+              <Th className="text-right">Clicks</Th>
+              <Th className="text-right">Signups</Th>
+              <Th className="text-right">Conversions</Th>
+              <Th className="text-right">Revenue</Th>
+              <Th className="text-right">Paid Out</Th>
+              <Th className="text-right">Actions</Th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i}><td colSpan={9}><div className="h-10 mx-4 my-1 rounded-lg bg-surface animate-pulse" /></td></tr>
+                <tr key={i}><td colSpan={9} className="px-4 py-3"><Skeleton className="h-5 w-full" /></td></tr>
               ))
             ) : affiliates.length === 0 ? (
-              <tr><td colSpan={9}><EmptyState message="No affiliates yet. Affiliate program not active." /></td></tr>
+              <tr><td colSpan={9}>
+                <EmptyState
+                  icon={Share2}
+                  title="No affiliates"
+                  message="Affiliate partners will appear here when they join the program."
+                />
+              </td></tr>
             ) : affiliates.map((a) => (
-              <tr key={a.id} className="hover:bg-surface/40">
-                <Td className="font-mono text-sm">{a.code}</Td>
-                <Td><StatusBadge status={a.status} /></Td>
-                <Td className="text-text-muted">{(a.commissionRate * 100).toFixed(0)}%</Td>
-                <Td className="text-text-muted">{a.totalClicks}</Td>
-                <Td className="text-text-muted">{a.totalSignups}</Td>
-                <Td className="text-text-muted">{a.totalConversions}</Td>
-                <Td className="text-text-muted">${a.totalRevenue.toFixed(2)}</Td>
-                <Td className="text-text-muted">${a.paidOut.toFixed(2)}</Td>
+              <tr key={a.id} className="hover:bg-surface/40 transition-colors">
                 <Td>
-                  <div className="flex gap-2">
+                  <span className="font-mono text-[12px] font-medium bg-surface px-2 py-0.5 rounded">{a.code}</span>
+                </Td>
+                <Td><StatusBadge status={a.status} dot /></Td>
+                <Td className="text-right text-text-muted tabular-nums">{(a.commissionRate * 100).toFixed(0)}%</Td>
+                <Td className="text-right text-text-muted tabular-nums">{a.totalClicks.toLocaleString()}</Td>
+                <Td className="text-right text-text-muted tabular-nums">{a.totalSignups.toLocaleString()}</Td>
+                <Td className="text-right text-text-muted tabular-nums">{a.totalConversions.toLocaleString()}</Td>
+                <Td className="text-right text-text-muted tabular-nums">${a.totalRevenue.toFixed(2)}</Td>
+                <Td className="text-right text-text-muted tabular-nums">${a.paidOut.toFixed(2)}</Td>
+                <Td>
+                  <div className="flex gap-1.5 justify-end">
                     {a.status !== 'ACTIVE' && (
-                      <button disabled={actionId === a.id} onClick={() => doAction(a.id, 'approve')}
-                        className="text-xs px-2 py-1 rounded-lg bg-accent-light text-accent hover:bg-accent hover:text-white transition-colors">
+                      <button
+                        disabled={actionId === a.id}
+                        onClick={() => doAction(a.id, 'approve')}
+                        className="text-[11px] font-medium px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors disabled:opacity-50"
+                      >
                         Approve
                       </button>
                     )}
                     {a.status !== 'SUSPENDED' && (
-                      <button disabled={actionId === a.id} onClick={() => doAction(a.id, 'suspend')}
-                        className="text-xs px-2 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors">
+                      <button
+                        disabled={actionId === a.id}
+                        onClick={() => doAction(a.id, 'suspend')}
+                        className="text-[11px] font-medium px-2 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors disabled:opacity-50"
+                      >
                         Suspend
                       </button>
                     )}

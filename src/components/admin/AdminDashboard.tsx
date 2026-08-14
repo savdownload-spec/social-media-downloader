@@ -2,11 +2,11 @@
 
 import {
   Users, Download, Star, CreditCard, Coins, Activity,
-  TrendingUp, Clock, AlertCircle,
+  TrendingUp, Clock, AlertCircle, ArrowRight, Zap,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
-  StatCard, PageHeader, BarChart, AdminPage, TableCard,
+  StatCard, PageHeader, BarChart, AdminPage, TableCard, SectionCard,
   Table, Th, Td, StatusBadge, EmptyState,
 } from './AdminUI';
 
@@ -32,38 +32,54 @@ interface Props {
 }
 
 export function AdminDashboard({ stats, topTools, recentActivity, dailyDownloads, usersByPlan, adminEmail }: Props) {
+  const pendingActions = [
+    stats.pendingReviews > 0 && {
+      label: `${stats.pendingReviews} review${stats.pendingReviews !== 1 ? 's' : ''} awaiting moderation`,
+      href: '/admin/reviews',
+      icon: Star,
+      color: 'text-amber-600 bg-amber-50',
+    },
+  ].filter(Boolean) as { label: string; href: string; icon: typeof Star; color: string }[];
+
   return (
     <AdminPage>
       <PageHeader
-        eyebrow="Admin"
         title="Dashboard"
-        description={`Signed in as ${adminEmail}`}
+        description={`Welcome back. Signed in as ${adminEmail}`}
       />
 
-      {/* Alert: pending reviews */}
-      {stats.pendingReviews > 0 && (
-        <Link href="/admin/reviews" className="flex items-center gap-3 mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl hover:bg-amber-100 transition-colors">
-          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-          <p className="text-sm text-amber-800 font-medium">
-            {stats.pendingReviews} review{stats.pendingReviews !== 1 ? 's' : ''} awaiting moderation
-          </p>
-          <span className="ml-auto text-xs text-amber-600 font-semibold">Review →</span>
-        </Link>
+      {/* Pending actions */}
+      {pendingActions.length > 0 && (
+        <div className="space-y-2 mb-6">
+          {pendingActions.map((action) => (
+            <Link
+              key={action.href}
+              href={action.href}
+              className="flex items-center gap-3 p-3 bg-amber-50/80 border border-amber-200/60 rounded-xl hover:bg-amber-50 transition-colors"
+            >
+              <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-4 h-4 text-amber-600" />
+              </div>
+              <p className="text-[13px] text-amber-800 font-medium flex-1">{action.label}</p>
+              <ArrowRight className="w-4 h-4 text-amber-500 shrink-0" />
+            </Link>
+          ))}
+        </div>
       )}
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+      {/* KPI cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <StatCard
           label="Total Users"
           value={stats.totalUsers.toLocaleString()}
-          sub={`+${stats.newUsersToday} today · +${stats.newUsersMonth} this month`}
+          sub={`+${stats.newUsersToday} today`}
           icon={Users}
           accent="purple"
         />
         <StatCard
           label="Total Downloads"
           value={stats.totalDownloads.toLocaleString()}
-          sub={`${stats.downloadsToday} today · ${stats.downloadsMonth} this month`}
+          sub={`${stats.downloadsToday.toLocaleString()} today`}
           icon={Download}
           accent="blue"
         />
@@ -76,17 +92,14 @@ export function AdminDashboard({ stats, topTools, recentActivity, dailyDownloads
         <StatCard
           label="Credits Used"
           value={stats.totalCreditsUsed.toLocaleString()}
-          sub={`${stats.creditsUsedToday} today`}
+          sub={`${stats.creditsUsedToday.toLocaleString()} today`}
           icon={Coins}
           accent="amber"
         />
-        <StatCard
-          label="Pending Reviews"
-          value={stats.pendingReviews.toLocaleString()}
-          sub={`${stats.totalReviews} total reviews`}
-          icon={Star}
-          accent="rose"
-        />
+      </div>
+
+      {/* Secondary stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <StatCard
           label="New Users (30d)"
           value={stats.newUsersMonth.toLocaleString()}
@@ -94,106 +107,120 @@ export function AdminDashboard({ stats, topTools, recentActivity, dailyDownloads
           accent="green"
         />
         <StatCard
-          label="Downloads Today"
-          value={stats.downloadsToday.toLocaleString()}
+          label="Downloads (30d)"
+          value={stats.downloadsMonth.toLocaleString()}
           icon={Activity}
           accent="blue"
         />
         <StatCard
-          label="Downloads (30d)"
-          value={stats.downloadsMonth.toLocaleString()}
-          icon={Clock}
+          label="Pending Reviews"
+          value={stats.pendingReviews.toLocaleString()}
+          sub={`${stats.totalReviews.toLocaleString()} total`}
+          icon={Star}
+          accent="rose"
+        />
+        <StatCard
+          label="Downloads Today"
+          value={stats.downloadsToday.toLocaleString()}
+          icon={Zap}
           accent="purple"
         />
       </div>
 
       {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <div className="lg:col-span-2">
-          <BarChart data={dailyDownloads} title="Downloads — last 7 days" />
+          <BarChart data={dailyDownloads} title="Download Activity" subtitle="Last 7 days" />
         </div>
 
-        {/* Users by plan */}
-        <TableCard>
-          <div className="p-4 border-b border-border">
-            <p className="text-sm font-semibold text-text">Users by plan</p>
-          </div>
+        <SectionCard
+          title="Users by Plan"
+          actions={
+            <Link href="/admin/users" className="text-[11px] text-primary hover:underline font-medium">
+              View all
+            </Link>
+          }
+        >
           {usersByPlan.length === 0 ? (
             <EmptyState message="No users yet." />
           ) : (
-            <div className="divide-y divide-border">
+            <div className="divide-y divide-border-light">
               {usersByPlan.map((r) => (
-                <div key={r.plan} className="flex items-center justify-between px-4 py-3">
+                <div key={r.plan} className="flex items-center justify-between px-5 py-3">
                   <StatusBadge status={r.plan} />
-                  <span className="text-sm font-semibold text-text">{r.count.toLocaleString()}</span>
+                  <span className="text-sm font-semibold text-text tabular-nums">{r.count.toLocaleString()}</span>
                 </div>
               ))}
             </div>
           )}
-        </TableCard>
+        </SectionCard>
       </div>
 
       {/* Bottom row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top tools */}
-        <TableCard>
-          <div className="flex items-center justify-between p-4 border-b border-border">
-            <p className="text-sm font-semibold text-text">Top tools</p>
-            <Link href="/admin/tools" className="text-xs text-primary hover:underline">View all →</Link>
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <SectionCard
+          title="Top Tools"
+          actions={
+            <Link href="/admin/tools" className="text-[11px] text-primary hover:underline font-medium">
+              View all
+            </Link>
+          }
+        >
           <Table>
             <thead>
               <tr>
-                <Th>#</Th>
+                <Th className="w-10">#</Th>
                 <Th>Tool</Th>
                 <Th className="text-right">Uses</Th>
               </tr>
             </thead>
             <tbody>
               {topTools.length === 0 ? (
-                <tr><td colSpan={3}><EmptyState /></td></tr>
+                <tr><td colSpan={3}><EmptyState message="No tool usage data yet." /></td></tr>
               ) : topTools.map((r, i) => (
-                <tr key={r.tool} className="hover:bg-surface/50 transition-colors">
-                  <Td className="text-text-muted w-10">{i + 1}</Td>
+                <tr key={r.tool} className="hover:bg-surface/40 transition-colors">
+                  <Td className="text-text-subtle font-medium">{i + 1}</Td>
                   <Td className="font-medium">{r.tool}</Td>
-                  <Td className="text-right text-text-muted">{r.count.toLocaleString()}</Td>
+                  <Td className="text-right text-text-muted tabular-nums">{r.count.toLocaleString()}</Td>
                 </tr>
               ))}
             </tbody>
           </Table>
-        </TableCard>
+        </SectionCard>
 
-        {/* Recent activity */}
-        <TableCard>
-          <div className="flex items-center justify-between p-4 border-b border-border">
-            <p className="text-sm font-semibold text-text">Recent activity</p>
-            <Link href="/admin/usage" className="text-xs text-primary hover:underline">View all →</Link>
-          </div>
+        <SectionCard
+          title="Recent Activity"
+          actions={
+            <Link href="/admin/usage" className="text-[11px] text-primary hover:underline font-medium">
+              View all
+            </Link>
+          }
+        >
           <Table>
             <thead>
               <tr>
                 <Th>Tool</Th>
                 <Th>Platform</Th>
                 <Th>Status</Th>
-                <Th>Time</Th>
+                <Th className="text-right">Time</Th>
               </tr>
             </thead>
             <tbody>
               {recentActivity.length === 0 ? (
-                <tr><td colSpan={4}><EmptyState /></td></tr>
-              ) : recentActivity.map((d) => (
-                <tr key={d.id} className="hover:bg-surface/50 transition-colors">
+                <tr><td colSpan={4}><EmptyState message="No recent activity." /></td></tr>
+              ) : recentActivity.slice(0, 8).map((d) => (
+                <tr key={d.id} className="hover:bg-surface/40 transition-colors">
                   <Td className="font-medium max-w-[140px] truncate">{d.tool}</Td>
                   <Td className="text-text-muted">{d.platform}</Td>
-                  <Td><StatusBadge status={d.status} /></Td>
-                  <Td className="text-text-muted text-xs whitespace-nowrap">
+                  <Td><StatusBadge status={d.status} dot /></Td>
+                  <Td className="text-right text-text-muted text-[12px] whitespace-nowrap tabular-nums">
                     {new Date(d.createdAt).toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })}
                   </Td>
                 </tr>
               ))}
             </tbody>
           </Table>
-        </TableCard>
+        </SectionCard>
       </div>
     </AdminPage>
   );
