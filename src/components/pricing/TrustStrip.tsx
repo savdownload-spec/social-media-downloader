@@ -1,9 +1,10 @@
-import { ShieldCheck, Gauge, RotateCcw, ReceiptText } from 'lucide-react';
+import { Rocket, Infinity as InfinityIcon, RotateCcw, ReceiptText } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { trustPoints } from '@/config/pricing';
 
-const icons: LucideIcon[] = [ShieldCheck, Gauge, RotateCcw, ReceiptText];
+// Order matches trustPoints: Start free · Credits never expire · Cancel anytime · No hidden fees.
+const icons: LucideIcon[] = [Rocket, InfinityIcon, RotateCcw, ReceiptText];
 
 /**
  * A quiet reassurance row under the pricing cards. Every claim here has to be

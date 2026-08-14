@@ -12,158 +12,205 @@ import {
 import type { LucideIcon } from 'lucide-react';
 
 /**
- * Every number shown on /pricing lives here.
+ * Every number shown on /pricing lives here — a single source of truth so the
+ * plans, credit packs, comparison table and FAQ can never disagree.
  *
- * The page used to hard-code its plans inline, which made it impossible to keep
- * the tiers, the credit packs and the FAQ answers in agreement. Anything that
- * quotes a price or a credit amount should import from this file.
+ * Commercial shape (see the pricing brief):
+ *   • Free is genuinely usable but capped (daily allowance + monthly ceiling).
+ *   • Pro Monthly is the "most chosen" option; Pro Yearly is the strongest
+ *     price-to-value ratio (a real ~30% saving vs twelve monthly payments).
+ *   • Credit packs are a one-time alternative; their savings are DERIVED from a
+ *     base per-credit rate, never invented.
+ *   • Lifetime is a large but FINITE credit bank (never "unlimited"), so it
+ *     stays attractive without cannibalising the subscription model.
  *
- * Prices here are display strings only. What a purchase actually grants lives
- * in `@/lib/billing`, keyed by Stripe price ID, and the amount charged comes
- * from Stripe — the browser never sends a price. Change a number here and you
- * must change the matching Stripe price too.
+ * Billing is not live yet, so paid CTAs are presented as a waitlist. Flip
+ * BILLING_LIVE to true (and wire the checkout) when payments launch.
  */
 
-export type BillingPeriod = 'monthly' | 'yearly';
+export const BILLING_LIVE = false;
+
+/** The pre-launch CTA every paid plan/pack uses while BILLING_LIVE is false. */
+export const WAITLIST_CTA = { label: 'Join the waitlist', href: '/contact' } as const;
+
+const money = (cents: number) =>
+  cents % 100 === 0 ? `$${cents / 100}` : `$${(cents / 100).toFixed(2)}`;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Subscriptions: Free · Pro Monthly · Pro Yearly
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type PlanHighlight = 'none' | 'popular' | 'value';
 
 export type Plan = {
-  id: 'free' | 'pro' | 'max';
+  id: 'free' | 'pro-monthly' | 'pro-yearly';
   name: string;
   tagline: string;
-  /** Price shown for each billing period, already formatted. */
-  price: Record<BillingPeriod, string>;
-  /** Small line under the price, e.g. "per month". */
-  period: Record<BillingPeriod, string>;
-  /** Only set on paid plans: the effective monthly rate when paying yearly. */
-  yearlyNote?: string;
-  /**
-   * What paying yearly actually saves against twelve monthly payments, and the
-   * monthly total it is measured against. Both are real figures derived from
-   * the prices above — never a struck-through price we never charged.
-   */
-  yearlySaving?: { amount: string; monthlyTotal: string };
+  price: string;
+  /** e.g. "per month", "forever". */
+  period: string;
+  /** Optional secondary price line, e.g. effective monthly rate when yearly. */
+  priceNote?: string;
   credits: string;
+  /** Optional second credit line, e.g. a monthly ceiling on Free. */
+  creditsNote?: string;
   features: string[];
-  /** Free plan only: a plain link, since there is nothing to buy. */
-  cta?: { label: string; href: string };
-  /**
-   * Paid plans: the catalogue id in `@/lib/billing` to check out, per billing
-   * period. The server resolves it to a Stripe price — the amount is never
-   * sent from the browser.
-   */
-  checkout?: Record<BillingPeriod, { item: string; label: string }>;
-  /** The single subtly-highlighted recommendation. */
-  highlight: boolean;
+  /** Which premium treatment the card gets. */
+  highlight: PlanHighlight;
+  /** Badge text for highlighted cards. */
+  badge?: string;
+  /** A short, punchy value message shown under the badge (yearly savings). */
+  valueMessage?: string;
+  /** Free plan links straight to the tools; paid plans use the waitlist CTA. */
+  cta: { label: string; href: string };
+  /** Catalogue id for later checkout wiring (unused while BILLING_LIVE is false). */
+  checkoutItem?: string;
 };
 
-/** Paying yearly costs the same as ten monthly payments. */
-export const YEARLY_SAVING_LABEL = '2 months free';
+// Pro monthly anchor and the yearly price, kept as cents so the saving is exact.
+const PRO_MONTHLY_CENTS = 999; // $9.99 / month
+const PRO_YEARLY_CENTS = 8388; // $83.88 / year = $6.99 x 12
+const proYearlyVsMonthly = PRO_MONTHLY_CENTS * 12 - PRO_YEARLY_CENTS; // $36.00 saved
+const proYearlyPercent = Math.round((proYearlyVsMonthly / (PRO_MONTHLY_CENTS * 12)) * 100); // 30
+
+const PRO_FEATURES = [
+  'Everything in Free',
+  '4K and highest quality',
+  'Priority, fastest processing',
+  'Batch downloads',
+  'Early access to new AI tools',
+  'No ads, ever',
+];
 
 export const plans: Plan[] = [
   {
     id: 'free',
     name: 'Free',
-    tagline: 'Everything you need for everyday downloads.',
-    price: { monthly: '$0', yearly: '$0' },
-    period: { monthly: 'forever', yearly: 'forever' },
-    credits: '30 SavCredits / day',
+    tagline: 'Try SavDown before you pay.',
+    price: '$0',
+    period: 'forever',
+    credits: '30 credits / day',
+    creditsNote: 'up to 500 credits / month',
     features: [
       'Every downloader included',
       'Up to 1080p HD',
       'No watermarks',
-      'Free account, no card required',
-      'Credits refresh every day',
+      'No card required',
+      'Standard processing',
     ],
-    cta: { label: 'Start downloading free', href: '/#tools' },
-    highlight: false,
+    highlight: 'none',
+    cta: { label: 'Get started', href: '/#tools' },
   },
   {
-    id: 'pro',
-    name: 'Pro',
+    id: 'pro-monthly',
+    name: 'Pro Monthly',
     tagline: 'For creators who download every day.',
-    price: { monthly: '$9', yearly: '$90' },
-    period: { monthly: 'per month', yearly: 'per year' },
-    yearlyNote: '$7.50 / month, billed yearly',
-    yearlySaving: { amount: '$18', monthlyTotal: '$108' },
-    credits: '1,500 SavCredits / month',
-    features: [
-      'Everything in Free',
-      '4K and highest quality',
-      'Priority, fastest speed',
-      'Batch downloads',
-      'Early access to AI tools',
-      'No ads, ever',
-    ],
-    checkout: {
-      monthly: { item: 'pro-monthly', label: 'Get Pro' },
-      yearly: { item: 'pro-yearly', label: 'Get Pro' },
-    },
-    highlight: true,
+    price: money(PRO_MONTHLY_CENTS),
+    period: 'per month',
+    credits: '1,500 credits / month',
+    features: PRO_FEATURES,
+    highlight: 'popular',
+    badge: 'MOST POPULAR',
+    cta: WAITLIST_CTA,
+    checkoutItem: 'pro-monthly',
   },
   {
-    id: 'max',
-    name: 'Max',
-    tagline: 'For heavy users running big jobs.',
-    price: { monthly: '$15', yearly: '$150' },
-    period: { monthly: 'per month', yearly: 'per year' },
-    yearlyNote: '$12.50 / month, billed yearly',
-    yearlySaving: { amount: '$30', monthlyTotal: '$180' },
-    credits: '3,500 SavCredits / month',
-    features: [
-      'Everything in Pro',
-      'Highest monthly credit allowance',
-      'Largest batch sizes',
-      'Priority support',
-    ],
-    checkout: {
-      monthly: { item: 'max-monthly', label: 'Get Max' },
-      yearly: { item: 'max-yearly', label: 'Get Max' },
-    },
-    highlight: false,
+    id: 'pro-yearly',
+    name: 'Pro Yearly',
+    tagline: 'Best price for consistent users.',
+    price: money(PRO_YEARLY_CENTS),
+    period: 'per year',
+    priceNote: `${money(699)} / month, billed yearly`,
+    credits: '1,500 credits / month',
+    creditsNote: '18,000 credits / year',
+    features: PRO_FEATURES,
+    highlight: 'value',
+    badge: 'BEST VALUE',
+    valueMessage: `Save ${proYearlyPercent}% · ${money(proYearlyVsMonthly)}/year`,
+    cta: WAITLIST_CTA,
+    checkoutItem: 'pro-yearly',
   },
 ];
 
-export type CreditPack = {
+// ─────────────────────────────────────────────────────────────────────────────
+// Credit packs: one-time, never expire. Savings derived from the base rate.
+// ─────────────────────────────────────────────────────────────────────────────
+
+type CreditPackRaw = {
   id: string;
-  /** Catalogue id in `@/lib/billing`. */
   item: string;
   name: string;
-  credits: string;
-  price: string;
-  /** Effective per-credit rate, so the packs are honestly comparable. */
-  rate: string;
-  bestValue: boolean;
+  tagline: string;
+  credits: number;
+  priceCents: number;
+  badge?: 'MOST POPULAR' | 'BEST VALUE';
 };
 
-export const creditPacks: CreditPack[] = [
+const creditPacksRaw: CreditPackRaw[] = [
   {
     id: 'starter',
     item: 'pack-starter',
     name: 'Starter',
-    credits: '1,000',
-    price: '$9',
-    rate: '$0.0090 per credit',
-    bestValue: false,
+    tagline: 'For occasional users',
+    credits: 2000,
+    priceCents: 999,
   },
   {
-    id: 'standard',
-    item: 'pack-standard',
-    name: 'Standard',
-    credits: '3,000',
-    price: '$19',
-    rate: '$0.0063 per credit',
-    bestValue: true,
+    id: 'creator',
+    item: 'pack-creator',
+    name: 'Creator',
+    tagline: 'For regular one-off usage',
+    credits: 5000,
+    priceCents: 1999,
+    badge: 'MOST POPULAR',
   },
   {
-    id: 'bulk',
-    item: 'pack-bulk',
-    name: 'Bulk',
-    credits: '8,000',
-    price: '$45',
-    rate: '$0.0056 per credit',
-    bestValue: false,
+    id: 'power',
+    item: 'pack-power',
+    name: 'Power',
+    tagline: 'For heavy one-time usage',
+    credits: 12000,
+    priceCents: 3999,
+    badge: 'BEST VALUE',
   },
 ];
+
+/** The smallest pack sets the baseline per-credit price; larger packs save against it. */
+const BASE_RATE_PER_CREDIT = creditPacksRaw[0].priceCents / creditPacksRaw[0].credits;
+
+export type CreditPack = {
+  id: string;
+  item: string;
+  name: string;
+  tagline: string;
+  /** "2,000" */
+  credits: string;
+  /** "$9.99" */
+  price: string;
+  /** "$5.00 / 1,000 credits" */
+  perThousand: string;
+  /** Whole-number percent saved vs the base rate; 0 for the base pack. */
+  savePercent: number;
+  badge?: 'MOST POPULAR' | 'BEST VALUE';
+  highlight: PlanHighlight;
+};
+
+export const creditPacks: CreditPack[] = creditPacksRaw.map((p) => {
+  const rate = p.priceCents / p.credits; // cents per credit
+  const dollarsPerThousand = (rate * 1000) / 100; // cents/credit → $/1,000 credits
+  return {
+    id: p.id,
+    item: p.item,
+    name: p.name,
+    tagline: p.tagline,
+    credits: p.credits.toLocaleString(),
+    price: money(p.priceCents),
+    perThousand: `$${dollarsPerThousand.toFixed(2)} / 1,000 credits`,
+    savePercent: Math.round((1 - rate / BASE_RATE_PER_CREDIT) * 100),
+    badge: p.badge,
+    highlight: p.badge === 'MOST POPULAR' ? 'popular' : p.badge === 'BEST VALUE' ? 'value' : 'none',
+  };
+});
 
 export const creditPackPerks: string[] = [
   'One-time purchase, no subscription',
@@ -172,32 +219,61 @@ export const creditPackPerks: string[] = [
   'Works with every tool on SavDown',
 ];
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Lifetime: a large but finite credit bank. Deliberately NOT unlimited.
+// ─────────────────────────────────────────────────────────────────────────────
+
 export const lifetime = {
   name: 'Lifetime',
   price: '$199',
   period: 'one-time payment',
-  credits: '3,500 SavCredits / month, forever',
-  tagline: 'Pay once. Keep Max-level access for good.',
-  features: [
-    '3,500 SavCredits refreshed every month, forever',
-    'Every Max feature, including tools we ship later',
-    '4K and highest quality downloads',
-    'Priority speed and largest batch sizes',
-    'No renewal, no subscription, no price increases',
+  creditsValue: '15,000',
+  creditsLabel: '15,000 lifetime credits',
+  tagline: 'Pay once. Use your lifetime credits whenever you need them.',
+  item: 'lifetime',
+  benefits: [
+    'One-time payment, no subscription',
+    '15,000 lifetime credits',
+    'Credits never expire',
+    'Lifetime access to premium features',
+    'All future standard feature updates',
+    'Priority access to selected new features',
   ],
   fairUse: [
-    'Monthly credits reset at the start of each month and do not carry over.',
-    'Intended for personal and individual use, not resale or automated bulk pipelines.',
+    'A fixed lifetime credit balance — not unlimited processing.',
+    'Top up any time with a credit pack once your balance runs low.',
+    'For personal and individual use, not resale or automated bulk pipelines.',
   ],
-  checkout: { item: 'lifetime', label: 'Get Lifetime' },
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Comparison matrix (kept short and mobile-friendly)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type ComparisonValue = boolean | string;
+export type ComparisonRow = { label: string; free: ComparisonValue; pro: ComparisonValue; lifetime: ComparisonValue };
+
+export const comparisonColumns = ['Free', 'Pro', 'Lifetime'] as const;
+
+export const comparisonRows: ComparisonRow[] = [
+  { label: 'Daily credits', free: '30 / day', pro: 'From monthly pool', lifetime: 'From lifetime pool' },
+  { label: 'Credit allowance', free: '500 / month', pro: '1,500 / month', lifetime: '15,000 total' },
+  { label: 'Up to 4K quality', free: false, pro: true, lifetime: true },
+  { label: 'Priority processing', free: false, pro: true, lifetime: true },
+  { label: 'Batch downloads', free: false, pro: true, lifetime: true },
+  { label: 'Ads', free: 'Minimal', pro: 'None', lifetime: 'None' },
+  { label: 'Credit expiry', free: 'Daily reset', pro: 'Monthly reset', lifetime: 'Never expire' },
+  { label: 'Recurring payment', free: 'None', pro: 'Monthly or yearly', lifetime: 'One-time' },
+  { label: 'Priority new features', free: false, pro: false, lifetime: true },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// How credits work
+// ─────────────────────────────────────────────────────────────────────────────
 
 export type CreditCost = { icon: LucideIcon; label: string; cost: string };
 
-/**
- * These must stay in step with `JOB_COST` in `@/lib/credits`, which is what the
- * API routes actually charge.
- */
+/** Kept in step with JOB_COST in `@/lib/credits`, which is what routes charge. */
 export const creditCosts: CreditCost[] = [
   { icon: Film, label: 'HD / SD video', cost: '1 credit' },
   { icon: Film, label: '4K video', cost: '2 credits' },
@@ -210,48 +286,28 @@ export const creditCosts: CreditCost[] = [
 export type CreditFlowStep = { icon: LucideIcon; title: string; description: string };
 
 export const creditFlow: CreditFlowStep[] = [
-  {
-    icon: MousePointerClick,
-    title: 'Choose a tool',
-    description: 'Pick any downloader or utility from the catalog.',
-  },
-  {
-    icon: Eye,
-    title: 'See its credit cost',
-    description: 'The cost is shown up front, before anything runs.',
-  },
-  {
-    icon: Sparkles,
-    title: 'Use the tool',
-    description: 'Paste your link and get your file.',
-  },
-  {
-    icon: Coins,
-    title: 'Credits are deducted',
-    description: 'Only for jobs that finish successfully.',
-  },
+  { icon: MousePointerClick, title: 'Choose a tool', description: 'Pick any downloader or utility from the catalog.' },
+  { icon: Eye, title: 'See its credit cost', description: 'The cost is shown up front, before anything runs.' },
+  { icon: Sparkles, title: 'Use the tool', description: 'Paste your link and get your file.' },
+  { icon: Coins, title: 'Credits are deducted', description: 'Only for jobs that finish successfully.' },
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Trust row (only claims that are actually true today)
+// ─────────────────────────────────────────────────────────────────────────────
 
 export type TrustPoint = { title: string; description: string };
 
 export const trustPoints: TrustPoint[] = [
-  {
-    title: 'Secure payments',
-    description: 'Handled by a trusted payment provider. We never see your card details.',
-  },
-  {
-    title: 'Clear limits',
-    description: 'Every tool shows its credit cost before you run it.',
-  },
-  {
-    title: 'Cancel anytime',
-    description: 'Manage or cancel your plan yourself, from your account, in one click.',
-  },
-  {
-    title: 'No hidden fees',
-    description: 'The price you see is the price you pay. No setup fees.',
-  },
+  { title: 'Start free', description: 'Use SavDown today with free daily credits. No card required.' },
+  { title: 'Credits never expire', description: 'Credit packs are one-time and stay in your balance for good.' },
+  { title: 'Cancel anytime', description: 'When subscriptions launch, cancel yourself in one click. No lock-in.' },
+  { title: 'No hidden fees', description: 'The price you see is the price you pay. No setup fees.' },
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FAQ
+// ─────────────────────────────────────────────────────────────────────────────
 
 export const pricingFaqs = [
   {
@@ -260,19 +316,24 @@ export const pricingFaqs = [
       'SavCredits are the unit you spend when you run a tool. Most downloads cost 1 credit, 4K costs 2, and the AI tools we are building will cost 3 or more. Every account gets a free daily allowance, so you can use SavDown without paying anything.',
   },
   {
-    question: 'Do SavCredits expire?',
+    question: 'Are paid plans available yet?',
     answer:
-      'It depends where they came from. Free daily credits reset every 24 hours. Credits included with a Pro or Max plan reset at the start of each billing month. Credits you buy in a one-time pack never expire.',
+      'Not quite. The Free plan works today with free daily credits. Paid subscriptions and credit packs are launching soon — join the waitlist and we will let you know the moment they go live. Nothing is charged in the meantime.',
   },
   {
-    question: 'What happens when I reach my limit?',
+    question: 'Do credits expire?',
     answer:
-      'Nothing breaks and you are never charged automatically. The tool simply asks you to wait for your next reset, buy a one-time credit pack, or move to a larger plan. Your existing files and account are untouched.',
+      'It depends where they came from. Free daily credits reset every 24 hours. Credits included with a Pro plan reset at the start of each billing month. Credits you buy in a one-time pack, and your Lifetime credit balance, never expire.',
   },
   {
-    question: 'Can I cancel?',
+    question: 'Why choose yearly over monthly?',
     answer:
-      'Yes. Open the billing page in your account to cancel in one click. Your plan stays active until the end of the period you already paid for, and you are not charged again. Credit packs and the Lifetime plan are one-time purchases, so there is no subscription to cancel.',
+      `Pro Yearly costs ${money(PRO_YEARLY_CENTS)} — that is ${money(699)} a month, versus ${money(PRO_MONTHLY_CENTS)} a month on the monthly plan. You get the same features and credits for about ${proYearlyPercent}% less, saving ${money(proYearlyVsMonthly)} over the year.`,
+  },
+  {
+    question: 'What is the Lifetime plan?',
+    answer:
+      'A single payment of $199 that gives you 15,000 lifetime credits which never expire, lifetime access to premium features, and all future standard updates. It is a large but fixed credit balance rather than unlimited processing — when it runs low you can top up with a credit pack. Best for people who would rather own SavDown than subscribe.',
   },
   {
     question: 'Can I buy credits without subscribing?',
@@ -280,13 +341,8 @@ export const pricingFaqs = [
       'Yes, that is exactly what the credit packs are for. They are a one-time purchase with no recurring charge, they never expire, and they stack on top of whatever plan you are on, including the Free plan.',
   },
   {
-    question: 'What is the Lifetime plan?',
+    question: 'What happens when I run out of credits?',
     answer:
-      'A single payment of $199 that gives you 3,500 SavCredits refreshed every month, for as long as SavDown runs, along with every Max feature. There is no renewal and no subscription. Fair use applies: monthly credits reset rather than stacking, and it is meant for personal use rather than resale or automated bulk pipelines.',
-  },
-  {
-    question: 'What happens to unused credits?',
-    answer:
-      'Credits from one-time packs carry over indefinitely. Free daily credits and the credits included with a plan reset at the start of each period and do not stack up month to month.',
+      'Nothing breaks and you are never charged automatically. The tool asks you to wait for your next reset, buy a one-time credit pack, or move to a larger plan. Your existing files and account are untouched.',
   },
 ];

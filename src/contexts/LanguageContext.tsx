@@ -19,46 +19,48 @@ type LanguageContextType = {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'savdown-language';
 const GOOGTRANS_COOKIE = 'googtrans';
 
-function getStoredLanguage(): string {
-  if (typeof window === 'undefined') return 'en';
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored && languages.some((l) => l.code === stored)) return stored;
-  } catch {
-    // localStorage unavailable
+/**
+ * Removes the googtrans cookie across every scope Google's widget might have
+ * written it to (path-only, host, and registrable domain). This is what
+ * guarantees a fresh load starts in English: if a previous session left
+ * `googtrans=/en/hi`, the widget would silently auto-translate on load unless
+ * the cookie is gone before it initializes.
+ */
+function clearGoogtransCookie() {
+  if (typeof document === 'undefined') return;
+  const expired = 'expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  const host = window.location.hostname;
+  const parts = host.split('.');
+  const domains = ['', host, `.${host}`];
+  if (parts.length > 2) domains.push(`.${parts.slice(-2).join('.')}`);
+  for (const d of domains) {
+    document.cookie = `${GOOGTRANS_COOKIE}=; path=/; ${expired}${d ? `; domain=${d}` : ''}`;
   }
-  return 'en';
 }
 
-function setStoredLanguage(code: string) {
-  try {
-    localStorage.setItem(STORAGE_KEY, code);
-  } catch {
-    // localStorage unavailable
-  }
-}
-
-function setGoogtransCookie(sourceLang: string, targetLang: string) {
-  if (sourceLang === targetLang) {
-    document.cookie = `${GOOGTRANS_COOKIE}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+/**
+ * Points Google's widget at a language for the CURRENT session only. English
+ * clears the cookie; any other language sets a SESSION cookie (no max-age) so
+ * it can never outlive the tab — and it is cleared on the next load anyway
+ * (see the reset effect). English is always the default on a fresh load.
+ */
+function applyGoogtransCookie(code: string) {
+  if (typeof document === 'undefined') return;
+  if (code === 'en') {
+    clearGoogtransCookie();
     return;
   }
-  const value = `/${sourceLang}/${targetLang}`;
-  document.cookie = `${GOOGTRANS_COOKIE}=${value}; path=/; max-age=${60 * 60 * 24 * 365}`;
+  document.cookie = `${GOOGTRANS_COOKIE}=/en/${code}; path=/`;
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [isTranslating, setIsTranslating] = useState(false);
-  // Always start from English on both the server render and the client's
-  // first hydration pass — reading localStorage here would make the
-  // client's initial render diverge from the server-rendered HTML (the
-  // server has no localStorage), which forces React to discard and fully
-  // re-render the tree client-side on every load for a returning
-  // non-English user. The stored language is restored a tick later, after
-  // mount, in the effect below.
+  // English is ALWAYS the initial language — on the server render, on the
+  // client's first hydration pass, and on every fresh page load. The user's
+  // choice is deliberately NOT restored from storage here (see the reset
+  // effect for why): it must not carry across reloads or new sessions.
   const [language, setLanguageState] = useState<Language>(languages[0]);
 
   const setLanguage = useCallback(
@@ -68,66 +70,39 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
       const targetLang = languages.find((l) => l.code === code)!;
       setLanguageState(targetLang);
-      setStoredLanguage(code);
-      setGoogtransCookie('en', code);
+      applyGoogtransCookie(code);
 
-      // No navigation here — URLs no longer carry a locale segment, so
-      // switching languages is purely a client-side visual swap via the
-      // Google Translate widget (already preloaded by the effect below,
-      // so this should apply in well under a second). This always runs,
-      // including for English: the widget's own dropdown has an 'en'
-      // option that genuinely reverts translated content back to the
-      // original text — skipping the call for English (as before) left
-      // the page stuck showing the previous language until a full reload.
+      // Purely a client-side visual swap via the preloaded Google Translate
+      // widget — no navigation, since URLs carry no locale segment.
       setIsTranslating(true);
       loadGoogleTranslateScript()
         .then(() => translatePage(code))
         .finally(() => setIsTranslating(false));
     },
-    [language.code]
+    [language.code],
   );
 
-  // Restore the stored language after mount (see the useState comment above
-  // for why this can't happen during the initial synchronous render).
-  // localStorage — not the googtrans cookie — is the single source of
-  // truth for the user's chosen language; this always reconciles the
-  // cookie to match it (clearing it for English), so a stale cookie from
-  // an earlier session can never make Google's widget silently
-  // auto-translate the page to a language the user didn't actually pick.
+  // Force an English baseline on every fresh load. This provider lives in the
+  // root layout and does NOT remount on client-side navigation, so a language
+  // the user picks stays active while they browse — but a reload, a reopened
+  // tab, or a new session remounts it and lands back on English. The cookie is
+  // cleared here BEFORE the translate widget is ever constructed (below), so a
+  // stale cookie from a previous session can never auto-translate the page.
+  //
+  // Intentionally NOT reading localStorage/cookies/navigator.language to pick a
+  // starting language: English is the default unless the user actively chooses
+  // otherwise during this session.
   useEffect(() => {
-    const stored = getStoredLanguage();
-    const targetLang = languages.find((l) => l.code === stored) ?? languages[0];
-    setLanguageState(targetLang);
-    setGoogtransCookie('en', stored);
+    clearGoogtransCookie();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Preload the widget on every mount (even for English) so it's already
-  // initialized by the time a user picks a non-English language — the
-  // script + Google's internal async bootstrap is the slow part (can take
-  // several seconds), while actually driving an already-ready widget's
-  // dropdown is near-instant. Always drives the combo to match the
-  // current language (English included, see translatePage/setLanguage)
-  // rather than trusting whatever state the widget initialized itself
-  // into from its own cookie.
+  // Preload the widget and drive it to the current language (English on load,
+  // near-instant since English just means "no translation"). Preloading here
+  // means a later language pick applies quickly rather than waiting on Google's
+  // slow async bootstrap.
   useEffect(() => {
     loadGoogleTranslateScript().then(() => translatePage(language.code));
-  }, [language.code]);
-
-  // Cross-tab sync: `storage` only fires in *other* tabs than the one that
-  // made the change, so this picks up a language switch made elsewhere
-  // without needing any broadcast/reload machinery of our own.
-  useEffect(() => {
-    function handleStorage(e: StorageEvent) {
-      if (e.key !== STORAGE_KEY) return;
-      const code = e.newValue && languages.some((l) => l.code === e.newValue) ? e.newValue : 'en';
-      if (code === language.code) return;
-      setLanguageState(languages.find((l) => l.code === code) ?? languages[0]);
-      setGoogtransCookie('en', code);
-      loadGoogleTranslateScript().then(() => translatePage(code));
-    }
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
   }, [language.code]);
 
   const value: LanguageContextType = {

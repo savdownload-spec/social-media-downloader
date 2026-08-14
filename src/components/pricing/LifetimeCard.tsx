@@ -1,72 +1,70 @@
+import Link from 'next/link';
 import { Check, Coins, Infinity as InfinityIcon } from 'lucide-react';
-import { CheckoutButton } from '@/components/pricing/CheckoutButton';
-import { lifetime } from '@/config/pricing';
+import { HighlightFrame } from '@/components/pricing/HighlightFrame';
+import { lifetime, WAITLIST_CTA } from '@/config/pricing';
 
 /**
- * The one-time long-term offer. A single wide card rather than a grid, so it
- * reads as a distinct option instead of a fourth tier — and the fair-use note
- * sits directly under the benefits rather than being buried in the FAQ.
+ * The one-time long-term offer. A single wide, premium card so it reads as a
+ * distinct option — and the fair-use note (a FINITE credit bank, not
+ * unlimited) sits right under the benefits, not buried in the FAQ.
  */
 export function LifetimeCard() {
   return (
-    <div className="max-w-3xl mx-auto rounded-3xl gradient-ring shadow-glow-lg">
-      <div className="rounded-[23px] bg-white p-8 md:p-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
+    <div className="mx-auto max-w-3xl">
+      <HighlightFrame variant="value" badge="LIFETIME" className="p-8 md:p-10">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-10">
           {/* Price + CTA */}
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-light text-primary text-xs font-semibold">
-              <InfinityIcon className="w-3.5 h-3.5 flex-shrink-0" /> {lifetime.name}
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary-light px-3 py-1 text-xs font-semibold text-primary">
+              <InfinityIcon className="h-3.5 w-3.5 flex-shrink-0" /> One-time
             </div>
 
             <div className="mt-4 flex flex-wrap items-end gap-x-1.5">
               <span className="text-5xl font-bold tracking-tight text-text">{lifetime.price}</span>
-              <span className="text-sm text-text-muted mb-1.5">{lifetime.period}</span>
+              <span className="mb-1.5 text-sm text-text-muted">{lifetime.period}</span>
             </div>
 
-            <div className="mt-4 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent-light text-accent-hover text-xs font-semibold">
-              <Coins className="w-3.5 h-3.5 flex-shrink-0" /> {lifetime.credits}
+            <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-accent-light px-2.5 py-1 text-xs font-semibold text-accent-hover">
+              <Coins className="h-3.5 w-3.5 flex-shrink-0" /> {lifetime.creditsLabel}
             </div>
 
-            <p className="mt-4 text-sm text-text-muted leading-relaxed">{lifetime.tagline}</p>
+            <p className="mt-4 text-sm leading-relaxed text-text-muted">{lifetime.tagline}</p>
 
-            <CheckoutButton
-              item={lifetime.checkout.item}
-              label={lifetime.checkout.label}
-              className="mt-6 flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-white font-semibold bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all"
-            />
+            <Link
+              href={WAITLIST_CTA.href}
+              className="mt-6 flex w-full items-center justify-center rounded-2xl bg-gradient-brand bg-[length:200%_200%] py-3 font-semibold text-white shadow-glow-lg transition-all hover:bg-[position:100%_50%]"
+            >
+              {WAITLIST_CTA.label}
+            </Link>
           </div>
 
-          {/* What's included */}
+          {/* Benefits */}
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
-              What&apos;s included
-            </p>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">What&apos;s included</p>
             <ul className="mt-4 space-y-3">
-              {lifetime.features.map((feature) => (
-                <li key={feature} className="flex items-start gap-2.5 text-sm text-text">
-                  <span className="mt-0.5 w-4 h-4 rounded-full bg-accent-light flex items-center justify-center flex-shrink-0">
-                    <Check className="w-3 h-3 text-accent-hover" />
+              {lifetime.benefits.map((benefit) => (
+                <li key={benefit} className="flex items-start gap-2.5 text-sm text-text">
+                  <span className="mt-0.5 flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-accent-light">
+                    <Check className="h-3 w-3 text-accent-hover" />
                   </span>
-                  {feature}
+                  {benefit}
                 </li>
               ))}
             </ul>
           </div>
         </div>
 
-        <div className="mt-8 rounded-xl bg-surface border border-border-light p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-text-subtle">
-            Fair use
-          </p>
+        <div className="mt-8 rounded-xl border border-border-light bg-surface p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-text-subtle">Fair use</p>
           <ul className="mt-2 space-y-1.5">
             {lifetime.fairUse.map((rule) => (
-              <li key={rule} className="text-sm text-text-muted leading-relaxed">
+              <li key={rule} className="text-sm leading-relaxed text-text-muted">
                 {rule}
               </li>
             ))}
           </ul>
         </div>
-      </div>
+      </HighlightFrame>
     </div>
   );
 }
