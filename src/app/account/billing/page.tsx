@@ -92,8 +92,11 @@ export default async function BillingPage({
                   {PLAN_LABEL[summary.plan] ?? summary.plan}
                 </p>
                 <p className="mt-1 text-sm text-text-muted">
-                  {allowance.credits.toLocaleString()} credits per {allowance.period}
-                  {summary.plan === 'LIFETIME' && ', forever'}
+                  {summary.plan === 'LIFETIME'
+                    ? `${allowance.credits.toLocaleString()} lifetime credits (never expire)`
+                    : summary.plan === 'FREE'
+                      ? `${allowance.credits.toLocaleString()} credits per ${allowance.period}`
+                      : `${allowance.credits.toLocaleString()} credits per month`}
                 </p>
               </div>
 
