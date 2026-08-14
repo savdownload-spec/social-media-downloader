@@ -22,23 +22,27 @@ export function AdBanner() {
         <div className="relative overflow-hidden rounded-xl md:rounded-2xl border border-dashed border-primary/25 bg-gradient-brand-soft">
           <div className="absolute inset-0 bg-grid [mask-image:radial-gradient(ellipse_80%_100%_at_50%_0%,black,transparent)] pointer-events-none" />
 
-          {/* Mobile: compact 320x100-style banner */}
-          <div className="relative flex sm:hidden min-h-[100px] items-center justify-between gap-3 px-4 py-3">
-            <div className="flex items-center gap-3 min-w-0">
+          {/* Mobile: a deliberate portrait ad card (not a squeezed leaderboard).
+              Label/icon top, headline centred in the middle, CTA bottom-right. */}
+          <div className="relative flex sm:hidden min-h-[160px] flex-col px-5 py-5 text-left">
+            {/* Top: advertisement label + icon */}
+            <div className="flex items-center gap-2.5">
               <span className="inline-flex w-9 h-9 flex-shrink-0 rounded-xl bg-white items-center justify-center shadow-soft-md">
                 <Sparkles className="w-4 h-4 text-primary" />
               </span>
-              <div className="min-w-0 text-left">
-                <p className="text-[9px] font-bold uppercase tracking-wider text-primary/70">Advertisement</p>
-                <p className="mt-0.5 text-sm font-bold text-text tracking-tight leading-tight">
-                  Advertise Here
-                </p>
-                <p className="text-[11px] text-text-subtle">320 &times; 100 mobile banner</p>
-              </div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-primary/70">Advertisement</p>
             </div>
+
+            {/* Middle: headline + size, vertically centred in the remaining space */}
+            <div className="flex flex-1 flex-col justify-center py-3">
+              <p className="text-base font-bold tracking-tight text-text">Advertise Here</p>
+              <p className="mt-0.5 text-xs text-text-subtle">320 &times; 100 mobile banner</p>
+            </div>
+
+            {/* Bottom-right: CTA */}
             <Link
               href="/contact"
-              className="flex-shrink-0 inline-flex items-center gap-1 px-3 py-2 rounded-full text-xs font-semibold text-white bg-gradient-brand shadow-soft"
+              className="inline-flex items-center gap-1 self-end rounded-full bg-gradient-brand px-4 py-2 text-xs font-semibold text-white shadow-soft"
             >
               Inquire <ArrowUpRight className="w-3 h-3" />
             </Link>
