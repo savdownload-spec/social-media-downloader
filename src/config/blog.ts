@@ -1,19 +1,33 @@
 /**
- * Static blog content. Kept in code (not the database) so the blog is always
- * populated and works without a running DB. Content uses a light markdown-ish
- * syntax rendered by the blog post page (#, ##, ###, - lists, paragraphs).
+ * Authoritative editorial content for the public blog.
+ *
+ * The listing, homepage, search, sitemap, related articles, and article pages all
+ * consume this record shape. Admin-managed posts are normalized into the same
+ * shape by src/lib/blog.ts when a database is available.
  */
 export type BlogPost = {
   slug: string;
   title: string;
   excerpt: string;
   author: string;
-  publishedAt: string; // ISO date
+  publishedAt: string;
+  updatedAt?: string;
   readingTime: string;
   tags: string[];
-  cover: string; // image seed for the cover
+  category: string;
+  coverImage: string;
+  coverAlt: string;
+  ogImage?: string;
   content: string;
+  seoTitle: string;
+  metaDescription: string;
+  primaryKeyword: string;
+  secondaryKeywords: string[];
+  canonicalUrl?: string;
+  toolSlug?: string;
 };
+
+const blogImage = (name: string) => `/images/blog/${name}.webp`;
 
 export const blogPosts: BlogPost[] = [
   {
@@ -22,9 +36,17 @@ export const blogPosts: BlogPost[] = [
     excerpt: 'Learn how to download YouTube videos in HD, Full HD, and 4K quality for free with a simple browser-based workflow.',
     author: 'The SavDown Team',
     publishedAt: '2026-08-12',
+    updatedAt: '2026-08-12',
     readingTime: '7 min read',
     tags: ['YouTube', 'Guides', 'HD'],
-    cover: 'savdown-blog-youtube-hd',
+    category: 'YouTube',
+    coverImage: blogImage('youtube-hd'),
+    coverAlt: 'Laptop set up for editing and saving high-quality video',
+    seoTitle: 'How to Download YouTube Videos in HD Quality | SavDown',
+    metaDescription: 'Learn how to save YouTube videos in 720p, 1080p, and 4K with a simple browser workflow, plus tips for choosing formats and downloading responsibly.',
+    primaryKeyword: 'download YouTube videos in HD',
+    secondaryKeywords: ['YouTube 1080p downloader', 'YouTube 4K download', 'save YouTube videos'],
+    toolSlug: 'youtube-video-downloader',
     content: `YouTube is home to billions of videos, from tutorials and music to full-length documentaries. In this guide, you will learn how to download YouTube videos in HD quality using SavDown, what resolution to choose, and how to avoid common download mistakes.
 
 ## Why people download YouTube videos
@@ -77,7 +99,7 @@ Yes. The process is the same on Android, iPhone, and desktop browsers.
 No. SavDown does not add a watermark to the downloaded file.
 
 ## Final thoughts
-Downloading YouTube videos in HD does not need to be complicated. With SavDown, the process takes a few taps, works across devices, and keeps your workflow simple. Paste a YouTube link into SavDown and choose the quality that works for you.`
+Downloading YouTube videos in HD does not need to be complicated. With SavDown, the process takes a few taps, works across devices, and keeps your workflow simple. Paste a YouTube link into SavDown and choose the quality that works for you.`,
   },
   {
     slug: 'savdown-social-media-launch-content-pack',
@@ -85,9 +107,16 @@ Downloading YouTube videos in HD does not need to be complicated. With SavDown, 
     excerpt: 'Ready-to-publish launch ideas, captions, scripts, and pin copy for introducing SavDown across every major social platform.',
     author: 'The SavDown Team',
     publishedAt: '2026-08-11',
+    updatedAt: '2026-08-11',
     readingTime: '6 min read',
     tags: ['Social Media', 'Marketing', 'Creators'],
-    cover: 'savdown-social-media-content-pack',
+    category: 'Tools',
+    coverImage: blogImage('social-media-workflow'),
+    coverAlt: 'Smartphone and creator tools arranged for a social media workflow',
+    seoTitle: 'SavDown Social Media Launch Content Pack',
+    metaDescription: 'Use this practical SavDown launch content pack for social captions, short-form scripts, engagement prompts, and Pinterest copy.',
+    primaryKeyword: 'social media content pack',
+    secondaryKeywords: ['SavDown launch content', 'creator captions', 'social media scripts'],
     content: `Launching a new tool is easier when every platform has a clear, consistent message. This SavDown social media content pack includes launch captions, short-form video scripts, engagement prompts, and Pinterest copy that teams and creators can adapt immediately.
 
 ## Core launch message
@@ -147,18 +176,25 @@ Show a TikTok link being pasted into SavDown, a quality option being selected, a
 - **Pin description:** A simple guide to downloading Instagram Reels using SavDown, completely free and with no app install required.
 
 ## Publishing checklist
-Keep the visual identity consistent, link every post back to the relevant SavDown tool, invite a simple response, and credit original creators when demonstrating content from another account.`
+Keep the visual identity consistent, link every post back to the relevant SavDown tool, invite a simple response, and credit original creators when demonstrating content from another account.`,
   },
   {
     slug: 'how-to-download-youtube-videos-4k',
     title: 'How to Download YouTube Videos in 4K (2026 Guide)',
-    excerpt:
-      'A step-by-step walkthrough for saving YouTube videos in crisp 4K, plus how to pick the right format and keep the original quality.',
+    excerpt: 'A step-by-step walkthrough for saving YouTube videos in crisp 4K, plus how to pick the right format and keep the original quality.',
     author: 'The SavDown Team',
     publishedAt: '2026-07-20',
+    updatedAt: '2026-07-20',
     readingTime: '4 min read',
     tags: ['YouTube', 'Guides', '4K'],
-    cover: 'savdown-blog-youtube',
+    category: 'YouTube',
+    coverImage: blogImage('video-formats'),
+    coverAlt: 'Video editing timeline representing high-resolution video formats',
+    seoTitle: 'How to Download YouTube Videos in 4K | SavDown',
+    metaDescription: 'Learn how to save YouTube videos in 4K, choose the right format, and understand why the original upload determines the maximum resolution.',
+    primaryKeyword: 'download YouTube videos in 4K',
+    secondaryKeywords: ['4K YouTube downloader', '2160p video download', 'YouTube video quality'],
+    toolSlug: 'youtube-video-downloader',
     content: `YouTube hosts some of the highest-quality video on the web, and a growing share of it is uploaded in 4K. Saving those videos for offline viewing, a flight, a spotty connection, or a personal archive, is simple when you know the steps.
 
 ## What you need
@@ -184,13 +220,19 @@ Only download videos you own, have permission to save, or that are licensed for 
   {
     slug: 'is-it-legal-to-download-social-media-videos',
     title: 'Is It Legal to Download Videos From Social Media?',
-    excerpt:
-      'The honest answer is "it depends." Here is a clear, non-lawyer breakdown of when downloading is fine and when it is not.',
+    excerpt: 'The honest answer is "it depends." Here is a clear, non-lawyer breakdown of when downloading is fine and when it is not.',
     author: 'The SavDown Team',
     publishedAt: '2026-07-12',
+    updatedAt: '2026-07-12',
     readingTime: '5 min read',
     tags: ['Legal', 'Copyright', 'Best Practices'],
-    cover: 'savdown-blog-legal',
+    category: 'Guides',
+    coverImage: blogImage('creators-workflow'),
+    coverAlt: 'Creator workspace with cameras and editing equipment',
+    seoTitle: 'Is It Legal to Download Social Media Videos? | SavDown',
+    metaDescription: 'Understand the practical copyright and permission questions to consider before downloading or sharing videos from social media platforms.',
+    primaryKeyword: 'is it legal to download social media videos',
+    secondaryKeywords: ['download copyright videos', 'social media video rights', 'creator permissions'],
     content: `It is the most common question we get, so let us answer it plainly. This is general information, not legal advice, but it will help you make good decisions.
 
 ## The short version
@@ -218,13 +260,20 @@ SavDown never hosts or stores media, it simply helps you save a file you have th
   {
     slug: 'mp4-vs-mp3-vs-gif-which-format',
     title: 'MP4 vs MP3 vs GIF: Which Format Should You Choose?',
-    excerpt:
-      'Video, audio, or a looping clip? A quick guide to picking the right download format for the job, and the file size trade-offs.',
+    excerpt: 'Video, audio, or a looping clip? A quick guide to picking the right download format for the job, and the file size trade-offs.',
     author: 'The SavDown Team',
     publishedAt: '2026-07-04',
+    updatedAt: '2026-07-04',
     readingTime: '3 min read',
     tags: ['Formats', 'Guides'],
-    cover: 'savdown-blog-formats',
+    category: 'Tips',
+    coverImage: blogImage('mobile-video'),
+    coverAlt: 'Mobile phone used for recording and working with video',
+    seoTitle: 'MP4 vs MP3 vs GIF: Which Download Format Should You Choose?',
+    metaDescription: 'Compare MP4, MP3, and GIF downloads to choose the best format for watching, listening, editing, or sharing short loops.',
+    primaryKeyword: 'MP4 vs MP3 vs GIF',
+    secondaryKeywords: ['best video format', 'audio download format', 'GIF vs MP4'],
+    toolSlug: 'youtube-video-downloader',
     content: `When you download a clip, SavDown often gives you a choice of formats. Here is how to pick the right one without overthinking it.
 
 ## MP4: the everyday video
@@ -248,13 +297,20 @@ When in doubt, MP4 is the safe default.`,
   {
     slug: 'download-tiktok-without-watermark',
     title: 'How to Save TikTok Videos Without the Watermark',
-    excerpt:
-      'Watermarks get in the way when you want a clean copy. Here is how to save TikToks in HD without the bouncing logo.',
+    excerpt: 'Watermarks get in the way when you want a clean copy. Here is how to save TikToks in HD without the bouncing logo.',
     author: 'The SavDown Team',
     publishedAt: '2026-06-25',
+    updatedAt: '2026-06-25',
     readingTime: '3 min read',
     tags: ['TikTok', 'Guides'],
-    cover: 'savdown-blog-tiktok',
+    category: 'TikTok',
+    coverImage: blogImage('tiktok-vertical'),
+    coverAlt: 'Vertical-video layouts representing TikTok-style short-form content',
+    seoTitle: 'How to Save TikTok Videos Without the Watermark | SavDown',
+    metaDescription: 'Learn how to save public TikTok videos in HD, when a no-watermark copy is useful, and why creator credit still matters.',
+    primaryKeyword: 'save TikTok videos without watermark',
+    secondaryKeywords: ['TikTok downloader', 'download TikTok HD', 'TikTok video save'],
+    toolSlug: 'tiktok-video-downloader',
     content: `The TikTok watermark, that bouncing username and logo, is fine for sharing inside the app, but distracting when you want a clean copy for editing or archiving.
 
 ## How to remove it
@@ -277,13 +333,20 @@ This works with public TikToks only. Private or friends-only videos are not acce
   {
     slug: 'download-instagram-reels-any-device',
     title: 'How to Download Instagram Reels on Any Device',
-    excerpt:
-      'iPhone, Android, or desktop, saving an Instagram Reel takes the same three steps. Here is the quickest way.',
+    excerpt: 'iPhone, Android, or desktop, saving an Instagram Reel takes the same three steps. Here is the quickest way.',
     author: 'The SavDown Team',
     publishedAt: '2026-06-14',
+    updatedAt: '2026-06-14',
     readingTime: '3 min read',
     tags: ['Instagram', 'Reels', 'Guides'],
-    cover: 'savdown-blog-instagram',
+    category: 'Instagram',
+    coverImage: blogImage('instagram-reels'),
+    coverAlt: 'Smartphone on a creator setup for recording and sharing short video',
+    seoTitle: 'How to Download Instagram Reels on Any Device | SavDown',
+    metaDescription: 'Save public Instagram Reels on iPhone, Android, or desktop with a quick browser workflow and no app installation.',
+    primaryKeyword: 'download Instagram Reels',
+    secondaryKeywords: ['Instagram Reels downloader', 'save Reels on iPhone', 'download Reels on Android'],
+    toolSlug: 'instagram-reels-downloader',
     content: `Instagram does not offer a native "save video" button for other people's Reels, but you can still keep a copy in HD from any device.
 
 ## The three steps
@@ -303,13 +366,19 @@ Only public content is supported, and, as always, save responsibly. Reels you do
   {
     slug: 'creators-guide-repurposing-video',
     title: "A Creator's Guide to Repurposing Video Content",
-    excerpt:
-      'One video can become a dozen posts. Here is a practical workflow for turning a single clip into content across every platform.',
+    excerpt: 'One video can become a dozen posts. Here is a practical workflow for turning a single clip into content across every platform.',
     author: 'The SavDown Team',
     publishedAt: '2026-05-30',
+    updatedAt: '2026-05-30',
     readingTime: '5 min read',
     tags: ['Creators', 'Strategy', 'Workflow'],
-    cover: 'savdown-blog-creators',
+    category: 'Tips',
+    coverImage: blogImage('content-strategy'),
+    coverAlt: 'Content creator workspace with cameras, monitors, and editing tools',
+    seoTitle: "A Creator's Guide to Repurposing Video Content | SavDown",
+    metaDescription: 'Turn one strong video into platform-ready clips with a practical workflow for formats, archives, and responsible content reuse.',
+    primaryKeyword: 'repurpose video content',
+    secondaryKeywords: ['content repurposing workflow', 'short-form video strategy', 'creator workflow'],
     content: `The most efficient creators do not make more content, they make their content go further. Repurposing is the skill of turning one strong video into many smaller pieces tuned for each platform.
 
 ## Start with a source
@@ -338,6 +407,24 @@ export const blogPostsByDate = [...blogPosts].sort(
   (a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt),
 );
 
+export const blogCategories = Array.from(
+  new Set(blogPostsByDate.map((post) => post.category)),
+);
+
 export function getBlogPost(slug: string): BlogPost | undefined {
-  return blogPosts.find((p) => p.slug === slug);
+  return blogPosts.find((post) => post.slug === slug);
+}
+
+export function getRelatedBlogPosts(post: BlogPost, limit = 3): BlogPost[] {
+  const scored = blogPostsByDate
+    .filter((candidate) => candidate.slug !== post.slug)
+    .map((candidate) => {
+      const sharedTags = candidate.tags.filter((tag) => post.tags.includes(tag)).length;
+      const sameCategory = candidate.category === post.category ? 4 : 0;
+      const sameTool = candidate.toolSlug && candidate.toolSlug === post.toolSlug ? 2 : 0;
+      return { candidate, score: sharedTags * 3 + sameCategory + sameTool };
+    })
+    .sort((a, b) => b.score - a.score || +new Date(b.candidate.publishedAt) - +new Date(a.candidate.publishedAt));
+
+  return scored.slice(0, limit).map(({ candidate }) => candidate);
 }

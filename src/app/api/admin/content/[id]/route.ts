@@ -8,15 +8,26 @@ import { z } from 'zod';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-function forbidden() { return NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403 }); }
+function forbidden() {
+  return NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403 });
+}
 
 const updateSchema = z.object({
-  title:     z.string().min(2).optional(),
-  slug:      z.string().min(2).optional(),
-  excerpt:   z.string().optional(),
-  content:   z.string().min(1).optional(),
-  author:    z.string().optional(),
-  tagsJson:  z.string().optional(),
+  title: z.string().min(2).optional(),
+  slug: z.string().min(2).optional(),
+  excerpt: z.string().optional(),
+  content: z.string().min(1).optional(),
+  author: z.string().optional(),
+  tagsJson: z.string().optional(),
+  category: z.string().optional(),
+  coverImage: z.string().optional(),
+  coverAlt: z.string().optional(),
+  ogImage: z.string().optional(),
+  primaryKeyword: z.string().optional(),
+  secondaryKeywordsJson: z.string().optional(),
+  canonicalUrl: z.string().optional(),
+  toolSlug: z.string().optional(),
+  readingTimeMinutes: z.coerce.number().int().positive().optional(),
   published: z.boolean().optional(),
 });
 

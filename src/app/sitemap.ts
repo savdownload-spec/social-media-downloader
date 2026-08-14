@@ -2,11 +2,12 @@ import type { MetadataRoute } from 'next';
 import { siteConfig } from '@/config/site';
 import { tools } from '@/config/tools';
 import { catalog } from '@/config/catalog';
-import { blogPosts } from '@/config/blog';
+import { getPublicBlogPosts } from '@/lib/blog';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteConfig.url;
   const now = new Date();
+  const posts = await getPublicBlogPosts();
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${base}/`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
@@ -23,8 +24,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/dmca`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
   ];
 
-  const toolSlugs = new Set<string>(catalog.map((t) => t.slug));
-  for (const t of tools) toolSlugs.add(t.slug);
+  const toolSlugs = new Set<string>(catalog.map((tool) => tool.slug));
+  for (const tool of tools) toolSlugs.add(tool.slug);
   const toolRoutes: MetadataRoute.Sitemap = Array.from(toolSlugs, (slug) => ({
     url: `${base}/tools/${slug}`,
     lastModified: now,
@@ -32,9 +33,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.9,
   }));
 
-  const postRoutes: MetadataRoute.Sitemap = blogPosts.map((p) => ({
-    url: `${base}/blog/${p.slug}`,
-    lastModified: new Date(p.publishedAt),
+  const postRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
+    url: `${base}/blog/${post.slug}`,
+    lastModified: new Date(post.updatedAt || post.publishedAt),
     changeFrequency: 'monthly',
     priority: 0.7,
   }));

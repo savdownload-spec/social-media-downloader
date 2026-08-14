@@ -8,7 +8,15 @@ type SeoInput = {
   image?: string;
   keywords?: string[];
   noIndex?: boolean;
+  type?: 'website' | 'article';
+  publishedTime?: string;
+  modifiedTime?: string;
+  author?: string;
 };
+
+function absoluteUrl(value: string) {
+  return value.startsWith('http') ? value : `${siteConfig.url}${value}`;
+}
 
 export function buildMetadata({
   title,
@@ -17,9 +25,14 @@ export function buildMetadata({
   image,
   keywords = [],
   noIndex = false,
+  type = 'website',
+  publishedTime,
+  modifiedTime,
+  author,
 }: SeoInput): Metadata {
-  const url = `${siteConfig.url}${path}`;
-  const ogImage = image ?? `${siteConfig.url}/og-default.svg`;
+  const url = absoluteUrl(path);
+  const ogImage = absoluteUrl(image ?? '/og-default.svg');
+  const authors = author ? [{ name: author }] : [{ name: siteConfig.name }];
 
   return {
     title,
@@ -29,12 +42,13 @@ export function buildMetadata({
     alternates: { canonical: url },
     robots: noIndex ? { index: false, follow: false } : { index: true, follow: true },
     openGraph: {
-      type: 'website',
+      type,
       url,
       title,
       description,
       siteName: siteConfig.name,
       images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
+      ...(type === 'article' ? { publishedTime, modifiedTime, authors: authors.map((entry) => entry.name) } : {}),
     },
     twitter: {
       card: 'summary_large_image',
@@ -43,7 +57,7 @@ export function buildMetadata({
       images: [ogImage],
       creator: siteConfig.twitterHandle,
     },
-    authors: [{ name: siteConfig.name }],
+    authors,
   };
 }
 
@@ -62,17 +76,12 @@ export function softwareAppSchema(tool: { name: string; description: string; url
     applicationCategory: 'MultimediaApplication',
     operatingSystem: 'Any',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.8',
-      ratingCount: '1284',
-    },
   };
 }
 
 export function faqSchema(items: ReadonlyArray<{ question: string; answer: string }>) {
   const entities = [];
-  for (const item of (items || [])) {
+  for (const item of items || []) {
     entities.push({
       '@type': 'Question',
       name: item.question,

@@ -8,31 +8,76 @@ import { z } from 'zod';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-function forbidden() { return NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403 }); }
+function forbidden() {
+  return NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403 });
+}
+
+const postFields = {
+  title: z.string().min(2),
+  slug: z.string().min(2),
+  excerpt: z.string().optional(),
+  content: z.string().min(1),
+  author: z.string().default('Editorial Team'),
+  tagsJson: z.string().default('[]'),
+  category: z.string().default('Guides'),
+  coverImage: z.string().optional(),
+  coverAlt: z.string().optional(),
+  ogImage: z.string().optional(),
+  primaryKeyword: z.string().optional(),
+  secondaryKeywordsJson: z.string().default('[]'),
+  canonicalUrl: z.string().optional(),
+  toolSlug: z.string().optional(),
+  readingTimeMinutes: z.coerce.number().int().positive().optional(),
+  published: z.boolean().default(false),
+};
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if ((session?.user as { role?: string })?.role !== 'ADMIN') return forbidden();
 
-  const sp       = req.nextUrl.searchParams;
-  const page     = Math.max(1, parseInt(sp.get('page') ?? '1', 10));
+  const sp = req.nextUrl.searchParams;
+  const page = Math.max(1, parseInt(sp.get('page') ?? '1', 10));
   const pageSize = Math.min(50, parseInt(sp.get('pageSize') ?? '20', 10));
-  const status   = sp.get('status') ?? ''; // published | draft
-  const search   = sp.get('search')?.trim() ?? '';
+  const status = sp.get('status') ?? '';
+  const search = sp.get('search')?.trim() ?? '';
 
   const where: Record<string, unknown> = {};
   if (status === 'published') where.published = true;
-  if (status === 'draft')     where.published = false;
+  if (status === 'draft') where.published = false;
   if (search) where.OR = [
-    { title:   { contains: search, mode: 'insensitive' } },
+    { title: { contains: search, mode: 'insensitive' } },
     { excerpt: { contains: search, mode: 'insensitive' } },
+    { category: { contains: search, mode: 'insensitive' } },
   ];
 
   const [posts, total] = await Promise.all([
     prisma.post.findMany({
-      where, orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * pageSize, take: pageSize,
-      select: { id: true, slug: true, title: true, author: true, published: true, publishedAt: true, tagsJson: true, createdAt: true, updatedAt: true },
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        excerpt: true,
+        content: true,
+        author: true,
+        tagsJson: true,
+        category: true,
+        coverImage: true,
+        coverAlt: true,
+        ogImage: true,
+        primaryKeyword: true,
+        secondaryKeywordsJson: true,
+        canonicalUrl: true,
+        toolSlug: true,
+        readingTimeMinutes: true,
+        published: true,
+        publishedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     }),
     prisma.post.count({ where }),
   ]);
@@ -40,26 +85,20 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     data: {
-      posts: posts.map((p) => ({
-        ...p,
-        createdAt: p.createdAt.toISOString(),
-        updatedAt: p.updatedAt.toISOString(),
-        publishedAt: p.publishedAt?.toISOString() ?? null,
+      posts: posts.map((post) => ({
+        ...post,
+        createdAt: post.createdAt.toISOString(),
+        updatedAt: post.updatedAt.toISOString(),
+        publishedAt: post.publishedAt?.toISOString() ?? null,
       })),
-      total, page, totalPages: Math.ceil(total / pageSize),
+      total,
+      page,
+      totalPages: Math.ceil(total / pageSize),
     },
   });
 }
 
-const postSchema = z.object({
-  title:    z.string().min(2),
-  slug:     z.string().min(2),
-  excerpt:  z.string().optional(),
-  content:  z.string().min(1),
-  author:   z.string().default('Editorial Team'),
-  tagsJson: z.string().default('[]'),
-  published: z.boolean().default(false),
-});
+const postSchema = z.object(postFields);
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);

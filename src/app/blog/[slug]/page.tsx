@@ -1,205 +1,143 @@
 import Link from 'next/link';
+import { ArrowLeft, ArrowRight, CalendarDays, Clock3, UserRound } from 'lucide-react';
 import { notFound } from 'next/navigation';
-import { ChevronLeft } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
-import { buildMetadata, jsonLd } from '@/lib/seo';
+import { BlogAdSlot } from '@/components/blog/BlogAdSlot';
+import { BlogCard } from '@/components/blog/BlogCard';
+import { BlogCover } from '@/components/blog/BlogCover';
+import { BlogPostBody } from '@/components/blog/BlogPostBody';
+import { BlogSidebar } from '@/components/blog/BlogSidebar';
+import { buildMetadata, breadcrumbSchema, jsonLd } from '@/lib/seo';
+import { getPublicBlogPost, getPublicBlogPosts } from '@/lib/blog';
 import { formatDate } from '@/lib/utils';
 import { siteConfig } from '@/config/site';
-import { getTranslations } from 'next-intl/server';
-import blogEn from '@/i18n/translations/blog/en.json';
+
+export const dynamic = 'force-dynamic';
 
 type Props = { params: { slug: string } };
 
-// This page previously called getLocale()/getTranslations() while
-// generateStaticParams() only ever returned { slug }, never { locale },
-// with no ancestor route providing its own locale params either. That
-// combination made Next.js bail from static generation with a
-// DYNAMIC_SERVER_USAGE error, which surfaced as a raw 500 in production
-// (same root cause already found and fixed on /tools/[slug]). Locale
-// routing is gone now, but kept force-dynamic rather than reintroducing
-// generateStaticParams for this route, no static-generation benefit lost.
-export const dynamic = 'force-dynamic';
+function relatedTo(post: Awaited<ReturnType<typeof getPublicBlogPost>> extends infer T ? Exclude<T, undefined> : never, candidates: Awaited<ReturnType<typeof getPublicBlogPosts>>) {
+  return candidates
+    .filter((candidate) => candidate.slug !== post.slug)
+    .map((candidate) => {
+      const sharedTags = candidate.tags.filter((tag) => post.tags.includes(tag)).length;
+      const score = sharedTags * 3 + (candidate.category === post.category ? 4 : 0) + (candidate.toolSlug === post.toolSlug ? 2 : 0);
+      return { candidate, score };
+    })
+    .sort((a, b) => b.score - a.score || +new Date(b.candidate.publishedAt) - +new Date(a.candidate.publishedAt))
+    .slice(0, 3)
+    .map(({ candidate }) => candidate);
+}
 
 export async function generateMetadata({ params }: Props) {
-  const posts: any[] = (blogEn as any).posts ?? [];
-  const post = posts.find((p: any) => p.slug === params.slug);
+  const post = await getPublicBlogPost(params.slug);
+  if (!post) return {};
+
   return buildMetadata({
-    title: post.title,
-    description: post.excerpt,
-    path: `/blog/${params.slug}`,
-    keywords: post.tags,
-    image: `https://picsum.photos/seed/${post.cover}/1200/630`,
+    title: post.seoTitle,
+    description: post.metaDescription,
+    path: post.canonicalUrl || `/blog/${post.slug}`,
+    keywords: [post.primaryKeyword, ...post.secondaryKeywords, ...post.tags],
+    image: post.ogImage || post.coverImage,
+    type: 'article',
+    publishedTime: post.publishedAt,
+    modifiedTime: post.updatedAt,
   });
 }
 
-/** Bold (**text**) inline formatting only, content is trusted, authored in-repo. */
-function inline(text: string) {
-  return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-}
-
-function renderContent(content: string) {
-  const out: React.ReactNode[] = [];
-  let para: string[] = [];
-  let list: string[] = [];
-  let key = 0;
-
-  const flushPara = () => {
-    if (para.length) {
-      out.push(<p key={key++} dangerouslySetInnerHTML={{ __html: inline(para.join(' ')) }} />);
-      para = [];
-    }
-  };
-  const flushList = () => {
-    if (list.length) {
-      const items = list;
-      out.push(
-        <ul key={key++}>
-          {items.map((it, j) => (
-            <li key={j} dangerouslySetInnerHTML={{ __html: inline(it) }} />
-          ))}
-        </ul>,
-      );
-      list = [];
-    }
-  };
-
-  for (const raw of content.split('\n')) {
-    const line = raw.trim();
-    if (!line) {
-      flushPara();
-      flushList();
-    } else if (line.startsWith('### ')) {
-      flushPara();
-      flushList();
-      out.push(<h3 key={key++}>{line.slice(4)}</h3>);
-    } else if (line.startsWith('## ')) {
-      flushPara();
-      flushList();
-      out.push(<h2 key={key++}>{line.slice(3)}</h2>);
-    } else if (line.startsWith('# ')) {
-      flushPara();
-      flushList();
-      out.push(<h1 key={key++}>{line.slice(2)}</h1>);
-    } else if (line.startsWith('- ')) {
-      flushPara();
-      list.push(line.slice(2));
-    } else {
-      flushList();
-      para.push(line);
-    }
-  }
-  flushPara();
-  flushList();
-  return out;
-}
-
 export default async function BlogPostPage({ params }: Props) {
-  const t = await getTranslations('blog');
+  const [post, allPosts] = await Promise.all([getPublicBlogPost(params.slug), getPublicBlogPosts()]);
+  if (!post) notFound();
 
-  const posts: any[] = (blogEn as any).posts ?? [];
-  const post = posts.find((p: any) => p.slug === params.slug);
-  if (!post) return notFound();
-
-  const related = posts.filter((p: any) => p.slug !== post.slug).slice(0, 3);
-
+  const related = relatedTo(post, allPosts);
+  const canonicalPath = post.canonicalUrl || `/blog/${post.slug}`;
+  const canonicalUrl = canonicalPath.startsWith('http') ? canonicalPath : `${siteConfig.url}${canonicalPath}`;
+  const image = post.ogImage || `${siteConfig.url}${post.coverImage}`;
   const articleSchema = {
     '@type': 'BlogPosting',
     headline: post.title,
-    description: post.excerpt,
+    description: post.metaDescription,
     author: { '@type': 'Organization', name: post.author },
     datePublished: post.publishedAt,
-    image: `https://picsum.photos/seed/${post.cover}/1200/630`,
-    publisher: { '@type': 'Organization', name: siteConfig.name },
-    mainEntityOfPage: `${siteConfig.url}/blog/${post.slug}`,
+    ...(post.updatedAt ? { dateModified: post.updatedAt } : {}),
+    image,
+    keywords: [post.primaryKeyword, ...post.secondaryKeywords, ...post.tags].join(', '),
+    publisher: { '@type': 'Organization', name: siteConfig.name, url: siteConfig.url },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalUrl },
   };
+  const crumbs = [
+    { name: 'Home', url: siteConfig.url },
+    { name: 'Blog', url: `${siteConfig.url}/blog` },
+    { name: post.title, url: canonicalUrl },
+  ];
 
   return (
-    <>
+    <main>
       <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(articleSchema)} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(breadcrumbSchema(crumbs))} />
 
-      <Container className="pt-16 md:pt-20 max-w-3xl">
-        <Link
-          href="/blog"
-          className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-text mb-8 transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4" /> {t('backToBlog') || 'All articles'}
+      <Container className="max-w-6xl pt-10 md:pt-14">
+        <Link href="/blog" className="inline-flex items-center gap-2 text-sm font-medium text-text-muted transition-colors hover:text-primary">
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Back to articles
         </Link>
 
-        <div className="flex items-center gap-2 text-xs text-text-subtle uppercase tracking-wider mb-3">
-          <span>{formatDate(new Date(post.publishedAt))}</span>
-          <span>·</span>
-          <span>{post.readingTime}</span>
-          <span>·</span>
-          <span>by {post.author}</span>
-        </div>
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-[1.05]">
-          {post.title}
-        </h1>
-        <p className="mt-4 text-lg text-text-muted leading-relaxed">{post.excerpt}</p>
+        <header className="mx-auto max-w-4xl py-9 text-center md:py-12">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">{post.category}</p>
+          <h1 className="mt-4 font-display text-4xl font-semibold leading-[1.04] tracking-tight text-text md:text-6xl">
+            {post.title}
+          </h1>
+          <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-text-muted md:text-lg">{post.excerpt}</p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-text-muted">
+            <span className="inline-flex items-center gap-1.5"><UserRound className="h-4 w-4" aria-hidden="true" />{post.author}</span>
+            <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-4 w-4" aria-hidden="true" />{formatDate(new Date(post.publishedAt))}</span>
+            <span className="inline-flex items-center gap-1.5"><Clock3 className="h-4 w-4" aria-hidden="true" />{post.readingTime}</span>
+          </div>
+          {post.tags.length > 0 && (
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              {post.tags.map((tag) => <span key={tag} className="rounded-full bg-primary-light px-3 py-1.5 text-xs font-medium text-primary">{tag}</span>)}
+            </div>
+          )}
+        </header>
 
-        <div className="mt-6 flex items-center gap-2 flex-wrap">
-          {post.tags.map((tag: string) => (
-            <span key={tag} className="text-xs px-2.5 py-1 rounded-full bg-primary-light text-primary font-medium">
-              {tag}
-            </span>
-          ))}
+        <BlogCover post={post} priority className="aspect-[16/8] rounded-3xl border border-border shadow-soft-lg" />
+      </Container>
+
+      <Container className="max-w-6xl py-12 md:py-16">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+          <article className="min-w-0 rounded-3xl border border-border bg-white p-6 shadow-soft md:p-10">
+            <BlogPostBody post={post} />
+            <div className="mt-10 rounded-2xl bg-gradient-brand p-7 text-center text-white shadow-glow-lg md:p-9">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">Save it when you need it</p>
+              <h2 className="mt-3 text-2xl font-semibold tracking-tight">Ready to download media with SavDown?</h2>
+              <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-white/80">Paste a public link, choose an available format, and keep your workflow simple.</p>
+              <Link href={post.toolSlug ? `/tools/${post.toolSlug}` : '/tools'} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-ink-900 transition-colors hover:bg-indigo-50">
+                Try SavDown free <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </div>
+          </article>
+
+          <BlogSidebar post={post} related={related} />
         </div>
       </Container>
 
-      <Container className="mt-10 max-w-4xl">
-        <div className="relative aspect-[16/9] rounded-3xl overflow-hidden border border-border shadow-soft-lg bg-surface">
-          <img
-            src={`https://picsum.photos/seed/${post.cover}/1200/675`}
-            alt={post.title}
-            className="w-full h-full object-cover"
-          />
-        </div>
-      </Container>
-
-      <Container className="max-w-3xl">
-        <article className="prose-elegant mt-12">{renderContent(post.content)}</article>
-
-        {/* CTA */}
-        <div className="mt-14 rounded-3xl bg-gradient-brand bg-[length:200%_200%] animate-gradient text-white p-8 md:p-10 text-center shadow-glow-lg">
-          <h2 className="text-2xl font-bold tracking-tight">{t('ctaTitle') || 'Ready To Save A Video?'}</h2>
-          <p className="mt-2 text-white/80">{t('ctaDesc') || 'Try our free, watermark-free downloaders, no signup required.'}</p>
-          <Link
-            href="/#tools"
-            className="inline-flex items-center mt-6 px-6 py-3 rounded-2xl bg-white text-text font-semibold shadow-soft-md hover:shadow-soft-lg transition-all"
-          >
-            {t('ctaButton') || 'Browse all tools'}
-          </Link>
-        </div>
-      </Container>
-
-      {/* Related */}
-      <Container className="py-24 max-w-6xl">
-        <h2 className="text-2xl font-bold tracking-tight mb-8">{t('keepReading') || 'Keep Reading'}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {related.map((p: any) => (
-            <Link
-              key={p.slug}
-              href={`/blog/${p.slug}`}
-              className="group flex flex-col rounded-2xl overflow-hidden bg-white border border-border shadow-soft hover:shadow-soft-lg hover:-translate-y-1 transition-all duration-300"
-            >
-              <div className="relative aspect-[16/10] bg-surface overflow-hidden">
-                <img
-                  src={`https://picsum.photos/seed/${p.cover}/600/380`}
-                  alt={p.title}
-                  loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
+      <Container className="max-w-6xl pb-16 md:pb-24">
+        <BlogAdSlot slot="SECONDARY_AD" />
+        {related.length > 0 && (
+          <section className="mt-14">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Continue exploring</p>
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-text">Related articles</h2>
               </div>
-              <div className="p-6">
-                <h3 className="font-bold text-text tracking-tight group-hover:text-primary transition-colors">
-                  {p.title}
-                </h3>
-                <p className="mt-2 text-sm text-text-muted leading-relaxed line-clamp-2">{p.excerpt}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
+              <Link href="/blog" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-hover">All articles <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>
+            </div>
+            <div className="mt-6 grid gap-5 md:grid-cols-3">
+              {related.map((item) => <BlogCard key={item.slug} post={item} compact />)}
+            </div>
+          </section>
+        )}
       </Container>
-    </>
+    </main>
   );
 }

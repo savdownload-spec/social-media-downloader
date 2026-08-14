@@ -13,22 +13,18 @@ import { FAQ } from '@/components/home/FAQ';
 import { Newsletter } from '@/components/home/Newsletter';
 import { jsonLd, faqSchema } from '@/lib/seo';
 import { getTranslations } from 'next-intl/server';
-import blogEn from '@/i18n/translations/blog/en.json';
+import { getPublicBlogPosts } from '@/lib/blog';
 
-export const revalidate = 3600;
+export const revalidate = 300;
 
 export default async function HomePage() {
   const t = await getTranslations('faqs');
   const faqs = (t.raw as any)('items') ?? [];
-
-  const posts: any[] = (blogEn as any).posts ?? [];
+  const posts = await getPublicBlogPosts();
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={jsonLd(faqSchema(faqs))}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(faqSchema(faqs))} />
       <Hero />
       <AllToolsGrid />
       <HowItWorks />
