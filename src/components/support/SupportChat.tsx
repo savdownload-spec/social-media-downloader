@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
+import { playOpen, playClose, playTap, playTick, playSend, playSuccess, playReceive, playAttach, playRemove, playBack } from '@/lib/sounds';
 
 type Attachment = { id: string; fileName: string; contentType: string; size: number };
 type Message = { id: string; senderType: 'CUSTOMER' | 'ADMIN' | 'SYSTEM'; body: string; createdAt: string; attachments: Attachment[] };
@@ -94,19 +95,19 @@ export function SupportChat() {
 
   async function startConversation(e: FormEvent) {
     e.preventDefault(); if (!category || !message.trim()) return;
-    setSending(true);
+    setSending(true); playSend();
     try {
       const res = await fetch('/api/support', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ category, message, name, email }) });
       const data = await res.json(); if (!res.ok || !data?.ok) throw new Error(data?.error || 'Could not start conversation.');
       if (data.data.guestToken) localStorage.setItem(guestKey, JSON.stringify({ id: data.data.conversation.id, token: data.data.guestToken }));
-      setJustCreatedId(data.data.conversation.id);
+      setJustCreatedId(data.data.conversation.id); playSuccess();
       setMessage(''); setFiles([]); await loadDetail(data.data.conversation.id); loadList();
     } catch (e) { error('Message not sent', e instanceof Error ? e.message : 'Please try again.'); } finally { setSending(false); }
   }
   async function sendMessage() {
-    if (!detail || !message.trim() || sending) return; setSending(true);
+    if (!detail || !message.trim() || sending) return; setSending(true); playSend();
     const body = new FormData(); body.set('message', message); files.forEach((file) => body.append('attachments', file));
-    try { const res = await fetch(`/api/support/${detail.id}`, { method: 'POST', headers: guestHeaders(), body }); const data = await res.json(); if (!res.ok || !data?.ok) throw new Error(data?.error || 'Could not send message.'); setMessage(''); setFiles([]); await loadDetail(detail.id); loadList(); }
+    try { const res = await fetch(`/api/support/${detail.id}`, { method: 'POST', headers: guestHeaders(), body }); const data = await res.json(); if (!res.ok || !data?.ok) throw new Error(data?.error || 'Could not send message.'); playReceive(); setMessage(''); setFiles([]); await loadDetail(detail.id); loadList(); }
     catch (e) { error('Message not sent', e instanceof Error ? e.message : 'Retry when your connection returns.'); } finally { setSending(false); }
   }
   function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
@@ -119,7 +120,7 @@ export function SupportChat() {
       <button
         type="button"
         aria-label="Open support"
-        onClick={() => setOpen(true)}
+        onClick={() => { setOpen(true); playOpen(); }}
         className="group fixed bottom-5 right-5 z-[90] inline-flex h-14 items-center gap-2.5 rounded-full bg-gradient-brand bg-[length:200%_200%] pl-2.5 pr-4 text-sm font-semibold text-white shadow-glow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-[position:100%_50%] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:pr-5"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
@@ -142,7 +143,7 @@ export function SupportChat() {
           {/* Mobile backdrop */}
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}
-            onClick={() => setOpen(false)}
+            onClick={() => { setOpen(false); playClose(); }}
             className="fixed inset-0 z-[100] bg-ink/30 backdrop-blur-[2px] sm:hidden"
             aria-hidden
           />
@@ -167,7 +168,7 @@ export function SupportChat() {
     return (
       <header className="flex shrink-0 items-center gap-3 border-b border-border-light px-4 py-3.5">
         {onBack ? (
-          <button onClick={onBack} aria-label="Back" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-text-muted transition-colors hover:bg-surface">
+          <button onClick={() => { onBack(); playBack(); }} aria-label="Back" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-text-muted transition-colors hover:bg-surface">
             <ArrowLeft className="h-4.5 w-4.5" />
           </button>
         ) : (
@@ -179,7 +180,7 @@ export function SupportChat() {
           <h2 className="text-sm font-bold leading-tight text-text">Support</h2>
           <p className="truncate text-xs text-text-muted">{subtitle ?? "We're here to help."}</p>
         </div>
-        <button onClick={() => setOpen(false)} aria-label="Close support" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-text-subtle transition-colors hover:bg-surface hover:text-text">
+        <button onClick={() => { setOpen(false); playClose(); }} aria-label="Close support" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-text-subtle transition-colors hover:bg-surface hover:text-text">
           <X className="h-4.5 w-4.5" />
         </button>
       </header>
@@ -208,7 +209,7 @@ export function SupportChat() {
         <>
           <Header subtitle={<StatusLine />} />
           <div className="flex-1 overflow-y-auto px-4 py-4">
-            <button onClick={() => { setStarting(true); resetComposer(); }} className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-brand px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition-shadow hover:shadow-soft-md">
+            <button onClick={() => { setStarting(true); resetComposer(); playTap(); }} className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-brand px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition-shadow hover:shadow-soft-md">
               <Plus className="h-4 w-4" /> New conversation
             </button>
             <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-wider text-text-subtle">Your conversations</p>
@@ -216,7 +217,7 @@ export function SupportChat() {
               {conversations.map((c) => {
                 const M = meta(c.category).icon;
                 return (
-                  <button key={c.id} onClick={() => loadDetail(c.id)} className="flex w-full items-center gap-3 rounded-xl border border-border-light bg-white p-3 text-left transition-all hover:border-primary/30 hover:shadow-soft">
+                  <button key={c.id} onClick={() => { loadDetail(c.id); playTap(); }} className="flex w-full items-center gap-3 rounded-xl border border-border-light bg-white p-3 text-left transition-all hover:border-primary/30 hover:shadow-soft">
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-light text-primary"><M className="h-4 w-4" /></span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center justify-between gap-2">
@@ -255,7 +256,7 @@ export function SupportChat() {
                     <button
                       key={key}
                       type="button"
-                      onClick={() => setCategory(key)}
+                      onClick={() => { setCategory(key); playTap(); }}
                       className="group flex flex-col gap-1.5 rounded-xl border border-border-light bg-white p-3 text-left transition-all duration-150 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft"
                     >
                       <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-light text-primary transition-colors group-hover:bg-primary group-hover:text-white">
@@ -267,7 +268,7 @@ export function SupportChat() {
                   ))}
                 </div>
                 {!showMore && (
-                  <button onClick={() => setShowMore(true)} className="mt-2 flex w-full items-center justify-center gap-1 rounded-xl border border-border-light py-2.5 text-xs font-semibold text-text-muted transition-colors hover:border-primary/30 hover:text-primary">
+                  <button onClick={() => { setShowMore(true); playTick(); }} className="mt-2 flex w-full items-center justify-center gap-1 rounded-xl border border-border-light py-2.5 text-xs font-semibold text-text-muted transition-colors hover:border-primary/30 hover:text-primary">
                     More topics
                   </button>
                 )}
@@ -281,7 +282,7 @@ export function SupportChat() {
                     <span className="block text-sm font-semibold text-text">{label(category)}</span>
                     <span className="block truncate text-[11px] text-text-muted">{meta(category).desc}</span>
                   </span>
-                  <button type="button" onClick={() => setCategory('')} className="text-xs font-semibold text-primary hover:underline">Change</button>
+                  <button type="button" onClick={() => { setCategory(''); playTick(); }} className="text-xs font-semibold text-primary hover:underline">Change</button>
                 </div>
 
                 <div>
@@ -376,7 +377,7 @@ export function SupportChat() {
                 <span key={i} className="inline-flex max-w-[12rem] items-center gap-1 rounded-lg border border-border-light bg-surface py-1 pl-2 pr-1 text-[11px] text-text-muted">
                   <Paperclip className="h-3 w-3 shrink-0 text-text-subtle" />
                   <span className="truncate">{f.name}</span>
-                  <button type="button" onClick={() => setFiles(files.filter((_, j) => j !== i))} className="grid h-4 w-4 shrink-0 place-items-center rounded text-text-subtle hover:bg-border-light hover:text-text" aria-label={`Remove ${f.name}`}>
+                  <button type="button" onClick={() => { setFiles(files.filter((_, j) => j !== i)); playRemove(); }} className="grid h-4 w-4 shrink-0 place-items-center rounded text-text-subtle hover:bg-border-light hover:text-text" aria-label={`Remove ${f.name}`}>
                     <X className="h-3 w-3" />
                   </button>
                 </span>
@@ -384,7 +385,7 @@ export function SupportChat() {
             </div>
           )}
           <div className="flex items-end gap-1.5 rounded-2xl border border-border bg-white p-1.5 transition-shadow focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
-            <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf,text/plain" className="hidden" onChange={(e) => setFiles(Array.from(e.target.files || []).slice(0, 4))} />
+            <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf,text/plain" className="hidden" onChange={(e) => { const f = Array.from(e.target.files || []).slice(0, 4); setFiles(f); if (f.length) playAttach(); }} />
             <button type="button" onClick={() => fileRef.current?.click()} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-text-subtle transition-colors hover:bg-surface hover:text-primary" title="Attach screenshot" aria-label="Attach screenshot">
               <Plus className="h-5 w-5" />
             </button>
