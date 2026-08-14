@@ -61,18 +61,26 @@ export function HighlightFrame({
 
   return (
     <div className="relative h-full">
+      {/* The badge floats as its own layer ABOVE the top border, not on it:
+          `bottom-full` pins its bottom edge to the top of the card and `mb-2`
+          lifts it clear, so the complete gradient border — all four sides and
+          corners — stays visible and uninterrupted behind it. It never masks
+          or clips the stroke, regardless of badge height. */}
       {badge && (
         <span
           className={cn(
-            'absolute -top-3 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-full px-3.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] shadow-soft-md',
+            'absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 whitespace-nowrap rounded-full px-3.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] shadow-soft-md',
             styles.badge,
           )}
         >
           {badge}
         </span>
       )}
+      {/* Uniform 1.5px stroke: the inner radius must be the outer radius
+          (rounded-3xl = 32px) minus the padding (1.5px) = 30.5px, or the
+          gradient bunches up thicker at the corners than along the edges. */}
       <div className={cn('h-full rounded-3xl bg-gradient-to-br p-[1.5px]', styles.border, styles.glow)}>
-        <div className={cn('h-full rounded-[22.5px] bg-white', className)}>{children}</div>
+        <div className={cn('h-full rounded-[30.5px] bg-white', className)}>{children}</div>
       </div>
     </div>
   );
