@@ -8,7 +8,7 @@ import {
 } from './AdminUI';
 import { useToast } from '@/components/ui/Toast';
 import { useConfirm } from '@/components/ui/ConfirmProvider';
-import { UserCheck, UserX, Trash2, Eye, ChevronDown } from 'lucide-react';
+import { UserCheck, UserX, Trash2, Eye } from 'lucide-react';
 
 const PLAN_FILTERS = ['ALL', 'FREE', 'PRO', 'MAX', 'LIFETIME'];
 
@@ -104,7 +104,7 @@ export function AdminUsersClient() {
                     <p className="text-xs text-text-muted">{u.email}</p>
                   </div>
                 </Td>
-                <Td><StatusBadge status={u.role === 'SUSPENDED' ? 'SUSPENDED' : 'ACTIVE'} /></Td>
+                <Td><StatusBadge status={u.role} /></Td>
                 <Td><StatusBadge status={u.plan} /></Td>
                 <Td className="text-text-muted">{u.totalCredits.toLocaleString()}</Td>
                 <Td className="text-text-muted">{u._count.downloads.toLocaleString()}</Td>

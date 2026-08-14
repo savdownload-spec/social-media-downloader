@@ -9,7 +9,7 @@ import {
 } from './AdminUI';
 import { useToast } from '@/components/ui/Toast';
 import { useConfirm } from '@/components/ui/ConfirmProvider';
-import { ArrowLeft, UserX, UserCheck, Trash2, Coins, CreditCard } from 'lucide-react';
+import { ArrowLeft, UserX, UserCheck, Trash2, Coins, CreditCard, ShieldCheck } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 
@@ -31,9 +31,11 @@ export function AdminUserDetail({ user }: { user: UserData }) {
   const [loading, setLoading] = useState(false);
   const [creditModal, setCreditModal] = useState<'add' | 'remove' | null>(null);
   const [planModal, setPlanModal]     = useState(false);
+  const [roleModal, setRoleModal]     = useState(false);
   const [creditAmt, setCreditAmt]     = useState('');
   const [creditReason, setCreditReason] = useState('');
   const [newPlan, setNewPlan]         = useState(user.plan);
+  const [newRole, setNewRole]         = useState(user.role === 'ADMIN' ? 'ADMIN' : 'USER');
   const [tab, setTab]                 = useState<'overview' | 'credits' | 'downloads' | 'subscriptions' | 'reviews'>('overview');
 
   async function doAction(action: string, extra?: Record<string, unknown>) {
@@ -88,6 +90,10 @@ export function AdminUserDetail({ user }: { user: UserData }) {
             </button>
             <button onClick={() => setPlanModal(true)} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-primary-light text-primary hover:bg-primary hover:text-white transition-colors">
               <CreditCard className="w-3.5 h-3.5" /> Change Plan
+            </button>
+            <button onClick={() => { setNewRole(user.role === 'ADMIN' ? 'ADMIN' : 'USER'); setRoleModal(true); }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-primary-light text-primary hover:bg-primary hover:text-white transition-colors">
+              <ShieldCheck className="w-3.5 h-3.5" /> Change Role
             </button>
             {user.role === 'SUSPENDED' ? (
               <button disabled={loading} onClick={() => doAction('restore')} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-accent-light text-accent hover:bg-accent hover:text-white transition-colors">
@@ -277,6 +283,27 @@ export function AdminUserDetail({ user }: { user: UserData }) {
             <button onClick={() => setPlanModal(false)} className="px-4 py-2 rounded-xl text-sm text-text-muted hover:bg-surface transition-colors">Cancel</button>
             <Button onClick={async () => { await doAction('changePlan', { plan: newPlan }); setPlanModal(false); }} loading={loading} size="sm">
               Change Plan
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Change role modal */}
+      <Modal open={roleModal} onClose={() => setRoleModal(false)} title="Change Role" size="sm">
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs font-semibold text-text-muted block mb-1">New Role</label>
+            <select value={newRole} onChange={(e) => setNewRole(e.target.value)}
+              className="w-full h-10 rounded-xl border border-border px-3 text-sm focus:outline-none focus:border-primary/50 bg-white">
+              <option value="USER">USER</option>
+              <option value="ADMIN">ADMIN</option>
+            </select>
+            <p className="mt-2 text-xs text-text-subtle">Administrator access is applied when the user refreshes their session.</p>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button onClick={() => setRoleModal(false)} className="px-4 py-2 rounded-xl text-sm text-text-muted hover:bg-surface transition-colors">Cancel</button>
+            <Button onClick={async () => { await doAction('changeRole', { role: newRole }); setRoleModal(false); }} loading={loading} size="sm">
+              Save Role
             </Button>
           </div>
         </div>

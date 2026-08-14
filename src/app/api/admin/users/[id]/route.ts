@@ -33,6 +33,7 @@ const patchSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('suspend') }),
   z.object({ action: z.literal('restore') }),
   z.object({ action: z.literal('delete') }),
+  z.object({ action: z.literal('changeRole'), role: z.enum(['USER', 'ADMIN']) }),
   z.object({ action: z.literal('changePlan'), plan: z.enum(['FREE', 'PRO', 'LIFETIME']) }),
   z.object({ action: z.literal('addCredits'), amount: z.number().int().positive(), reason: z.string().min(3) }),
   z.object({ action: z.literal('removeCredits'), amount: z.number().int().positive(), reason: z.string().min(3) }),
@@ -66,6 +67,31 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     await prisma.user.delete({ where: { id: params.id } });
     await writeAuditLog({ adminId: adminUser.id!, adminEmail: adminUser.email!, action: 'user.delete', targetType: 'User', targetId: params.id, ip });
     return NextResponse.json({ ok: true, data: { message: 'User deleted' } });
+  }
+
+  if (action === 'changeRole') {
+    if (params.id === adminUser.id && parsed.data.role !== 'ADMIN') {
+      return NextResponse.json(
+        { ok: false, error: 'You cannot remove your own administrator access.' },
+        { status: 400 },
+      );
+    }
+    const target = await prisma.user.findUnique({
+      where: { id: params.id },
+      select: { role: true },
+    });
+    if (!target) return NextResponse.json({ ok: false, error: 'Not found' }, { status: 404 });
+    await prisma.user.update({ where: { id: params.id }, data: { role: parsed.data.role } });
+    await writeAuditLog({
+      adminId: adminUser.id!,
+      adminEmail: adminUser.email!,
+      action: 'user.changeRole',
+      targetType: 'User',
+      targetId: params.id,
+      detail: { from: target.role, to: parsed.data.role },
+      ip,
+    });
+    return NextResponse.json({ ok: true, data: { message: `Role changed to ${parsed.data.role}` } });
   }
 
   if (action === 'changePlan') {

@@ -107,6 +107,8 @@ export function Td({ children, className }: { children: React.ReactNode; classNa
 const STATUS_MAP: Record<string, string> = {
   // User statuses
   ACTIVE:       'bg-accent-light text-accent',
+  ADMIN:        'bg-primary-light text-primary',
+  USER:         'bg-surface text-text-muted',
   SUSPENDED:    'bg-rose-50 text-rose-700',
   // Plan
   FREE:         'bg-surface text-text-muted',

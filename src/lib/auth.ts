@@ -6,10 +6,13 @@ import { prisma } from './prisma';
 import { verifyPassword } from './passwords';
 import { loginSchema } from './auth/validators';
 
-const adminEmails = (process.env.ADMIN_EMAILS || '')
-  .split(',')
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean);
+const adminEmails = Array.from(new Set([
+  'hafizm.farooq@gmail.com',
+  ...(process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean),
+]));
 
 const providers = [];
 
@@ -70,14 +73,20 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user?.email) {
+        const normalizedEmail = user.email.toLowerCase();
+        const isConfiguredAdmin = adminEmails.includes(normalizedEmail);
         const dbUser = await prisma.user.upsert({
           where: { email: user.email },
-          update: { name: user.name, image: user.image },
+          update: {
+            name: user.name,
+            image: user.image,
+            ...(isConfiguredAdmin ? { role: 'ADMIN' } : {}),
+          },
           create: {
             email: user.email,
             name: user.name,
             image: user.image,
-            role: adminEmails.includes(user.email.toLowerCase()) ? 'ADMIN' : 'USER',
+            role: isConfiguredAdmin ? 'ADMIN' : 'USER',
           },
         });
         token.id = dbUser.id;
