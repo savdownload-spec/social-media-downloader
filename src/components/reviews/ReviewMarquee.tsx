@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, type ReactNode } from 'react';
+import Link from 'next/link';
 import { Star } from 'lucide-react';
 import { Review } from './ReviewCard';
 
@@ -49,7 +50,10 @@ function MarqueeRow({ items, speed, direction, paused, onPauseChange }: MarqueeR
 
   return (
     <div
-      className="relative w-full overflow-hidden"
+      // overflow-x-clip hides the wide scrolling track horizontally while
+      // leaving the vertical axis visible, so a card's hover lift and deeper
+      // shadow are not clipped at the top/bottom edges of the row.
+      className="relative w-full overflow-x-clip"
       onMouseEnter={() => onPauseChange(true)}
       onMouseLeave={() => onPauseChange(false)}
     >
@@ -64,11 +68,15 @@ function MarqueeRow({ items, speed, direction, paused, onPauseChange }: MarqueeR
         }}
       >
         {duplicated.map((review, i) => (
-          <div
+          <Link
             key={`${review.id}-${i}`}
-            className="w-[320px] md:w-[360px] shrink-0"
+            href={`/reviews?review=${review.id}`}
+            aria-label={`Read reviews — ${review.name}`}
+            className="group block w-[320px] md:w-[360px] shrink-0"
           >
-            <div className="h-full rounded-2xl bg-white border border-border shadow-soft p-5">
+            {/* Whole card is the link target. Hover lifts it slightly, deepens
+                the shadow and tints the border to signal it's clickable. */}
+            <div className="h-full rounded-2xl bg-white border border-border shadow-soft p-5 transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-soft-lg">
               <div className="flex items-center gap-1 text-amber-400 mb-2">
                 {Array.from({ length: 5 }).map((_, s) => (
                   <Star key={s} className={`w-3.5 h-3.5 ${s < review.rating ? 'fill-current' : 'fill-none text-text-subtle'}`} />
@@ -97,7 +105,7 @@ function MarqueeRow({ items, speed, direction, paused, onPauseChange }: MarqueeR
                 </div>
               </div>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
