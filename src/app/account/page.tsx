@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { Coins } from 'lucide-react';
@@ -10,6 +10,7 @@ import { ProfileForm, type AccountUser } from '@/components/account/ProfileForm'
 import { MyReviews, type MyReview } from '@/components/account/MyReviews';
 import { DangerZone } from '@/components/account/DangerZone';
 import { buildMetadata } from '@/lib/seo';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
 export const metadata = buildMetadata({
   title: 'Account',
@@ -85,10 +86,18 @@ export default async function AccountPage() {
     <Section variant="default" className="pt-12 md:pt-16">
       <Container>
         <div className="max-w-5xl mx-auto">
+          <Breadcrumb
+            className="mb-8 justify-start px-0"
+            includeSchema
+            items={[
+              { label: 'Home', href: '/' },
+              { label: 'Account' },
+            ]}
+          />
           <div className="mb-10">
             <p className="text-sm font-medium text-primary mb-3">Account</p>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Hi, {user.name ?? 'there'} 👋
+              Hi, {user.name ?? 'there'} ðŸ‘‹
             </h1>
             <p className="mt-2 text-text-muted text-sm">
               Manage your profile, review your submissions, and control your account.
@@ -110,3 +119,4 @@ export default async function AccountPage() {
     </Section>
   );
 }
+

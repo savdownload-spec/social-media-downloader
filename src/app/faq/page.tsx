@@ -1,8 +1,9 @@
-import { Container } from '@/components/layout/Container';
+﻿import { Container } from '@/components/layout/Container';
 import { FAQ } from '@/components/home/FAQ';
 import { homeFaqs } from '@/config/faqs';
 import { tools } from '@/config/tools';
 import { buildMetadata, jsonLd, faqSchema } from '@/lib/seo';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
 export const metadata = buildMetadata({
   title: 'FAQ',
@@ -28,6 +29,14 @@ export default function FaqPage() {
         dangerouslySetInnerHTML={jsonLd(faqSchema(allFaqs))}
       />
       <Container className="pt-24 pb-8 max-w-3xl text-center">
+        <Breadcrumb
+          className="mb-8"
+          includeSchema
+          items={[
+            { label: 'Home', href: '/' },
+            { label: 'FAQ' },
+          ]}
+        />
         <p className="text-sm font-medium text-primary mb-3">FAQ</p>
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-[1.05]">
           Everything You Might Wonder.

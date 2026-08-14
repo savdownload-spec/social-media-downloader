@@ -1,4 +1,5 @@
-import { Container } from '@/components/layout/Container';
+﻿import { Container } from '@/components/layout/Container';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { BlogListingClient } from '@/components/blog/BlogListingClient';
 import { getPublicBlogPosts } from '@/lib/blog';
 
@@ -30,3 +31,4 @@ export default async function BlogPage() {
     </main>
   );
 }
+

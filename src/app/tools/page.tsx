@@ -1,6 +1,7 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Section } from '@/components/layout/Section';
 import { Reveal } from '@/components/ui/Reveal';
 import { catalog, toolGroups, isToolAvailable } from '@/config/catalog';
@@ -34,6 +35,14 @@ export default function ToolsIndexPage() {
           <div className="absolute -top-10 right-0 w-[22rem] h-[22rem] bg-fuchsia-brand/15 rounded-full blur-3xl animate-blob-slow" />
         </div>
         <Container className="relative pt-16 pb-10 md:pt-20 md:pb-14 text-center">
+          <Breadcrumb
+            className="mb-10"
+            includeSchema
+            items={[
+              { label: 'Home', href: '/' },
+              { label: 'Tools' },
+            ]}
+          />
           <div className="reveal max-w-2xl mx-auto">
             <p className="text-sm font-semibold uppercase tracking-wider text-gradient inline-block mb-3">
               The complete toolkit
@@ -108,3 +117,4 @@ export default function ToolsIndexPage() {
     </>
   );
 }
+

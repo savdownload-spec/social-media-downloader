@@ -1,4 +1,4 @@
-import {
+﻿import {
   Shield, Mail, FileText, Clock, AlertTriangle, CheckCircle2, ListOrdered, Scale,
 } from 'lucide-react';
 import {
@@ -25,6 +25,10 @@ export default function DmcaPage() {
   return (
     <>
       <InfoPageHero
+        breadcrumbs={[
+          { label: 'Home', href: '/' },
+          { label: 'DMCA' },
+        ]}
         eyebrow="Legal"
         title={<>DMCA <span className="text-gradient">Policy.</span></>}
         description="SavDown respects the intellectual property rights of others and expects users to do the same. Here is how we handle copyright concerns, in plain language."
@@ -141,3 +145,5 @@ export default function DmcaPage() {
     </>
   );
 }
+
+

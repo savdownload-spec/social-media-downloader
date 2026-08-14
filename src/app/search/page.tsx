@@ -1,10 +1,11 @@
-'use client';
+﻿'use client';
 
 import { Suspense, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ArrowUpRight, Search as SearchIcon } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Input } from '@/components/ui/Input';
 import { tools } from '@/config/tools';
 import { blogPosts } from '@/config/blog';
@@ -41,7 +42,7 @@ const blogItems: SearchItem[] = blogPosts.map((post) => ({
   title: post.title,
   description: post.excerpt,
   href: `/blog/${post.slug}`,
-  category: `Blog · ${post.category}`,
+  category: `Blog Â· ${post.category}`,
   keywords: [post.primaryKeyword, ...post.secondaryKeywords, ...post.tags],
 }));
 
@@ -67,7 +68,7 @@ function SearchInner() {
     <>
       <div className="relative mt-8">
         <SearchIcon className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />
-        <Input value={query} onChange={(event) => { setQuery(event.target.value); router.replace(event.target.value ? `/search?q=${encodeURIComponent(event.target.value)}` : '/search', { scroll: false }); }} placeholder="Type to search tools, articles, or topics…" autoFocus className="pl-12 text-base" aria-label="Search" />
+        <Input value={query} onChange={(event) => { setQuery(event.target.value); router.replace(event.target.value ? `/search?q=${encodeURIComponent(event.target.value)}` : '/search', { scroll: false }); }} placeholder="Type to search tools, articles, or topicsâ€¦" autoFocus className="pl-12 text-base" aria-label="Search" />
       </div>
       <p className="mt-6 text-sm text-text-muted">{results.length} result{results.length === 1 ? '' : 's'}{query && <> for <span className="text-text">&quot;{query}&quot;</span></>}</p>
       <div className="mt-6 space-y-3">
@@ -86,9 +87,18 @@ function SearchInner() {
 export default function SearchPage() {
   return (
     <Container className="max-w-3xl py-24">
+      <Breadcrumb
+        className="mb-8 justify-start px-0"
+        includeSchema
+        items={[
+          { label: 'Home', href: '/' },
+          { label: 'Search' },
+        ]}
+      />
       <p className="mb-3 text-sm font-medium text-primary">Search</p>
       <h1 className="text-4xl font-bold leading-[1.05] tracking-tight md:text-5xl">Find Anything On SavDown.</h1>
       <Suspense fallback={<div className="mt-8 h-14 animate-pulse rounded-2xl bg-surface" />}><SearchInner /></Suspense>
     </Container>
   );
 }
+

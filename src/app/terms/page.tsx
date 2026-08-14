@@ -1,4 +1,4 @@
-import {
+﻿import {
   CheckCircle2, XCircle, FileText, AlertTriangle, Scale, RefreshCw,
   Mail, BookOpen, Shield,
 } from 'lucide-react';
@@ -32,6 +32,10 @@ export default function TermsPage() {
   return (
     <>
       <InfoPageHero
+        breadcrumbs={[
+          { label: 'Home', href: '/' },
+          { label: 'Terms of Service' },
+        ]}
         eyebrow="Legal"
         title={<>Terms of <span className="text-gradient">Service.</span></>}
         description="By using SavDown, you agree to these terms. We have written them in plain English so you do not need a lawyer to understand them."
@@ -193,3 +197,5 @@ export default function TermsPage() {
     </>
   );
 }
+
+

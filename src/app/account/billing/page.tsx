@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { Coins, CheckCircle2, ArrowLeft } from 'lucide-react';
@@ -9,6 +9,7 @@ import { Section } from '@/components/layout/Section';
 import { ManageBillingButton } from '@/components/account/ManageBillingButton';
 import { getBillingSummary, TIER_ALLOWANCE } from '@/lib/billing';
 import { buildMetadata } from '@/lib/seo';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
 export const metadata = buildMetadata({
   title: 'Billing',
@@ -56,6 +57,15 @@ export default async function BillingPage({
     <Section variant="default" className="pt-12 md:pt-16">
       <Container>
         <div className="max-w-3xl mx-auto">
+          <Breadcrumb
+            className="mb-8 justify-start px-0"
+            includeSchema
+            items={[
+              { label: 'Home', href: '/' },
+              { label: 'Account', href: '/account' },
+              { label: 'Billing' },
+            ]}
+          />
           <Link
             href="/account"
             className="inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-text transition-colors"
@@ -220,3 +230,4 @@ function BalanceTile({
     </div>
   );
 }
+

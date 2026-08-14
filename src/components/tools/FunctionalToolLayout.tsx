@@ -1,4 +1,4 @@
-import { Zap } from 'lucide-react';
+﻿import { Zap } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { Section, SectionHeading } from '@/components/layout/Section';
 import { FAQSection } from '@/components/ui/FAQSection';
@@ -25,6 +25,8 @@ type Props = {
  */
 export function FunctionalToolLayout({ tool, children }: Props) {
   const url = `${siteConfig.url}/tools/${tool.slug}`;
+  const groupLabel = tool.group === 'Downloaders' ? 'Social Media Downloaders' : `${tool.group} Tools`;
+  const groupHref = `/tools#${tool.group.toLowerCase()}`;
   const Icon = tool.icon ?? fallbackIcon;
   const content = functionalToolContent[tool.slug];
 
@@ -52,6 +54,7 @@ export function FunctionalToolLayout({ tool, children }: Props) {
           breadcrumbSchema([
             { name: 'Home', url: siteConfig.url },
             { name: 'Tools', url: `${siteConfig.url}/tools` },
+            { name: groupLabel, url: `${siteConfig.url}${groupHref}` },
             { name: tool.name, url },
           ]),
         )}
@@ -70,6 +73,7 @@ export function FunctionalToolLayout({ tool, children }: Props) {
             items={[
               { label: 'Home', href: '/' },
               { label: 'Tools', href: '/tools' },
+              { label: groupLabel, href: groupHref },
               { label: tool.name },
             ]}
           />
@@ -158,3 +162,5 @@ export function FunctionalToolLayout({ tool, children }: Props) {
     </>
   );
 }
+
+

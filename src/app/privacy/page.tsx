@@ -1,4 +1,4 @@
-import {
+﻿import {
   Shield, Lock, Eye, Database, Clock, UserCheck, Mail, Trash2,
   Cookie, FileText, Server, Globe,
 } from 'lucide-react';
@@ -58,6 +58,10 @@ export default function PrivacyPage() {
   return (
     <>
       <InfoPageHero
+        breadcrumbs={[
+          { label: 'Home', href: '/' },
+          { label: 'Privacy Policy' },
+        ]}
         eyebrow="Legal"
         title={<>Your Privacy, <span className="text-gradient">Respected.</span></>}
         description="Your privacy matters to us. This policy explains, in plain English, what data SavDown collects, why we collect it, and how it is handled."
@@ -204,3 +208,5 @@ export default function PrivacyPage() {
     </>
   );
 }
+
+

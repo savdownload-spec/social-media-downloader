@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Container } from '@/components/layout/Container';
@@ -9,6 +9,7 @@ import { ReviewMarquee } from '@/components/reviews/ReviewMarquee';
 import { Review } from '@/components/reviews/ReviewCard';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
 const FILTERS = [
   { key: 'all', label: 'All' },
@@ -156,3 +157,4 @@ export function ReviewsClient({
     </>
   );
 }
+

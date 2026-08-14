@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import { Clock, ArrowRight, ArrowUpRight, Bell } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { Section, SectionHeading } from '@/components/layout/Section';
@@ -16,6 +16,8 @@ import { siteConfig } from '@/config/site';
 export function GenericToolPage({ tool }: { tool: CatalogTool }) {
   const Icon = tool.icon;
   const url = `${siteConfig.url}/tools/${tool.slug}`;
+  const groupLabel = tool.group === 'Downloaders' ? 'Social Media Downloaders' : `${tool.group} Tools`;
+  const groupHref = `/tools#${tool.group.toLowerCase()}`;
   const related = catalog.filter((t) => t.group === tool.group && t.slug !== tool.slug).slice(0, 6);
 
   return (
@@ -26,6 +28,7 @@ export function GenericToolPage({ tool }: { tool: CatalogTool }) {
           breadcrumbSchema([
             { name: 'Home', url: siteConfig.url },
             { name: 'Tools', url: `${siteConfig.url}/tools` },
+            { name: groupLabel, url: `${siteConfig.url}${groupHref}` },
             { name: tool.name, url },
           ]),
         )}
@@ -44,6 +47,7 @@ export function GenericToolPage({ tool }: { tool: CatalogTool }) {
             items={[
               { label: 'Home', href: '/' },
               { label: 'Tools', href: '/tools' },
+              { label: groupLabel, href: groupHref },
               { label: tool.name },
             ]}
           />
@@ -119,3 +123,5 @@ export function GenericToolPage({ tool }: { tool: CatalogTool }) {
     </>
   );
 }
+
+

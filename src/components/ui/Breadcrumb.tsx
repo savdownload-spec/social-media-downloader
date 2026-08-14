@@ -1,11 +1,14 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import { ChevronRight, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { breadcrumbSchema, jsonLd } from '@/lib/seo';
+import { siteConfig } from '@/config/site';
 
 export type BreadcrumbItem = {
   label: string;
   /** Omit on the last item, it renders as the current page, not a link. */
   href?: string;
+  schemaUrl?: string;
 };
 
 /**
@@ -13,9 +16,20 @@ export type BreadcrumbItem = {
  * always renders as a compact Home icon (label hidden below `sm`), and the
  * final item is highlighted as a chip to make the current page unmistakable.
  */
-export function Breadcrumb({ items, className }: { items: BreadcrumbItem[]; className?: string }) {
+export function Breadcrumb({ items, className, includeSchema = false }: { items: BreadcrumbItem[]; className?: string; includeSchema?: boolean }) {
   return (
     <nav aria-label="Breadcrumb" className={cn('flex justify-center px-4', className)}>
+      {includeSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={jsonLd(
+            breadcrumbSchema(items.map((item) => ({
+              name: item.label,
+              url: item.schemaUrl ?? new URL(item.href ?? '/', siteConfig.url).toString(),
+            }))),
+          )}
+        />
+      )}
       <ol className="inline-flex max-w-full items-center gap-1 sm:gap-1.5 rounded-full border border-border-light bg-white/70 px-3 sm:px-4 py-2 text-xs sm:text-sm shadow-soft backdrop-blur">
         {items.map((item, i) => {
           const isFirst = i === 0;
@@ -50,3 +64,4 @@ export function Breadcrumb({ items, className }: { items: BreadcrumbItem[]; clas
     </nav>
   );
 }
+

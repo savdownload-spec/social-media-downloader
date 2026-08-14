@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import { Suspense } from 'react';
 import { CheckCircle2, Zap, Lock, Sparkles, ChevronRight } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
@@ -22,6 +22,9 @@ const perks = [
 export function ToolPageView({ tool }: { tool: Tool }) {
   const url = `${siteConfig.url}/tools/${tool.slug}`;
   const meta = getCatalogTool(tool.slug);
+  const group = meta?.group ?? 'Downloaders';
+  const groupLabel = group === 'Downloaders' ? 'Social Media Downloaders' : `${group} Tools`;
+  const groupHref = `/tools#${group.toLowerCase()}`;
   const Icon = meta?.icon ?? fallbackIcon;
   const tile = meta?.tile ?? 'bg-primary-light text-primary';
 
@@ -43,6 +46,7 @@ export function ToolPageView({ tool }: { tool: Tool }) {
           breadcrumbSchema([
             { name: 'Home', url: siteConfig.url },
             { name: 'Tools', url: `${siteConfig.url}/tools` },
+            { name: groupLabel, url: `${siteConfig.url}${groupHref}` },
             { name: tool.shortName, url },
           ]),
         )}
@@ -61,6 +65,7 @@ export function ToolPageView({ tool }: { tool: Tool }) {
             items={[
               { label: 'Home', href: '/' },
               { label: 'Tools', href: '/tools' },
+              { label: groupLabel, href: groupHref },
               { label: tool.shortName },
             ]}
           />
@@ -161,7 +166,7 @@ export function ToolPageView({ tool }: { tool: Tool }) {
       {/* FAQ */}
       <FAQSection items={tool.faq} variant="white" />
 
-      {/* ── Similar Tools (related downloads in the same group) ── */}
+      {/* â”€â”€ Similar Tools (related downloads in the same group) â”€â”€ */}
       {(() => {
         const meta = getCatalogTool(tool.slug);
         if (!meta) return null;
@@ -201,8 +206,10 @@ export function ToolPageView({ tool }: { tool: Tool }) {
         );
       })()}
 
-      {/* ── Long-form SEO content (~1,000+ words) ─────────────── */}
+      {/* â”€â”€ Long-form SEO content (~1,000+ words) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <ToolLongContentSection slug={tool.slug} />
     </>
   );
 }
+
+

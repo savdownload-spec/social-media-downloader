@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import Link from 'next/link';
 import {
   Zap,
@@ -22,16 +22,25 @@ import {
 import { Container } from '@/components/layout/Container';
 import { Section, SectionHeading } from '@/components/layout/Section';
 import { Reveal } from '@/components/ui/Reveal';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
 export default function AboutPage() {
   return (
     <>
-      {/* ── 1. Hero Section ─────────────────────────────────── */}
+      {/* â”€â”€ 1. Hero Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <section className="relative overflow-hidden bg-gradient-to-b from-surface/60 via-white to-white pt-20 pb-24 md:pt-28 md:pb-32">
         <div className="absolute inset-0 bg-grid [mask-image:radial-gradient(ellipse_70%_60%_at_50%_20%,black,transparent)] pointer-events-none opacity-60" />
         <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[40rem] h-[20rem] bg-indigo-brand/10 rounded-full blur-3xl pointer-events-none" />
 
         <Container className="relative">
+          <Breadcrumb
+            className="mb-10"
+            includeSchema
+            items={[
+              { label: 'Home', href: '/' },
+              { label: 'About' },
+            ]}
+          />
           <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
             <div className="lg:col-span-7 text-center lg:text-left">
               <Reveal>
@@ -125,7 +134,7 @@ export default function AboutPage() {
         </Container>
       </section>
 
-      {/* ── 2. Who We Are ──────────────────────────────────── */}
+      {/* â”€â”€ 2. Who We Are â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <Section variant="white" className="border-t border-border-light">
         <div className="grid lg:grid-cols-12 gap-12 items-center max-w-6xl mx-auto">
           <div className="lg:col-span-5">
@@ -153,7 +162,7 @@ export default function AboutPage() {
         </div>
       </Section>
 
-      {/* ── 3. Our Mission ─────────────────────────────────── */}
+      {/* â”€â”€ 3. Our Mission â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <Section variant="tinted">
         <div className="max-w-4xl mx-auto text-center">
           <Reveal>
@@ -170,7 +179,7 @@ export default function AboutPage() {
         </div>
       </Section>
 
-      {/* ── 4. Our Core Values ─────────────────────────────── */}
+      {/* â”€â”€ 4. Our Core Values â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <Section variant="white">
         <SectionHeading
           eyebrow="Core Principles"
@@ -218,7 +227,7 @@ export default function AboutPage() {
         </div>
       </Section>
 
-      {/* ── 5. What You Can Do ─────────────────────────────── */}
+      {/* â”€â”€ 5. What You Can Do â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <Section variant="muted">
         <SectionHeading
           eyebrow="Capabilities"
@@ -264,7 +273,7 @@ export default function AboutPage() {
         </div>
       </Section>
 
-      {/* ── 6. Why Choose SavDown ───────────────────────────── */}
+      {/* â”€â”€ 6. Why Choose SavDown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <Section variant="white">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           <Reveal>
@@ -322,7 +331,7 @@ export default function AboutPage() {
         </div>
       </Section>
 
-      {/* ── 7. Community & Feedback ─────────────────────────── */}
+      {/* â”€â”€ 7. Community & Feedback â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <Section variant="tinted">
         <div className="max-w-4xl mx-auto text-center">
           <Reveal>
@@ -350,7 +359,7 @@ export default function AboutPage() {
         </div>
       </Section>
 
-      {/* ── 8. Final CTA ───────────────────────────────────── */}
+      {/* â”€â”€ 8. Final CTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <Section variant="dark" className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-mesh-dark pointer-events-none" />
         <div className="absolute inset-0 bg-grid-dark [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,black,transparent)] pointer-events-none" />
@@ -381,3 +390,4 @@ export default function AboutPage() {
     </>
   );
 }
+

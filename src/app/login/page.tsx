@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import Link from 'next/link';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
 function GoogleIcon() {
   return (
@@ -122,6 +123,14 @@ function LoginClient() {
   return (
     <Section variant="default" className="pt-16 md:pt-20">
       <Container>
+        <Breadcrumb
+          className="mb-8"
+          includeSchema
+          items={[
+            { label: 'Home', href: '/' },
+            { label: 'Sign In' },
+          ]}
+        />
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
@@ -333,3 +342,5 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+
+

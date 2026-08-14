@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -8,6 +8,7 @@ import { Section } from '@/components/layout/Section';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
 function ResetPasswordClient() {
   const searchParams = useSearchParams();
@@ -54,6 +55,14 @@ function ResetPasswordClient() {
     return (
       <Section variant="default" className="pt-16 md:pt-20">
         <Container>
+          <Breadcrumb
+            className="mb-8"
+            includeSchema
+            items={[
+              { label: 'Home', href: '/' },
+              { label: 'Reset Password' },
+            ]}
+          />
           <div className="max-w-md mx-auto text-center">
             <div className="rounded-2xl bg-white border border-border shadow-soft p-8">
               <h1 className="text-2xl font-bold tracking-tight mb-3">Password Updated</h1>
@@ -76,6 +85,14 @@ function ResetPasswordClient() {
   return (
     <Section variant="default" className="pt-16 md:pt-20">
       <Container>
+          <Breadcrumb
+            className="mb-8"
+            includeSchema
+            items={[
+              { label: 'Home', href: '/' },
+              { label: 'Reset Password' },
+            ]}
+          />
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Choose a New Password</h1>
@@ -146,3 +163,4 @@ export default function ResetPasswordPage() {
     </Suspense>
   );
 }
+

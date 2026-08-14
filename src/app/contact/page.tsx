@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useState } from 'react';
 import { Container } from '@/components/layout/Container';
 import { Input } from '@/components/ui/Input';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Send, Check, Mail } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import { useTranslation } from '@/i18n';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
 export default function ContactPage() {
   const t = useTranslation();
@@ -60,6 +61,14 @@ export default function ContactPage() {
 
   return (
     <Container className="py-24 max-w-2xl">
+      <Breadcrumb
+        className="mb-8 justify-start px-0"
+        includeSchema
+        items={[
+          { label: 'Home', href: '/' },
+          { label: 'Contact Us' },
+        ]}
+      />
       <div className="w-12 h-12 rounded-2xl bg-primary-light flex items-center justify-center mb-6">
         <Mail className="w-5 h-5 text-primary" />
       </div>
@@ -112,3 +121,4 @@ export default function ContactPage() {
     </Container>
   );
 }
+

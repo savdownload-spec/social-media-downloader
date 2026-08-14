@@ -1,4 +1,4 @@
-import {
+﻿import {
   Cookie, ShieldCheck, BarChart3, XCircle, Settings, Globe,
 } from 'lucide-react';
 import {
@@ -32,6 +32,10 @@ export default function CookiesPage() {
   return (
     <>
       <InfoPageHero
+        breadcrumbs={[
+          { label: 'Home', href: '/' },
+          { label: 'Cookie Disclaimer' },
+        ]}
         eyebrow="Legal"
         title={<>Cookie <span className="text-gradient">Policy.</span></>}
         description="Cookies are small text files stored on your device when you visit a website. SavDown uses the minimum number necessary to make the service work well, nothing more."
@@ -164,3 +168,5 @@ export default function CookiesPage() {
     </>
   );
 }
+
+

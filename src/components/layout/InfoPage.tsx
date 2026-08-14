@@ -1,8 +1,9 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { Container } from './Container';
 import { Section } from './Section';
 import { Reveal } from '@/components/ui/Reveal';
+import { Breadcrumb, type BreadcrumbItem } from '@/components/ui/Breadcrumb';
 
 type InfoPageHeroProps = {
   eyebrow: string;
@@ -12,6 +13,7 @@ type InfoPageHeroProps = {
   meta?: ReactNode;
   /** Hero highlight chips, small pills rendered under the description. */
   highlights?: { icon?: ReactNode; label: string }[];
+  breadcrumbs?: BreadcrumbItem[];
 };
 
 /**
@@ -25,6 +27,7 @@ export function InfoPageHero({
   description,
   meta,
   highlights,
+  breadcrumbs,
 }: InfoPageHeroProps) {
   return (
     <section className="relative overflow-hidden">
@@ -35,6 +38,7 @@ export function InfoPageHero({
       </div>
 
       <Container className="relative pt-16 pb-12 md:pt-20 md:pb-16 text-center max-w-3xl">
+        {breadcrumbs && <Breadcrumb className="mb-8" items={breadcrumbs} includeSchema />}
         <Reveal>
           <p className="text-sm font-semibold uppercase tracking-wider text-gradient inline-block mb-3">
             {eyebrow}
@@ -174,3 +178,5 @@ export function InfoGap() {
 }
 
 export { Section as InfoSection };
+
+

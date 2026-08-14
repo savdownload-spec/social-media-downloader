@@ -1,10 +1,11 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import { ArrowLeft, ArrowRight, CalendarDays, Clock3, UserRound } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { Container } from '@/components/layout/Container';
 import { BlogAdSlot } from '@/components/blog/BlogAdSlot';
 import { BlogCard } from '@/components/blog/BlogCard';
 import { BlogCover } from '@/components/blog/BlogCover';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { BlogPostBody } from '@/components/blog/BlogPostBody';
 import { BlogSidebar } from '@/components/blog/BlogSidebar';
 import { buildMetadata, breadcrumbSchema, jsonLd } from '@/lib/seo';
@@ -53,6 +54,8 @@ export default async function BlogPostPage({ params }: Props) {
   const canonicalPath = post.canonicalUrl || `/blog/${post.slug}`;
   const canonicalUrl = canonicalPath.startsWith('http') ? canonicalPath : `${siteConfig.url}${canonicalPath}`;
   const image = post.ogImage || `${siteConfig.url}${post.coverImage}`;
+  const categoryPath = `/blog?category=${encodeURIComponent(post.category)}`;
+  const categoryUrl = `${siteConfig.url}${categoryPath}`;
   const articleSchema = {
     '@type': 'BlogPosting',
     headline: post.title,
@@ -77,6 +80,15 @@ export default async function BlogPostPage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(breadcrumbSchema(crumbs))} />
 
       <Container className="max-w-6xl pt-10 md:pt-14">
+        <Breadcrumb
+          className="mb-8 justify-start px-0"
+          items={[
+            { label: 'Home', href: '/' },
+            { label: 'Blog', href: '/blog' },
+            { label: post.category, href: categoryPath },
+            { label: post.title },
+          ]}
+        />
         <Link href="/blog" className="inline-flex items-center gap-2 text-sm font-medium text-text-muted transition-colors hover:text-primary">
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           Back to articles
@@ -141,3 +153,6 @@ export default async function BlogPostPage({ params }: Props) {
     </main>
   );
 }
+
+
+
