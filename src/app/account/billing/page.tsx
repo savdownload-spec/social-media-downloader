@@ -58,7 +58,7 @@ export default async function BillingPage({
       <Container>
         <div className="max-w-3xl mx-auto">
           <Breadcrumb
-            className="mb-8 justify-start px-0"
+            className="mb-8"
             includeSchema
             items={[
               { label: 'Home', href: '/' },
@@ -230,4 +230,5 @@ function BalanceTile({
     </div>
   );
 }
+
 

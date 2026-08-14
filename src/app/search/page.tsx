@@ -88,7 +88,7 @@ export default function SearchPage() {
   return (
     <Container className="max-w-3xl py-24">
       <Breadcrumb
-        className="mb-8 justify-start px-0"
+        className="mb-8"
         includeSchema
         items={[
           { label: 'Home', href: '/' },
@@ -101,4 +101,5 @@ export default function SearchPage() {
     </Container>
   );
 }
+
 

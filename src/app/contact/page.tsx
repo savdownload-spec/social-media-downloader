@@ -62,7 +62,7 @@ export default function ContactPage() {
   return (
     <Container className="py-24 max-w-2xl">
       <Breadcrumb
-        className="mb-8 justify-start px-0"
+        className="mb-8"
         includeSchema
         items={[
           { label: 'Home', href: '/' },
@@ -121,4 +121,5 @@ export default function ContactPage() {
     </Container>
   );
 }
+
 

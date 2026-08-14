@@ -1,5 +1,5 @@
 ﻿import Link from 'next/link';
-import { ArrowLeft, ArrowRight, CalendarDays, Clock3, UserRound } from 'lucide-react';
+import { ArrowRight, CalendarDays, Clock3, UserRound } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { Container } from '@/components/layout/Container';
 import { BlogAdSlot } from '@/components/blog/BlogAdSlot';
@@ -81,7 +81,7 @@ export default async function BlogPostPage({ params }: Props) {
 
       <Container className="max-w-6xl pt-10 md:pt-14">
         <Breadcrumb
-          className="mb-8 justify-start px-0"
+          className="mb-8"
           items={[
             { label: 'Home', href: '/' },
             { label: 'Blog', href: '/blog' },
@@ -89,10 +89,6 @@ export default async function BlogPostPage({ params }: Props) {
             { label: post.title },
           ]}
         />
-        <Link href="/blog" className="inline-flex items-center gap-2 text-sm font-medium text-text-muted transition-colors hover:text-primary">
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          Back to articles
-        </Link>
 
         <header className="mx-auto max-w-4xl py-9 text-center md:py-12">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">{post.category}</p>
@@ -153,6 +149,8 @@ export default async function BlogPostPage({ params }: Props) {
     </main>
   );
 }
+
+
 
 
 

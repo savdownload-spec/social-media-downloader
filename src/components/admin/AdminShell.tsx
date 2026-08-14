@@ -52,7 +52,7 @@ export function AdminShell({ children, title }: Props) {
           {segments.length > 0 && (
             <div className="border-b border-border-light bg-white/70 px-4 py-4 sm:px-6">
               <Breadcrumb
-                className="justify-start px-0"
+                
                 includeSchema
                 items={breadcrumbItems}
               />
@@ -64,6 +64,7 @@ export function AdminShell({ children, title }: Props) {
     </div>
   );
 }
+
 
 
 

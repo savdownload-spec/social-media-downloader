@@ -87,7 +87,7 @@ export default async function AccountPage() {
       <Container>
         <div className="max-w-5xl mx-auto">
           <Breadcrumb
-            className="mb-8 justify-start px-0"
+            className="mb-8"
             includeSchema
             items={[
               { label: 'Home', href: '/' },
@@ -119,4 +119,5 @@ export default async function AccountPage() {
     </Section>
   );
 }
+
 
