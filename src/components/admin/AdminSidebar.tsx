@@ -18,6 +18,7 @@ import {
   Flag,
   Settings,
   ClipboardList,
+  MessageCircle,
   X,
   ShieldCheck,
 } from 'lucide-react';
@@ -26,6 +27,7 @@ const NAV = [
   { label: 'Dashboard',     href: '/admin',               icon: LayoutDashboard },
   { label: 'Users',         href: '/admin/users',          icon: Users },
   { label: 'Reviews',       href: '/admin/reviews',        icon: Star },
+  { label: 'Support',       href: '/admin/support',        icon: MessageCircle },
   { label: 'Tools',         href: '/admin/tools',          icon: Wrench },
   { label: 'Usage',         href: '/admin/usage',          icon: BarChart3 },
   { label: 'Credits',       href: '/admin/credits',        icon: Coins },

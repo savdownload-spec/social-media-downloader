@@ -15,6 +15,7 @@ import { LanguageProvider } from '@/contexts/LanguageContext';
 import { Providers } from '@/components/providers';
 import { PricingProvider } from '@/components/pricing/PricingProvider';
 import { getPricingConfig } from '@/lib/pricing-server';
+import { SupportChat } from '@/components/support/SupportChat';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -113,6 +114,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     <AdBanner />
                     <main className="min-h-[calc(100vh-4rem)]">{children}</main>
                     <Footer />
+                    <SupportChat />
                   </InstallProvider>
                 </ConfirmProvider>
               </ToastProvider>
