@@ -56,6 +56,12 @@ export async function POST(req: NextRequest) {
   const filename = `${crypto.randomUUID()}.webp`;
   const relativePath = `blog/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${filename}`;
 
+  // Vercel sets this on every deployment (not just production), so it's a
+  // reliable "are we running on serverless with no writable filesystem?"
+  // check — used to fail fast with a clear message instead of an ENOENT
+  // crash from trying to mkdir under the read-only /var/task.
+  const onVercel = !!process.env.VERCEL;
+
   let url: string;
   if (process.env.BLOB_READ_WRITE_TOKEN) {
     const blob = await put(relativePath, outBuffer, {
@@ -64,6 +70,11 @@ export async function POST(req: NextRequest) {
       addRandomSuffix: false,
     });
     url = blob.url;
+  } else if (onVercel) {
+    return NextResponse.json(
+      { ok: false, error: 'Image storage is not configured for this deployment. Add BLOB_READ_WRITE_TOKEN to this project\'s Production environment variables (Vercel → Storage → your Blob store → connect it to Production), then redeploy.' },
+      { status: 500 },
+    );
   } else {
     const dir = path.join(process.cwd(), 'public', 'images', 'blog', 'uploads', String(now.getFullYear()), String(now.getMonth() + 1).padStart(2, '0'));
     await mkdir(dir, { recursive: true });
