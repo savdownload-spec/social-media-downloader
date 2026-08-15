@@ -1,8 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, Save, Eye, CalendarClock, Send, Check, RefreshCw, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, Eye, CalendarClock, Send, Check, RefreshCw, AlertCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { useConfirm } from '@/components/ui/ConfirmProvider';
@@ -68,6 +67,7 @@ export function ContentStudioShell({
   const [postId, setPostId] = useState<string | null>(initialPost?.id ?? null);
   const [wasPublished] = useState(!!initialPost?.published);
   const [saving, setSaving] = useState(false);
+  const [discarding, setDiscarding] = useState(false);
   const [stats, setStats] = useState<EditorStats>({ wordCount: 0, charCount: 0, readingTimeMinutes: 1, headingCount: 0, imageCount: 0, linkCount: 0 });
   const editorHandle = useRef<TiptapEditorHandle>(null);
   const { success, error: toastError } = useToast();
@@ -181,6 +181,45 @@ export function ContentStudioShell({
     window.open(`/blog/${form.slug}`, '_blank', 'noopener,noreferrer');
   }
 
+  async function handleDiscard() {
+    // Autosave may have already created a DB row for a brand-new article
+    // the user never meant to keep — in that case "Discard" deletes it.
+    // Editing an existing article never deletes it here; it just closes
+    // without persisting further, leaving the last-saved version intact.
+    const isUnsavedNewDraft = !initialPost && !!postId;
+    if (isUnsavedNewDraft) {
+      const ok = await confirm({
+        title: 'Discard this draft?',
+        description: 'This article was never published and will be permanently deleted.',
+        confirmLabel: 'Discard',
+        variant: 'danger',
+      });
+      if (!ok) return;
+      setDiscarding(true);
+      try {
+        await fetch(`/api/admin/content/${postId}`, { method: 'DELETE' });
+        onSaved();
+        onClose();
+      } catch {
+        toastError('Could not discard the draft — please try again.');
+      } finally {
+        setDiscarding(false);
+      }
+      return;
+    }
+    if (!initialPost) {
+      onClose();
+      return;
+    }
+    const ok = await confirm({
+      title: 'Discard unsaved changes?',
+      description: 'Any edits since the last autosave will be lost. The article itself will not be deleted.',
+      confirmLabel: 'Discard changes',
+    });
+    if (!ok) return;
+    onClose();
+  }
+
   const status = useMemo(() => {
     if (form.published) return 'PUBLISHED';
     if (form.scheduledAt && new Date(form.scheduledAt) > new Date()) return 'SCHEDULED';
@@ -199,6 +238,9 @@ export function ContentStudioShell({
         </div>
         <AutosaveIndicator status={autosaveStatus} onRetry={retryAutosave} enabled={autosaveEnabled} />
         <StatusBadge status={status} dot />
+        <Button variant="ghost" size="sm" onClick={handleDiscard} loading={discarding} className="text-rose-600 hover:bg-rose-50">
+          <Trash2 className="w-3.5 h-3.5 mr-1" /> Discard
+        </Button>
         <Button variant="outline" size="sm" onClick={handlePreview} disabled={!form.slug}>
           <Eye className="w-3.5 h-3.5 mr-1" /> Preview
         </Button>
