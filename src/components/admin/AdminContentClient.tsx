@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   AdminPage, PageHeader, TableCard, Table, Th, Td, StatusBadge,
   Pagination, FilterBar, FilterTab, EmptyState, ErrorState,
@@ -11,7 +11,7 @@ import { useConfirm } from '@/components/ui/ConfirmProvider';
 import { ContentStudioShell, type AdminPost } from './content-studio/ContentStudioShell';
 import {
   Pencil, Trash2, Eye, EyeOff, Plus, FileText, FileWarning, FileCheck2,
-  Gauge, BookOpenCheck, ImageOff, Link2Off,
+  Gauge, BookOpenCheck, ImageOff, Link2Off, X,
 } from 'lucide-react';
 
 type Post = AdminPost;
@@ -22,6 +22,13 @@ const ATTENTION_FILTERS: { label: string; value: string }[] = [
   { label: 'Needs Attention', value: 'needsAttention' },
   { label: 'Good SEO', value: 'goodSeo' },
 ];
+const ATTENTION_LABELS: Record<string, string> = {
+  needsAttention: 'Posts needing attention (SEO score under 60)',
+  goodSeo: 'Posts with good SEO (score 80+)',
+  missingMetaDescription: 'Posts missing a meta description',
+  missingFeaturedImage: 'Posts missing a featured image',
+  missingInternalLinks: 'Posts with no internal links',
+};
 const SORT_OPTIONS: { label: string; value: string }[] = [
   { label: 'Newest', value: 'createdAt' },
   { label: 'Recently Updated', value: 'updatedAt' },
@@ -59,9 +66,17 @@ export function AdminContentClient() {
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [editPost, setEditPost] = useState<Post | null>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
 
   const { success, error: err } = useToast();
   const { confirm } = useConfirm();
+
+  function jumpToFilter(value: string) {
+    setSearch('');
+    setFilter('ALL');
+    setAttention(value);
+    requestAnimationFrame(() => tableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }
 
   const load = useCallback(() => {
     setLoading(true);
@@ -127,9 +142,15 @@ export function AdminContentClient() {
             <StatCard label="Drafts" value={stats.drafts} icon={FileWarning} accent="amber" />
             <StatCard label="Avg SEO Score" value={stats.avgSeoScore} icon={Gauge} accent="blue" />
             <StatCard label="Avg Readability" value={stats.avgReadabilityScore} icon={BookOpenCheck} accent="blue" />
-            <StatCard label="Missing Meta Description" value={stats.missingMetaDescription} icon={FileWarning} accent="rose" />
-            <StatCard label="Missing Featured Image" value={stats.missingFeaturedImage} icon={ImageOff} accent="rose" />
-            <StatCard label="Missing Internal Links" value={stats.missingInternalLinks} icon={Link2Off} accent="rose" />
+            <button type="button" onClick={() => jumpToFilter('missingMetaDescription')} className="text-left rounded-xl transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" title="Show posts missing a meta description">
+              <StatCard label="Missing Meta Description" value={stats.missingMetaDescription} icon={FileWarning} accent="rose" />
+            </button>
+            <button type="button" onClick={() => jumpToFilter('missingFeaturedImage')} className="text-left rounded-xl transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" title="Show posts missing a featured image">
+              <StatCard label="Missing Featured Image" value={stats.missingFeaturedImage} icon={ImageOff} accent="rose" />
+            </button>
+            <button type="button" onClick={() => jumpToFilter('missingInternalLinks')} className="text-left rounded-xl transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" title="Show posts with no internal links">
+              <StatCard label="Missing Internal Links" value={stats.missingInternalLinks} icon={Link2Off} accent="rose" />
+            </button>
           </>
         )}
       </div>
@@ -150,6 +171,18 @@ export function AdminContentClient() {
           {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>Sort: {o.label}</option>)}
         </select>
       </FilterBar>
+
+      <div ref={tableRef} />
+      {attention && ATTENTION_LABELS[attention] && (
+        <div className="flex items-center justify-between gap-3 mb-3 px-4 py-2.5 rounded-xl bg-primary/[0.06] border border-primary/20">
+          <p className="text-[12px] font-medium text-primary">
+            Filtered: {ATTENTION_LABELS[attention]} ({total})
+          </p>
+          <button type="button" onClick={() => setAttention('')} className="flex items-center gap-1 text-[12px] font-medium text-text-muted hover:text-text">
+            <X className="w-3.5 h-3.5" /> Clear
+          </button>
+        </div>
+      )}
 
       {error ? (
         <ErrorState message="Failed to load posts." onRetry={load} />

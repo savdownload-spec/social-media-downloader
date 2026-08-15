@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { writeAuditLog } from '@/lib/admin';
 import { computeScores } from '@/lib/content-studio/computeScores';
+import { analyzeContentJson } from '@/lib/content-studio/contentText';
 import { z } from 'zod';
 
 export const runtime = 'nodejs';
@@ -57,7 +58,8 @@ export async function GET(req: NextRequest) {
   const pageSize = Math.min(50, parseInt(sp.get('pageSize') ?? '20', 10));
   const status = sp.get('status') ?? '';
   const search = sp.get('search')?.trim() ?? '';
-  const attention = sp.get('attention') ?? ''; // 'needsAttention' | 'goodSeo'
+  // 'needsAttention' | 'goodSeo' | 'missingMetaDescription' | 'missingFeaturedImage' | 'missingInternalLinks'
+  const attention = sp.get('attention') ?? '';
   const sortBy = sp.get('sortBy') ?? 'createdAt'; // createdAt | updatedAt | publishedAt | seoScore | readabilityScore
   const sortDir = sp.get('sortDir') === 'asc' ? 'asc' : 'desc';
 
@@ -80,10 +82,90 @@ export async function GET(req: NextRequest) {
   ];
   if (attention === 'needsAttention') where.OR = [...(where.OR as unknown[] ?? []), { seoScore: { lt: 60 } }, { seoScore: null }];
   if (attention === 'goodSeo') where.seoScore = { gte: 80 };
+  if (attention === 'missingMetaDescription') where.AND = [{ metaDescription: null }, { excerpt: null }];
+  if (attention === 'missingFeaturedImage') where.coverImage = null;
 
   const orderBy: Record<string, 'asc' | 'desc'> = ['seoScore', 'readabilityScore', 'updatedAt', 'publishedAt'].includes(sortBy)
     ? { [sortBy]: sortDir }
     : { createdAt: sortDir };
+
+  const selectFields = {
+    id: true,
+    slug: true,
+    title: true,
+    excerpt: true,
+    content: true,
+    author: true,
+    tagsJson: true,
+    category: true,
+    coverImage: true,
+    coverAlt: true,
+    ogImage: true,
+    primaryKeyword: true,
+    secondaryKeywordsJson: true,
+    canonicalUrl: true,
+    toolSlug: true,
+    readingTimeMinutes: true,
+    published: true,
+    publishedAt: true,
+    createdAt: true,
+    updatedAt: true,
+    seoTitle: true,
+    metaDescription: true,
+    focusKeyphrase: true,
+    synonymsJson: true,
+    noIndex: true,
+    noFollow: true,
+    metaRobotsAdvanced: true,
+    breadcrumbTitle: true,
+    schemaType: true,
+    faqJson: true,
+    howToJson: true,
+    ogTitle: true,
+    ogDescription: true,
+    scheduledAt: true,
+    seoScore: true,
+    readabilityScore: true,
+    wordCount: true,
+  } as const;
+
+  function serialize(post: { createdAt: Date; updatedAt: Date; publishedAt: Date | null; scheduledAt: Date | null; [k: string]: unknown }) {
+    return {
+      ...post,
+      createdAt: post.createdAt.toISOString(),
+      updatedAt: post.updatedAt.toISOString(),
+      publishedAt: post.publishedAt?.toISOString() ?? null,
+      scheduledAt: post.scheduledAt?.toISOString() ?? null,
+    };
+  }
+
+  // "Missing internal links" can't be expressed as a SQL WHERE clause — it
+  // depends on walking each post's Tiptap contentJson. We fetch a bounded
+  // candidate set matching the other filters, analyze in memory, then
+  // paginate the filtered result ourselves.
+  if (attention === 'missingInternalLinks') {
+    const candidates = await prisma.post.findMany({
+      where,
+      orderBy: orderBy as unknown as { createdAt: 'asc' | 'desc' },
+      take: 1000,
+      select: { ...selectFields, contentJson: true },
+    });
+    const filtered = candidates.filter((post) => {
+      const analysis = analyzeContentJson(post.contentJson as never);
+      return analysis.wordCount > 0 && analysis.internalLinks === 0;
+    });
+    const total = filtered.length;
+    const paged = filtered.slice((page - 1) * pageSize, (page - 1) * pageSize + pageSize);
+    return NextResponse.json({
+      ok: true,
+      data: {
+        posts: paged.map(({ contentJson: _contentJson, ...post }) => serialize(post)),
+        total,
+        page,
+        totalPages: Math.ceil(total / pageSize),
+      },
+    });
+  }
 
   const [posts, total] = await Promise.all([
     prisma.post.findMany({
@@ -91,45 +173,7 @@ export async function GET(req: NextRequest) {
       orderBy: orderBy as unknown as { createdAt: 'asc' | 'desc' },
       skip: (page - 1) * pageSize,
       take: pageSize,
-      select: {
-        id: true,
-        slug: true,
-        title: true,
-        excerpt: true,
-        content: true,
-        author: true,
-        tagsJson: true,
-        category: true,
-        coverImage: true,
-        coverAlt: true,
-        ogImage: true,
-        primaryKeyword: true,
-        secondaryKeywordsJson: true,
-        canonicalUrl: true,
-        toolSlug: true,
-        readingTimeMinutes: true,
-        published: true,
-        publishedAt: true,
-        createdAt: true,
-        updatedAt: true,
-        seoTitle: true,
-        metaDescription: true,
-        focusKeyphrase: true,
-        synonymsJson: true,
-        noIndex: true,
-        noFollow: true,
-        metaRobotsAdvanced: true,
-        breadcrumbTitle: true,
-        schemaType: true,
-        faqJson: true,
-        howToJson: true,
-        ogTitle: true,
-        ogDescription: true,
-        scheduledAt: true,
-        seoScore: true,
-        readabilityScore: true,
-        wordCount: true,
-      },
+      select: selectFields,
     }),
     prisma.post.count({ where }),
   ]);
@@ -137,13 +181,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     data: {
-      posts: posts.map((post) => ({
-        ...post,
-        createdAt: post.createdAt.toISOString(),
-        updatedAt: post.updatedAt.toISOString(),
-        publishedAt: post.publishedAt?.toISOString() ?? null,
-        scheduledAt: post.scheduledAt?.toISOString() ?? null,
-      })),
+      posts: posts.map(serialize),
       total,
       page,
       totalPages: Math.ceil(total / pageSize),
