@@ -62,7 +62,17 @@ export function AdminShell({ children }: Props) {
           collapsed={collapsed}
           onToggleCollapse={toggleCollapse}
         />
-        <main className="flex-1 overflow-auto">{children}</main>
+        {/*
+          No overflow-auto here. This root is min-h-screen (not h-screen), so
+          this <main> never actually gets a bounded height to scroll within —
+          the window scrolls instead, matching the sticky sidebar above. But
+          `overflow: auto` alone (regardless of whether it ever overflows)
+          makes the browser treat this element as the nearest scrolling
+          ancestor for CSS position: sticky, silently breaking every sticky
+          element on every admin page (edit toolbars, sticky headers, etc.)
+          since its own scrollTop never moves.
+        */}
+        <main className="flex-1">{children}</main>
 
         {/* Admin footer */}
         <footer className="border-t border-border-light bg-white/60 px-6 py-3">
