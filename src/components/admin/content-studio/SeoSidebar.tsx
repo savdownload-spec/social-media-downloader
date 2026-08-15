@@ -125,7 +125,10 @@ export function SeoSidebar({
   const previewUrl = `${siteConfig.url.replace(/\/$/, '')}/blog/${form.slug || 'post-slug'}`;
 
   return (
-    <div className="bg-white border border-border-light rounded-xl overflow-hidden sticky top-[60px] max-h-[calc(100vh-76px)] overflow-y-auto">
+    // No sticky/max-height/internal scroll: every section renders at full
+    // height and the sidebar scrolls with the rest of the page instead of
+    // trapping content in a small internal scrollbar.
+    <div className="bg-white border border-border-light rounded-xl overflow-hidden">
       {/* Score header */}
       <div className="flex items-center justify-around px-4 py-4 border-b border-border-light bg-surface/30">
         <ScoreRing label="SavDown SEO Score" score={seo.score} />
