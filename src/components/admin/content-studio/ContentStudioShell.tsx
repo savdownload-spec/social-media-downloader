@@ -279,11 +279,17 @@ export function ContentStudioShell({
               onUploadFeaturedImage={async (file) => {
                 const body = new FormData();
                 body.append('file', file);
-                const res = await fetch('/api/admin/content/media', { method: 'POST', body });
-                const data = await res.json().catch(() => null);
-                if (data?.ok) {
-                  setField('coverImage', data.data.url);
-                  if (!form.ogImage) setField('ogImage', data.data.url);
+                try {
+                  const res = await fetch('/api/admin/content/media', { method: 'POST', body });
+                  const data = await res.json().catch(() => null);
+                  if (data?.ok) {
+                    setField('coverImage', data.data.url);
+                    if (!form.ogImage) setField('ogImage', data.data.url);
+                  } else {
+                    toastError('Image upload failed', data?.error || `Server returned ${res.status}. The image was not saved.`);
+                  }
+                } catch {
+                  toastError('Image upload failed', 'Could not reach the server. Check your connection and try again.');
                 }
               }}
             />

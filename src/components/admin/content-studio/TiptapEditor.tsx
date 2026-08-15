@@ -14,6 +14,7 @@ import {
 import { getBaseExtensions } from '@/lib/content-studio/tiptapExtensions';
 import { analyzeContentJson, type TiptapNode } from '@/lib/content-studio/contentText';
 import { CALLOUT_VARIANTS, type CalloutVariant } from '@/lib/content-studio/nodes/calloutNode';
+import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 
 const CALLOUT_ICONS: Record<CalloutVariant, typeof Info> = {
@@ -73,6 +74,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
   const [calloutMenuOpen, setCalloutMenuOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { error: toastError } = useToast();
 
   const extensions = useMemo(() => [
     ...getBaseExtensions(),
@@ -138,7 +140,11 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
         const alt = window.prompt('Alt text (describes the image for accessibility & SEO)') || '';
         const caption = window.prompt('Caption (optional, shown under the image)') || '';
         editor?.chain().focus().insertFigureImage({ src: data.data.url, alt, caption }).run();
+      } else {
+        toastError('Image upload failed', data?.error || `Server returned ${res.status}. The image was not inserted.`);
       }
+    } catch {
+      toastError('Image upload failed', 'Could not reach the server. Check your connection and try again.');
     } finally {
       setUploading(false);
     }
@@ -183,7 +189,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
     // Rounded corners are applied per-edge to the toolbar/content instead.
     <div className="bg-white border border-border-light rounded-xl">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 px-2.5 py-2 border-b border-border-light bg-surface/40 rounded-t-xl sticky top-14 z-[5]">
+      <div className="flex flex-wrap items-center gap-0.5 px-2.5 py-2 border-b border-border-light bg-white rounded-t-xl sticky top-14 z-[5] shadow-sm">
         <ToolbarButton title="Undo" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}><Undo2 className="w-3.5 h-3.5" /></ToolbarButton>
         <ToolbarButton title="Redo" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}><Redo2 className="w-3.5 h-3.5" /></ToolbarButton>
         <Divider />
