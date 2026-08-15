@@ -80,6 +80,8 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
   const [pendingImage, setPendingImage] = useState<{ url: string } | null>(null);
   const [altInput, setAltInput] = useState('');
   const [captionInput, setCaptionInput] = useState('');
+  const [urlPromptKind, setUrlPromptKind] = useState<'link' | 'youtube' | null>(null);
+  const [urlInput, setUrlInput] = useState('');
 
   const extensions = useMemo(() => [
     ...getBaseExtensions(),
@@ -162,15 +164,25 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
   }
 
   function insertLink() {
-    const url = window.prompt('Link URL');
-    if (!url) return;
-    editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    setUrlInput('');
+    setUrlPromptKind('link');
   }
 
   function insertYoutube() {
-    const url = window.prompt('YouTube video URL');
-    if (!url) return;
-    editor?.commands.setYoutubeVideo({ src: url });
+    setUrlInput('');
+    setUrlPromptKind('youtube');
+  }
+
+  function confirmUrlPrompt() {
+    const url = urlInput.trim();
+    if (url) {
+      if (urlPromptKind === 'link') {
+        editor?.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+      } else if (urlPromptKind === 'youtube') {
+        editor?.commands.setYoutubeVideo({ src: url });
+      }
+    }
+    setUrlPromptKind(null);
   }
 
   useImperativeHandle(ref, () => ({
@@ -296,6 +308,27 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
             </div>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        open={!!urlPromptKind}
+        onClose={confirmUrlPrompt}
+        title={urlPromptKind === 'youtube' ? 'Embed YouTube video' : 'Insert link'}
+        size="sm"
+        footer={
+          <Button variant="primary" size="sm" onClick={confirmUrlPrompt} disabled={!urlInput.trim()}>
+            {urlPromptKind === 'youtube' ? 'Embed video' : 'Insert link'}
+          </Button>
+        }
+      >
+        <input
+          autoFocus
+          value={urlInput}
+          onChange={(e) => setUrlInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') confirmUrlPrompt(); }}
+          placeholder={urlPromptKind === 'youtube' ? 'https://www.youtube.com/watch?v=…' : 'https://example.com'}
+          className="w-full h-9 rounded-lg border border-border-light bg-white px-3 text-[13px] text-text focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
+        />
       </Modal>
     </div>
   );

@@ -12,6 +12,7 @@ import { analyzeContentJson } from '@/lib/content-studio/contentText';
 import { analyzeSeo, type SeoCheck } from '@/lib/content-studio/seoAnalysis';
 import { analyzeReadability } from '@/lib/content-studio/readability';
 import { cn } from '@/lib/utils';
+import { useConfirm } from '@/components/ui/ConfirmProvider';
 import type { StudioForm, FaqBlock, HowToBlock } from './types';
 import { parseArray, parseFaq, parseHowTo } from './types';
 import type { TiptapEditorHandle } from './TiptapEditor';
@@ -552,6 +553,7 @@ function VersionHistory({ postId }: { postId: string }) {
   const [revisions, setRevisions] = useState<Revision[]>([]);
   const [loading, setLoading] = useState(false);
   const [restoring, setRestoring] = useState<string | null>(null);
+  const { confirm } = useConfirm();
 
   function load() {
     setLoading(true);
@@ -561,7 +563,13 @@ function VersionHistory({ postId }: { postId: string }) {
   useEffect(() => { load(); }, [postId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function restore(id: string) {
-    if (!window.confirm('Restore this version? Your current unsaved changes will be replaced.')) return;
+    const ok = await confirm({
+      title: 'Restore this version?',
+      description: 'Your current unsaved changes will be replaced with this earlier version.',
+      confirmLabel: 'Restore',
+      variant: 'danger',
+    });
+    if (!ok) return;
     setRestoring(id);
     try {
       const r = await fetch(`/api/admin/content/${postId}/revisions/${id}/restore`, { method: 'POST' });
