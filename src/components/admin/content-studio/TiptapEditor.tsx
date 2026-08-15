@@ -177,9 +177,13 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
   }
 
   return (
-    <div className="bg-white border border-border-light rounded-xl overflow-hidden">
+    // No overflow-hidden here: it would make this the sticky containing
+    // block for the toolbar below, which breaks position: sticky against
+    // the real page scroll (the toolbar would never appear to "stick").
+    // Rounded corners are applied per-edge to the toolbar/content instead.
+    <div className="bg-white border border-border-light rounded-xl">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 px-2.5 py-2 border-b border-border-light bg-surface/40 sticky top-14 z-[5]">
+      <div className="flex flex-wrap items-center gap-0.5 px-2.5 py-2 border-b border-border-light bg-surface/40 rounded-t-xl sticky top-14 z-[5]">
         <ToolbarButton title="Undo" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}><Undo2 className="w-3.5 h-3.5" /></ToolbarButton>
         <ToolbarButton title="Redo" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}><Redo2 className="w-3.5 h-3.5" /></ToolbarButton>
         <Divider />

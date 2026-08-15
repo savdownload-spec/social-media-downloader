@@ -6,6 +6,7 @@ import sharp from 'sharp';
 import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
+import { put } from '@vercel/blob';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,13 +19,13 @@ const MAX_BYTES = 8 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 /**
- * Local-filesystem image upload for blog content (dev/self-hosted Node
- * hosts). NOTE: this repo's Prisma schema explicitly documents that its
- * Vercel serverless target has no persistent filesystem, so files written
- * here will NOT survive across deploys/instances in that environment — a
- * real object-storage integration (out of scope for this change) is needed
- * for production persistence there. No cloud/paid storage SDK was added
- * per the "self-hosted only" instruction.
+ * Uploads a processed image and returns its public URL.
+ *
+ * Uses Vercel Blob when BLOB_READ_WRITE_TOKEN is configured (required in
+ * production — Vercel serverless functions have no persistent filesystem,
+ * per the note in prisma/schema.prisma). Falls back to writing under
+ * public/images/blog/uploads/ for local/self-hosted dev where no Blob
+ * token is set, so `npm run dev` keeps working with zero setup.
  */
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -49,16 +50,26 @@ export async function POST(req: NextRequest) {
 
   const resized = metadata.width && metadata.width > 2000 ? image.resize({ width: 2000 }) : image;
   const outBuffer = await resized.webp({ quality: 82 }).toBuffer();
+  const outMeta = await sharp(outBuffer).metadata();
 
   const now = new Date();
-  const dir = path.join(process.cwd(), 'public', 'images', 'blog', 'uploads', String(now.getFullYear()), String(now.getMonth() + 1).padStart(2, '0'));
-  await mkdir(dir, { recursive: true });
-
   const filename = `${crypto.randomUUID()}.webp`;
-  await writeFile(path.join(dir, filename), outBuffer);
+  const relativePath = `blog/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${filename}`;
 
-  const url = `/images/blog/uploads/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${filename}`;
-  const outMeta = await sharp(outBuffer).metadata();
+  let url: string;
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const blob = await put(relativePath, outBuffer, {
+      access: 'public',
+      contentType: 'image/webp',
+      addRandomSuffix: false,
+    });
+    url = blob.url;
+  } else {
+    const dir = path.join(process.cwd(), 'public', 'images', 'blog', 'uploads', String(now.getFullYear()), String(now.getMonth() + 1).padStart(2, '0'));
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, filename), outBuffer);
+    url = `/images/blog/uploads/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${filename}`;
+  }
 
   await writeAuditLog({ adminId: admin.id!, adminEmail: admin.email!, action: 'content.media.upload', targetType: 'Media', targetId: url });
 
