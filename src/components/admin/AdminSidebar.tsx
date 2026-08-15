@@ -19,6 +19,7 @@ import {
   Settings,
   ClipboardList,
   MessageCircle,
+  MessageSquare,
   X,
   ShieldCheck,
   ChevronLeft,
@@ -78,6 +79,7 @@ const NAV_GROUPS: NavGroup[] = [
     section: 'Content',
     items: [
       { label: 'Content', href: '/admin/content', icon: FileText },
+      { label: 'Comments', href: '/admin/comments', icon: MessageSquare },
     ],
   },
   {

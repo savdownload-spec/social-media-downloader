@@ -1,45 +1,40 @@
-import { Megaphone } from 'lucide-react';
-
+/**
+ * Structural Google AdSense container. It remains visually neutral until a real
+ * publisher client and slot identifier are configured, preventing a fake-ad UI
+ * while reserving stable responsive space for future inventory.
+ */
 type BlogAdSlotProps = {
   slot: 'TOP_BANNER' | 'SIDEBAR_AD' | 'IN_ARTICLE_AD' | 'SECONDARY_AD';
   className?: string;
+  slotId?: string;
 };
 
-const slotCopy = {
-  TOP_BANNER: {
-    label: 'ADVERTISEMENT',
-    detail: 'Top banner placement',
-    size: 'min-h-[92px] md:min-h-[108px]',
-  },
-  SIDEBAR_AD: {
-    label: 'ADVERTISEMENT',
-    detail: 'Sidebar placement',
-    size: 'min-h-[250px]',
-  },
-  IN_ARTICLE_AD: {
-    label: 'ADVERTISEMENT',
-    detail: 'In-article placement',
-    size: 'min-h-[132px]',
-  },
-  SECONDARY_AD: {
-    label: 'ADVERTISEMENT',
-    detail: 'Secondary placement',
-    size: 'min-h-[180px]',
-  },
-} as const;
+const slotSizing: Record<BlogAdSlotProps['slot'], string> = {
+  TOP_BANNER: 'min-h-[96px] md:min-h-[112px]',
+  SIDEBAR_AD: 'min-h-[250px]',
+  IN_ARTICLE_AD: 'min-h-[120px] md:min-h-[150px]',
+  SECONDARY_AD: 'min-h-[160px] md:min-h-[180px]',
+};
 
-export function BlogAdSlot({ slot, className = '' }: BlogAdSlotProps) {
-  const copy = slotCopy[slot];
+export function BlogAdSlot({ slot, className = '', slotId }: BlogAdSlotProps) {
+  const clientId = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
+  const hasConfiguredAd = Boolean(clientId && slotId);
+
   return (
     <div
-      aria-label={`${copy.detail} reserved for future advertising`}
-      className={`flex ${copy.size} w-full flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-white/55 px-5 text-center ${className}`}
+      className={`${slotSizing[slot]} w-full overflow-hidden rounded-2xl ${className}`}
+      aria-hidden={!hasConfiguredAd}
+      data-ad-slot={slot}
     >
-      <Megaphone className="mb-2 h-4 w-4 text-text-subtle" aria-hidden="true" />
-      <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-text-subtle">
-        {copy.label}
-      </span>
-      <span className="mt-1 text-xs text-text-subtle">{copy.detail}</span>
+      {hasConfiguredAd && (
+        <ins
+          className="adsbygoogle block h-full w-full"
+          data-ad-client={clientId}
+          data-ad-slot={slotId}
+          data-ad-format="auto"
+          data-full-width-responsive="true"
+        />
+      )}
     </div>
   );
 }
