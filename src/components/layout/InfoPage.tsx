@@ -135,7 +135,7 @@ export function InfoCallout({ title, body, cta }: InfoCalloutProps) {
           {cta && (
             <Link
               href={cta.href}
-              className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white text-text font-semibold shadow-soft-md hover:shadow-soft-lg transition-all"
+              className="mt-6 inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-white text-text font-semibold shadow-soft-md hover:shadow-soft-lg transition-all active:scale-[0.98]"
             >
               {cta.label}
             </Link>

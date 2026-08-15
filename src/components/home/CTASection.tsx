@@ -17,7 +17,7 @@ export function CTASection() {
       <Reveal className="relative">
         <div className="max-w-2xl mx-auto text-center">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-semibold text-white">
-            <Sparkles className="w-3.5 h-3.5" /> {t('ctaSection.eyebrow') || 'Free forever, no signup, no limits'}
+            <Sparkles className="w-3.5 h-3.5" /> {t('ctaSection.eyebrow') || 'Free Forever, No Signup, No Limits'}
           </span>
           <h2 className="mt-6 text-3xl md:text-5xl font-bold tracking-tight text-white leading-tight">
             {t('ctaSection.title') || 'Explore The Whole Toolkit.'}
@@ -28,13 +28,13 @@ export function CTASection() {
           <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/#tools"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all"
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
             >
               {t('ctaSection.buttons.browse') || 'Browse All Tools'} <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
               href="/faq"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-white/5 border border-white/15 hover:bg-white/10 transition-colors"
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-white/5 border border-white/15 hover:bg-white/10 transition-all active:scale-[0.98]"
             >
               {t('ctaSection.buttons.faq') || 'Read the FAQ'}
             </Link>

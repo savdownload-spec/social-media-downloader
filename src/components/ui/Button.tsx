@@ -33,7 +33,7 @@ const variants: Record<Variant, string> = {
 const sizes: Record<Size, string> = {
   sm: 'text-sm px-3.5 py-2 rounded-xl',
   md: 'text-sm px-5 py-2.5 rounded-2xl',
-  lg: 'text-base px-6 py-3.5 rounded-2xl',
+  lg: 'text-base px-7 py-3.5 rounded-2xl font-semibold',
 };
 
 export const Button = forwardRef<HTMLButtonElement, Props>(

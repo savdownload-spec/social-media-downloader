@@ -83,14 +83,14 @@ export function Footer() {
           {/* Contact + language */}
           <div className="lg:col-span-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-4">
-              {t('footer.stayInLoop') || 'Stay in the loop'}
+              {t('footer.stayInLoop') || 'Stay In The Loop'}
             </p>
             <p className="text-sm text-ink-muted leading-relaxed mb-5">
               {t('footer.stayInLoopDesc') || 'We read every message. Reach us anytime for support, partnerships, or just to say hi.'}
             </p>
             <Link
               href="/contact"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
             >
               <Mail className="w-4 h-4" />
               {t('nav.contact')}
@@ -106,7 +106,7 @@ export function Footer() {
           {/* Brand statement */}
           <div className="lg:col-span-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-4">
-              {t('footer.whySavDown') || 'Why SavDown'}
+              {t('footer.whySavDown') || 'Why SavDown?'}
             </p>
             <ul className="space-y-3">
               {[t('features.unlimited'), t('features.noSignup') || 'No signup required', t('features.secure')].map((item) => (

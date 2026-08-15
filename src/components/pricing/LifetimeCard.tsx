@@ -32,7 +32,7 @@ export function LifetimeCard({ lifetime }: { lifetime: LifetimeView }) {
 
             <Link
               href={lifetime.ctaHref}
-              className="mt-6 flex w-full items-center justify-center rounded-2xl bg-gradient-brand bg-[length:200%_200%] py-3 font-semibold text-white shadow-glow-lg transition-all hover:bg-[position:100%_50%]"
+              className="mt-6 flex w-full items-center justify-center rounded-2xl bg-gradient-brand bg-[length:200%_200%] py-3 font-semibold text-white shadow-glow-lg transition-all hover:bg-[position:100%_50%] active:scale-[0.98]"
             >
               {lifetime.ctaLabel}
             </Link>

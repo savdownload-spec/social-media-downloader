@@ -57,13 +57,13 @@ export default function AboutPage() {
                 <div className="mt-8 flex flex-wrap items-center justify-center lg:justify-start gap-4">
                   <Link
                     href="/#tools"
-                    className="inline-flex items-center gap-2 px-7.5 py-3.5 rounded-2xl text-sm font-bold text-white bg-gradient-brand shadow-glow hover:opacity-95 transition-all transform hover:-translate-y-0.5"
+                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
                   >
                     Explore Toolkit <ArrowRight className="w-4 h-4" />
                   </Link>
                   <Link
                     href="/contact"
-                    className="inline-flex items-center gap-2 px-7.5 py-3.5 rounded-2xl text-sm font-bold text-text bg-white border border-border hover:bg-surface transition-all shadow-soft"
+                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-text bg-white border border-border hover:border-primary/40 hover:bg-primary-light/40 transition-all shadow-soft active:scale-[0.98]"
                   >
                     Contact Team
                   </Link>
@@ -350,7 +350,7 @@ export default function AboutPage() {
             <div className="mt-8">
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-sm font-bold text-primary bg-white border border-border shadow-soft hover:bg-surface transition-all"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-text bg-white border border-border hover:border-primary/40 hover:bg-primary-light/40 transition-all shadow-soft active:scale-[0.98]"
               >
                 Send Us Feedback <ArrowRight className="w-4 h-4" />
               </Link>
@@ -379,7 +379,7 @@ export default function AboutPage() {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <Link
                 href="/#tools"
-                className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-bold text-white bg-gradient-brand shadow-glow-lg hover:opacity-95 transition-all"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
               >
                 <Zap className="w-5 h-5" /> Explore All Tools
               </Link>

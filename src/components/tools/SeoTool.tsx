@@ -57,7 +57,7 @@ function GenerateButton({ onClick, disabled }: { onClick: () => void; disabled: 
     <button
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-brand text-white text-sm font-semibold shadow-glow hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+      className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-brand bg-[length:200%_200%] text-white text-base font-semibold shadow-glow-lg hover:bg-[position:100%_50%] disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
     >
       <Sparkles className="w-4 h-4" /> Generate
     </button>

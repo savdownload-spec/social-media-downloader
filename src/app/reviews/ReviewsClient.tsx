@@ -94,7 +94,7 @@ export function ReviewsClient({
                 <Link
                   key={f.key}
                   href={`/reviews?filter=${f.key}${highlightId ? `&review=${highlightId}` : ''}`}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-all active:scale-[0.98] ${
                     activeFilter === f.key
                       ? 'bg-text text-white shadow-soft-md'
                       : 'bg-white text-text-muted border border-border hover:border-primary/40 hover:text-text'
@@ -136,7 +136,7 @@ export function ReviewsClient({
                 <div className="mt-12 text-center">
                   <button
                     onClick={loadMore}
-                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all"
+                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
                   >
                     Load More Reviews <ArrowRight className="w-5 h-5" />
                   </button>

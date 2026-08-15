@@ -141,7 +141,7 @@ export function MobileNav({ close }: { close: () => void }) {
                       <Link
                         href="/tools"
                         onClick={close}
-                        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-primary-light/60 text-primary text-sm font-semibold hover:bg-primary-light transition-colors"
+                        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-primary-light/60 text-primary text-sm font-semibold hover:bg-primary-light transition-all active:scale-[0.98]"
                       >
                         <ArrowRight className="w-4 h-4" /> {t('mobileNav.viewAllTools')}
                       </Link>
@@ -177,7 +177,7 @@ export function MobileNav({ close }: { close: () => void }) {
                           </Link>
                         );
                       })}
-                      <Link href="/pricing" onClick={close} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-primary-light/60 text-primary text-sm font-semibold hover:bg-primary-light transition-colors">
+                      <Link href="/pricing" onClick={close} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-primary-light/60 text-primary text-sm font-semibold hover:bg-primary-light transition-all active:scale-[0.98]">
                         <ArrowRight className="w-4 h-4" /> {t('mobileNav.fullPricingDetails') || 'Full pricing details'}
                       </Link>
                     </div>
@@ -202,7 +202,7 @@ export function MobileNav({ close }: { close: () => void }) {
                           </div>
                         </Link>
                       ))}
-                      <Link href="/blog" onClick={close} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-primary-light/60 text-primary text-sm font-semibold hover:bg-primary-light transition-colors">
+                      <Link href="/blog" onClick={close} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-primary-light/60 text-primary text-sm font-semibold hover:bg-primary-light transition-all active:scale-[0.98]">
                         <ArrowRight className="w-4 h-4" /> {t('mobileNav.viewAllArticles')}
                       </Link>
                     </div>
@@ -247,7 +247,7 @@ export function MobileNav({ close }: { close: () => void }) {
         <Link
           href="/#tools"
           onClick={close}
-          className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-gradient-brand text-white text-sm font-semibold shadow-glow"
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-gradient-brand bg-[length:200%_200%] text-white text-sm font-semibold shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
         >
           <Zap className="w-4 h-4" /> {t('mobileNav.getStartedFree')}
         </Link>

@@ -71,7 +71,7 @@ function ResetPasswordClient() {
               </p>
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center px-6 py-3 rounded-2xl text-sm font-semibold text-white bg-gradient-brand shadow-glow-lg"
+                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
               >
                 Go to Sign In
               </Link>
@@ -145,7 +145,7 @@ function ResetPasswordClient() {
             {!token && (
               <div className="mt-4 text-center">
                 <Link href="/login" className="text-sm text-primary font-semibold hover:underline">
-                  Back to sign in
+                  Back to Sign In
                 </Link>
               </div>
             )}

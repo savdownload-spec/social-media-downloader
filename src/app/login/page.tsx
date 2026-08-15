@@ -152,7 +152,7 @@ function LoginClient() {
                   key={t.key}
                   type="button"
                   onClick={() => switchTab(t.key)}
-                  className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                  className={`px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all active:scale-[0.98] ${
                     tab === t.key
                       ? 'bg-text text-white shadow-soft-md'
                       : 'bg-surface text-text-muted hover:text-text hover:bg-surface/60'
@@ -169,7 +169,7 @@ function LoginClient() {
                 <button
                   type="button"
                   onClick={() => signIn('google', { callbackUrl })}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-2xl border border-border bg-white hover:bg-surface text-sm font-semibold text-text transition-all shadow-soft hover:shadow-soft-md"
+                  className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-2xl border border-border bg-white hover:bg-surface text-sm font-semibold text-text transition-all shadow-soft hover:shadow-soft-md active:scale-[0.98]"
                 >
                   <GoogleIcon /> Continue with Google
                 </button>
@@ -218,7 +218,7 @@ function LoginClient() {
                 <button
                   type="button"
                   onClick={() => signIn('google', { callbackUrl })}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-2xl border border-border bg-white hover:bg-surface text-sm font-semibold text-text transition-all shadow-soft hover:shadow-soft-md"
+                  className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-2xl border border-border bg-white hover:bg-surface text-sm font-semibold text-text transition-all shadow-soft hover:shadow-soft-md active:scale-[0.98]"
                 >
                   <GoogleIcon /> Sign up with Google
                 </button>

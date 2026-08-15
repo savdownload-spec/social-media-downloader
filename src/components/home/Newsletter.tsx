@@ -56,7 +56,7 @@ export function Newsletter() {
           <div className="absolute -bottom-20 -left-10 w-72 h-72 bg-fuchsia-brand/30 rounded-full blur-3xl pointer-events-none" />
           <div className="relative max-w-2xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              {t('newsletter.title') || 'Get The Good Updates.'}
+              {t('newsletter.title') || 'The Monthly Update'}
             </h2>
             <p className="mt-3 text-white/70 leading-relaxed">
               {t('newsletter.description') || 'One thoughtful email per month. Zero fluff. Only when we ship something worth telling you about.'}

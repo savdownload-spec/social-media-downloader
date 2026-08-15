@@ -2,8 +2,8 @@
   "common": {
     "language": "Language",
     "search": "Search",
-    "getStarted": "Get started",
-    "learnMore": "Learn more",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More",
     "close": "Close",
     "menu": "Menu",
     "followUs": "Follow us",
@@ -31,11 +31,11 @@
     "title": "Download Videos, Images & More",
     "subtitle": "Fast, free, and easy-to-use tools for downloading content from social media platforms",
     "cta": "Start Downloading",
-    "trusted": "Trusted by 2M+ creators",
+    "trusted": "Trusted By 2M+ Creators",
     "howItWorks": "See How It Works",
     "badges": {
-      "privacyFirst": "Privacy-first",
-      "everyPlatform": "Every platform"
+      "privacyFirst": "Privacy-First",
+      "everyPlatform": "Every Platform"
     },
     "stats": {
       "free": "Free",
@@ -67,10 +67,10 @@
     "company": "Company",
     "copyright": "All rights reserved.",
     "disclaimer": "Disclaimer: SavDown is not affiliated with any social media platform. Please respect copyrights.",
-    "stayInLoop": "Stay in the loop",
+    "stayInLoop": "Stay In The Loop",
     "stayInLoopDesc": "Get notified about new tools and updates.",
     "whySavDown": "Why SavDown?",
-    "noSignup": "No signup required"
+    "noSignup": "No Signup Required"
   },
   "catalog": {
     "title": "All Tools",
@@ -365,7 +365,7 @@
       "title": "Start Saving Today.",
       "description": "No signup, no watermarks, no cost. Just paste a link and download.",
       "button": {
-        "text": "Start downloading",
+        "text": "Start Downloading",
         "href": "/#tools"
       }
     }
@@ -381,8 +381,8 @@
       "message": "What's on your mind?"
     },
     "buttons": {
-      "send": "Send message",
-      "sent": "Message sent"
+      "send": "Send Message",
+      "sent": "Message Sent"
     },
     "validation": {
       "email": "Please enter a valid email address.",
@@ -403,7 +403,7 @@
     "eyebrow": "The Blog",
     "title": "Guides, Tips & Stories.",
     "subtitle": "Everything we've learned about downloading and repurposing video the right way.",
-    "backToBlog": "All articles",
+    "backToBlog": "All Articles",
     "ctaTitle": "Ready To Save A Video?",
     "ctaDesc": "Try our free, watermark-free downloaders, no signup required.",
     "ctaButton": "Browse all tools",
@@ -457,7 +457,7 @@
     ]
   },
   "ctaSection": {
-    "eyebrow": "Free forever, no signup, no limits",
+    "eyebrow": "Free Forever, No Signup, No Limits",
     "title": "Explore The Whole Toolkit.",
     "description": "Every tool you need, gathered in one place. Browse the full kit and find exactly what you are looking for. No account, no catch.",
     "buttons": {
@@ -466,7 +466,7 @@
     }
   },
   "howItWorks": {
-    "eyebrow": "How it works",
+    "eyebrow": "How It Works",
     "title": "Get What You Need In Three Simple Steps.",
     "description": "No apps to install and no accounts to create. Every tool in the kit follows the same quick, friendly flow.",
     "steps": [
@@ -485,7 +485,7 @@
     ]
   },
   "mediaShowcase": {
-    "eyebrow": "See it in action",
+    "eyebrow": "See It In Action",
     "title": "One Toolkit, Endless Ways To Use It.",
     "description": "From saving a video to cleaning up an image or merging a PDF, every tool is one click away. Tap any example to open its tool.",
     "items": {
@@ -508,7 +508,7 @@
     }
   },
   "security": {
-    "eyebrow": "Security and privacy",
+    "eyebrow": "Security And Privacy",
     "title": "Your Links Are Yours. We Keep It That Way.",
     "description": "Privacy is not a setting you have to find. SavDown is built to forget you the moment your download finishes.",
     "points": [
@@ -564,7 +564,7 @@
     "subscribed": "You're subscribed"
   },
   "compatibility": {
-    "eyebrow": "Works everywhere",
+    "eyebrow": "Works Everywhere",
     "title": "One Tool. Every Device.",
     "titleAccent": "Every Browser.",
     "description": "Use SavDown wherever you are. No special software required, just open your browser and download.",
@@ -574,8 +574,8 @@
       "mobile": "Mobile",
       "browsers": "Browsers"
     },
-    "statusEyebrow": "Compatibility status",
-    "statusTitle": "Browser-based by design",
+    "statusEyebrow": "Compatibility Status",
+    "statusTitle": "Browser-Based By Design",
     "statusBody": "Nothing to install. Nothing complicated. Just open SavDown and get started.",
     "benefits": [
       "No software required",
@@ -587,7 +587,7 @@
     "footnote": "No downloads. No setup. Just a fast, simple experience."
   },
   "testimonials": {
-    "eyebrow": "Loved by creators",
+    "eyebrow": "Loved By Creators",
     "title": "The Tool People Quietly Keep Coming Back To.",
     "description": "Thousands of creators, marketers, students, and archivists reach for SavDown when they need a clean copy, fast.",
     "items": [
@@ -624,9 +624,9 @@
     "description": "Cookies are small text files stored on your device when you visit a website. SavDown uses the minimum number necessary to make the service work well, nothing more.",
     "meta": "Last updated: January 2026",
     "highlights": {
-      "minimalCookies": "Minimal cookies",
-      "optOut": "Opt-out anytime",
-      "noCrossSite": "No cross-site tracking"
+      "minimalCookies": "Minimal Cookies",
+      "optOut": "Opt-Out Anytime",
+      "noCrossSite": "No Cross-Site Tracking"
     },
     "essentialSection": {
       "eyebrow": "Essential cookies",
@@ -717,9 +717,9 @@
     "description": "SavDown respects the intellectual property rights of others and expects users to do the same. Here is how we handle copyright concerns, in plain language.",
     "meta": "Last updated: January 2026",
     "highlights": {
-      "creatorFirst": "Creator-first",
-      "reviewed72h": "Reviewed within 72 hours",
-      "counterNotices": "Counter-notices supported"
+      "creatorFirst": "Creator-First",
+      "reviewed72h": "Reviewed Within 72 Hours",
+      "counterNotices": "Counter-Notices Supported"
     },
     "contextSection": {
       "eyebrow": "Important context",
@@ -792,9 +792,9 @@
     "description": "Your privacy matters to us. This policy explains, in plain English, what data SavDown collects, why we collect it, and how it is handled.",
     "meta": "Last updated: January 2026",
     "highlights": {
-      "gdpr": "GDPR-aligned",
-      "noTrackers": "No third-party trackers",
-      "responseTime": "30-day response time"
+      "gdpr": "GDPR-Aligned",
+      "noTrackers": "No Third-Party Trackers",
+      "responseTime": "30-Day Response Time"
     },
     "principlesSection": {
       "eyebrow": "Our principles",
@@ -913,8 +913,8 @@
     "meta": "Last updated: January 2026",
     "highlights": {
       "plainEnglish": "Plain English",
-      "fairClear": "Fair & clear",
-      "respectsRights": "Respects your rights"
+      "fairClear": "Fair & Clear",
+      "respectsRights": "Respects Your Rights"
     },
     "summarySection": {
       "eyebrow": "The short version",
@@ -1199,7 +1199,7 @@
     }
   },
   "useCases": {
-    "eyebrow": "Use cases",
+    "eyebrow": "Use Cases",
     "title": "One Tool, A Lot Of Reasons To Keep It Bookmarked.",
     "titleHighlight": "Lot Of Reasons",
     "description": "However you work with video, SavDown fits into the moment you need a clean, reliable copy.",
@@ -1225,27 +1225,27 @@
   "megaMenu": {
     "categories": "Categories",
     "popular": "Popular",
-    "freeForever": "Free forever",
+    "freeForever": "Free Forever",
     "aiToolsComing": "AI Tools Coming",
     "aiToolsComingDesc": "Next-gen AI tools for creators. Join the waitlist for early access.",
-    "seePricing": "See pricing",
+    "seePricing": "See Pricing",
     "viewAllTools": "View All Tools",
-    "allArticles": "All articles",
-    "latestArticlesTitle": "Latest articles & guides.",
-    "fullDetails": "Full details",
-    "pricingTitle": "Simple, transparent pricing.",
+    "allArticles": "All Articles",
+    "latestArticlesTitle": "Latest Articles & Guides.",
+    "fullDetails": "Full Details",
+    "pricingTitle": "Simple, Transparent Pricing.",
     "pricingSubtitle": "Start free, upgrade when you're ready.",
     "pricingPeriodForever": "forever",
     "pricingPeriodMonth": "/month",
     "pricingPeriodOneTime": "one-time",
     "mostPopular": "Most Popular",
-    "noCreditCard": "No credit card required",
-    "freeTierForever": "Free tier forever",
-    "cancelAnytime": "Cancel any time",
-    "resourcesTitle": "Everything you need to know.",
+    "noCreditCard": "No Credit Card Required",
+    "freeTierForever": "Free Tier Forever",
+    "cancelAnytime": "Cancel Any Time",
+    "resourcesTitle": "Everything You Need To Know.",
     "resourcesSubtitle": "Documentation, support, and legal, all in one place.",
     "resourcesEyebrow": "Resources",
-    "aboutTitle": "The team building SavDown.",
+    "aboutTitle": "The Team Building SavDown.",
     "aboutSubtitle": "Fast, private, free, that's our promise.",
     "aboutEyebrow": "Company",
     "followUs": "Follow us:",

@@ -42,7 +42,7 @@ export function AdBanner() {
             {/* Bottom-right: CTA */}
             <Link
               href="/contact"
-              className="inline-flex items-center gap-1 self-end rounded-full bg-gradient-brand px-4 py-2 text-xs font-semibold text-white shadow-soft"
+              className="inline-flex items-center gap-1 self-end rounded-xl bg-gradient-brand px-3.5 py-2 text-xs font-semibold text-white shadow-soft active:scale-[0.98] transition-all"
             >
               Inquire <ArrowUpRight className="w-3 h-3" />
             </Link>
@@ -68,7 +68,7 @@ export function AdBanner() {
             <div className="flex flex-col items-end gap-2 flex-shrink-0">
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-white bg-gradient-brand shadow-soft hover:shadow-soft-md transition-shadow"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-2xl text-sm font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
               >
                 Get This Spot <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>

@@ -48,7 +48,7 @@ export function AllToolsGrid() {
               key={f}
               onClick={() => setFilter(f)}
               aria-pressed={active}
-              className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+              className={`px-5 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-200 active:scale-[0.98] ${
                 active
                   ? 'bg-text text-white shadow-soft-md'
                   : 'bg-white text-text-muted border border-border hover:border-primary/40 hover:text-text'
@@ -110,7 +110,7 @@ export function AllToolsGrid() {
       <div className="mt-12 text-center">
         <Link
           href="/tools"
-          className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all"
+          className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
         >
           {t('common.viewAll')} <ArrowRight className="w-5 h-5" />
         </Link>

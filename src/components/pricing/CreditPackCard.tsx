@@ -11,8 +11,8 @@ export function CreditPackCard({ pack }: { pack: PackView }) {
   const highlighted = pack.badge !== null;
 
   const cta = highlighted
-    ? 'mt-6 flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-sm text-white font-semibold bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all'
-    : 'mt-6 flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-sm font-semibold bg-white text-text border border-border hover:border-primary/40 hover:bg-primary-light/40 transition-all';
+    ? 'mt-6 flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-sm text-white font-semibold bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]'
+    : 'mt-6 flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-sm font-semibold bg-white text-text border border-border hover:border-primary/40 hover:bg-primary-light/40 transition-all active:scale-[0.98]';
 
   return (
     <HighlightFrame variant={pack.badge ?? 'none'} badge={pack.badgeLabel} className="p-6">

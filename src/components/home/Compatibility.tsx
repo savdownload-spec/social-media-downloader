@@ -48,7 +48,7 @@ export function Compatibility() {
   return (
     <Section variant="default" id="compatibility">
       <SectionHeading
-        eyebrow={t('compatibility.eyebrow') || 'Works everywhere'}
+        eyebrow={t('compatibility.eyebrow') || 'Works Everywhere'}
         title={
           <>
             {t('compatibility.title') || 'One Tool. Every Device.'}{' '}
@@ -107,10 +107,10 @@ export function Compatibility() {
               </div>
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
-                  {t('compatibility.statusEyebrow') || 'Compatibility status'}
+                  {t('compatibility.statusEyebrow') || 'Compatibility Status'}
                 </p>
                 <p className="mt-1 text-sm font-semibold text-text">
-                  {t('compatibility.statusTitle') || 'Browser-based by design'}
+                  {t('compatibility.statusTitle') || 'Browser-Based By Design'}
                 </p>
               </div>
             </div>

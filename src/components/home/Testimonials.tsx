@@ -46,7 +46,7 @@ export function Testimonials() {
       <div className="mt-10 text-center">
         <Link
           href="/reviews"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-semibold text-text bg-white border border-border hover:border-primary/40 hover:bg-primary-light/40 transition-colors"
+          className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-text bg-white border border-border hover:border-primary/40 hover:bg-primary-light/40 transition-all active:scale-[0.98]"
         >
           See All Reviews <ArrowRight className="w-4 h-4" />
         </Link>

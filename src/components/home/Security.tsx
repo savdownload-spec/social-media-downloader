@@ -68,7 +68,7 @@ export function Security() {
                     <ShieldCheck className="h-[18px] w-[18px]" strokeWidth={1.8} />
                   </span>
                   <div>
-                    <h3 className="text-sm font-semibold text-text">Privacy by design</h3>
+                    <h3 className="text-sm font-semibold text-text">Privacy By Design</h3>
                     <p className="mt-1 text-xs leading-5 text-text-muted">We keep unnecessary collection and retention to a minimum.</p>
                   </div>
                 </div>
@@ -84,7 +84,7 @@ export function Security() {
                 <div className="pointer-events-none absolute inset-0 bg-grid-dark opacity-50 [mask-image:linear-gradient(to_bottom,black,transparent_90%)]" />
 
                 <div className="relative flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-subtle">
-                  <span>Privacy by design</span>
+                  <span>Privacy By Design</span>
                   <span className="flex items-center gap-1.5 text-emerald-300"><i className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_0_4px_rgba(110,231,183,0.12)]" /> Active</span>
                 </div>
                 <div className="relative mt-12 flex items-center gap-4">
