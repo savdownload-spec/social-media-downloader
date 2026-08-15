@@ -2,8 +2,9 @@
  * Reads Vercel's edge-injected IP geolocation headers. Free, zero-latency,
  * no external API call, and the app never sees or stores the raw visitor
  * IP — Vercel resolves these at the edge before the request reaches us.
- * Returns null on any non-Vercel host (local dev, self-host), where the
- * caller falls back to `resolveIpGeoFallback` or the browser-timezone chain.
+ * Returns null on any non-Vercel host (local dev, self-host) — there is no
+ * third-party IP-geolocation fallback; the caller falls back to the
+ * browser-timezone chain instead (theme), or disables the feature (weather).
  *
  * Header names per Vercel's documented edge network geolocation contract.
  */
