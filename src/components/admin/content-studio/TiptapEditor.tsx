@@ -35,7 +35,7 @@ function ToolbarButton({ onClick, active, disabled, title, children }: {
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed',
         active ? 'bg-primary/[0.12] text-primary' : 'text-text-muted hover:bg-surface hover:text-text',
       )}
     >
@@ -45,7 +45,7 @@ function ToolbarButton({ onClick, active, disabled, title, children }: {
 }
 
 function Divider() {
-  return <span className="w-px h-5 bg-border-light mx-1" />;
+  return <span className="w-px h-6 bg-border-light mx-1" />;
 }
 
 export type EditorStats = {
@@ -212,35 +212,35 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
     // Rounded corners are applied per-edge to the toolbar/content instead.
     <div className="bg-white border border-border-light rounded-xl">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 px-2.5 py-2 border-b border-border-light bg-white rounded-t-xl sticky top-14 z-[5] shadow-sm">
-        <ToolbarButton title="Undo" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}><Undo2 className="w-3.5 h-3.5" /></ToolbarButton>
-        <ToolbarButton title="Redo" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}><Redo2 className="w-3.5 h-3.5" /></ToolbarButton>
+      <div className="flex flex-wrap items-center gap-1 px-3 py-2.5 border-b border-border-light bg-white rounded-t-xl sticky top-14 z-[5] shadow-sm">
+        <ToolbarButton title="Undo" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}><Undo2 className="w-4 h-4" /></ToolbarButton>
+        <ToolbarButton title="Redo" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}><Redo2 className="w-4 h-4" /></ToolbarButton>
         <Divider />
-        <ToolbarButton title="Heading 1" active={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}><Heading1 className="w-3.5 h-3.5" /></ToolbarButton>
-        <ToolbarButton title="Heading 2" active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}><Heading2 className="w-3.5 h-3.5" /></ToolbarButton>
-        <ToolbarButton title="Heading 3" active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><Heading3 className="w-3.5 h-3.5" /></ToolbarButton>
-        <ToolbarButton title="Heading 4" active={editor.isActive('heading', { level: 4 })} onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()}><Heading4 className="w-3.5 h-3.5" /></ToolbarButton>
+        <ToolbarButton title="Heading 1" active={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}><Heading1 className="w-4 h-4" /></ToolbarButton>
+        <ToolbarButton title="Heading 2" active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}><Heading2 className="w-4 h-4" /></ToolbarButton>
+        <ToolbarButton title="Heading 3" active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><Heading3 className="w-4 h-4" /></ToolbarButton>
+        <ToolbarButton title="Heading 4" active={editor.isActive('heading', { level: 4 })} onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()}><Heading4 className="w-4 h-4" /></ToolbarButton>
         <Divider />
-        <ToolbarButton title="Bold" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}><Bold className="w-3.5 h-3.5" /></ToolbarButton>
-        <ToolbarButton title="Italic" active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic className="w-3.5 h-3.5" /></ToolbarButton>
-        <ToolbarButton title="Underline" active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}><UnderlineIcon className="w-3.5 h-3.5" /></ToolbarButton>
-        <ToolbarButton title="Strikethrough" active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}><Strikethrough className="w-3.5 h-3.5" /></ToolbarButton>
-        <ToolbarButton title="Inline code" active={editor.isActive('code')} onClick={() => editor.chain().focus().toggleCode().run()}><Code className="w-3.5 h-3.5" /></ToolbarButton>
+        <ToolbarButton title="Bold" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}><Bold className="w-4 h-4" /></ToolbarButton>
+        <ToolbarButton title="Italic" active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic className="w-4 h-4" /></ToolbarButton>
+        <ToolbarButton title="Underline" active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}><UnderlineIcon className="w-4 h-4" /></ToolbarButton>
+        <ToolbarButton title="Strikethrough" active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}><Strikethrough className="w-4 h-4" /></ToolbarButton>
+        <ToolbarButton title="Inline code" active={editor.isActive('code')} onClick={() => editor.chain().focus().toggleCode().run()}><Code className="w-4 h-4" /></ToolbarButton>
         <Divider />
-        <ToolbarButton title="Bullet list" active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}><List className="w-3.5 h-3.5" /></ToolbarButton>
-        <ToolbarButton title="Numbered list" active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered className="w-3.5 h-3.5" /></ToolbarButton>
-        <ToolbarButton title="Blockquote" active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote className="w-3.5 h-3.5" /></ToolbarButton>
-        <ToolbarButton title="Horizontal rule" onClick={() => editor.chain().focus().setHorizontalRule().run()}><Minus className="w-3.5 h-3.5" /></ToolbarButton>
+        <ToolbarButton title="Bullet list" active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}><List className="w-4 h-4" /></ToolbarButton>
+        <ToolbarButton title="Numbered list" active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered className="w-4 h-4" /></ToolbarButton>
+        <ToolbarButton title="Blockquote" active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote className="w-4 h-4" /></ToolbarButton>
+        <ToolbarButton title="Horizontal rule" onClick={() => editor.chain().focus().setHorizontalRule().run()}><Minus className="w-4 h-4" /></ToolbarButton>
         <Divider />
-        <ToolbarButton title="Link" active={editor.isActive('link')} onClick={insertLink}><LinkIcon className="w-3.5 h-3.5" /></ToolbarButton>
+        <ToolbarButton title="Link" active={editor.isActive('link')} onClick={insertLink}><LinkIcon className="w-4 h-4" /></ToolbarButton>
         <ToolbarButton title="Insert image" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
-          {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImageIcon className="w-3.5 h-3.5" />}
+          {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
         </ToolbarButton>
-        <ToolbarButton title="Insert table" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}><TableIcon className="w-3.5 h-3.5" /></ToolbarButton>
-        <ToolbarButton title="YouTube embed" onClick={insertYoutube}><YoutubeIcon className="w-3.5 h-3.5" /></ToolbarButton>
+        <ToolbarButton title="Insert table" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}><TableIcon className="w-4 h-4" /></ToolbarButton>
+        <ToolbarButton title="YouTube embed" onClick={insertYoutube}><YoutubeIcon className="w-4 h-4" /></ToolbarButton>
         <Divider />
         <div className="relative">
-          <ToolbarButton title="Callout" active={editor.isActive('callout')} onClick={() => setCalloutMenuOpen((v) => !v)}><Info className="w-3.5 h-3.5" /></ToolbarButton>
+          <ToolbarButton title="Callout" active={editor.isActive('callout')} onClick={() => setCalloutMenuOpen((v) => !v)}><Info className="w-4 h-4" /></ToolbarButton>
           {calloutMenuOpen && (
             <div className="absolute top-8 left-0 z-10 bg-white border border-border-light rounded-lg shadow-soft-lg p-1 flex flex-col min-w-[130px]">
               {CALLOUT_VARIANTS.map((v) => {
@@ -252,7 +252,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
                     onClick={() => { editor.chain().focus().setCallout(v.value).run(); setCalloutMenuOpen(false); }}
                     className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[12px] text-text hover:bg-surface text-left"
                   >
-                    <Icon className="w-3.5 h-3.5" /> {v.label}
+                    <Icon className="w-4 h-4" /> {v.label}
                   </button>
                 );
               })}
