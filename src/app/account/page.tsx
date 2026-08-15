@@ -59,6 +59,7 @@ export default async function AccountPage() {
         company: true,
         bio: true,
         createdAt: true,
+        accounts: { select: { provider: true }, take: 1 },
       },
     }),
     prisma.review.findMany({
@@ -97,7 +98,7 @@ export default async function AccountPage() {
           <div className="mb-10">
             <p className="text-sm font-medium text-primary mb-3">Account</p>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Hi, {user.name ?? 'there'} ðŸ‘‹
+              Hi, {user.name ?? 'there'} 👋
             </h1>
             <p className="mt-2 text-text-muted text-sm">
               Manage your profile, review your submissions, and control your account.
@@ -106,7 +107,7 @@ export default async function AccountPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <ProfileForm user={user as AccountUser} />
+              <ProfileForm user={{ ...user, oauthProvider: user.accounts[0]?.provider ?? null } as AccountUser} />
               <MyReviews reviews={reviews as MyReview[]} />
             </div>
             <div className="space-y-6">

@@ -28,6 +28,11 @@ const nextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
+    // pdfkit reads its bundled AFM font metrics off disk at runtime via a
+    // computed path (data/Helvetica.afm etc.) — webpack bundling the
+    // package breaks that resolution, so it must run un-bundled from
+    // node_modules like it would under plain Node.
+    serverComponentsExternalPackages: ['pdfkit'],
     // The bundled yt-dlp Linux binary (bin/) and ffmpeg-static's downloaded
     // binary aren't detected by Next.js's default file tracing (they're
     // read via a runtime-computed path, not a static import), so Vercel's

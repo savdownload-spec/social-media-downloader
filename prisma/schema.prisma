@@ -453,3 +453,31 @@ model BlogComment {
   @@index([status, reportedAt])
   @@index([userId, createdAt])
 }
+
+/// A generated Users data export (Admin > Users export drawer). Tracks
+/// generation status and the resulting file(s) so the admin UI can show an
+/// export history with real progress instead of a fire-and-forget download.
+model UserExportJob {
+  id            String    @id @default(cuid())
+  adminId       String
+  adminEmail    String
+  status        String    @default("PROCESSING") // PROCESSING | COMPLETED | FAILED | EXPIRED
+  scope         String    // all | filtered | selected
+  userCount     Int       @default(0)
+  dateField     String?   // createdAt | updatedAt
+  dateFrom      DateTime?
+  dateTo        DateTime?
+  fieldsJson    Json      // string[] of exported field ids
+  formatsJson   Json      // string[] of requested formats (csv|xlsx|json|pdf|zip)
+  fileName      String?   // primary file name shown in history (zip name if zip was requested, else the first format)
+  fileUrl       String?   // primary download URL (Vercel Blob, or local path in dev)
+  fileSize      Int?      // primary file size in bytes
+  filesJson     Json?     // every generated file: { format, name, url, size }[] — lets multi-format exports (without zip) each stay downloadable
+  error         String?
+  createdAt     DateTime  @default(now())
+  completedAt   DateTime?
+  expiresAt     DateTime
+
+  @@index([adminId, createdAt])
+  @@index([status, expiresAt])
+}

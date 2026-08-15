@@ -25,12 +25,14 @@ export async function GET() {
       company: true,
       bio: true,
       createdAt: true,
+      accounts: { select: { provider: true }, take: 1 },
     },
   });
 
   if (!user) return fail('Account not found.', 404);
 
-  return ok(user);
+  const { accounts, ...rest } = user;
+  return ok({ ...rest, oauthProvider: accounts[0]?.provider ?? null });
 }
 
 export async function PATCH(request: Request) {

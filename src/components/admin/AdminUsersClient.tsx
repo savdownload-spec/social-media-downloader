@@ -5,11 +5,14 @@ import Link from 'next/link';
 import {
   AdminPage, PageHeader, TableCard, Table, Th, Td,
   StatusBadge, Pagination, FilterBar, FilterTab, EmptyState, ErrorState,
-  Skeleton,
+  Skeleton, ActionButton,
 } from './AdminUI';
+import { UsersExportDrawer } from './UsersExportDrawer';
+import { Checkbox } from '@/components/ui/Checkbox';
 import { useToast } from '@/components/ui/Toast';
 import { useConfirm } from '@/components/ui/ConfirmProvider';
-import { UserCheck, UserX, Trash2, Eye, Users } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { UserCheck, UserX, Trash2, Eye, Users, Download } from 'lucide-react';
 
 const PLAN_FILTERS = ['ALL', 'FREE', 'PRO', 'MAX', 'LIFETIME'];
 
@@ -29,6 +32,9 @@ export function AdminUsersClient() {
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportScope, setExportScope] = useState<'all' | 'filtered' | 'selected'>('all');
   const { success, error: err } = useToast();
   const { confirm }             = useConfirm();
 
@@ -68,18 +74,64 @@ export function AdminUsersClient() {
 
   async function handleDelete(u: User) {
     const ok = await confirm({ title: `Delete ${u.name ?? u.email}?`, description: 'This action cannot be undone. All user data will be permanently removed.', confirmLabel: 'Delete', variant: 'danger' });
-    if (ok) doAction(u.id, 'delete');
+    if (ok) { doAction(u.id, 'delete'); setSelected((s) => { const n = new Set(s); n.delete(u.id); return n; }); }
   }
+
+  function toggleSelect(id: string) {
+    setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  }
+  const pageIds = users.map((u) => u.id);
+  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
+  const somePageSelected = pageIds.some((id) => selected.has(id));
+  function toggleSelectPage() {
+    setSelected((s) => {
+      const n = new Set(s);
+      if (allPageSelected) pageIds.forEach((id) => n.delete(id));
+      else pageIds.forEach((id) => n.add(id));
+      return n;
+    });
+  }
+
+  const hasFilters = !!search || plan !== 'ALL';
 
   return (
     <AdminPage>
-      <PageHeader title="Users" description={`${total.toLocaleString()} registered users`} />
+      <PageHeader
+        title="Users"
+        description={`${total.toLocaleString()} registered users`}
+        actions={
+          <ActionButton variant="primary" icon={Download} onClick={() => { setExportScope('all'); setExportOpen(true); }}>
+            Export Users
+          </ActionButton>
+        }
+      />
 
       <FilterBar search={search} onSearch={setSearch} placeholder="Search by name or email...">
         {PLAN_FILTERS.map((f) => (
           <FilterTab key={f} label={f} active={plan === f} onClick={() => setPlan(f)} />
         ))}
       </FilterBar>
+
+      {(selected.size > 0 || hasFilters) && (
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          {selected.size > 0 && (
+            <>
+              <span className="text-[12px] text-text-muted">{selected.size.toLocaleString()} users selected</span>
+              <ActionButton size="sm" icon={Download} onClick={() => { setExportScope('selected'); setExportOpen(true); }}>
+                Export selected
+              </ActionButton>
+              <button onClick={() => setSelected(new Set())} className="text-[11px] font-semibold text-text-muted hover:text-text hover:underline">
+                Clear selection
+              </button>
+            </>
+          )}
+          {hasFilters && (
+            <ActionButton size="sm" icon={Download} onClick={() => { setExportScope('filtered'); setExportOpen(true); }}>
+              Export filtered
+            </ActionButton>
+          )}
+        </div>
+      )}
 
       {error ? (
         <ErrorState message="Failed to load users." onRetry={load} />
@@ -88,6 +140,9 @@ export function AdminUsersClient() {
           <Table>
             <thead>
               <tr>
+                <Th className="w-10">
+                  <Checkbox checked={allPageSelected} indeterminate={!allPageSelected && somePageSelected} onChange={toggleSelectPage} />
+                </Th>
                 <Th>User</Th>
                 <Th>Role</Th>
                 <Th>Plan</Th>
@@ -101,13 +156,13 @@ export function AdminUsersClient() {
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={7} className="px-4 py-3">
+                    <td colSpan={8} className="px-4 py-3">
                       <Skeleton className="h-5 w-full" />
                     </td>
                   </tr>
                 ))
               ) : users.length === 0 ? (
-                <tr><td colSpan={7}>
+                <tr><td colSpan={8}>
                   <EmptyState
                     icon={Users}
                     title="No users found"
@@ -115,7 +170,10 @@ export function AdminUsersClient() {
                   />
                 </td></tr>
               ) : users.map((u) => (
-                <tr key={u.id} className="hover:bg-surface/40 transition-colors">
+                <tr key={u.id} className={cn('hover:bg-surface/40 transition-colors', selected.has(u.id) && 'bg-primary/[0.03]')}>
+                  <Td>
+                    <Checkbox checked={selected.has(u.id)} onChange={() => toggleSelect(u.id)} />
+                  </Td>
                   <Td>
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-primary/[0.08] flex items-center justify-center text-[11px] font-bold text-primary shrink-0">
@@ -160,6 +218,15 @@ export function AdminUsersClient() {
           <Pagination page={page} totalPages={totalPages} total={total} onPage={setPage} />
         </TableCard>
       )}
+
+      <UsersExportDrawer
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        initialScope={exportScope}
+        currentFilters={{ search, plan }}
+        selectedIds={Array.from(selected)}
+        onExported={() => success('Export ready — check the download.')}
+      />
     </AdminPage>
   );
 }

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { Camera, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
@@ -16,10 +17,16 @@ export type AccountUser = {
   company?: string | null;
   bio?: string | null;
   createdAt?: string | Date;
+  oauthProvider?: string | null;
 };
 
 type ProfileFormProps = {
   user: AccountUser;
+};
+
+const PROVIDER_LABEL: Record<string, string> = {
+  google: 'Google',
+  github: 'GitHub',
 };
 
 export function ProfileForm({ user }: ProfileFormProps) {
@@ -35,6 +42,50 @@ export function ProfileForm({ user }: ProfileFormProps) {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const managedByOAuth = !!user.oauthProvider;
+  const providerLabel = user.oauthProvider ? PROVIDER_LABEL[user.oauthProvider] ?? user.oauthProvider : null;
+
+  const handleAvatarClick = () => {
+    if (managedByOAuth || avatarUploading) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      errorToast('Invalid file', 'Please choose an image file.');
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      errorToast('File too large', 'Please choose an image under 8MB.');
+      return;
+    }
+
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/account/avatar', { method: 'POST', body: formData });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) {
+        errorToast('Upload failed', data?.error || 'Please try again.');
+        return;
+      }
+      setImage(data.data.url);
+      success('Profile picture updated!');
+      update();
+    } catch {
+      errorToast('Network error', 'Could not reach the server.');
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -85,16 +136,45 @@ export function ProfileForm({ user }: ProfileFormProps) {
       <p className="text-sm text-text-muted mb-6">Your public profile information.</p>
 
       <div className="flex items-center gap-4 mb-6">
-        {image ? (
-          <img src={image} alt="Profile" className="w-16 h-16 rounded-full object-cover shrink-0" />
-        ) : (
-          <div className="w-16 h-16 rounded-full bg-gradient-brand flex items-center justify-center text-white text-lg font-bold shrink-0">
-            {initials}
-          </div>
-        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleAvatarChange}
+        />
+        <button
+          type="button"
+          onClick={handleAvatarClick}
+          disabled={managedByOAuth || avatarUploading}
+          aria-label={managedByOAuth ? 'Profile picture managed by ' + providerLabel : 'Change profile picture'}
+          className="group relative w-16 h-16 rounded-full shrink-0 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2 disabled:cursor-default"
+        >
+          {image ? (
+            <img src={image} alt="Profile" className="w-16 h-16 rounded-full object-cover" />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-gradient-brand flex items-center justify-center text-white text-lg font-bold">
+              {initials}
+            </div>
+          )}
+          {!managedByOAuth && (
+            <div className={`absolute inset-0 rounded-full bg-black/50 flex items-center justify-center transition-opacity ${avatarUploading ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+              {avatarUploading ? (
+                <Loader2 className="w-5 h-5 text-white animate-spin" />
+              ) : (
+                <Camera className="w-5 h-5 text-white" />
+              )}
+            </div>
+          )}
+        </button>
         <div className="min-w-0">
           <p className="text-sm font-semibold text-text truncate">{user.name ?? 'Your name'}</p>
           <p className="text-xs text-text-muted truncate">{user.email}</p>
+          <p className="text-xs text-text-subtle mt-0.5">
+            {managedByOAuth
+              ? `Managed by your ${providerLabel} account`
+              : 'Click your photo to change it'}
+          </p>
         </div>
       </div>
 
@@ -112,18 +192,6 @@ export function ProfileForm({ user }: ProfileFormProps) {
             </label>
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
           </div>
-        </div>
-
-        <div>
-          <label className="block text-xs font-semibold text-text-subtle uppercase tracking-wider mb-1.5">
-            Profile Picture URL
-          </label>
-          <Input
-            value={image}
-            onChange={(e) => setImage(e.target.value)}
-            placeholder="https://example.com/avatar.jpg"
-          />
-          <p className="text-xs text-text-subtle mt-1.5">Paste a public image URL. Leave blank to use your initials.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
