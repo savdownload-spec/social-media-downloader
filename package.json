@@ -14,7 +14,8 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "stripe:setup": "tsx scripts/setup-stripe.ts",
-    "stripe:verify": "tsx scripts/setup-stripe.ts --verify"
+    "stripe:verify": "tsx scripts/setup-stripe.ts --verify",
+    "test": "vitest run"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
@@ -79,6 +80,7 @@
     "prisma": "^5.22.0",
     "tailwindcss": "^3.4.15",
     "tsx": "^4.19.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
   }
 }

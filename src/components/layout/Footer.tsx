@@ -5,6 +5,8 @@ import { Facebook, Instagram, Linkedin, Twitter, Mail, Check } from 'lucide-reac
 import { siteConfig } from '@/config/site';
 import { Logo } from '@/components/ui/Logo';
 import { LanguageSelector } from '@/components/ui/LanguageSelector';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import { WeatherAttribution } from '@/components/effects/WeatherAttribution';
 import { Container } from './Container';
 import { FooterToolGrid } from './FooterToolGrid';
 import { useTranslation } from '@/i18n';
@@ -95,11 +97,19 @@ export function Footer() {
               <Mail className="w-4 h-4" />
               {t('nav.contact')}
             </Link>
-            <div className="mt-6">
-              <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
-                {t('common.language')}
-              </p>
-              <LanguageSelector variant="footer" />
+            <div className="mt-6 flex flex-wrap gap-x-10 gap-y-6">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
+                  {t('common.language')}
+                </p>
+                <LanguageSelector variant="footer" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
+                  Theme
+                </p>
+                <ThemeToggle variant="footer" />
+              </div>
             </div>
           </div>
 
@@ -178,6 +188,7 @@ export function Footer() {
                 </Link>
               );
             })}
+            <WeatherAttribution />
           </div>
         </div>
       </Container>

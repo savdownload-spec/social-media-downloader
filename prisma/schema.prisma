@@ -36,6 +36,10 @@ model User {
   jobTitle      String?
   company       String?
   bio           String?
+  /// Cross-device sync of the user's manual theme choice ('light' | 'dark' |
+  /// 'auto'). localStorage is the source of truth per-device; this column
+  /// only seeds a fresh device that has no local value yet.
+  themePreference String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

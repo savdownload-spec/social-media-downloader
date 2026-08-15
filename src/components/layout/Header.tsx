@@ -6,6 +6,7 @@ import { Menu, X, Search, Zap, Download, User } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { Logo } from '@/components/ui/Logo';
 import { LanguageSelector } from '@/components/ui/LanguageSelector';
+import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { Container } from './Container';
 import { MegaMenu } from './MegaMenu';
 import { MobileNav } from './MobileNav';
@@ -35,6 +36,7 @@ export function Header() {
 
         {/* Desktop right actions */}
         <div className="hidden md:flex items-center gap-2 shrink-0">
+          <ThemeToggle variant="header" />
           <LanguageSelector variant="header" />
           <Link
             href={accountHref}
@@ -98,7 +100,10 @@ export function Header() {
           >
             <Container className="py-3">
               <div className="flex items-center justify-between pb-3 border-b border-border-light mb-1">
-                <LanguageSelector variant="header" />
+                <div className="flex items-center gap-1">
+                  <ThemeToggle variant="header" />
+                  <LanguageSelector variant="header" />
+                </div>
                 <div className="flex items-center gap-4">
                   <Link href="/search" onClick={() => setMobileOpen(false)} className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text">
                     <Search className="w-4 h-4" /> {t('common.search')}

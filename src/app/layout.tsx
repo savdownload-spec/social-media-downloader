@@ -17,6 +17,10 @@ import { Providers } from '@/components/providers';
 import { PricingProvider } from '@/components/pricing/PricingProvider';
 import { getPricingConfig } from '@/lib/pricing-server';
 import { SupportChat } from '@/components/support/SupportChat';
+import { ThemeProvider } from '@/contexts/ThemeContext';
+import { WeatherProvider } from '@/contexts/WeatherContext';
+import { WeatherAtmosphere } from '@/components/effects/WeatherAtmosphere';
+import { THEME_INIT_SCRIPT } from '@/lib/theme/theme-init-script';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -92,7 +96,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#FFFFFF',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#FFFFFF' },
+    { media: '(prefers-color-scheme: dark)', color: '#0B0918' },
+  ],
   width: 'device-width',
   initialScale: 1,
 };
@@ -101,17 +108,28 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const [messages, pricing] = await Promise.all([getMessages(), getPricingConfig()]);
 
   return (
-    <html lang="en" className={`${inter.variable} ${jakarta.variable}`}>
+    // suppressHydrationWarning: the blocking script below mutates this
+    // element's class/data attributes/style before hydration to prevent a
+    // theme flash; React never renders those attributes itself, so this
+    // only silences the (harmless, expected) mismatch React would otherwise
+    // warn about on this one node.
+    <html lang="en" className={`${inter.variable} ${jakarta.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="font-sans bg-surface text-text antialiased">
         <Providers>
           <NextIntlClientProvider messages={messages}>
             <PricingProvider value={pricing}>
             <LanguageProvider>
+              <ThemeProvider>
+              <WeatherProvider>
               <ToastProvider>
                 <ConfirmProvider>
                   <InstallProvider>
                     <ServiceWorkerRegister />
                     <PublicShell>
+                      <WeatherAtmosphere />
                       <Header />
                       <AdBanner />
                     </PublicShell>
@@ -123,6 +141,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   </InstallProvider>
                 </ConfirmProvider>
               </ToastProvider>
+              </WeatherProvider>
+              </ThemeProvider>
             </LanguageProvider>
             </PricingProvider>
           </NextIntlClientProvider>

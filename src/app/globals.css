@@ -17,6 +17,27 @@
     letter-spacing: -0.011em;
   }
 
+  /* Document-level dark mode. This intentionally only fixes the base
+     background/text colors and .glass — it does not repaint every existing
+     component's own hardcoded light colors, which is a separate, larger
+     design pass. `dark:` Tailwind utilities are available everywhere via
+     darkMode:['class'] in tailwind.config.ts for that follow-up work. */
+  .dark body {
+    background: #0B0918;
+    color: #F1EEFB;
+  }
+
+  /* Smooth, non-abrupt theme changes (manual toggle or auto day/night
+     boundary) — always on rather than JS-toggled, since it only ever
+     animates an actual color change, never the first paint (the blocking
+     init script in <head> sets the correct theme before anything renders). */
+  html {
+    transition: background-color 0.35s ease, color 0.35s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { transition: none; }
+  }
+
   /* Headings use the premium display face for a distinct, trustworthy voice */
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-jakarta), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
@@ -63,6 +84,9 @@
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: saturate(180%) blur(16px);
     -webkit-backdrop-filter: saturate(180%) blur(16px);
+  }
+  .dark .glass {
+    background: rgba(11, 9, 24, 0.7);
   }
 
   /* Gradient border card: use as wrapper, put content in a white child */
@@ -116,6 +140,90 @@
   .bg-grid-dark {
     background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
     background-size: 22px 22px;
+  }
+
+  /* ── Weather atmosphere ──────────────────────────────────────────────
+     Decorative only, never a focal element. A single masked pseudo-element
+     confines every condition's pattern to the page edges (the mask fades
+     the center fully transparent), matching "very subtle, near edges" —
+     no full-screen animation, no lightning, no heavy particle density. */
+  .weather-atmosphere::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    -webkit-mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, transparent 50%, black 100%);
+    mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, transparent 50%, black 100%);
+  }
+
+  [data-weather='rain']::before {
+    background-image: repeating-linear-gradient(
+      115deg,
+      rgba(99, 102, 241, 0.16) 0px,
+      rgba(99, 102, 241, 0.16) 1px,
+      transparent 1px,
+      transparent 14px
+    );
+    background-size: 3px 22px;
+    opacity: 0.5;
+    animation: weather-rain-fall 0.9s linear infinite;
+  }
+  [data-weather='rain'][data-weather-intensity='moderate']::before {
+    opacity: 0.7;
+  }
+  @keyframes weather-rain-fall {
+    from { background-position: 0 0; }
+    to { background-position: -8px 22px; }
+  }
+
+  [data-weather='snow']::before {
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.65) 1px, transparent 1.5px);
+    background-size: 26px 26px;
+    opacity: 0.45;
+    animation: weather-snow-drift 9s linear infinite;
+  }
+  .dark [data-weather='snow']::before {
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.4) 1px, transparent 1.5px);
+  }
+  @keyframes weather-snow-drift {
+    from { background-position: 0 0; }
+    to { background-position: 30px 220px; }
+  }
+
+  [data-weather='cloudy']::before {
+    background:
+      radial-gradient(ellipse 60% 40% at 15% 10%, rgba(120, 120, 140, 0.12), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 85% 90%, rgba(120, 120, 140, 0.10), transparent 60%);
+    opacity: 0.8;
+  }
+
+  [data-weather='clear']::before {
+    background:
+      radial-gradient(ellipse 50% 35% at 85% 8%, rgba(217, 70, 239, 0.10), transparent 60%),
+      radial-gradient(ellipse 50% 35% at 10% 92%, rgba(99, 102, 241, 0.08), transparent 60%);
+    opacity: 0.7;
+  }
+
+  [data-weather='storm']::before {
+    background: radial-gradient(ellipse 90% 80% at 50% 40%, transparent 40%, rgba(10, 8, 20, 0.10) 100%);
+    opacity: 0.9;
+  }
+  .dark [data-weather='storm']::before {
+    background: radial-gradient(ellipse 90% 80% at 50% 40%, transparent 40%, rgba(0, 0, 0, 0.28) 100%);
+  }
+
+  /* Tab hidden: pause, don't just visually freeze — actually stops the
+     animation loop from running in the background. */
+  .weather-atmosphere.weather-paused::before {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .weather-atmosphere::before { animation: none !important; }
+  }
+
+  /* Mobile: reduce, don't disable — a lighter version of the same effect. */
+  @media (max-width: 640px) {
+    .weather-atmosphere { opacity: 0.6; }
   }
 
   /* Gradient text tuned for legibility on dark backgrounds */
