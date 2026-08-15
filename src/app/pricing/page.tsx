@@ -6,6 +6,7 @@ import { PricingTabs } from '@/components/pricing/PricingTabs';
 import { TrustStrip } from '@/components/pricing/TrustStrip';
 import { ComparisonTable } from '@/components/pricing/ComparisonTable';
 import { HowCreditsWork } from '@/components/pricing/HowCreditsWork';
+import { PricingReviews } from '@/components/pricing/PricingReviews';
 import { buildPricingFaqs } from '@/config/pricing';
 import { getPricingConfig } from '@/lib/pricing-server';
 import { buildMetadata } from '@/lib/seo';
@@ -59,6 +60,7 @@ export default async function PricingPage() {
       <TrustStrip />
       <HowCreditsWork />
       <ComparisonTable />
+      <PricingReviews />
 
       <FAQSection items={faqs} variant="white" />
     </>
