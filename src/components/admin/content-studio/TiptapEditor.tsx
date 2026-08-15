@@ -15,6 +15,8 @@ import { getBaseExtensions } from '@/lib/content-studio/tiptapExtensions';
 import { analyzeContentJson, type TiptapNode } from '@/lib/content-studio/contentText';
 import { CALLOUT_VARIANTS, type CalloutVariant } from '@/lib/content-studio/nodes/calloutNode';
 import { useToast } from '@/components/ui/Toast';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 
 const CALLOUT_ICONS: Record<CalloutVariant, typeof Info> = {
@@ -75,6 +77,9 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { error: toastError } = useToast();
+  const [pendingImage, setPendingImage] = useState<{ url: string } | null>(null);
+  const [altInput, setAltInput] = useState('');
+  const [captionInput, setCaptionInput] = useState('');
 
   const extensions = useMemo(() => [
     ...getBaseExtensions(),
@@ -137,9 +142,9 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
       const res = await fetch('/api/admin/content/media', { method: 'POST', body: form });
       const data = await res.json().catch(() => null);
       if (data?.ok) {
-        const alt = window.prompt('Alt text (describes the image for accessibility & SEO)') || '';
-        const caption = window.prompt('Caption (optional, shown under the image)') || '';
-        editor?.chain().focus().insertFigureImage({ src: data.data.url, alt, caption }).run();
+        setAltInput('');
+        setCaptionInput('');
+        setPendingImage({ url: data.data.url });
       } else {
         toastError('Image upload failed', data?.error || `Server returned ${res.status}. The image was not inserted.`);
       }
@@ -148,6 +153,12 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
     } finally {
       setUploading(false);
     }
+  }
+
+  function confirmPendingImage() {
+    if (!pendingImage) return;
+    editor?.chain().focus().insertFigureImage({ src: pendingImage.url, alt: altInput, caption: captionInput }).run();
+    setPendingImage(null);
   }
 
   function insertLink() {
@@ -246,6 +257,46 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
       </div>
 
       <EditorContent editor={editor} />
+
+      <Modal
+        open={!!pendingImage}
+        onClose={confirmPendingImage}
+        title="Image details"
+        description="Add alt text for accessibility and SEO, and an optional caption shown under the image."
+        size="sm"
+        footer={
+          <Button variant="primary" size="sm" onClick={confirmPendingImage}>
+            Insert image
+          </Button>
+        }
+      >
+        {pendingImage && (
+          <div className="space-y-3">
+            <img src={pendingImage.url} alt="" className="w-full max-h-40 object-cover rounded-lg border border-border-light" />
+            <div>
+              <label className="block text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1.5">Alt text</label>
+              <input
+                autoFocus
+                value={altInput}
+                onChange={(e) => setAltInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') confirmPendingImage(); }}
+                placeholder="Describe the image…"
+                className="w-full h-9 rounded-lg border border-border-light bg-white px-3 text-[13px] text-text focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1.5">Caption (optional)</label>
+              <input
+                value={captionInput}
+                onChange={(e) => setCaptionInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') confirmPendingImage(); }}
+                placeholder="Shown under the image…"
+                className="w-full h-9 rounded-lg border border-border-light bg-white px-3 text-[13px] text-text focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
+              />
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 });
