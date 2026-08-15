@@ -218,7 +218,49 @@ model Post {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  // ── Content Studio: Tiptap source of truth ──────────────────────────────
+  // `content` (above) stays in sync as a markdown export on every save from
+  // the new editor, so the legacy renderer and search/excerpts keep working.
+  // Posts never opened in the new editor keep contentJson null.
+  contentJson         Json?
+
+  // ── Content Studio: SEO fields ───────────────────────────────────────────
+  // Explicit override columns. Null falls back to the same title/excerpt
+  // chain normalizeDbPost() already used, so unedited posts render unchanged.
+  seoTitle            String?
+  metaDescription     String?
+  focusKeyphrase      String?
+  synonymsJson        String    @default("[]")
+  noIndex             Boolean   @default(false)
+  noFollow            Boolean   @default(false)
+  metaRobotsAdvanced  String?
+  breadcrumbTitle     String?
+  schemaType          String?
+  faqJson             String    @default("[]")
+  howToJson           String    @default("[]")
+  ogTitle             String?
+  ogDescription       String?
+  scheduledAt         DateTime?
+  seoScore            Int?
+  readabilityScore    Int?
+  wordCount           Int?
+
+  revisions PostRevision[]
+
   @@index([published, publishedAt])
+}
+
+model PostRevision {
+  id            String   @id @default(cuid())
+  postId        String
+  post          Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  snapshotJson  Json
+  changeSummary String?
+  authorId      String?
+  authorEmail   String?
+  createdAt     DateTime @default(now())
+
+  @@index([postId, createdAt])
 }
 
 model NewsletterSubscriber {

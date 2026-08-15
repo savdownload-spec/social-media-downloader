@@ -25,6 +25,16 @@ export type BlogPost = {
   secondaryKeywords: string[];
   canonicalUrl?: string;
   toolSlug?: string;
+  // Content Studio additions — optional so the static catalog above (and any
+  // DB post that predates the Content Studio upgrade) keeps compiling and
+  // rendering unchanged.
+  contentJson?: unknown;
+  noIndex?: boolean;
+  noFollow?: boolean;
+  breadcrumbTitle?: string;
+  schemaType?: string;
+  faqItems?: { question: string; answer: string }[];
+  howToSteps?: { title: string; description: string; image?: string }[];
 };
 
 const blogImage = (name: string) => `/images/blog/${name}.webp`;

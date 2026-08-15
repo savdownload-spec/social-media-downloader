@@ -5,11 +5,12 @@ import { Container } from '@/components/layout/Container';
 import { BlogCard } from '@/components/blog/BlogCard';
 import { BlogComments } from '@/components/blog/BlogComments';
 import { BlogCover } from '@/components/blog/BlogCover';
-import { BlogPostBody, getBlogHeadings } from '@/components/blog/BlogPostBody';
+import { BlogPostBody, getHeadingsForPost } from '@/components/blog/BlogPostBody';
 import { BlogShare } from '@/components/blog/BlogShare';
 import { BlogSidebar } from '@/components/blog/BlogSidebar';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { buildMetadata, breadcrumbSchema, jsonLd } from '@/lib/seo';
+import { buildFaqSchema, buildHowToSchema } from '@/lib/content-studio/schema';
 import { getPublicBlogPost, getPublicBlogPosts } from '@/lib/blog';
 import { formatDate } from '@/lib/utils';
 import { siteConfig } from '@/config/site';
@@ -28,28 +29,33 @@ function relatedTo(post: Post, candidates: Awaited<ReturnType<typeof getPublicBl
 export async function generateMetadata({ params }: Props) {
   const post = await getPublicBlogPost(params.slug);
   if (!post) return {};
-  return buildMetadata({ title: post.seoTitle, description: post.metaDescription, path: post.canonicalUrl || `/blog/${post.slug}`, keywords: [post.primaryKeyword, ...post.secondaryKeywords, ...post.tags], image: post.ogImage || post.coverImage, type: 'article', publishedTime: post.publishedAt, modifiedTime: post.updatedAt });
+  return buildMetadata({ title: post.seoTitle, description: post.metaDescription, path: post.canonicalUrl || `/blog/${post.slug}`, keywords: [post.primaryKeyword, ...post.secondaryKeywords, ...post.tags], image: post.ogImage || post.coverImage, type: 'article', publishedTime: post.publishedAt, modifiedTime: post.updatedAt, noIndex: post.noIndex, noFollow: post.noFollow });
 }
 
 export default async function BlogPostPage({ params }: Props) {
   const [post, allPosts] = await Promise.all([getPublicBlogPost(params.slug), getPublicBlogPosts()]);
   if (!post) notFound();
   const related = relatedTo(post, allPosts);
-  const headings = getBlogHeadings(post.content);
+  const headings = getHeadingsForPost(post);
   const categories = Array.from(new Set(allPosts.map((item) => item.category)));
   const canonicalPath = post.canonicalUrl || `/blog/${post.slug}`;
   const canonicalUrl = canonicalPath.startsWith('http') ? canonicalPath : `${siteConfig.url}${canonicalPath}`;
   const image = post.ogImage || `${siteConfig.url}${post.coverImage}`;
   const categoryPath = `/blog?category=${encodeURIComponent(post.category)}`;
-  const articleSchema = { '@type': 'BlogPosting', headline: post.title, description: post.metaDescription, author: { '@type': 'Organization', name: post.author }, datePublished: post.publishedAt, ...(post.updatedAt ? { dateModified: post.updatedAt } : {}), image, keywords: [post.primaryKeyword, ...post.secondaryKeywords, ...post.tags].join(', '), publisher: { '@type': 'Organization', name: siteConfig.name, url: siteConfig.url }, mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalUrl } };
-  const crumbs = [{ name: 'Home', url: siteConfig.url }, { name: 'Blog', url: `${siteConfig.url}/blog` }, { name: post.title, url: canonicalUrl }];
+  const articleSchema = { '@type': post.schemaType || 'BlogPosting', headline: post.title, description: post.metaDescription, author: { '@type': 'Organization', name: post.author }, datePublished: post.publishedAt, ...(post.updatedAt ? { dateModified: post.updatedAt } : {}), image, keywords: [post.primaryKeyword, ...post.secondaryKeywords, ...post.tags].join(', '), publisher: { '@type': 'Organization', name: siteConfig.name, url: siteConfig.url }, mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalUrl } };
+  const breadcrumbLabel = post.breadcrumbTitle || post.title;
+  const crumbs = [{ name: 'Home', url: siteConfig.url }, { name: 'Blog', url: `${siteConfig.url}/blog` }, { name: breadcrumbLabel, url: canonicalUrl }];
+  const faqSchemaData = post.faqItems ? buildFaqSchema(post.faqItems) : null;
+  const howToSchemaData = post.howToSteps ? buildHowToSchema(post.title, post.howToSteps) : null;
 
   return (
     <main>
       <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(articleSchema)} />
       <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(breadcrumbSchema(crumbs))} />
+      {faqSchemaData && <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(faqSchemaData)} />}
+      {howToSchemaData && <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(howToSchemaData)} />}
       <Container className="max-w-6xl pt-10 md:pt-14">
-        <Breadcrumb className="mb-8" items={[{ label: 'Home', href: '/' }, { label: 'Blog', href: '/blog' }, { label: post.category, href: categoryPath }, { label: post.title }]} />
+        <Breadcrumb className="mb-8" items={[{ label: 'Home', href: '/' }, { label: 'Blog', href: '/blog' }, { label: post.category, href: categoryPath }, { label: breadcrumbLabel }]} />
         <header className="mx-auto max-w-4xl pb-9 text-center md:pb-12"><Link href={categoryPath} className="text-xs font-semibold uppercase tracking-[0.2em] text-primary hover:text-primary-hover">{post.category}</Link><h1 className="mt-4 font-display text-4xl font-semibold leading-[1.04] tracking-tight text-text md:text-6xl">{post.title}</h1><p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-text-muted md:text-lg">{post.excerpt}</p><div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-text-muted"><span className="inline-flex items-center gap-1.5"><UserRound className="h-4 w-4" />{post.author}</span><span className="inline-flex items-center gap-1.5"><CalendarDays className="h-4 w-4" />Published {formatDate(new Date(post.publishedAt))}</span>{post.updatedAt && <span className="inline-flex items-center gap-1.5"><RefreshCw className="h-4 w-4" />Updated {formatDate(new Date(post.updatedAt))}</span>}<span className="inline-flex items-center gap-1.5"><Clock3 className="h-4 w-4" />{post.readingTime}</span></div>{post.tags.length > 0 && <div className="mt-6 flex flex-wrap justify-center gap-2">{post.tags.map((tag) => <span key={tag} className="rounded-full bg-primary-light px-3 py-1.5 text-xs font-medium text-primary">{tag}</span>)}</div>}<div className="mt-7 flex justify-center"><BlogShare title={post.seoTitle} description={post.metaDescription} /></div></header>
         <BlogCover post={post} priority className="aspect-[16/8] rounded-3xl border border-border shadow-soft-lg" />
       </Container>

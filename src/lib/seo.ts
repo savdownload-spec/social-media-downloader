@@ -8,6 +8,7 @@ type SeoInput = {
   image?: string;
   keywords?: string[];
   noIndex?: boolean;
+  noFollow?: boolean;
   type?: 'website' | 'article';
   publishedTime?: string;
   modifiedTime?: string;
@@ -25,6 +26,7 @@ export function buildMetadata({
   image,
   keywords = [],
   noIndex = false,
+  noFollow = false,
   type = 'website',
   publishedTime,
   modifiedTime,
@@ -40,7 +42,10 @@ export function buildMetadata({
     keywords: keywords.length ? keywords : [...siteConfig.keywords],
     metadataBase: new URL(siteConfig.url),
     alternates: { canonical: url },
-    robots: noIndex ? { index: false, follow: false } : { index: true, follow: true },
+    // Preserves the original noIndex-implies-nofollow behavior for every
+    // existing caller (none of which pass noFollow); an explicit noFollow
+    // can additionally nofollow an otherwise-indexable page.
+    robots: { index: !noIndex, follow: noFollow ? false : !noIndex },
     openGraph: {
       type,
       url,

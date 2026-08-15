@@ -11,6 +11,16 @@ function parseJsonArray(value: string | null | undefined): string[] {
   }
 }
 
+function parseFaqOrHowTo<T>(value: string | null | undefined): T[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 function normalizeDbPost(post: {
   slug: string;
   title: string;
@@ -29,6 +39,17 @@ function normalizeDbPost(post: {
   readingTimeMinutes: number | null;
   publishedAt: Date | null;
   updatedAt: Date;
+  // Content Studio additions — all optional so callers that still select the
+  // original column set (or rows saved before this migration) keep working.
+  contentJson?: unknown;
+  seoTitle?: string | null;
+  metaDescription?: string | null;
+  noIndex?: boolean;
+  noFollow?: boolean;
+  breadcrumbTitle?: string | null;
+  schemaType?: string | null;
+  faqJson?: string | null;
+  howToJson?: string | null;
 }): BlogPost {
   const tags = parseJsonArray(post.tagsJson);
   const secondaryKeywords = parseJsonArray(post.secondaryKeywordsJson);
@@ -49,12 +70,22 @@ function normalizeDbPost(post: {
     coverAlt: post.coverAlt || post.title,
     ogImage: post.ogImage || undefined,
     content: post.content,
-    seoTitle: post.title,
-    metaDescription: post.excerpt ?? post.title,
+    // Same fallback chain as before this change (title/excerpt), now backed
+    // by explicit columns instead of being implicit here — unedited rows
+    // (seoTitle/metaDescription null) render byte-identical to before.
+    seoTitle: post.seoTitle || post.title,
+    metaDescription: post.metaDescription || post.excerpt || post.title,
     primaryKeyword: post.primaryKeyword ?? tags[0] ?? 'SavDown guide',
     secondaryKeywords,
     canonicalUrl: post.canonicalUrl || undefined,
     toolSlug: post.toolSlug || undefined,
+    contentJson: post.contentJson ?? undefined,
+    noIndex: post.noIndex ?? false,
+    noFollow: post.noFollow ?? false,
+    breadcrumbTitle: post.breadcrumbTitle || undefined,
+    schemaType: post.schemaType || undefined,
+    faqItems: parseFaqOrHowTo(post.faqJson),
+    howToSteps: parseFaqOrHowTo(post.howToJson),
   };
 }
 
@@ -65,6 +96,17 @@ function normalizeDbPost(post: {
  */
 export async function getPublicBlogPosts(): Promise<BlogPost[]> {
   try {
+    // Best-effort scheduled publish: no cron infra exists in this project,
+    // so a due post goes live the next time this is called (public page
+    // view, sitemap build, or an admin visit) rather than at the exact
+    // scheduled second.
+    await prisma.post
+      .updateMany({
+        where: { published: false, scheduledAt: { lte: new Date() } },
+        data: { published: true, publishedAt: new Date() },
+      })
+      .catch(() => undefined);
+
     const published = await prisma.post.findMany({
       where: { published: true },
       orderBy: [{ publishedAt: 'desc' }, { updatedAt: 'desc' }],
@@ -86,6 +128,15 @@ export async function getPublicBlogPosts(): Promise<BlogPost[]> {
         readingTimeMinutes: true,
         publishedAt: true,
         updatedAt: true,
+        contentJson: true,
+        seoTitle: true,
+        metaDescription: true,
+        noIndex: true,
+        noFollow: true,
+        breadcrumbTitle: true,
+        schemaType: true,
+        faqJson: true,
+        howToJson: true,
       },
     });
 

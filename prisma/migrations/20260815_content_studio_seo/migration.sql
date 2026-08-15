@@ -1,0 +1,44 @@
+ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "contentJson" JSONB;
+ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "seoTitle" TEXT;
+ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "metaDescription" TEXT;
+ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "focusKeyphrase" TEXT;
+ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "synonymsJson" TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "noIndex" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "noFollow" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "metaRobotsAdvanced" TEXT;
+ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "breadcrumbTitle" TEXT;
+ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "schemaType" TEXT;
+ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "faqJson" TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "howToJson" TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "ogTitle" TEXT;
+ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "ogDescription" TEXT;
+ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "scheduledAt" TIMESTAMP(3);
+ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "seoScore" INTEGER;
+ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "readabilityScore" INTEGER;
+ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "wordCount" INTEGER;
+
+CREATE TABLE IF NOT EXISTS "PostRevision" (
+    "id" TEXT NOT NULL,
+    "postId" TEXT NOT NULL,
+    "snapshotJson" JSONB NOT NULL,
+    "changeSummary" TEXT,
+    "authorId" TEXT,
+    "authorEmail" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "PostRevision_pkey" PRIMARY KEY ("id")
+);
+
+CREATE INDEX IF NOT EXISTS "PostRevision_postId_createdAt_idx" ON "PostRevision"("postId", "createdAt");
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'PostRevision_postId_fkey'
+  ) THEN
+    ALTER TABLE "PostRevision"
+      ADD CONSTRAINT "PostRevision_postId_fkey"
+      FOREIGN KEY ("postId") REFERENCES "Post"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;

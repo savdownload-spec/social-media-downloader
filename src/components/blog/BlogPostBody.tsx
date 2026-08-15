@@ -1,8 +1,27 @@
 import type { ReactNode } from 'react';
 import type { BlogPost } from '@/config/blog';
 import { BlogAdSlot } from '@/components/blog/BlogAdSlot';
+import { renderContentJsonToHtml } from '@/lib/content-studio/render';
+import { analyzeContentJson, type TiptapNode } from '@/lib/content-studio/contentText';
 
-export type BlogHeading = { title: string; id: string; level: 2 | 3 };
+export type BlogHeading = { title: string; id: string; level: 2 | 3 | 4 };
+
+/**
+ * Posts saved with the new Content Studio editor carry contentJson (a Tiptap
+ * document) and are rendered via the shared generateHTML()+sanitize pipeline.
+ * Posts that predate the upgrade (or were never re-saved) have no
+ * contentJson and keep using the original hand-rolled markdown renderer
+ * below, completely unchanged.
+ */
+export function getHeadingsForPost(post: BlogPost): BlogHeading[] {
+  if (post.contentJson) {
+    const analysis = analyzeContentJson(post.contentJson as TiptapNode);
+    return analysis.headings
+      .filter((h) => h.level >= 2)
+      .map((h) => ({ title: h.text, id: h.id, level: h.level as 2 | 3 | 4 }));
+  }
+  return getBlogHeadings(post.content);
+}
 
 function slugify(value: string) {
   return value
@@ -94,7 +113,8 @@ function renderContent(content: string, headings: BlogHeading[]): ReactNode[] {
 }
 
 export function BlogPostBody({ post }: { post: BlogPost }) {
-  const headings = getBlogHeadings(post.content);
+  const headings = getHeadingsForPost(post);
+  const usingRichEditor = !!post.contentJson;
   return (
     <div>
       {headings.length >= 3 && (
@@ -103,7 +123,7 @@ export function BlogPostBody({ post }: { post: BlogPost }) {
           <ol className="mt-4 grid gap-2">
             {headings.map((heading, index) => (
               <li key={heading.id}>
-                <a href={`#${heading.id}`} className={`flex gap-3 rounded-lg px-2 py-1.5 text-sm leading-5 text-text-muted transition-colors hover:bg-white hover:text-primary ${heading.level === 3 ? 'pl-8' : ''}`}>
+                <a href={`#${heading.id}`} className={`flex gap-3 rounded-lg px-2 py-1.5 text-sm leading-5 text-text-muted transition-colors hover:bg-white hover:text-primary ${heading.level >= 3 ? 'pl-8' : ''}`}>
                   <span className="font-semibold text-primary">{String(index + 1).padStart(2, '0')}</span>
                   <span>{heading.title}</span>
                 </a>
@@ -112,7 +132,11 @@ export function BlogPostBody({ post }: { post: BlogPost }) {
           </ol>
         </nav>
       )}
-      <div className="prose-elegant">{renderContent(post.content, headings)}</div>
+      {usingRichEditor ? (
+        <div className="prose-elegant" dangerouslySetInnerHTML={{ __html: renderContentJsonToHtml(post.contentJson as TiptapNode) }} />
+      ) : (
+        <div className="prose-elegant">{renderContent(post.content, headings as { title: string; id: string; level: 2 | 3 }[])}</div>
+      )}
       <BlogAdSlot slot="IN_ARTICLE_AD" className="my-10" />
     </div>
   );
