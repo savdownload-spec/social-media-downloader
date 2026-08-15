@@ -3,12 +3,13 @@ import { prisma } from '@/lib/prisma';
 import { fail, ok } from '@/lib/api';
 import { getClientId, ratelimit } from '@/lib/ratelimit';
 import { canAccessSupportConversation, cleanSupportText, MAX_SUPPORT_FILES, MAX_SUPPORT_FILE_SIZE, SUPPORT_ATTACHMENT_TYPES, supportPreview } from '@/lib/support';
+import { detectSupportLanguage, translateSupportMessage } from '@/lib/support-translation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const attachmentSelect = { id: true, fileName: true, contentType: true, size: true, createdAt: true } as const;
-const messageSelect = { id: true, senderType: true, senderId: true, body: true, internal: true, createdAt: true, attachments: { select: attachmentSelect } } as const;
+const messageSelect = { id: true, senderType: true, senderId: true, body: true, originalMessage: true, detectedLanguage: true, translatedMessage: true, translationStatus: true, internal: true, createdAt: true, attachments: { select: attachmentSelect } } as const;
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   const access = await canAccessSupportConversation(params.id, request);
@@ -36,6 +37,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
     const body = cleanSupportText(z.string().min(1).max(5000).parse(form.get('message')));
     const files = form.getAll('attachments').filter((entry): entry is File => entry instanceof File && entry.size > 0);
     if (!body) return fail('Please enter a message.');
+    const detectedLanguage = detectSupportLanguage(body);
+    const translation = await translateSupportMessage(body, detectedLanguage);
     if (files.length > MAX_SUPPORT_FILES) return fail(`You can attach up to ${MAX_SUPPORT_FILES} files.`);
     let total = 0;
     for (const file of files) {
@@ -48,7 +51,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     const message = await prisma.$transaction(async (tx) => {
       const created = await tx.supportMessage.create({
         data: {
-          conversationId: params.id, senderType: 'CUSTOMER', senderId: access.actor.userId ?? null, body,
+          conversationId: params.id, senderType: 'CUSTOMER', senderId: access.actor.userId ?? null, body, originalMessage: body, detectedLanguage: translation.detectedLanguage, translatedMessage: translation.translatedMessage, translationStatus: translation.translationStatus,
           attachments: { create: await Promise.all(files.map(async (file) => ({ fileName: file.name.replace(/[\\/\x00]/g, '_').slice(0, 180), contentType: file.type, size: file.size, data: Buffer.from(await file.arrayBuffer()) }))) },
         }, select: messageSelect,
       });
