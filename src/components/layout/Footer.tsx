@@ -6,7 +6,6 @@ import { siteConfig } from '@/config/site';
 import { Logo } from '@/components/ui/Logo';
 import { LanguageSelector } from '@/components/ui/LanguageSelector';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
-import { WeatherAttribution } from '@/components/effects/WeatherAttribution';
 import { Container } from './Container';
 import { FooterToolGrid } from './FooterToolGrid';
 import { useTranslation } from '@/i18n';
@@ -188,7 +187,6 @@ export function Footer() {
                 </Link>
               );
             })}
-            <WeatherAttribution />
           </div>
         </div>
       </Container>

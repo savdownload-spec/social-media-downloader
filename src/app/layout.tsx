@@ -18,8 +18,6 @@ import { PricingProvider } from '@/components/pricing/PricingProvider';
 import { getPricingConfig } from '@/lib/pricing-server';
 import { SupportChat } from '@/components/support/SupportChat';
 import { ThemeProvider } from '@/contexts/ThemeContext';
-import { WeatherProvider } from '@/contexts/WeatherContext';
-import { WeatherAtmosphere } from '@/components/effects/WeatherAtmosphere';
 import { THEME_INIT_SCRIPT } from '@/lib/theme/theme-init-script';
 
 const inter = Inter({
@@ -123,13 +121,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <PricingProvider value={pricing}>
             <LanguageProvider>
               <ThemeProvider>
-              <WeatherProvider>
               <ToastProvider>
                 <ConfirmProvider>
                   <InstallProvider>
                     <ServiceWorkerRegister />
                     <PublicShell>
-                      <WeatherAtmosphere />
                       <Header />
                       <AdBanner />
                     </PublicShell>
@@ -141,7 +137,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   </InstallProvider>
                 </ConfirmProvider>
               </ToastProvider>
-              </WeatherProvider>
               </ThemeProvider>
             </LanguageProvider>
             </PricingProvider>
