@@ -9,6 +9,8 @@ import { detectSupportLanguage, translateSupportMessage } from '@/lib/support-tr
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+const ACKNOWLEDGEMENT = 'Thanks for reaching out. Your message has been received. Our support team will respond here as soon as possible.';
+
 const Create = z.object({
   category: z.enum(SUPPORT_CATEGORIES),
   message: z.string().min(1).max(5000),
@@ -47,7 +49,10 @@ export async function POST(request: Request) {
         category: parsed.category,
         status: 'OPEN', lastMessagePreview: supportPreview(message),
         adminUnreadCount: 1,
-        messages: { create: { senderType: 'CUSTOMER', senderId: actor.userId ?? null, body: message, originalMessage: message, detectedLanguage: translation.detectedLanguage, translatedMessage: translation.translatedMessage, translationStatus: translation.translationStatus } },
+        messages: { create: [
+          { senderType: 'CUSTOMER', senderId: actor.userId ?? null, body: message, originalMessage: message, detectedLanguage: translation.detectedLanguage, translatedMessage: translation.translatedMessage, translationStatus: translation.translationStatus },
+          { senderType: 'SYSTEM', body: ACKNOWLEDGEMENT, originalMessage: ACKNOWLEDGEMENT, translationStatus: 'NOT_NEEDED' },
+        ] },
       },
       select: { id: true, category: true, status: true, priority: true, lastMessagePreview: true, lastMessageAt: true, customerUnreadCount: true, createdAt: true },
     });

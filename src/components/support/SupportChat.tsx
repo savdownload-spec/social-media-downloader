@@ -75,8 +75,8 @@ export function SupportChat() {
   const [open, setOpen] = useState(false); const [conversations, setConversations] = useState<Conversation[]>([]); const [detail, setDetail] = useState<Detail | null>(null);
   const [starting, setStarting] = useState(false); const [category, setCategory] = useState<string>(''); const [message, setMessage] = useState(''); const [name, setName] = useState(''); const [email, setEmail] = useState(''); const [files, setFiles] = useState<File[]>([]); const [sending, setSending] = useState(false); const [loading, setLoading] = useState(false);
   const [showMore, setShowMore] = useState(false); const [justCreatedId, setJustCreatedId] = useState<string | null>(null);
-  const [keyboardInset, setKeyboardInset] = useState(0); const [translatingId, setTranslatingId] = useState<string | null>(null); const [showTranslation, setShowTranslation] = useState<Record<string, boolean>>({}); const [copiedTranslationId, setCopiedTranslationId] = useState<string | null>(null);
-  const endRef = useRef<HTMLDivElement>(null); const fileRef = useRef<HTMLInputElement>(null); const composerRef = useRef<HTMLTextAreaElement>(null);
+  const [keyboardInset, setKeyboardInset] = useState(0); const [translatingId, setTranslatingId] = useState<string | null>(null); const [showTranslation, setShowTranslation] = useState<Record<string, boolean>>({}); const [copiedTranslationId, setCopiedTranslationId] = useState<string | null>(null); const [inlineError, setInlineError] = useState<string | null>(null);
+  const endRef = useRef<HTMLDivElement>(null); const fileRef = useRef<HTMLInputElement>(null); const composerRef = useRef<HTMLTextAreaElement>(null); const retryRef = useRef<(() => void | Promise<void>) | null>(null);
   const loggedIn = !!session?.user?.id; const { language } = useLanguage(); const isRtl = language.code === 'ar' || language.code === 'ur'; const { error, success } = useToast();
   const loadList = useCallback(async () => {
     if (!loggedIn) return;
@@ -106,24 +106,31 @@ export function SupportChat() {
   useEffect(() => { if (!loggedIn && open && !detail) { try { const saved = JSON.parse(localStorage.getItem(guestKey) || '{}'); if (saved.id && saved.token) loadDetail(saved.id); } catch {} } }, [loggedIn, open, detail, loadDetail]);
   if (pathname.startsWith('/admin')) return null;
 
-  function resetComposer() { setCategory(''); setMessage(''); setFiles([]); setShowMore(false); }
+  function resetComposer() { setCategory(''); setMessage(''); setFiles([]); setShowMore(false); setInlineError(null); retryRef.current = null; }
 
   async function startConversation(e: FormEvent) {
-    e.preventDefault(); if (!category || !message.trim()) return;
-    setSending(true); playSend();
+    e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
+    const input = form.elements.namedItem('message') as HTMLTextAreaElement | null;
+    const submittedMessage = (input?.value ?? message).trim();
+    if (!category || !submittedMessage) { setInlineError('Please enter a message.'); return; }
+    setInlineError(null); setSending(true); playSend();
     try {
-      const res = await fetch('/api/support', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ category, message, name, email }) });
+      const res = await fetch('/api/support', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ category, message: submittedMessage, name: name.trim(), email: email.trim() }) });
       const data = await res.json(); if (!res.ok || !data?.ok) throw new Error(data?.error || 'Could not start conversation.');
       if (data.data.guestToken) localStorage.setItem(guestKey, JSON.stringify({ id: data.data.conversation.id, token: data.data.guestToken }));
-      setJustCreatedId(data.data.conversation.id); playSuccess();
+      setJustCreatedId(data.data.conversation.id); setInlineError(null); playSuccess();
       setMessage(''); setFiles([]); await loadDetail(data.data.conversation.id); loadList();
-    } catch (e) { error('Message not sent', e instanceof Error ? e.message : 'Please try again.'); } finally { setSending(false); }
+    } catch (e) { console.error('[support] create conversation failed', e); retryRef.current = () => { void startConversation({ preventDefault: () => {}, currentTarget: form, target: form } as unknown as FormEvent); }; setInlineError("Couldn't send your message. Please try again."); } finally { setSending(false); }
   }
   async function sendMessage() {
-    if (!detail || !message.trim() || sending) return; setSending(true); playSend();
-    const body = new FormData(); body.set('message', message); files.forEach((file) => body.append('attachments', file));
-    try { const res = await fetch(`/api/support/${detail.id}`, { method: 'POST', headers: guestHeaders(), body }); const data = await res.json(); if (!res.ok || !data?.ok) throw new Error(data?.error || 'Could not send message.'); playReceive(); setMessage(''); setFiles([]); await loadDetail(detail.id); loadList(); }
-    catch (e) { error('Message not sent', e instanceof Error ? e.message : 'Retry when your connection returns.'); } finally { setSending(false); }
+    if (!detail || sending) return;
+    const submittedMessage = (composerRef.current?.value ?? message).trim();
+    if (!submittedMessage) { setInlineError('Please enter a message.'); return; }
+    setInlineError(null); setSending(true); playSend();
+    const body = new FormData(); body.set('message', submittedMessage); files.forEach((file) => body.append('attachments', file));
+    try { const res = await fetch(`/api/support/${detail.id}`, { method: 'POST', headers: guestHeaders(), body }); const data = await res.json(); if (!res.ok || !data?.ok) throw new Error(data?.error || 'Could not send message.'); playReceive(); setInlineError(null); setMessage(''); setFiles([]); await loadDetail(detail.id); loadList(); }
+    catch (e) { console.error('[support] send message failed', e); retryRef.current = () => { void sendMessage(); }; setInlineError("Couldn't send your message. Please try again."); } finally { setSending(false); }
   }
   async function translateMessage(target: Message) {
     if (!target.detectedLanguage || target.detectedLanguage === 'en' || translatingId) return;
@@ -325,7 +332,7 @@ export function SupportChat() {
                 <div>
                   <label className="mb-1.5 block text-sm font-semibold text-text">Tell us what happened</label>
                   <textarea
-                    required autoFocus aria-label="Support message" value={message} onChange={(e) => { setMessage(e.target.value); resizeTextarea(e.currentTarget); }} rows={4} maxLength={5000}
+                    name="message" required autoFocus aria-label="Support message" value={message} onChange={(e) => { setMessage(e.target.value); resizeTextarea(e.currentTarget); }} rows={4} maxLength={5000}
                     placeholder={meta(category).placeholder} dir={isRtl ? 'rtl' : 'ltr'}
                     style={{ textAlign: isRtl ? 'right' : 'left', minHeight: 110 }}
                     className="w-full resize-none rounded-xl border border-border bg-white p-3 text-sm leading-relaxed outline-none transition-shadow placeholder:text-text-subtle focus:border-primary focus:ring-2 focus:ring-primary/15"
@@ -340,6 +347,8 @@ export function SupportChat() {
                     <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm outline-none transition-shadow focus:border-primary focus:ring-2 focus:ring-primary/15" />
                   </div>
                 )}
+
+                {inlineError && <div role="alert" className="flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700"><span>{inlineError}</span><button type="button" onClick={() => retryRef.current?.()} disabled={sending} className="shrink-0 font-semibold underline underline-offset-2 disabled:opacity-50">Retry</button></div>}
 
                 <button disabled={!canSend || sending} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-brand bg-[length:200%_200%] px-4 py-3 text-sm font-semibold text-white shadow-soft transition-all hover:bg-[position:100%_50%] disabled:cursor-not-allowed disabled:opacity-50">
                   {sending ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</> : <><Send className="h-4 w-4" /> Send message</>}
@@ -445,6 +454,7 @@ export function SupportChat() {
               </button>
             </div>
           </div>
+          {inlineError && <div role="alert" className="flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700"><span>{inlineError}</span><button type="button" onClick={() => retryRef.current?.()} disabled={sending} className="shrink-0 font-semibold underline underline-offset-2 disabled:opacity-50">Retry</button></div>}
           <p className="mt-1 px-1 text-[10px] text-text-subtle">Enter to send · Shift + Enter for a new line</p>
         </div>
       </div>
