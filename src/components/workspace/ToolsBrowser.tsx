@@ -5,7 +5,9 @@ import { useSearchParams } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { catalog, toolGroups, type ToolGroup } from '@/config/catalog';
-import { ToolGridCard } from './ToolGridCard';
+import { ToolCard } from './ToolCard';
+import { WorkspaceCardGrid } from './WorkspaceCard';
+import { SectionHeader } from './SectionHeader';
 
 interface Props {
   /** Restrict to a single group; omit to browse every group. */
@@ -74,14 +76,12 @@ export function ToolsBrowser({ group }: Props) {
         if (items.length === 0) return null;
         return (
           <div key={g}>
-            {!group && activeGroup === 'All' && (
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-text-subtle mb-2.5">{g}</h2>
-            )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            {!group && activeGroup === 'All' && <SectionHeader title={g} />}
+            <WorkspaceCardGrid>
               {items.map((t) => (
-                <ToolGridCard key={t.slug} tool={t} />
+                <ToolCard key={t.slug} tool={t} />
               ))}
-            </div>
+            </WorkspaceCardGrid>
           </div>
         );
       })}

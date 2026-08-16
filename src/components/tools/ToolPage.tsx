@@ -1,6 +1,6 @@
 ﻿import Link from 'next/link';
 import { Suspense } from 'react';
-import { CheckCircle2, Zap, Lock, Sparkles, ChevronRight } from 'lucide-react';
+import { CheckCircle2, ChevronRight, Zap } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { Section, SectionHeading } from '@/components/layout/Section';
 import { FAQSection } from '@/components/ui/FAQSection';
@@ -8,16 +8,11 @@ import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { ShareButton } from '@/components/ui/ShareButton';
 import { DownloaderForm } from './DownloaderForm';
 import { ToolLongContentSection } from './ToolLongContent';
+import { downloaderPerks as perks } from './toolPerks';
 import { getCatalogTool, fallbackIcon, catalog } from '@/config/catalog';
 import type { Tool } from '@/config/tools';
 import { jsonLd, faqSchema, softwareAppSchema, breadcrumbSchema } from '@/lib/seo';
 import { siteConfig } from '@/config/site';
-
-const perks = [
-  { icon: Zap, label: 'Blazing Fast', desc: 'Under-a-second link analysis.' },
-  { icon: Lock, label: 'Fully Private', desc: 'Nothing is stored on our servers.' },
-  { icon: Sparkles, label: 'No Watermarks', desc: 'Clean, original media output.' },
-];
 
 export function ToolPageView({ tool }: { tool: Tool }) {
   const url = `${siteConfig.url}/tools/${tool.slug}`;
@@ -104,12 +99,12 @@ export function ToolPageView({ tool }: { tool: Tool }) {
 
           <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
             {perks.map((p) => (
-              <div key={p.label} className="flex flex-col items-center text-center gap-2 p-6 bg-white/70 dark:bg-card/70 backdrop-blur border border-border-light rounded-2xl shadow-soft">
+              <div key={p.title} className="flex flex-col items-center text-center gap-2 p-6 bg-white/70 dark:bg-card/70 backdrop-blur border border-border-light rounded-2xl shadow-soft">
                 <div className="w-11 h-11 rounded-xl bg-gradient-brand flex items-center justify-center shadow-glow-lg">
                   <p.icon className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-sm font-bold text-text">{p.label}</h3>
-                <p className="text-sm text-text-muted">{p.desc}</p>
+                <h3 className="text-sm font-bold text-text">{p.title}</h3>
+                <p className="text-sm text-text-muted">{p.body}</p>
               </div>
             ))}
           </div>

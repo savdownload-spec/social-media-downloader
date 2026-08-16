@@ -6,6 +6,8 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { ManageBillingButton } from '@/components/account/ManageBillingButton';
 import { getBillingSummary, TIER_ALLOWANCE } from '@/lib/billing';
+import { DataSection } from '@/components/workspace/DataSection';
+import { SectionHeader } from '@/components/workspace/SectionHeader';
 
 export const metadata = { title: 'Credits & Billing — SavDown Workspace' };
 export const dynamic = 'force-dynamic';
@@ -44,7 +46,7 @@ export default async function WorkspaceBillingPage({
   const justPaid = searchParams.checkout === 'success';
 
   return (
-    <div className="px-4 sm:px-6 lg:px-10 py-8 md:py-10 max-w-4xl mx-auto space-y-6">
+    <div className="px-4 sm:px-6 lg:px-10 py-8 md:py-10 max-w-6xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-text">Credits & Billing</h1>
         <p className="text-sm text-text-muted mt-1">Your plan, your credit balance, and where they came from.</p>
@@ -115,16 +117,18 @@ export default async function WorkspaceBillingPage({
       </div>
 
       {/* History */}
-      <div className="rounded-2xl border border-border bg-white dark:bg-card p-6 shadow-soft">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Recent activity</p>
+      <div>
+        <SectionHeader title="Recent Activity" />
         {ledger.length === 0 ? (
-          <p className="mt-4 text-sm text-text-muted">
-            Nothing yet. Your free daily credits do not appear here, only purchases and plan refills do.
-          </p>
+          <div className="text-center py-10 px-6 rounded-2xl border border-dashed border-border">
+            <p className="text-sm text-text-muted">
+              Nothing yet. Your free daily credits do not appear here, only purchases and plan refills do.
+            </p>
+          </div>
         ) : (
-          <ul className="mt-4 divide-y divide-border-light">
+          <DataSection>
             {ledger.map((entry) => (
-              <li key={entry.id} className="flex items-center justify-between gap-4 py-3">
+              <div key={entry.id} className="flex items-center justify-between gap-4 px-4 py-3.5 border-b border-border-light last:border-0">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-text">{entry.description ?? entry.kind}</p>
                   <p className="text-xs text-text-subtle">{entry.createdAt.toLocaleDateString()}</p>
@@ -133,9 +137,9 @@ export default async function WorkspaceBillingPage({
                   {entry.amount >= 0 ? '+' : ''}
                   {entry.amount.toLocaleString()}
                 </span>
-              </li>
+              </div>
             ))}
-          </ul>
+          </DataSection>
         )}
       </div>
     </div>

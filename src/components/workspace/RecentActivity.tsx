@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { DownloadCloud, CheckCircle2, XCircle, ExternalLink } from 'lucide-react';
 import type { ActivityItem } from '@/lib/workspace/activity';
 import { formatDate } from '@/lib/utils';
+import { DataSection } from './DataSection';
 
 function StatusBadge({ status }: { status: string }) {
   const ok = status === 'success';
@@ -31,7 +32,7 @@ export function RecentActivity({ items }: { items: ActivityItem[] }) {
   }
 
   return (
-    <div className="w-full rounded-2xl border border-border bg-white dark:bg-card shadow-soft overflow-hidden">
+    <DataSection>
       {items.map((item) => (
         <div
           key={item.id}
@@ -64,6 +65,6 @@ export function RecentActivity({ items }: { items: ActivityItem[] }) {
           View all activity →
         </Link>
       </div>
-    </div>
+    </DataSection>
   );
 }

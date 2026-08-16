@@ -16,6 +16,7 @@ import { cn, formatDate } from '@/lib/utils';
 import type { ActivityItem } from '@/lib/workspace/activity';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { resolveDateRangePreset, type DateRangePreset } from '@/lib/export/fields';
+import { DataSection } from './DataSection';
 
 type Tab = 'all' | 'completed' | 'failed';
 
@@ -124,7 +125,7 @@ export function DownloadsTable({ items }: { items: ActivityItem[] }) {
           <p className="text-sm font-medium text-text">No downloads match these filters.</p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-border bg-white dark:bg-card shadow-soft overflow-hidden">
+        <DataSection>
           {filtered.map((item) => (
             <div
               key={item.id}
@@ -162,7 +163,7 @@ export function DownloadsTable({ items }: { items: ActivityItem[] }) {
               </div>
             </div>
           ))}
-        </div>
+        </DataSection>
       )}
     </div>
   );

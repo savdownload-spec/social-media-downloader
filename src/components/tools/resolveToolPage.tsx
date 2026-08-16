@@ -7,6 +7,8 @@ import { GenericToolPage } from '@/components/tools/GenericToolPage';
 import { FunctionalToolLayout } from '@/components/tools/FunctionalToolLayout';
 import { WorkspaceToolShell } from '@/components/tools/WorkspaceToolShell';
 import { DownloaderForm } from '@/components/tools/DownloaderForm';
+import { downloaderPerks } from '@/components/tools/toolPerks';
+import { functionalToolContent } from '@/config/functionalToolContent';
 
 /**
  * Shared dispatch: downloader config -> live downloader UI, catalog entry
@@ -49,7 +51,17 @@ export function resolveWorkspaceToolPage(slug: string): ReactElement | null {
     const entry = getCatalogTool(slug);
     if (!entry) return null;
     return (
-      <WorkspaceToolShell tool={entry}>
+      <WorkspaceToolShell
+        tool={entry}
+        content={{
+          tagline: tool.subheadline,
+          about: tool.description,
+          features: downloaderPerks,
+          howTo: tool.howTo.slice(0, 4),
+          faq: tool.faq.slice(0, 4),
+          supportedFormats: tool.supportedFormats,
+        }}
+      >
         <DownloaderForm
           tool={{
             slug: tool.slug,
@@ -68,8 +80,16 @@ export function resolveWorkspaceToolPage(slug: string): ReactElement | null {
     const functional = getFunctionalTool(slug);
     if (functional) {
       const { Component } = functional;
+      const extra = functionalToolContent[slug];
       return (
-        <WorkspaceToolShell tool={entry}>
+        <WorkspaceToolShell
+          tool={entry}
+          content={{
+            about: entry.description,
+            howTo: extra?.howTo,
+            faq: extra?.faq?.slice(0, 4),
+          }}
+        >
           <Component slug={slug} />
         </WorkspaceToolShell>
       );

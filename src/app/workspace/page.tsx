@@ -5,15 +5,21 @@ import { getUserActivity } from '@/lib/workspace/activity';
 import { getBillingSummary } from '@/lib/billing';
 import { UniversalInput } from '@/components/workspace/UniversalInput';
 import { ToolCategoryCard } from '@/components/workspace/ToolCategoryCard';
-import { WorkspaceSectionCard } from '@/components/workspace/WorkspaceSectionCard';
+import { ToolCard } from '@/components/workspace/ToolCard';
+import { WorkspaceCard, WorkspaceCardGrid } from '@/components/workspace/WorkspaceCard';
+import { WorkspaceCreditsBar } from '@/components/workspace/WorkspaceCreditsBar';
 import { RecentActivity } from '@/components/workspace/RecentActivity';
 import { OnboardingCallout } from '@/components/workspace/OnboardingCallout';
-import { WorkspaceHomeSidebar } from '@/components/workspace/WorkspaceHomeSidebar';
+import { SectionHeader } from '@/components/workspace/SectionHeader';
 import { GROUP_META } from '@/components/workspace/groupMeta';
-import { toolGroups } from '@/config/catalog';
+import { catalog, toolGroups } from '@/config/catalog';
 import { DownloadCloud, History, FolderOpen, Layers, ListChecks } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
+
+/** First entries of the master catalog — its declared order is already the curated
+ *  "most worth seeing first" list (see the doc comment on `catalog` in config/catalog.ts). */
+const POPULAR_TOOLS = catalog.slice(0, 4);
 
 export default async function WorkspaceHomePage() {
   const session = await getServerSession(authOptions);
@@ -27,88 +33,91 @@ export default async function WorkspaceHomePage() {
   const activity = allActivity.slice(0, 5);
 
   return (
-    <div className="px-4 sm:px-6 lg:px-10 py-6 md:py-8 max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-6">
-        {/* Main column */}
-        <div className="space-y-6 min-w-0">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-text-subtle">
-              {firstName ? `Welcome back, ${firstName}.` : 'Welcome back.'}
-            </p>
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-text">
-              What do you want to do?
-            </h1>
-          </div>
+    <div className="px-4 sm:px-6 lg:px-10 py-6 md:py-8 max-w-7xl mx-auto space-y-8">
+      <div className="space-y-1">
+        <p className="text-sm font-medium text-text-subtle">
+          {firstName ? `Welcome back, ${firstName}.` : 'Welcome back.'}
+        </p>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-text">
+          What do you want to do?
+        </h1>
+      </div>
 
-          <div className="max-w-2xl w-full space-y-6">
-            <UniversalInput />
-            <OnboardingCallout />
-          </div>
+      <div className="max-w-2xl mx-auto w-full space-y-6">
+        <UniversalInput />
+        <OnboardingCallout />
+      </div>
 
-          <div>
-            <h2 className="text-sm font-semibold text-text-subtle uppercase tracking-wider mb-3">Tools</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {toolGroups.map((group) => {
-                const meta = GROUP_META[group];
-                return <ToolCategoryCard key={group} group={group} icon={meta.icon} tile={meta.tile} />;
-              })}
-            </div>
-          </div>
+      {billing && <WorkspaceCreditsBar billing={billing} />}
 
-          <div>
-            <h2 className="text-sm font-semibold text-text-subtle uppercase tracking-wider mb-3">Workspace</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              <WorkspaceSectionCard
-                title="Downloads"
-                description="Everything you've processed through SavDown."
-                href="/workspace/downloads"
-                icon={DownloadCloud}
-                tile="bg-primary-light text-primary"
-                count={allActivity.length}
-              />
-              <WorkspaceSectionCard
-                title="Activity"
-                description="Your full workspace history."
-                href="/workspace/activity"
-                icon={History}
-                tile="bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400"
-                count={allActivity.length}
-              />
-              <WorkspaceSectionCard
-                title="My Files"
-                description="Files you've saved to your workspace."
-                href="/workspace/files"
-                icon={FolderOpen}
-                tile="bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-warning"
-                soon
-              />
-              <WorkspaceSectionCard
-                title="Collections"
-                description="Organize saved content into groups."
-                href="/workspace/collections"
-                icon={Layers}
-                tile="bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400"
-                soon
-              />
-              <WorkspaceSectionCard
-                title="Batch"
-                description="Process multiple items at once."
-                href="/workspace/batch"
-                icon={ListChecks}
-                tile="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"
-                soon
-              />
-            </div>
-          </div>
+      <div>
+        <SectionHeader title="Tools" />
+        <WorkspaceCardGrid>
+          {toolGroups.map((group) => {
+            const meta = GROUP_META[group];
+            return <ToolCategoryCard key={group} group={group} icon={meta.icon} tile={meta.tile} />;
+          })}
+        </WorkspaceCardGrid>
+      </div>
 
-          <div>
-            <h2 className="text-sm font-semibold text-text-subtle uppercase tracking-wider mb-3">Recent Activity</h2>
-            <RecentActivity items={activity} />
-          </div>
-        </div>
+      <div>
+        <SectionHeader title="Workspace" />
+        <WorkspaceCardGrid>
+          <WorkspaceCard
+            href="/workspace/downloads"
+            icon={DownloadCloud}
+            tile="bg-primary-light text-primary"
+            title="Downloads"
+            description="Everything you've processed through SavDown."
+            meta={`${allActivity.length} ${allActivity.length === 1 ? 'item' : 'items'}`}
+          />
+          <WorkspaceCard
+            href="/workspace/activity"
+            icon={History}
+            tile="bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400"
+            title="Activity"
+            description="Your full workspace history."
+            meta={`${allActivity.length} ${allActivity.length === 1 ? 'item' : 'items'}`}
+          />
+          <WorkspaceCard
+            href="/workspace/files"
+            icon={FolderOpen}
+            tile="bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-warning"
+            title="My Files"
+            description="Files you've saved to your workspace."
+            badge="soon"
+          />
+          <WorkspaceCard
+            href="/workspace/collections"
+            icon={Layers}
+            tile="bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400"
+            title="Collections"
+            description="Organize saved content into groups."
+            badge="soon"
+          />
+          <WorkspaceCard
+            href="/workspace/batch"
+            icon={ListChecks}
+            tile="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"
+            title="Batch"
+            description="Process multiple items at once."
+            badge="soon"
+          />
+        </WorkspaceCardGrid>
+      </div>
 
-        {/* Right column */}
-        {billing && <WorkspaceHomeSidebar billing={billing} />}
+      <div>
+        <SectionHeader title="Popular Tools" />
+        <WorkspaceCardGrid>
+          {POPULAR_TOOLS.map((tool) => (
+            <ToolCard key={tool.slug} tool={tool} />
+          ))}
+        </WorkspaceCardGrid>
+      </div>
+
+      <div>
+        <SectionHeader title="Recent Activity" />
+        <RecentActivity items={activity} />
       </div>
     </div>
   );
