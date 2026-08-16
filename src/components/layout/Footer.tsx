@@ -8,6 +8,7 @@ import { LanguageSelector } from '@/components/ui/LanguageSelector';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { Container } from './Container';
 import { FooterToolGrid } from './FooterToolGrid';
+import { FooterApps } from './FooterApps';
 import { useTranslation } from '@/i18n';
 
 function PinterestIcon({ className }: SVGProps<SVGSVGElement>) {
@@ -46,7 +47,7 @@ export function Footer() {
       <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[40rem] h-[24rem] bg-primary/10 blur-3xl rounded-full pointer-events-none" />
 
       <Container className="relative py-16 md:py-20">
-        {/* ── Top: brand + newsletter-style contact ────────────── */}
+        {/* ---- Top: brand + newsletter-style contact ---- */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 pb-12 border-b border-white/10">
           {/* Brand block */}
           <div className="lg:col-span-5">
@@ -130,10 +131,10 @@ export function Footer() {
           </div>
         </div>
 
-        {/* ── SEO mega-grid ── */}
+        {/* ---- SEO mega-grid ---- */}
         <FooterToolGrid />
 
-        {/* ── Site nav columns ──── */}
+        {/* ---- Site nav columns ---- */}
         <div className="mt-14 pt-12 border-t border-white/10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {Object.entries(siteConfig.footerLinks)
             .filter(([heading]) => !['All Tools', 'Social Media Downloaders', 'Video Downloaders', 'Audio Downloaders', 'Image Downloaders'].includes(heading))
@@ -167,12 +168,13 @@ export function Footer() {
                 </div>
               );
             })}
+          <FooterApps />
         </div>
 
-        {/* ── Bottom bar ── */}
+        {/* ---- Bottom bar ---- */}
         <div className="mt-14 pt-8 border-t border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <p className="text-xs text-ink-subtle">
-            © {new Date().getFullYear()} {siteConfig.name}. {t('footer.copyright')}
+            &copy; {new Date().getFullYear()} {siteConfig.name}. {t('footer.copyright')}
           </p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
             {siteConfig.legalLinks.map((link) => {

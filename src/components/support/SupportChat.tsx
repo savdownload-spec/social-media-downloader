@@ -163,7 +163,10 @@ export function SupportChat() {
         type="button"
         aria-label="Open support"
         onClick={() => { setOpen(true); playOpen(); }}
-        className="group fixed bottom-5 right-5 z-[90] inline-flex h-14 items-center gap-2.5 rounded-full bg-gradient-brand bg-[length:200%_200%] pl-2.5 pr-4 text-sm font-semibold text-white shadow-glow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-[position:100%_50%] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:pr-5"
+        className={`group fixed right-5 z-[90] inline-flex h-14 items-center gap-2.5 rounded-full bg-gradient-brand bg-[length:200%_200%] pl-2.5 pr-4 text-sm font-semibold text-white shadow-glow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-[position:100%_50%] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:pr-5 ${
+          // Workspace's own bottom tab bar occupies the same corner on mobile/tablet.
+          pathname.startsWith('/workspace') ? 'bottom-20 lg:bottom-5' : 'bottom-5'
+        }`}
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         <span className="grid h-9 w-9 place-items-center rounded-full bg-white/20 transition-transform duration-200 group-hover:scale-105">

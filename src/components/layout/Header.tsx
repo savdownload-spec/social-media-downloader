@@ -65,10 +65,10 @@ export function Header() {
             <Search className="w-4 h-4 text-text-muted" />
           </Link>
           <Link
-            href="/#tools"
+            href={session ? '/workspace' : '/#tools'}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:shadow-[0_14px_48px_-8px_rgb(124_58_237_/_0.5)] hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
           >
-            <Zap className="w-3.5 h-3.5" /> {t('common.getStarted')}
+            <Zap className="w-3.5 h-3.5" /> {session ? 'Open SavDown' : t('common.getStarted')}
           </Link>
         </div>
 
