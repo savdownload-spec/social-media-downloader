@@ -59,7 +59,7 @@ export function Newsletter() {
               {t('newsletter.title') || 'The Monthly Update'}
             </h2>
             <p className="mt-3 text-white/70 leading-relaxed">
-              {t('newsletter.description') || 'One thoughtful email per month. Zero fluff. Only when we ship something worth telling you about.'}
+              {t('newsletter.description') || 'One calm email a month with new tools, platform updates, and creative tips. No spam, ever.'}
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
               <input
