@@ -68,7 +68,7 @@ export function FooterToolGrid() {
           href="/tools"
           className="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold text-ink-muted hover:text-white transition-colors"
         >
-          See all tools <ArrowUpRight className="w-3.5 h-3.5" />
+          See All Tools <ArrowUpRight className="w-3.5 h-3.5" />
         </Link>
       </div>
 
@@ -132,7 +132,7 @@ export function FooterToolGrid() {
                     aria-controls={panelId}
                     className="group mt-3 inline-flex items-center gap-1 text-xs font-semibold text-ink-muted hover:text-white transition-colors"
                   >
-                    {isOpen ? 'Show less' : `See more (${collapsedTools.length})`}
+                    {isOpen ? 'Show Less' : `See More (${collapsedTools.length})`}
                     <ChevronDown
                       className="w-3.5 h-3.5 transition-transform duration-300 group-hover:text-white"
                       style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}

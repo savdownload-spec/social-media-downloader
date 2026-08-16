@@ -65,15 +65,15 @@
     "resources": "Resources",
     "legal": "Legal",
     "company": "Company",
-    "copyright": "All rights reserved.",
+    "copyright": "All Rights Reserved.",
     "disclaimer": "Disclaimer: SavDown is not affiliated with any social media platform. Please respect copyrights.",
-    "stayInLoop": "Stay in the loop",
+    "stayInLoop": "Stay In The Loop",
     "stayInLoopDesc": "Get notified about new tools and updates.",
     "whySavDown": "Why SavDown?",
     "noSignup": "No Signup Required",
-    "featureUnlimited": "Unlimited downloads",
-    "featureNoSignup": "No signup required",
-    "featureSecure": "Completely secure"
+    "featureUnlimited": "Unlimited Downloads",
+    "featureNoSignup": "No Signup Required",
+    "featureSecure": "Completely Secure"
   },
   "catalog": {
     "title": "All Tools",

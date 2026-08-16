@@ -29,13 +29,13 @@ export function FooterApps() {
   const { canInstall, isInstalled, openSheet } = useInstallPwa();
 
   const apps: AppBadge[] = [
-    { key: 'workspace', icon: Monitor, label: 'Web app', title: 'Open the SavDown web app', href: '/workspace' },
+    { key: 'workspace', icon: Monitor, label: 'Web App', title: 'Open the SavDown web app', href: '/workspace' },
   ];
 
   if (isInstalled) {
     apps.push({ key: 'install', icon: Check, label: 'Installed', title: 'Open the installed SavDown app', href: '/workspace', external: true });
   } else if (canInstall) {
-    apps.push({ key: 'install', icon: Download, label: 'Install app', title: 'Install SavDown on your device', onClick: openSheet });
+    apps.push({ key: 'install', icon: Download, label: 'Install App', title: 'Install SavDown on your device', onClick: openSheet });
   }
   // Neither installed nor installable (e.g. desktop Firefox): omit the badge
   // entirely rather than show a button that can't do anything.
