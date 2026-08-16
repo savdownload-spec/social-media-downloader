@@ -62,7 +62,7 @@ export function BlogComments({ postSlug }: BlogCommentsProps) {
       const payload = await response.json();
       if (!response.ok || !payload?.ok) throw new Error(payload?.error ?? 'Unable to submit your comment.');
       setBody('');
-      setMessage('Thanks â€” your comment was submitted for review.');
+      setMessage('Thanks — your comment was submitted for review.');
       await loadComments();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Unable to submit your comment.');
@@ -118,9 +118,9 @@ export function BlogComments({ postSlug }: BlogCommentsProps) {
       {authStatus === 'authenticated' && session?.user ? (
         <div className="mt-7 rounded-2xl border border-border bg-surface/55 p-4 md:p-5">
           <label htmlFor="blog-comment" className="text-sm font-semibold text-text">Add your perspective</label>
-          <textarea id="blog-comment" value={body} onChange={(event) => setBody(event.target.value)} maxLength={2000} rows={4} placeholder="Share a useful tip, question, or clarificationâ€¦" className="mt-3 w-full resize-y rounded-xl border border-border bg-white dark:bg-card px-4 py-3 text-sm leading-6 text-text outline-none transition-shadow placeholder:text-text-subtle focus:border-primary focus:ring-4 focus:ring-primary/10" />
+          <textarea id="blog-comment" value={body} onChange={(event) => setBody(event.target.value)} maxLength={2000} rows={4} placeholder="Share a useful tip, question, or clarification…" className="mt-3 w-full resize-y rounded-xl border border-border bg-white dark:bg-card px-4 py-3 text-sm leading-6 text-text outline-none transition-shadow placeholder:text-text-subtle focus:border-primary focus:ring-4 focus:ring-primary/10" />
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-text-subtle">{body.length}/2000 Â· Comments are reviewed before publication.</p>
+            <p className="text-xs text-text-subtle">{body.length}/2000 · Comments are reviewed before publication.</p>
             <button type="button" onClick={submit} disabled={submitting || body.trim().length < 2} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50">
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Submit comment
             </button>
@@ -137,7 +137,7 @@ export function BlogComments({ postSlug }: BlogCommentsProps) {
       {message && <p className="mt-4 rounded-xl bg-primary-light px-4 py-3 text-sm text-primary" role="status">{message}</p>}
 
       <div className="mt-8 space-y-5">
-        {loading ? <div className="flex items-center gap-2 text-sm text-text-muted"><Loader2 className="h-4 w-4 animate-spin" /> Loading commentsâ€¦</div> : null}
+        {loading ? <div className="flex items-center gap-2 text-sm text-text-muted"><Loader2 className="h-4 w-4 animate-spin" /> Loading comments…</div> : null}
         {!loading && comments.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-white dark:bg-card p-6 text-sm text-text-muted">Be the first to add a thoughtful question or helpful tip.</div> : null}
         {comments.map((comment) => (
           <article key={comment.id} className="rounded-2xl border border-border bg-white dark:bg-card p-5 shadow-soft">

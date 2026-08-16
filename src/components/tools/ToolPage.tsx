@@ -166,7 +166,7 @@ export function ToolPageView({ tool }: { tool: Tool }) {
       {/* FAQ */}
       <FAQSection items={tool.faq} variant="white" />
 
-      {/* â”€â”€ Similar Tools (related downloads in the same group) â”€â”€ */}
+      {/* ── Similar Tools (related downloads in the same group) ── */}
       {(() => {
         const meta = getCatalogTool(tool.slug);
         if (!meta) return null;
@@ -206,7 +206,7 @@ export function ToolPageView({ tool }: { tool: Tool }) {
         );
       })()}
 
-      {/* â”€â”€ Long-form SEO content (~1,000+ words) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Long-form SEO content (~1,000+ words) ─────────────── */}
       <ToolLongContentSection slug={tool.slug} />
     </>
   );

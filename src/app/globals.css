@@ -4,14 +4,14 @@
 
 @layer base {
   /* Theme tokens. :root values are copied verbatim from what used to be
-     hardcoded directly in tailwind.config.ts â€” light mode is byte-identical
+     hardcoded directly in tailwind.config.ts -- light mode is byte-identical
      to before this file existed. .dark introduces the actual dark palette;
      every semantic Tailwind color (bg-surface, text-text, bg-primary,
      border-border, bg-card, ...) reads from these and re-themes for free
      across every component that already uses the semantic tokens.
 
      Most tokens are stored as space-separated RGB channels (not hex/rgba)
-     and consumed in tailwind.config.ts via rgb(var(--x) / <alpha-value>) â€”
+     and consumed in tailwind.config.ts via rgb(var(--x) / <alpha-value>) --
      required for Tailwind's opacity-modifier syntax (bg-primary/20,
      border-border/60, etc, used extensively site-wide) to work at all when
      the color comes from a CSS custom property; a plain var(--x) string
@@ -20,7 +20,7 @@
      primary-light/accent-light/border/border-light are the exception: in
      dark mode their *unmodified* (no /NN) appearance is intentionally
      already-translucent (a soft wash / hairline), which the "no modifier
-     = fully opaque" alpha-value convention can't represent â€” so these four
+     = fully opaque" alpha-value convention can't represent -- so these four
      stay plain var(--x) strings, correct for their common unmodified use;
      the rare /NN-suffixed use of these four falls back to the base value
      (see component-level fixes) rather than compounding the opacity. */
@@ -74,7 +74,7 @@
   }
 
   /* Smooth, non-abrupt theme changes (manual toggle or auto day/night
-     boundary) â€” always on rather than JS-toggled, since it only ever
+     boundary) -- always on rather than JS-toggled, since it only ever
      animates an actual color change, never the first paint (the blocking
      init script in <head> sets the correct theme before anything renders). */
   html {
@@ -196,7 +196,7 @@
     background-size: 22px 22px;
   }
 
-  /* â”€â/* Gradient text tuned for legibility on dark backgrounds */
+  /* Gradient text tuned for legibility on dark backgrounds */
   .text-gradient-light {
     background-image: linear-gradient(120deg, #A5B4FC 0%, #C4B5FD 50%, #F0ABFC 100%);
     -webkit-background-clip: text;
@@ -206,7 +206,7 @@
   }
 }
 
-/* â”€â”€ Suppress Google Translate's own UI chrome â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+/* ---- Suppress Google Translate's own UI chrome ----
    The language switcher uses Google's Website Translator widget purely
    as a translation engine (see src/lib/translation-manager.ts), our own
    dropdown is the only language control users should see. Google's

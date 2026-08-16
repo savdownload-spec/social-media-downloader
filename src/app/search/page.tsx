@@ -42,7 +42,7 @@ const blogItems: SearchItem[] = blogPosts.map((post) => ({
   title: post.title,
   description: post.excerpt,
   href: `/blog/${post.slug}`,
-  category: `Blog Â· ${post.category}`,
+  category: `Blog · ${post.category}`,
   keywords: [post.primaryKeyword, ...post.secondaryKeywords, ...post.tags],
 }));
 
@@ -68,7 +68,7 @@ function SearchInner() {
     <>
       <div className="relative mt-8">
         <SearchIcon className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" aria-hidden="true" />
-        <Input value={query} onChange={(event) => { setQuery(event.target.value); router.replace(event.target.value ? `/search?q=${encodeURIComponent(event.target.value)}` : '/search', { scroll: false }); }} placeholder="Type to search tools, articles, or topicsâ€¦" autoFocus className="pl-12 text-base" aria-label="Search" />
+        <Input value={query} onChange={(event) => { setQuery(event.target.value); router.replace(event.target.value ? `/search?q=${encodeURIComponent(event.target.value)}` : '/search', { scroll: false }); }} placeholder="Type to search tools, articles, or topics…" autoFocus className="pl-12 text-base" aria-label="Search" />
       </div>
       <p className="mt-6 text-sm text-text-muted">{results.length} result{results.length === 1 ? '' : 's'}{query && <> for <span className="text-text">&quot;{query}&quot;</span></>}</p>
       <div className="mt-6 space-y-3">
