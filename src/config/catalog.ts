@@ -141,6 +141,17 @@ export const HOMEPAGE_MOBILE_LIMIT = 10;
 
 export const toolGroups: ToolGroup[] = ['Downloaders', 'Image', 'Video', 'PDF', 'AI', 'SEO', 'Utility'];
 
+/** One-line description per group, shared by the public Tools page and the Workspace category cards. */
+export const groupBlurb: Record<ToolGroup, string> = {
+  Downloaders: 'Save videos, reels, photos, audio, and thumbnails from every major platform.',
+  Image: 'Remove backgrounds, upscale, compress, resize, and convert images.',
+  Video: 'Convert, compress, and repurpose video into the format you need.',
+  PDF: 'Merge, split, compress, and convert PDFs and documents.',
+  AI: 'Generate thumbnails, titles, captions, hashtags, and more with AI.',
+  SEO: 'Create titles, descriptions, tags, keywords, and schema that rank.',
+  Utility: 'Handy everyday helpers for creators and developers.',
+};
+
 /** URL segment for a tool group, e.g. 'Downloaders' -> 'downloaders'. */
 export function groupSlug(group: ToolGroup): string {
   return group.toLowerCase();

@@ -42,31 +42,32 @@ export function WorkspaceHeader({ user, credits, onOpenMobileMenu, onOpenCommand
         <Menu className="w-5 h-5" />
       </button>
 
-      {/* Command bar trigger */}
-      <button
-        onClick={onOpenCommand}
-        className="hidden sm:flex items-center gap-2.5 flex-1 max-w-md h-10 px-3.5 rounded-xl border border-border bg-surface/60 hover:bg-surface text-left transition-colors"
-      >
-        <Search className="w-4 h-4 text-text-subtle shrink-0" />
-        <span className="text-sm text-text-subtle flex-1">Search tools, downloads, settings…</span>
-        <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-white dark:bg-card border border-border-light text-[10px] font-semibold text-text-subtle">
-          Ctrl K
-        </kbd>
-      </button>
+      {/* Center: search / command bar trigger */}
+      <div className="flex-1 min-w-0 flex justify-center">
+        <button
+          onClick={onOpenCommand}
+          className="hidden sm:flex items-center gap-2.5 w-full max-w-md h-10 px-3.5 rounded-xl border border-border bg-surface/60 hover:bg-surface text-left transition-colors"
+        >
+          <Search className="w-4 h-4 text-text-subtle shrink-0" />
+          <span className="text-sm text-text-subtle flex-1">Search tools, downloads, settings…</span>
+          <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-white dark:bg-card border border-border-light text-[10px] font-semibold text-text-subtle">
+            Ctrl K
+          </kbd>
+        </button>
 
-      <button
-        onClick={onOpenCommand}
-        className="sm:hidden w-9 h-9 rounded-lg hover:bg-surface flex items-center justify-center text-text-muted"
-        aria-label="Search"
-      >
-        <Search className="w-[18px] h-[18px]" />
-      </button>
+        <button
+          onClick={onOpenCommand}
+          className="sm:hidden w-9 h-9 rounded-lg hover:bg-surface flex items-center justify-center text-text-muted"
+          aria-label="Search"
+        >
+          <Search className="w-[18px] h-[18px]" />
+        </button>
+      </div>
 
-      <div className="flex-1 sm:flex-none" />
-
-      <div className="flex items-center gap-1.5">
+      {/* Right: credits, install, theme, account — flush right */}
+      <div className="flex items-center gap-1.5 shrink-0">
         <Link
-          href="/account/billing"
+          href="/workspace/billing"
           className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-light text-primary text-[13px] font-semibold hover:bg-primary/15 transition-colors"
           title="Your SavCredits balance"
         >
@@ -113,14 +114,14 @@ export function WorkspaceHeader({ user, credits, onOpenMobileMenu, onOpenCommand
                 {user.email && <p className="text-xs text-text-muted truncate">{user.email}</p>}
               </div>
               <Link
-                href="/account"
+                href="/workspace/settings"
                 onClick={() => setMenuOpen(false)}
                 className="flex items-center gap-2.5 px-4 py-2 text-sm text-text-muted hover:text-text hover:bg-surface transition-colors"
               >
                 <UserIcon className="w-4 h-4" /> Profile
               </Link>
               <Link
-                href="/account/billing"
+                href="/workspace/billing"
                 onClick={() => setMenuOpen(false)}
                 className="flex items-center gap-2.5 px-4 py-2 text-sm text-text-muted hover:text-text hover:bg-surface transition-colors"
               >

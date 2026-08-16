@@ -16,6 +16,7 @@ import {
   Settings,
   Wrench,
   LifeBuoy,
+  Tag,
   CornerDownLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -40,8 +41,9 @@ const STATIC_ITEMS: ResultItem[] = [
   { id: 'collections', label: 'Collections (soon)', href: '/workspace/collections', icon: Layers, group: 'Workspace' },
   { id: 'batch', label: 'Batch (soon)', href: '/workspace/batch', icon: ListChecks, group: 'Workspace' },
   { id: 'all-tools', label: 'Browse all tools', href: '/workspace/tools', icon: Wrench, group: 'Tools' },
-  { id: 'credits', label: 'Credits & Billing', href: '/account/billing', icon: CreditCard, group: 'Account' },
-  { id: 'settings', label: 'Profile & Settings', href: '/account', icon: Settings, group: 'Account' },
+  { id: 'credits', label: 'Credits & Billing', href: '/workspace/billing', icon: CreditCard, group: 'Account' },
+  { id: 'pricing', label: 'Pricing', href: '/workspace/pricing', icon: Tag, group: 'Account' },
+  { id: 'settings', label: 'Profile & Settings', href: '/workspace/settings', icon: Settings, group: 'Account' },
   {
     id: 'support',
     label: 'Support',

@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { toolsBySlug } from '@/config/tools';
 import { getCatalogTool, groupFromSlug } from '@/config/catalog';
 import { isFunctionalTool } from '@/config/functionalTools';
-import { resolveToolPage } from '@/components/tools/resolveToolPage';
+import { resolveWorkspaceToolPage } from '@/components/tools/resolveToolPage';
 import { buildMetadata } from '@/lib/seo';
 
 // Same reasoning as src/app/tools/[slug]/page.tsx: no meaningful prerendering
@@ -29,7 +29,7 @@ export default function WorkspaceToolPage({ params }: { params: { group: string;
   const entry = getCatalogTool(params.slug);
   if (!group || !entry || entry.group !== group) return notFound();
 
-  const page = resolveToolPage(params.slug);
+  const page = resolveWorkspaceToolPage(params.slug);
   if (!page) return notFound();
   return page;
 }

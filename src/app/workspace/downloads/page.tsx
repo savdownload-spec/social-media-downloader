@@ -13,7 +13,7 @@ export default async function WorkspaceDownloadsPage() {
   const items = await getUserActivity(session.user.id, 200);
 
   return (
-    <div className="px-4 sm:px-6 lg:px-10 py-8 md:py-10 max-w-4xl mx-auto space-y-6">
+    <div className="px-4 sm:px-6 lg:px-10 py-8 md:py-10 max-w-7xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-text">Downloads</h1>
         <p className="text-sm text-text-muted mt-1">

@@ -19,6 +19,7 @@ import {
   Settings,
   LifeBuoy,
   ExternalLink,
+  Tag,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
@@ -38,8 +39,9 @@ const MORE_LINKS = [
   { label: 'Collections', href: '/workspace/collections', icon: Layers, badge: 'soon' },
   { label: 'Batch', href: '/workspace/batch', icon: ListChecks, badge: 'soon' },
   { label: 'All Tools', href: '/workspace/tools', icon: Wrench },
-  { label: 'Credits & Billing', href: '/account/billing', icon: CreditCard },
-  { label: 'Profile & Settings', href: '/account', icon: Settings },
+  { label: 'Credits & Billing', href: '/workspace/billing', icon: CreditCard },
+  { label: 'Pricing', href: '/workspace/pricing', icon: Tag },
+  { label: 'Profile & Settings', href: '/workspace/settings', icon: Settings },
 ];
 
 /** Dispatched so the Home screen's UniversalInput can focus itself even when

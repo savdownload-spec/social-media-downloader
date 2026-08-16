@@ -23,6 +23,7 @@ import {
   ChevronLeft,
   ExternalLink,
   LifeBuoy,
+  Tag,
   X,
 } from 'lucide-react';
 import { OPEN_SUPPORT_EVENT } from '@/components/support/SupportChat';
@@ -75,8 +76,9 @@ const NAV_GROUPS: NavGroup[] = [
   {
     section: 'Account',
     items: [
-      { label: 'Credits & Billing', href: '/account/billing', icon: CreditCard },
-      { label: 'Profile & Settings', href: '/account', icon: Settings },
+      { label: 'Credits & Billing', href: '/workspace/billing', icon: CreditCard },
+      { label: 'Pricing', href: '/workspace/pricing', icon: Tag },
+      { label: 'Profile & Settings', href: '/workspace/settings', icon: Settings },
     ],
   },
 ];

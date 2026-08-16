@@ -29,7 +29,7 @@ export function FooterApps() {
   const { canInstall, isInstalled, openSheet } = useInstallPwa();
 
   const apps: AppBadge[] = [
-    { key: 'workspace', icon: Monitor, label: 'Web App', title: 'Open the SavDown web app', href: '/workspace' },
+    { key: 'workspace', icon: Monitor, label: 'Web App', title: 'Open the SavDown web app', href: '/workspace', external: true },
   ];
 
   if (isInstalled) {

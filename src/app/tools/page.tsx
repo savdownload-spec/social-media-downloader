@@ -4,7 +4,7 @@ import { Container } from '@/components/layout/Container';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Section } from '@/components/layout/Section';
 import { Reveal } from '@/components/ui/Reveal';
-import { catalog, toolGroups, isToolAvailable } from '@/config/catalog';
+import { catalog, toolGroups, isToolAvailable, groupBlurb } from '@/config/catalog';
 import { buildMetadata } from '@/lib/seo';
 
 export const metadata = buildMetadata({
@@ -14,16 +14,6 @@ export const metadata = buildMetadata({
   path: '/tools',
   keywords: ['free online tools', 'social media downloader', 'image tools', 'pdf tools', 'ai tools', 'seo tools'],
 });
-
-const groupBlurb: Record<string, string> = {
-  Downloaders: 'Save videos, reels, photos, audio, and thumbnails from every major platform.',
-  Image: 'Remove backgrounds, upscale, compress, resize, and convert images.',
-  Video: 'Convert, compress, and repurpose video into the format you need.',
-  PDF: 'Merge, split, compress, and convert PDFs and documents.',
-  AI: 'Generate thumbnails, titles, captions, hashtags, and more with AI.',
-  SEO: 'Create titles, descriptions, tags, keywords, and schema that rank.',
-  Utility: 'Handy everyday helpers for creators and developers.',
-};
 
 export default function ToolsIndexPage() {
   return (
