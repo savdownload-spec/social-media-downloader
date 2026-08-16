@@ -5,15 +5,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Link2, Search, Upload, CheckCircle2 } from 'lucide-react';
 import { tools } from '@/config/tools';
-import { catalog, isToolAvailable } from '@/config/catalog';
+import { catalog, isToolAvailable, groupSlug } from '@/config/catalog';
 import { cn } from '@/lib/utils';
 import { FOCUS_UNIVERSAL_INPUT_EVENT } from './WorkspaceMobileNav';
 
 const UPLOAD_ROUTE_BY_PREFIX: { test: (type: string) => boolean; label: string; href: string }[] = [
-  { test: (t) => t.startsWith('image/'), label: 'image tools', href: '/tools#image' },
-  { test: (t) => t.startsWith('video/'), label: 'video tools', href: '/tools#video' },
-  { test: (t) => t.startsWith('audio/'), label: 'audio tools', href: '/tools#video' },
-  { test: (t) => t === 'application/pdf', label: 'PDF tools', href: '/tools#pdf' },
+  { test: (t) => t.startsWith('image/'), label: 'image tools', href: '/workspace/tools/image' },
+  { test: (t) => t.startsWith('video/'), label: 'video tools', href: '/workspace/tools/video' },
+  { test: (t) => t.startsWith('audio/'), label: 'audio tools', href: '/workspace/tools/video' },
+  { test: (t) => t === 'application/pdf', label: 'PDF tools', href: '/workspace/tools/pdf' },
 ];
 
 function looksLikeUrl(value: string) {
@@ -55,21 +55,21 @@ export function UniversalInput() {
   function handleFile(file: File | undefined) {
     if (!file) return;
     const match = UPLOAD_ROUTE_BY_PREFIX.find((r) => r.test(file.type));
-    setUploadHint(match ? { label: match.label, href: match.href } : { label: 'all tools', href: '/tools' });
+    setUploadHint(match ? { label: match.label, href: match.href } : { label: 'all tools', href: '/workspace/tools' });
   }
 
   function handleGo() {
     const trimmed = value.trim();
     if (!trimmed) return;
     if (detectedTool) {
-      router.push(`/tools/${detectedTool.slug}?url=${encodeURIComponent(trimmed)}`);
+      router.push(`/workspace/tools/downloaders/${detectedTool.slug}?url=${encodeURIComponent(trimmed)}`);
       return;
     }
     if (searchMatches[0]) {
-      router.push(`/tools/${searchMatches[0].slug}`);
+      router.push(`/workspace/tools/${groupSlug(searchMatches[0].group)}/${searchMatches[0].slug}`);
       return;
     }
-    router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+    router.push(`/workspace/tools?q=${encodeURIComponent(trimmed)}`);
   }
 
   return (
@@ -124,7 +124,7 @@ export function UniversalInput() {
             </p>
           </div>
           <Link
-            href={`/tools/${detectedTool.slug}?url=${encodeURIComponent(value.trim())}`}
+            href={`/workspace/tools/downloaders/${detectedTool.slug}?url=${encodeURIComponent(value.trim())}`}
             className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary-hover transition-colors"
           >
             Open Downloader <ArrowRight className="w-3.5 h-3.5" />
@@ -140,7 +140,7 @@ export function UniversalInput() {
             return (
               <Link
                 key={t.slug}
-                href={`/tools/${t.slug}`}
+                href={`/workspace/tools/${groupSlug(t.group)}/${t.slug}`}
                 className="flex items-center gap-3 px-4 py-3 hover:bg-surface transition-colors border-b border-border-light last:border-0"
               >
                 <span className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', t.tile)}>

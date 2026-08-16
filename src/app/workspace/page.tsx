@@ -17,22 +17,25 @@ export default async function WorkspaceHomePage() {
   const firstName = session.user.name?.split(' ')[0];
 
   return (
-    <div className="px-4 sm:px-6 lg:px-10 py-10 md:py-14 space-y-10">
-      <div className="text-center space-y-2">
+    <div className="px-4 sm:px-6 lg:px-10 py-6 md:py-8 space-y-6 max-w-6xl">
+      <div className="text-center space-y-1">
         <p className="text-sm font-medium text-text-subtle">
           {firstName ? `Welcome back, ${firstName}.` : 'Welcome back.'}
         </p>
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-text">
           What do you want to do?
         </h1>
       </div>
 
-      <UniversalInput />
+      <div className="max-w-2xl mx-auto w-full space-y-6">
+        <UniversalInput />
+        <OnboardingCallout />
+      </div>
+
       <QuickActions />
-      <OnboardingCallout />
 
       <div>
-        <h2 className="text-sm font-semibold text-text-subtle uppercase tracking-wider mb-3 max-w-2xl mx-auto">
+        <h2 className="text-sm font-semibold text-text-subtle uppercase tracking-wider mb-3">
           Recent Activity
         </h2>
         <RecentActivity items={activity} />

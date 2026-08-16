@@ -60,6 +60,11 @@ const CATEGORIES: CategoryMeta[] = [
 const PRIMARY_COUNT = 6;
 const guestKey = 'savdown-support-guest';
 
+/** Dispatched by nav entries (workspace sidebar, mobile "More" sheet, command
+ *  bar) so they can open this globally-mounted widget without lifting its
+ *  state up through WorkspaceShell. */
+export const OPEN_SUPPORT_EVENT = 'savdown:open-support';
+
 function guestHeaders(): Record<string, string> {
   try { const saved = JSON.parse(localStorage.getItem(guestKey) || '{}'); return saved.token ? { 'x-support-token': saved.token } : {}; } catch { return {}; }
 }
@@ -104,6 +109,11 @@ export function SupportChat() {
   }, [open]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [detail?.messages.length]);
   useEffect(() => { if (!loggedIn && open && !detail) { try { const saved = JSON.parse(localStorage.getItem(guestKey) || '{}'); if (saved.id && saved.token) loadDetail(saved.id); } catch {} } }, [loggedIn, open, detail, loadDetail]);
+  useEffect(() => {
+    function onOpenRequest() { setOpen(true); playOpen(); }
+    window.addEventListener(OPEN_SUPPORT_EVENT, onOpenRequest);
+    return () => window.removeEventListener(OPEN_SUPPORT_EVENT, onOpenRequest);
+  }, []);
   if (pathname.startsWith('/admin')) return null;
 
   function resetComposer() { setCategory(''); setMessage(''); setFiles([]); setShowMore(false); setInlineError(null); retryRef.current = null; }

@@ -18,9 +18,11 @@ import {
   CreditCard,
   Settings,
   LifeBuoy,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import { OPEN_SUPPORT_EVENT } from '@/components/support/SupportChat';
 
 const TABS = [
   { label: 'Home', href: '/workspace', icon: Home },
@@ -35,7 +37,7 @@ const MORE_LINKS = [
   { label: 'My Files', href: '/workspace/files', icon: FolderOpen, badge: 'soon' },
   { label: 'Collections', href: '/workspace/collections', icon: Layers, badge: 'soon' },
   { label: 'Batch', href: '/workspace/batch', icon: ListChecks, badge: 'soon' },
-  { label: 'All Tools', href: '/tools', icon: Wrench },
+  { label: 'All Tools', href: '/workspace/tools', icon: Wrench },
   { label: 'Credits & Billing', href: '/account/billing', icon: CreditCard },
   { label: 'Profile & Settings', href: '/account', icon: Settings },
 ];
@@ -169,13 +171,24 @@ export function WorkspaceMobileNav() {
                 <span className="text-xs font-semibold uppercase tracking-wider text-text-subtle">Theme</span>
                 <ThemeToggle variant="header" />
               </div>
-              <div className="px-3 pb-5">
+              <div className="px-3 pb-5 space-y-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMoreOpen(false);
+                    window.dispatchEvent(new CustomEvent(OPEN_SUPPORT_EVENT));
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-text hover:bg-surface transition-colors"
+                >
+                  <LifeBuoy className="w-[18px] h-[18px] text-text-subtle" />
+                  Support
+                </button>
                 <Link
                   href="/"
                   onClick={() => setMoreOpen(false)}
                   className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-text-subtle hover:bg-surface transition-colors"
                 >
-                  <LifeBuoy className="w-[18px] h-[18px]" />
+                  <ExternalLink className="w-[18px] h-[18px]" />
                   Back to site
                 </Link>
               </div>

@@ -15,16 +15,19 @@ import {
   CreditCard,
   Settings,
   Wrench,
+  LifeBuoy,
   CornerDownLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { catalog, isToolAvailable, type CatalogTool } from '@/config/catalog';
+import { catalog, isToolAvailable, groupSlug, type CatalogTool } from '@/config/catalog';
+import { OPEN_SUPPORT_EVENT } from '@/components/support/SupportChat';
 
 type ResultItem = {
   id: string;
   label: string;
   sublabel?: string;
-  href: string;
+  href?: string;
+  action?: () => void;
   icon: ComponentType<{ className?: string }>;
   group: 'Workspace' | 'Tools' | 'Account';
 };
@@ -36,9 +39,17 @@ const STATIC_ITEMS: ResultItem[] = [
   { id: 'files', label: 'My Files (soon)', href: '/workspace/files', icon: FolderOpen, group: 'Workspace' },
   { id: 'collections', label: 'Collections (soon)', href: '/workspace/collections', icon: Layers, group: 'Workspace' },
   { id: 'batch', label: 'Batch (soon)', href: '/workspace/batch', icon: ListChecks, group: 'Workspace' },
-  { id: 'all-tools', label: 'Browse all tools', href: '/tools', icon: Wrench, group: 'Tools' },
+  { id: 'all-tools', label: 'Browse all tools', href: '/workspace/tools', icon: Wrench, group: 'Tools' },
   { id: 'credits', label: 'Credits & Billing', href: '/account/billing', icon: CreditCard, group: 'Account' },
   { id: 'settings', label: 'Profile & Settings', href: '/account', icon: Settings, group: 'Account' },
+  {
+    id: 'support',
+    label: 'Support',
+    href: undefined,
+    action: () => window.dispatchEvent(new CustomEvent(OPEN_SUPPORT_EVENT)),
+    icon: LifeBuoy,
+    group: 'Account',
+  },
 ];
 
 function toolToResult(tool: CatalogTool): ResultItem {
@@ -46,7 +57,7 @@ function toolToResult(tool: CatalogTool): ResultItem {
     id: `tool-${tool.slug}`,
     label: tool.name,
     sublabel: tool.description,
-    href: `/tools/${tool.slug}`,
+    href: `/workspace/tools/${groupSlug(tool.group)}/${tool.slug}`,
     icon: tool.icon,
     group: 'Tools',
   };
@@ -95,7 +106,11 @@ export function CommandBar({ open, onClose }: Props) {
   }, [results]);
 
   function go(item: ResultItem) {
-    router.push(item.href);
+    if (item.action) {
+      item.action();
+    } else if (item.href) {
+      router.push(item.href);
+    }
     onClose();
   }
 

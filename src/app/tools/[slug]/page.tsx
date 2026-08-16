@@ -1,10 +1,8 @@
 import { notFound } from 'next/navigation';
 import { toolsBySlug } from '@/config/tools';
 import { getCatalogTool } from '@/config/catalog';
-import { getFunctionalTool, isFunctionalTool } from '@/config/functionalTools';
-import { ToolPageView } from '@/components/tools/ToolPage';
-import { GenericToolPage } from '@/components/tools/GenericToolPage';
-import { FunctionalToolLayout } from '@/components/tools/FunctionalToolLayout';
+import { isFunctionalTool } from '@/config/functionalTools';
+import { resolveToolPage } from '@/components/tools/resolveToolPage';
 import { buildMetadata } from '@/lib/seo';
 
 // This route used generateStaticParams() + dynamicParams = false to try to
@@ -46,23 +44,7 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
 }
 
 export default function Page({ params }: { params: { slug: string } }) {
-  const tool = toolsBySlug.get(params.slug);
-  if (tool) return <ToolPageView tool={tool} />;
-
-  const entry = getCatalogTool(params.slug);
-  if (entry) {
-    // Functional tools (image / PDF / QR / utility) render a live UI.
-    const functional = getFunctionalTool(params.slug);
-    if (functional) {
-      const { Component } = functional;
-      return (
-        <FunctionalToolLayout tool={entry}>
-          <Component slug={params.slug} />
-        </FunctionalToolLayout>
-      );
-    }
-    return <GenericToolPage tool={entry} />;
-  }
-
-  return notFound();
+  const page = resolveToolPage(params.slug);
+  if (!page) return notFound();
+  return page;
 }

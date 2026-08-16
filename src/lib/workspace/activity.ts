@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { toolsBySlug } from '@/config/tools';
-import { getCatalogTool } from '@/config/catalog';
+import { getCatalogTool, groupSlug } from '@/config/catalog';
 
 export type ActivityItem = {
   id: string;
@@ -41,7 +41,7 @@ function toActivityItem(row: {
     id: row.id,
     tool: row.tool,
     toolName: downloaderTool?.name ?? catalogTool?.name ?? row.tool,
-    toolHref: downloaderTool || catalogTool ? `/tools/${row.tool}` : null,
+    toolHref: catalogTool ? `/workspace/tools/${groupSlug(catalogTool.group)}/${row.tool}` : null,
     platform: row.platform,
     sourceUrl: row.sourceUrl,
     status: row.status,

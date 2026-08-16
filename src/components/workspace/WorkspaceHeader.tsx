@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import { signOut } from 'next-auth/react';
-import { Search, Menu, Coins, LogOut, User as UserIcon, Settings } from 'lucide-react';
+import { Search, Menu, Coins, LogOut, User as UserIcon, Settings, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import { useInstallPwa } from '@/components/pwa/InstallProvider';
 
 type WorkspaceUser = { name: string | null; email: string | null; image: string | null };
 
@@ -20,6 +21,7 @@ export function WorkspaceHeader({ user, credits, onOpenMobileMenu, onOpenCommand
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const initial = (user.name ?? user.email ?? 'S').trim().charAt(0).toUpperCase();
+  const { canInstall, isInstalled, openSheet } = useInstallPwa();
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -71,6 +73,17 @@ export function WorkspaceHeader({ user, credits, onOpenMobileMenu, onOpenCommand
           <Coins className="w-3.5 h-3.5" />
           {credits.toLocaleString()}
         </Link>
+
+        {!isInstalled && canInstall && (
+          <button
+            onClick={openSheet}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border text-text-muted text-[13px] font-semibold hover:text-text hover:border-primary/30 transition-colors"
+            title="Install SavDown"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Install
+          </button>
+        )}
 
         <ThemeToggle variant="header" />
 

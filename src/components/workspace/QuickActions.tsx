@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Download, Image as ImageIcon, Video, FileText, Sparkles, Search, Wrench } from 'lucide-react';
-import { toolGroups } from '@/config/catalog';
+import { toolGroups, groupSlug } from '@/config/catalog';
 
 const GROUP_META: Record<(typeof toolGroups)[number], { icon: typeof Download; blurb: string; tile: string }> = {
   Downloaders: { icon: Download, blurb: 'Save from every platform', tile: 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-400' },
@@ -14,7 +14,7 @@ const GROUP_META: Record<(typeof toolGroups)[number], { icon: typeof Download; b
 
 export function QuickActions() {
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="w-full">
       <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
         {toolGroups.map((group) => {
           const meta = GROUP_META[group];
@@ -22,7 +22,7 @@ export function QuickActions() {
           return (
             <Link
               key={group}
-              href={`/tools#${group.toLowerCase()}`}
+              href={`/workspace/tools/${groupSlug(group)}`}
               className="group flex flex-col items-center gap-2 p-3.5 rounded-2xl border border-border bg-white dark:bg-card hover:border-primary/30 hover:shadow-soft transition-all text-center"
             >
               <span className={`w-9 h-9 rounded-xl flex items-center justify-center ${meta.tile}`}>

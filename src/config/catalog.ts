@@ -141,6 +141,16 @@ export const HOMEPAGE_MOBILE_LIMIT = 10;
 
 export const toolGroups: ToolGroup[] = ['Downloaders', 'Image', 'Video', 'PDF', 'AI', 'SEO', 'Utility'];
 
+/** URL segment for a tool group, e.g. 'Downloaders' -> 'downloaders'. */
+export function groupSlug(group: ToolGroup): string {
+  return group.toLowerCase();
+}
+
+/** Reverse of groupSlug(); undefined for an unknown segment. */
+export function groupFromSlug(slug: string): ToolGroup | undefined {
+  return toolGroups.find((g) => g.toLowerCase() === slug.toLowerCase());
+}
+
 export const catalogBySlug = new Map(catalog.map((t) => [t.slug, t]));
 
 export function getCatalogTool(slug: string): CatalogTool | undefined {

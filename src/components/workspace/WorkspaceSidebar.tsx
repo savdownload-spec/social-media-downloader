@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { toolGroups } from '@/config/catalog';
+import { toolGroups, groupSlug } from '@/config/catalog';
 import {
   Home,
   DownloadCloud,
@@ -22,8 +22,10 @@ import {
   Settings,
   ChevronLeft,
   ExternalLink,
+  LifeBuoy,
   X,
 } from 'lucide-react';
+import { OPEN_SUPPORT_EVENT } from '@/components/support/SupportChat';
 
 interface NavItem {
   label: string;
@@ -62,10 +64,10 @@ const NAV_GROUPS: NavGroup[] = [
   {
     section: 'Tools',
     items: [
-      { label: 'All Tools', href: '/tools', icon: Wrench },
+      { label: 'All Tools', href: '/workspace/tools', icon: Wrench },
       ...toolGroups.map((group) => ({
         label: group,
-        href: `/tools#${group.toLowerCase()}`,
+        href: `/workspace/tools/${groupSlug(group)}`,
         icon: GROUP_ICON[group],
       })),
     ],
@@ -200,6 +202,21 @@ export function WorkspaceSidebar({ onClose, collapsed, onToggleCollapse }: Props
             {!collapsed && <span>Collapse</span>}
           </button>
         )}
+        <button
+          type="button"
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent(OPEN_SUPPORT_EVENT));
+            onClose?.();
+          }}
+          className={cn(
+            'flex items-center gap-2 w-full rounded-xl text-[13px] font-medium text-text-muted hover:text-text hover:bg-surface/80 transition-all duration-150',
+            collapsed ? 'justify-center p-2.5' : 'px-3 py-2',
+          )}
+          title={collapsed ? 'Support' : undefined}
+        >
+          <LifeBuoy className="w-[18px] h-[18px] shrink-0" />
+          {!collapsed && <span>Support</span>}
+        </button>
         <Link
           href="/"
           className={cn(

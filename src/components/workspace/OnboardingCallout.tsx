@@ -35,15 +35,15 @@ export function OnboardingCallout() {
   if (dismissed) return null;
 
   return (
-    <div className="w-full max-w-2xl mx-auto rounded-2xl border border-border-light bg-white/60 dark:bg-card/60 p-5 relative">
+    <div className="w-full rounded-2xl border border-border-light bg-white/60 dark:bg-card/60 p-4 relative">
       <button
         onClick={dismiss}
         aria-label="Skip onboarding"
-        className="absolute top-3 right-3 w-7 h-7 rounded-full hover:bg-surface flex items-center justify-center text-text-subtle transition-colors"
+        className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full hover:bg-surface flex items-center justify-center text-text-subtle transition-colors"
       >
         <X className="w-3.5 h-3.5" />
       </button>
-      <p className="text-xs font-semibold uppercase tracking-wider text-text-subtle mb-4">How SavDown Workspace works</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-text-subtle mb-3">How SavDown Workspace works</p>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {STEPS.map((step, i) => {
           const Icon = step.icon;
@@ -63,7 +63,7 @@ export function OnboardingCallout() {
       </div>
       <button
         onClick={dismiss}
-        className="mt-4 text-xs font-semibold text-primary hover:underline"
+        className="mt-3 text-xs font-semibold text-primary hover:underline"
       >
         Skip
       </button>

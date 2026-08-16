@@ -22,7 +22,7 @@ function StatusBadge({ status }: { status: string }) {
 export function RecentActivity({ items }: { items: ActivityItem[] }) {
   if (items.length === 0) {
     return (
-      <div className="w-full max-w-2xl mx-auto text-center py-10 px-6 rounded-2xl border border-dashed border-border bg-white/60 dark:bg-card/60">
+      <div className="w-full text-center py-8 px-6 rounded-2xl border border-dashed border-border bg-white/60 dark:bg-card/60">
         <DownloadCloud className="w-6 h-6 text-text-subtle mx-auto mb-2.5" />
         <p className="text-sm font-medium text-text">No activity yet.</p>
         <p className="text-xs text-text-muted mt-1">Paste a link above to get started.</p>
@@ -31,7 +31,7 @@ export function RecentActivity({ items }: { items: ActivityItem[] }) {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto rounded-2xl border border-border bg-white dark:bg-card shadow-soft overflow-hidden">
+    <div className="w-full rounded-2xl border border-border bg-white dark:bg-card shadow-soft overflow-hidden">
       {items.map((item) => (
         <div
           key={item.id}
