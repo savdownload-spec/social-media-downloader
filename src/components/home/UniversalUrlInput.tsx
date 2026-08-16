@@ -198,10 +198,11 @@ export function UniversalUrlInput() {
             />
             {placeholderActive && (
               <div
-                className="pointer-events-none absolute inset-y-0 left-12 right-20 flex min-w-0 items-center overflow-hidden"
+                className="notranslate pointer-events-none absolute inset-y-0 left-12 right-20 flex min-w-0 items-center overflow-hidden"
                 aria-hidden="true"
+                translate="no"
               >
-                <span className="block min-w-0 truncate whitespace-nowrap text-base text-text-subtle">
+                <span className="notranslate block min-w-0 truncate whitespace-nowrap text-base text-text-subtle" translate="no">
                   {placeholder.text}
                   {!placeholder.prefersReducedMotion && (
                     <span className="ml-0.5 inline-block h-5 w-px bg-primary align-middle animate-pulse" />
