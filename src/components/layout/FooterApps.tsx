@@ -12,6 +12,12 @@ type AppBadge = {
   title: string;
   href?: string;
   onClick?: () => void;
+  /** Force a real browser navigation instead of Next's client-side router.
+   *  Only a genuine navigation event is something the OS/browser can hand
+   *  off to the installed PWA (Windows "Open supported links in this app",
+   *  Android app links) -- client-side routing never leaves the page, so it
+   *  can never trigger that handoff even when the app is installed. */
+  external?: boolean;
 };
 
 /**
@@ -27,7 +33,7 @@ export function FooterApps() {
   ];
 
   if (isInstalled) {
-    apps.push({ key: 'install', icon: Check, label: 'Installed', title: 'Open the installed SavDown app', href: '/workspace' });
+    apps.push({ key: 'install', icon: Check, label: 'Installed', title: 'Open the installed SavDown app', href: '/workspace', external: true });
   } else if (canInstall) {
     apps.push({ key: 'install', icon: Download, label: 'Install app', title: 'Install SavDown on your device', onClick: openSheet });
   }
@@ -43,16 +49,27 @@ export function FooterApps() {
       <div className="mt-4 flex flex-col items-start gap-2">
         {apps.map((app) => {
           const Icon = app.icon;
-          return app.href ? (
+          if (!app.href) {
+            return (
+              <button key={app.key} type="button" onClick={app.onClick} title={app.title} className={badgeClass}>
+                <Icon className="h-3.5 w-3.5" />
+                {app.label}
+              </button>
+            );
+          }
+          if (app.external) {
+            return (
+              <a key={app.key} href={app.href} target="_blank" rel="noopener noreferrer" title={app.title} className={badgeClass}>
+                <Icon className="h-3.5 w-3.5" />
+                {app.label}
+              </a>
+            );
+          }
+          return (
             <Link key={app.key} href={app.href} title={app.title} className={badgeClass}>
               <Icon className="h-3.5 w-3.5" />
               {app.label}
             </Link>
-          ) : (
-            <button key={app.key} type="button" onClick={app.onClick} title={app.title} className={badgeClass}>
-              <Icon className="h-3.5 w-3.5" />
-              {app.label}
-            </button>
           );
         })}
       </div>
