@@ -226,7 +226,6 @@ export function SupportChat() {
           <h2 className="text-sm font-bold leading-tight text-text">Support</h2>
           <p className="truncate text-xs text-text-muted">{subtitle ?? "We're here to help."}</p>
         </div>
-        <LanguageSelector variant="header" />
         <button onClick={() => { setOpen(false); playClose(); }} aria-label="Close support" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-text-subtle transition-colors hover:bg-surface hover:text-text">
           <X className="h-4.5 w-4.5" />
         </button>
@@ -241,7 +240,7 @@ export function SupportChat() {
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent/60" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
         </span>
-        Usually replies within a few hours
+        Usually replies within an hour
       </span>
     );
   }
