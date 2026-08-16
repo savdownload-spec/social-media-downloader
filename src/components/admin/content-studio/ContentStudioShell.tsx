@@ -29,7 +29,7 @@ export type AdminPost = {
   faqJson?: string | null; howToJson?: string | null;
   ogTitle?: string | null; ogDescription?: string | null;
   scheduledAt?: string | null; seoScore?: number | null; readabilityScore?: number | null;
-  wordCount?: number | null;
+  wordCount?: number | null; internalLinks?: number | null; externalLinks?: number | null;
 };
 
 export function postToForm(post: AdminPost): StudioForm {

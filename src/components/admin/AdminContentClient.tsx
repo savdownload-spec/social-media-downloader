@@ -195,9 +195,12 @@ export function AdminContentClient() {
                 <Th>Status</Th>
                 <Th>Category</Th>
                 <Th>Author</Th>
+                <Th>Primary Keyword</Th>
                 <Th>SEO Score</Th>
                 <Th>Readability</Th>
                 <Th>Words</Th>
+                <Th>Internal Links</Th>
+                <Th>External Links</Th>
                 <Th>Updated</Th>
                 <Th className="text-right">Actions</Th>
               </tr>
@@ -205,10 +208,10 @@ export function AdminContentClient() {
             <tbody>
               {loading ? (
                 Array.from({ length: 6 }).map((_, i) => (
-                  <tr key={i}><td colSpan={9} className="px-4 py-3"><Skeleton className="h-5 w-full" /></td></tr>
+                  <tr key={i}><td colSpan={12} className="px-4 py-3"><Skeleton className="h-5 w-full" /></td></tr>
                 ))
               ) : posts.length === 0 ? (
-                <tr><td colSpan={9}>
+                <tr><td colSpan={12}>
                   <EmptyState icon={FileText} title="No posts yet" message="Create your first article to get started." action={<ActionButton variant="primary" icon={Plus} onClick={openCreate}>New Article</ActionButton>} />
                 </td></tr>
               ) : posts.map((post) => (
@@ -222,9 +225,12 @@ export function AdminContentClient() {
                   <Td><StatusBadge status={post.published ? 'PUBLISHED' : (post.scheduledAt && new Date(post.scheduledAt) > new Date() ? 'SCHEDULED' : 'DRAFT')} dot /></Td>
                   <Td><span className="text-[12px] text-text-muted bg-surface px-2 py-0.5 rounded-md">{post.category || 'Guides'}</span></Td>
                   <Td className="text-[12px] text-text-muted">{post.author}</Td>
+                  <Td className="text-[12px] text-text-muted"><span className="block max-w-[160px] truncate" title={post.primaryKeyword || post.focusKeyphrase || undefined}>{post.primaryKeyword || post.focusKeyphrase || '—'}</span></Td>
                   <Td><span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${scoreBadgeCls(post.seoScore)}`}>{post.seoScore ?? '—'}</span></Td>
                   <Td><span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${scoreBadgeCls(post.readabilityScore)}`}>{post.readabilityScore ?? '—'}</span></Td>
                   <Td className="text-[12px] text-text-muted tabular-nums">{post.wordCount ?? '—'}</Td>
+                  <Td className="text-[12px] text-text-muted tabular-nums">{post.internalLinks ?? '—'}</Td>
+                  <Td className="text-[12px] text-text-muted tabular-nums">{post.externalLinks ?? '—'}</Td>
                   <Td className="text-[12px] text-text-muted whitespace-nowrap tabular-nums">{new Date(post.updatedAt).toLocaleDateString()}</Td>
                   <Td>
                     <div className="flex items-center gap-1 justify-end">

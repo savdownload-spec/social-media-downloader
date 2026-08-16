@@ -129,9 +129,17 @@ export async function GET(req: NextRequest) {
     wordCount: true,
   } as const;
 
+  function countLinks(content: unknown) {
+    const text = typeof content === 'string' ? content : '';
+    const internalLinks = text.match(/\]\(\/[^)]+\)/g)?.length ?? 0;
+    const externalLinks = text.match(/\]\(https?:\/\/[^)]+\)/g)?.length ?? 0;
+    return { internalLinks, externalLinks };
+  }
+
   function serialize(post: { createdAt: Date; updatedAt: Date; publishedAt: Date | null; scheduledAt: Date | null; [k: string]: unknown }) {
     return {
       ...post,
+      ...countLinks(post.content),
       createdAt: post.createdAt.toISOString(),
       updatedAt: post.updatedAt.toISOString(),
       publishedAt: post.publishedAt?.toISOString() ?? null,
