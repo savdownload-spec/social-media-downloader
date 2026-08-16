@@ -85,8 +85,8 @@ export function LanguageSelector({ variant = 'header', alwaysShowLabel = false }
             style={{ position: 'fixed', top: coords.top, bottom: coords.bottom, left: coords.left, width: menuWidth }}
             className={
               variant === 'footer'
-                ? 'z-50 bg-ink border border-white/10 rounded-xl shadow-soft-lg py-2 max-h-[280px] overflow-y-auto'
-                : 'z-50 bg-white border border-border rounded-xl shadow-soft-lg py-2 max-h-[320px] overflow-y-auto'
+                ? 'z-[220] bg-ink border border-white/10 rounded-xl shadow-soft-lg py-2 max-h-[280px] overflow-y-auto'
+                : 'z-[220] bg-white border border-border rounded-xl shadow-soft-lg py-2 max-h-[320px] overflow-y-auto'
             }
           >
             {languages.map((lang) => (
