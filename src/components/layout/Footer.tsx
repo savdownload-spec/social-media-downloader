@@ -119,7 +119,7 @@ export function Footer() {
               {t('footer.whySavDown') || 'Why SavDown?'}
             </p>
             <ul className="space-y-3">
-              {[t('features.unlimited'), t('features.noSignup') || 'No signup required', t('features.secure')].map((item) => (
+              {[t('footer.featureUnlimited'), t('footer.featureNoSignup'), t('footer.featureSecure')].map((item) => (
                 <li key={item} className="flex items-center gap-2.5 text-sm text-ink-muted">
                   <span className="flex-shrink-0 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center">
                     <Check className="w-3 h-3 text-white" />
