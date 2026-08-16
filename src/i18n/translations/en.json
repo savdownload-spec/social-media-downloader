@@ -555,7 +555,7 @@
   },
   "newsletter": {
     "title": "The Monthly Update",
-    "description": "One calm email a month with new tools, platform updates, and creative tips. No spam, ever.",
+    "description": "One calm email a month with new tools, platform updates, creative tips, and useful ideas. No spam, ever.",
     "placeholder": "your@email.com",
     "button": "Subscribe",
     "success": "Check your inbox to confirm!",
