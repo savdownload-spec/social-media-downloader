@@ -291,6 +291,13 @@ export function SupportChat() {
           <AnimatePresence mode="wait">
             {picking ? (
               <motion.div key="pick" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.16 }}>
+                <div dir={isRtl ? 'rtl' : 'ltr'} className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-border-light bg-surface/60 px-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-text">Choose your language</p>
+                    <p className="mt-0.5 text-[11px] text-text-muted">Support labels will follow your selection.</p>
+                  </div>
+                  <LanguageSelector variant="header" alwaysShowLabel />
+                </div>
                 <div className="mb-4">
                   <h3 className="text-base font-bold text-text">How can we help?</h3>
                   <p className="mt-1 text-sm text-text-muted">Choose a topic or tell us what happened and our team will help you out.</p>

@@ -8,11 +8,12 @@ import { languages } from '@/config/languages';
 
 type LanguageSelectorProps = {
   variant?: 'header' | 'footer';
+  alwaysShowLabel?: boolean;
 };
 
 const MENU_WIDTH = { header: 200, footer: 180 } as const;
 
-export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) {
+export function LanguageSelector({ variant = 'header', alwaysShowLabel = false }: LanguageSelectorProps) {
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{ top?: number; bottom?: number; left: number } | null>(null);
   const { language, setLanguage, isTranslating } = useLanguage();
@@ -135,12 +136,12 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
       <button
         ref={triggerRef}
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text transition-colors rounded-full px-3 py-1.5 hover:bg-surface"
+          className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-text-muted transition-colors hover:bg-surface hover:text-text"
         aria-label="Select language"
         aria-expanded={open}
       >
         <Globe className="w-4 h-4" />
-        <span className="hidden lg:inline">{isTranslating ? '...' : language.label}</span>
+          <span className={alwaysShowLabel ? '' : 'hidden lg:inline'}>{isTranslating ? '...' : language.label}</span>
         <ChevronDown className="w-3.5 h-3.5" />
       </button>
       {menu}
