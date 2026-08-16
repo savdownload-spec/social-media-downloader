@@ -42,9 +42,16 @@ export function Header() {
             href={accountHref}
             aria-label={session ? 'Account' : 'Log in'}
             title={session ? 'Account' : 'Log in'}
-            className="w-10 h-10 rounded-full hover:bg-primary-light flex items-center justify-center transition-colors"
+            className="w-10 h-10 rounded-full overflow-hidden border border-transparent hover:border-border flex items-center justify-center transition-colors shrink-0"
           >
-            <User className="w-4 h-4 text-text-muted" />
+            {session?.user?.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={session.user.image} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span className="w-full h-full rounded-full hover:bg-primary-light flex items-center justify-center transition-colors">
+                <User className="w-4 h-4 text-text-muted" />
+              </span>
+            )}
           </Link>
           {canInstall && (
             <button
@@ -109,7 +116,12 @@ export function Header() {
                     <Search className="w-4 h-4" /> {t('common.search')}
                   </Link>
                   <Link href={accountHref} onClick={() => setMobileOpen(false)} className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text">
-                    <User className="w-4 h-4" /> {session ? 'Account' : 'Log in'}
+                    {session?.user?.image ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={session.user.image} alt="" className="w-4 h-4 rounded-full object-cover border border-border" />
+                    ) : (
+                      <User className="w-4 h-4" />
+                    )} {session ? 'Account' : 'Log in'}
                   </Link>
                 </div>
               </div>
