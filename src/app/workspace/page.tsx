@@ -11,6 +11,7 @@ import { WorkspaceCreditsBar } from '@/components/workspace/WorkspaceCreditsBar'
 import { RecentActivity } from '@/components/workspace/RecentActivity';
 import { OnboardingCallout } from '@/components/workspace/OnboardingCallout';
 import { SectionHeader } from '@/components/workspace/SectionHeader';
+import { WorkspaceContainer } from '@/components/workspace/WorkspaceContainer';
 import { GROUP_META } from '@/components/workspace/groupMeta';
 import { catalog, toolGroups } from '@/config/catalog';
 import { DownloadCloud, History, FolderOpen, Layers, ListChecks } from 'lucide-react';
@@ -33,7 +34,7 @@ export default async function WorkspaceHomePage() {
   const activity = allActivity.slice(0, 5);
 
   return (
-    <div className="px-4 sm:px-6 lg:px-10 py-6 md:py-8 max-w-7xl mx-auto space-y-8">
+    <WorkspaceContainer>
       <div className="text-center space-y-1">
         <p className="text-sm font-medium text-text-subtle">
           {firstName ? `Welcome back, ${firstName}.` : 'Welcome back.'}
@@ -119,6 +120,6 @@ export default async function WorkspaceHomePage() {
         <SectionHeader title="Recent Activity" />
         <RecentActivity items={activity} />
       </div>
-    </div>
+    </WorkspaceContainer>
   );
 }

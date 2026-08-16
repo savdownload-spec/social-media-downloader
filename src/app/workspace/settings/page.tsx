@@ -7,6 +7,8 @@ import { MyReviews, type MyReview } from '@/components/account/MyReviews';
 import { DangerZone } from '@/components/account/DangerZone';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { LanguageSelector } from '@/components/ui/LanguageSelector';
+import { WorkspaceContainer } from '@/components/workspace/WorkspaceContainer';
+import { WorkspacePageHeader } from '@/components/workspace/WorkspacePageHeader';
 
 export const metadata = { title: 'Profile & Settings — SavDown Workspace' };
 export const dynamic = 'force-dynamic';
@@ -53,11 +55,8 @@ export default async function WorkspaceSettingsPage() {
   if (!user) redirect('/login?callbackUrl=/workspace/settings');
 
   return (
-    <div className="px-4 sm:px-6 lg:px-10 py-8 md:py-10 max-w-6xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-text">Profile & Settings</h1>
-        <p className="text-sm text-text-muted mt-1">Manage your profile, preferences, and account.</p>
-      </div>
+    <WorkspaceContainer>
+      <WorkspacePageHeader title="Profile & Settings" description="Manage your profile, preferences, and account." />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -79,6 +78,6 @@ export default async function WorkspaceSettingsPage() {
           <DangerZone email={user.email ?? ''} />
         </div>
       </div>
-    </div>
+    </WorkspaceContainer>
   );
 }

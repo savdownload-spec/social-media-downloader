@@ -1,12 +1,19 @@
 import { ListChecks } from 'lucide-react';
+import { WorkspaceContainer } from '@/components/workspace/WorkspaceContainer';
+import { WorkspacePageHeader } from '@/components/workspace/WorkspacePageHeader';
 import { WorkspaceEmptyState } from '@/components/workspace/WorkspaceEmptyState';
+
+export const metadata = { title: 'Batch — SavDown Workspace' };
 
 export default function WorkspaceBatchPage() {
   return (
-    <WorkspaceEmptyState
-      icon={ListChecks}
-      title="Batch processing is coming soon"
-      description="Queue up multiple links or files and let SavDown work through them together, with live progress for every item."
-    />
+    <WorkspaceContainer>
+      <WorkspacePageHeader title="Batch" description="Queue up multiple links or files and let SavDown work through them together." />
+      <WorkspaceEmptyState
+        icon={ListChecks}
+        title="Batch processing is coming soon"
+        description="Queue up multiple links or files and let SavDown work through them together, with live progress for every item."
+      />
+    </WorkspaceContainer>
   );
 }

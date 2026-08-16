@@ -2,6 +2,9 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { groupFromSlug } from '@/config/catalog';
 import { ToolsBrowser } from '@/components/workspace/ToolsBrowser';
+import { WorkspaceContainer } from '@/components/workspace/WorkspaceContainer';
+import { WorkspacePageHeader } from '@/components/workspace/WorkspacePageHeader';
+import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
 export function generateMetadata({ params }: { params: { group: string } }) {
   const group = groupFromSlug(params.group);
@@ -13,12 +16,18 @@ export default function WorkspaceToolGroupPage({ params }: { params: { group: st
   if (!group) return notFound();
 
   return (
-    <div className="px-4 sm:px-6 lg:px-10 py-6 md:py-8 max-w-7xl">
-      <h1 className="text-xl font-bold text-text">{group} Tools</h1>
-      <p className="text-sm text-text-muted mb-5">Browse {group.toLowerCase()} tools.</p>
+    <WorkspaceContainer>
+      <Breadcrumb
+        items={[
+          { label: 'Home', href: '/workspace' },
+          { label: 'Tools', href: '/workspace/tools' },
+          { label: group },
+        ]}
+      />
+      <WorkspacePageHeader title={`${group} Tools`} description={`Browse ${group.toLowerCase()} tools.`} />
       <Suspense fallback={null}>
         <ToolsBrowser group={group} />
       </Suspense>
-    </div>
+    </WorkspaceContainer>
   );
 }

@@ -8,6 +8,8 @@ import { ManageBillingButton } from '@/components/account/ManageBillingButton';
 import { getBillingSummary, TIER_ALLOWANCE } from '@/lib/billing';
 import { DataSection } from '@/components/workspace/DataSection';
 import { SectionHeader } from '@/components/workspace/SectionHeader';
+import { WorkspaceContainer } from '@/components/workspace/WorkspaceContainer';
+import { WorkspacePageHeader } from '@/components/workspace/WorkspacePageHeader';
 
 export const metadata = { title: 'Credits & Billing — SavDown Workspace' };
 export const dynamic = 'force-dynamic';
@@ -46,11 +48,8 @@ export default async function WorkspaceBillingPage({
   const justPaid = searchParams.checkout === 'success';
 
   return (
-    <div className="px-4 sm:px-6 lg:px-10 py-8 md:py-10 max-w-6xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-text">Credits & Billing</h1>
-        <p className="text-sm text-text-muted mt-1">Your plan, your credit balance, and where they came from.</p>
-      </div>
+    <WorkspaceContainer>
+      <WorkspacePageHeader title="Credits & Billing" description="Your plan, your credit balance, and where they came from." />
 
       {justPaid && (
         <div className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent-light p-4">
@@ -142,7 +141,7 @@ export default async function WorkspaceBillingPage({
           </DataSection>
         )}
       </div>
-    </div>
+    </WorkspaceContainer>
   );
 }
 

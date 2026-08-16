@@ -4,6 +4,7 @@ import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { fallbackIcon, groupSlug, type CatalogTool } from '@/config/catalog';
 import { PrimaryCTA } from '@/components/workspace/CTAButtons';
 import { SectionHeader } from '@/components/workspace/SectionHeader';
+import { WorkspaceContainer } from '@/components/workspace/WorkspaceContainer';
 import { ToolFeatureCard } from './ToolFeatureCard';
 import { ToolFaqAccordion } from './ToolFaqAccordion';
 
@@ -37,27 +38,32 @@ export function WorkspaceToolShell({ tool, children, content }: Props) {
   const groupLabel = tool.group === 'Downloaders' ? 'Social Media Downloaders' : `${tool.group} Tools`;
 
   return (
-    <div className="px-4 sm:px-6 lg:px-10 py-6 md:py-8 max-w-4xl mx-auto space-y-8">
-      <Breadcrumb
-        items={[
-          { label: 'Home', href: '/workspace' },
-          { label: 'Tools', href: '/workspace/tools' },
-          { label: groupLabel, href: `/workspace/tools/${groupSlug(tool.group)}` },
-          { label: tool.name },
-        ]}
-      />
+    <WorkspaceContainer>
+      <div className="flex justify-center">
+        <Breadcrumb
+          items={[
+            { label: 'Home', href: '/workspace' },
+            { label: 'Tools', href: '/workspace/tools' },
+            { label: groupLabel, href: `/workspace/tools/${groupSlug(tool.group)}` },
+            { label: tool.name },
+          ]}
+        />
+      </div>
 
-      <div className="flex items-start gap-3.5">
-        <span className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${tool.tile}`}>
-          <Icon className="w-6 h-6" />
+      {/* Tool content reads best at a narrower width, centered like the
+       *  public tool page's hero — nested inside the same outer container
+       *  as every other Workspace page. */}
+      <div className="max-w-3xl mx-auto space-y-8">
+
+      <div className="flex flex-col items-center text-center gap-2">
+        <span className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${tool.tile}`}>
+          <Icon className="w-7 h-7" />
         </span>
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight text-text">{tool.name}</h1>
-          <p className="mt-1 text-sm text-text-muted leading-relaxed">{content?.tagline ?? tool.description}</p>
-          <span className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent-light text-[11px] font-semibold text-accent-hover">
-            <Zap className="w-3 h-3" /> Free tool, no signup
-          </span>
-        </div>
+        <h1 className="mt-1 text-xl md:text-2xl font-bold tracking-tight text-text">{tool.name}</h1>
+        <p className="text-sm text-text-muted leading-relaxed max-w-lg">{content?.tagline ?? tool.description}</p>
+        <span className="mt-1 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent-light text-[11px] font-semibold text-accent-hover">
+          <Zap className="w-3 h-3" /> Free tool, no signup
+        </span>
       </div>
 
       {/* Main tool functionality — the priority */}
@@ -126,6 +132,7 @@ export function WorkspaceToolShell({ tool, children, content }: Props) {
       <PrimaryCTA href={`/tools/${tool.slug}`} external>
         Read Full Guide <ArrowUpRight className="w-4 h-4" />
       </PrimaryCTA>
-    </div>
+      </div>
+    </WorkspaceContainer>
   );
 }
