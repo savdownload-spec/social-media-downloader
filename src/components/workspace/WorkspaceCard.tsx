@@ -52,9 +52,10 @@ export function WorkspaceCard({ href, icon: Icon, tile, title, description, meta
 
 /**
  * Flex-wrap grid, not CSS grid: a partial last row (e.g. 3 cards after a
- * full row of 4) stays centered at the same fixed card width instead of
- * being stretched to fill the row.
+ * full row of 4) stays left-aligned at the same fixed card width — lined up
+ * with the section heading above it — instead of being stretched or
+ * centered.
  */
 export function WorkspaceCardGrid({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-wrap justify-center gap-4">{children}</div>;
+  return <div className="flex flex-wrap justify-start gap-4">{children}</div>;
 }

@@ -34,7 +34,7 @@ export default async function WorkspaceHomePage() {
 
   return (
     <div className="px-4 sm:px-6 lg:px-10 py-6 md:py-8 max-w-7xl mx-auto space-y-8">
-      <div className="space-y-1">
+      <div className="text-center space-y-1">
         <p className="text-sm font-medium text-text-subtle">
           {firstName ? `Welcome back, ${firstName}.` : 'Welcome back.'}
         </p>
