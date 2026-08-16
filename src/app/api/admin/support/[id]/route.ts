@@ -17,7 +17,7 @@ const patchBody = z.object({
   action: z.enum(['reply', 'note']).optional(), message: z.string().min(1).max(5000).optional(),
 });
 const attachmentSelect = { id: true, fileName: true, contentType: true, size: true, createdAt: true } as const;
-const messageSelect = { id: true, senderType: true, senderId: true, body: true, internal: true, createdAt: true, attachments: { select: attachmentSelect } } as const;
+const messageSelect = { id: true, senderType: true, senderId: true, body: true, originalMessage: true, detectedLanguage: true, translatedMessage: true, translationStatus: true, internal: true, createdAt: true, attachments: { select: attachmentSelect } } as const;
 
 async function admin() {
   const session = await getServerSession(authOptions);
@@ -55,8 +55,9 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     if (data.action) {
       const body = cleanSupportText(data.message || ''); if (!body) return fail('Please enter a message.');
       const internal = data.action === 'note'; const now = new Date();
+      const originalMessage = body;
       const message = await prisma.$transaction(async (tx) => {
-        const created = await tx.supportMessage.create({ data: { conversationId: params.id, senderType: 'ADMIN', senderId: actor.id, body, internal }, select: messageSelect });
+        const created = await tx.supportMessage.create({ data: { conversationId: params.id, senderType: 'ADMIN', senderId: actor.id, body, originalMessage, translationStatus: 'NOT_NEEDED', internal }, select: messageSelect });
         await tx.supportConversation.update({ where: { id: params.id }, data: internal ? { lastMessageAt: now } : { status: 'WAITING_FOR_REPLY', customerUnreadCount: { increment: 1 }, lastMessageAt: now, lastMessagePreview: supportPreview(body) } });
         return created;
       });

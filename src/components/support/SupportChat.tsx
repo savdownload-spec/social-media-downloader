@@ -27,10 +27,12 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
+import { LanguageSelector } from '@/components/ui/LanguageSelector';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { playOpen, playClose, playTap, playTick, playSend, playSuccess, playReceive, playAttach, playRemove, playBack } from '@/lib/sounds';
 
 type Attachment = { id: string; fileName: string; contentType: string; size: number };
-type Message = { id: string; senderType: 'CUSTOMER' | 'ADMIN' | 'SYSTEM'; body: string; createdAt: string; attachments: Attachment[] };
+type Message = { id: string; senderType: 'CUSTOMER' | 'ADMIN' | 'SYSTEM'; body: string; originalMessage?: string | null; detectedLanguage?: string | null; translatedMessage?: string | null; translationStatus?: string | null; createdAt: string; attachments: Attachment[] };
 type Conversation = { id: string; category: string; status: string; lastMessagePreview: string; lastMessageAt: string; customerUnreadCount: number; createdAt: string };
 type Detail = Conversation & { messages: Message[] };
 
@@ -66,14 +68,16 @@ function meta(category: string): CategoryMeta { return CATEGORIES.find((c) => c.
 function label(category: string) { return meta(category).label; }
 function time(value: string) { return new Date(value).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); }
 function statusLabel(status: string) { return status === 'RESOLVED' || status === 'CLOSED' ? 'Resolved' : status === 'PENDING' ? 'Awaiting your reply' : 'Open'; }
+function resizeTextarea(element: HTMLTextAreaElement) { element.style.height = 'auto'; const max = 176; const height = Math.min(element.scrollHeight, max); element.style.height = `${height}px`; element.style.overflowY = element.scrollHeight > max ? 'auto' : 'hidden'; }
 
 export function SupportChat() {
-  const pathname = usePathname(); const { data: session } = useSession(); const { error } = useToast();
+  const pathname = usePathname(); const { data: session } = useSession();
   const [open, setOpen] = useState(false); const [conversations, setConversations] = useState<Conversation[]>([]); const [detail, setDetail] = useState<Detail | null>(null);
   const [starting, setStarting] = useState(false); const [category, setCategory] = useState<string>(''); const [message, setMessage] = useState(''); const [name, setName] = useState(''); const [email, setEmail] = useState(''); const [files, setFiles] = useState<File[]>([]); const [sending, setSending] = useState(false); const [loading, setLoading] = useState(false);
   const [showMore, setShowMore] = useState(false); const [justCreatedId, setJustCreatedId] = useState<string | null>(null);
-  const endRef = useRef<HTMLDivElement>(null); const fileRef = useRef<HTMLInputElement>(null);
-  const loggedIn = !!session?.user?.id;
+  const [keyboardInset, setKeyboardInset] = useState(0); const [translatingId, setTranslatingId] = useState<string | null>(null); const [showTranslation, setShowTranslation] = useState<Record<string, boolean>>({}); const [copiedTranslationId, setCopiedTranslationId] = useState<string | null>(null); const [inlineError, setInlineError] = useState<string | null>(null);
+  const endRef = useRef<HTMLDivElement>(null); const fileRef = useRef<HTMLInputElement>(null); const composerRef = useRef<HTMLTextAreaElement>(null); const retryRef = useRef<(() => void | Promise<void>) | null>(null);
+  const loggedIn = !!session?.user?.id; const { language } = useLanguage(); const isRtl = language.code === 'ar' || language.code === 'ur'; const { error, success } = useToast();
   const loadList = useCallback(async () => {
     if (!loggedIn) return;
     const res = await fetch('/api/support'); const data = await res.json(); if (data?.ok) setConversations(data.data.conversations || []);
@@ -87,29 +91,67 @@ export function SupportChat() {
   useEffect(() => { if (open) loadList(); }, [open, loadList]);
   const activeConversationId = detail?.id;
   useEffect(() => { if (!open || !activeConversationId) return; const poll = setInterval(() => loadDetail(activeConversationId), 15000); return () => clearInterval(poll); }, [open, activeConversationId, loadDetail]);
+  useEffect(() => {
+    if (!open || typeof window === 'undefined') return;
+    const viewport = window.visualViewport;
+    const syncKeyboard = () => setKeyboardInset(viewport ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop) : 0);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    syncKeyboard();
+    viewport?.addEventListener('resize', syncKeyboard); viewport?.addEventListener('scroll', syncKeyboard);
+    window.addEventListener('resize', syncKeyboard);
+    return () => { document.body.style.overflow = previousOverflow; viewport?.removeEventListener('resize', syncKeyboard); viewport?.removeEventListener('scroll', syncKeyboard); window.removeEventListener('resize', syncKeyboard); setKeyboardInset(0); };
+  }, [open]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [detail?.messages.length]);
   useEffect(() => { if (!loggedIn && open && !detail) { try { const saved = JSON.parse(localStorage.getItem(guestKey) || '{}'); if (saved.id && saved.token) loadDetail(saved.id); } catch {} } }, [loggedIn, open, detail, loadDetail]);
   if (pathname.startsWith('/admin')) return null;
 
-  function resetComposer() { setCategory(''); setMessage(''); setFiles([]); setShowMore(false); }
+  function resetComposer() { setCategory(''); setMessage(''); setFiles([]); setShowMore(false); setInlineError(null); retryRef.current = null; }
 
   async function startConversation(e: FormEvent) {
-    e.preventDefault(); if (!category || !message.trim()) return;
-    setSending(true); playSend();
+    e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
+    const input = form.elements.namedItem('message') as HTMLTextAreaElement | null;
+    const submittedMessage = (input?.value ?? message).trim();
+    if (!category || !submittedMessage) { setInlineError('Please enter a message.'); return; }
+    setInlineError(null); setSending(true); playSend();
     try {
-      const res = await fetch('/api/support', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ category, message, name, email }) });
+      const res = await fetch('/api/support', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ category, message: submittedMessage, name: name.trim(), email: email.trim() }) });
       const data = await res.json(); if (!res.ok || !data?.ok) throw new Error(data?.error || 'Could not start conversation.');
       if (data.data.guestToken) localStorage.setItem(guestKey, JSON.stringify({ id: data.data.conversation.id, token: data.data.guestToken }));
-      setJustCreatedId(data.data.conversation.id); playSuccess();
+      setJustCreatedId(data.data.conversation.id); setInlineError(null); playSuccess();
       setMessage(''); setFiles([]); await loadDetail(data.data.conversation.id); loadList();
-    } catch (e) { error('Message not sent', e instanceof Error ? e.message : 'Please try again.'); } finally { setSending(false); }
+    } catch (e) { console.error('[support] create conversation failed', e); retryRef.current = () => { void startConversation({ preventDefault: () => {}, currentTarget: form, target: form } as unknown as FormEvent); }; setInlineError("Couldn't send your message. Please try again."); } finally { setSending(false); }
   }
   async function sendMessage() {
-    if (!detail || !message.trim() || sending) return; setSending(true); playSend();
-    const body = new FormData(); body.set('message', message); files.forEach((file) => body.append('attachments', file));
-    try { const res = await fetch(`/api/support/${detail.id}`, { method: 'POST', headers: guestHeaders(), body }); const data = await res.json(); if (!res.ok || !data?.ok) throw new Error(data?.error || 'Could not send message.'); playReceive(); setMessage(''); setFiles([]); await loadDetail(detail.id); loadList(); }
-    catch (e) { error('Message not sent', e instanceof Error ? e.message : 'Retry when your connection returns.'); } finally { setSending(false); }
+    if (!detail || sending) return;
+    const submittedMessage = (composerRef.current?.value ?? message).trim();
+    if (!submittedMessage) { setInlineError('Please enter a message.'); return; }
+    setInlineError(null); setSending(true); playSend();
+    const body = new FormData(); body.set('message', submittedMessage); files.forEach((file) => body.append('attachments', file));
+    try { const res = await fetch(`/api/support/${detail.id}`, { method: 'POST', headers: guestHeaders(), body }); const data = await res.json(); if (!res.ok || !data?.ok) throw new Error(data?.error || 'Could not send message.'); playReceive(); setInlineError(null); setMessage(''); setFiles([]); await loadDetail(detail.id); loadList(); }
+    catch (e) { console.error('[support] send message failed', e); retryRef.current = () => { void sendMessage(); }; setInlineError("Couldn't send your message. Please try again."); } finally { setSending(false); }
   }
+  async function translateMessage(target: Message) {
+    if (!target.detectedLanguage || target.detectedLanguage === 'en' || translatingId) return;
+    setTranslatingId(target.id);
+    try {
+      const res = await fetch(`/api/support/messages/${target.id}/translate`, { method: 'POST', headers: guestHeaders() });
+      const data = await res.json();
+      if (!res.ok || !data?.ok || data.data?.translationStatus === 'FAILED') throw new Error('Translation is temporarily unavailable.');
+      const translated = data.data as Message;
+      setDetail((current) => current ? { ...current, messages: current.messages.map((item) => item.id === translated.id ? { ...item, ...translated } : item) } : current);
+      setShowTranslation((current) => ({ ...current, [target.id]: true }));
+    } catch (e) { error('Could not translate message', e instanceof Error ? e.message : 'Please try again.'); }
+    finally { setTranslatingId(null); }
+  }
+
+  async function copyTranslation(target: Message) {
+    if (!target.translatedMessage) return;
+    try { await navigator.clipboard.writeText(target.translatedMessage); setCopiedTranslationId(target.id); success('Translation copied'); window.setTimeout(() => setCopiedTranslationId((current) => current === target.id ? null : current), 1400); }
+    catch { error('Could not copy translation', 'Please select the translated text and copy it manually.'); }
+  }
+
   function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
 
   const unread = conversations.reduce((sum, c) => sum + c.customerUnreadCount, 0);
@@ -153,10 +195,11 @@ export function SupportChat() {
             exit={{ opacity: 0, y: 24, scale: 0.99 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="fixed inset-x-0 bottom-0 z-[105] flex max-h-[92dvh] flex-col overflow-hidden rounded-t-3xl border border-border bg-white dark:bg-card shadow-soft-xl sm:inset-x-auto sm:bottom-5 sm:right-5 sm:max-h-[min(40rem,calc(100dvh-2.5rem))] sm:w-[400px] sm:rounded-3xl"
+            style={{ bottom: keyboardInset > 0 ? `${keyboardInset}px` : undefined }}
             role="dialog"
             aria-label="Support"
           >
-            {detail ? <ConversationView /> : <StartFlow />}
+            {detail ? ConversationView() : StartFlow()}
           </motion.section>
         </>
       )}
@@ -166,7 +209,7 @@ export function SupportChat() {
   // ── Header shared by both states ────────────────────────────────────────
   function Header({ onBack, subtitle }: { onBack?: () => void; subtitle?: React.ReactNode }) {
     return (
-      <header className="flex shrink-0 items-center gap-3 border-b border-border-light px-4 py-3.5">
+      <header dir={isRtl ? 'rtl' : 'ltr'} className="flex shrink-0 items-center gap-3 border-b border-border-light px-4 py-3.5">
         {onBack ? (
           <button onClick={() => { onBack(); playBack(); }} aria-label="Back" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-text-muted transition-colors hover:bg-surface">
             <ArrowLeft className="h-4.5 w-4.5" />
@@ -180,6 +223,7 @@ export function SupportChat() {
           <h2 className="text-sm font-bold leading-tight text-text">Support</h2>
           <p className="truncate text-xs text-text-muted">{subtitle ?? "We're here to help."}</p>
         </div>
+        <LanguageSelector variant="header" />
         <button onClick={() => { setOpen(false); playClose(); }} aria-label="Close support" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-text-subtle transition-colors hover:bg-surface hover:text-text">
           <X className="h-4.5 w-4.5" />
         </button>
@@ -247,6 +291,13 @@ export function SupportChat() {
           <AnimatePresence mode="wait">
             {picking ? (
               <motion.div key="pick" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.16 }}>
+                <div dir={isRtl ? 'rtl' : 'ltr'} className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-border-light bg-surface/60 px-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-text">Choose your language</p>
+                    <p className="mt-0.5 text-[11px] text-text-muted">Support labels will follow your selection.</p>
+                  </div>
+                  <LanguageSelector variant="header" alwaysShowLabel />
+                </div>
                 <div className="mb-4">
                   <h3 className="text-base font-bold text-text">How can we help?</h3>
                   <p className="mt-1 text-sm text-text-muted">Choose a topic or tell us what happened and our team will help you out.</p>
@@ -288,8 +339,9 @@ export function SupportChat() {
                 <div>
                   <label className="mb-1.5 block text-sm font-semibold text-text">Tell us what happened</label>
                   <textarea
-                    required autoFocus value={message} onChange={(e) => setMessage(e.target.value)} rows={4} maxLength={5000}
-                    placeholder={meta(category).placeholder}
+                    name="message" required autoFocus aria-label="Support message" value={message} onChange={(e) => { setMessage(e.target.value); resizeTextarea(e.currentTarget); }} rows={4} maxLength={5000}
+                    placeholder={meta(category).placeholder} dir={isRtl ? 'rtl' : 'ltr'}
+                    style={{ textAlign: isRtl ? 'right' : 'left', minHeight: 110 }}
                     className="w-full resize-none rounded-xl border border-border bg-white dark:bg-card p-3 text-sm leading-relaxed outline-none transition-shadow placeholder:text-text-subtle focus:border-primary focus:ring-2 focus:ring-primary/15"
                   />
                   {message.length > 4000 && <p className="mt-1 text-right text-[11px] text-text-subtle">{message.length} / 5000</p>}
@@ -302,6 +354,8 @@ export function SupportChat() {
                     <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" className="h-10 w-full rounded-lg border border-border bg-white dark:bg-card px-3 text-sm outline-none transition-shadow focus:border-primary focus:ring-2 focus:ring-primary/15" />
                   </div>
                 )}
+
+                {inlineError && <div role="alert" className="flex items-center justify-between gap-3 rounded-xl border border-rose-200 dark:border-rose-500/25 bg-rose-50 dark:bg-rose-500/10 px-3 py-2 text-xs text-rose-700 dark:text-rose-400"><span>{inlineError}</span><button type="button" onClick={() => retryRef.current?.()} disabled={sending} className="shrink-0 font-semibold underline underline-offset-2 disabled:opacity-50">Retry</button></div>}
 
                 <button disabled={!canSend || sending} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-brand bg-[length:200%_200%] px-4 py-3 text-sm font-semibold text-white shadow-soft transition-all hover:bg-[position:100%_50%] disabled:cursor-not-allowed disabled:opacity-50">
                   {sending ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</> : <><Send className="h-4 w-4" /> Send message</>}
@@ -355,7 +409,18 @@ export function SupportChat() {
             return (
               <div key={m.id} className={`mb-3 flex ${mine ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${mine ? 'rounded-br-sm bg-primary text-white' : 'rounded-bl-sm border border-border-light bg-white dark:bg-card text-text shadow-soft'}`}>
-                  <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                  <p className="whitespace-pre-wrap break-words" dir={isRtl ? 'rtl' : 'ltr'} style={{ textAlign: isRtl ? 'right' : 'left' }}>{m.originalMessage || m.body}</p>
+                  {mine && m.detectedLanguage && m.detectedLanguage !== 'en' && (
+                    <div dir="ltr" className="mt-2 border-t border-white/15 pt-2 text-left">
+                      <p className="text-[10px] font-medium opacity-70">Detected language: {m.detectedLanguage}</p>
+                      {m.translatedMessage && showTranslation[m.id] && <p className="mt-1 rounded-lg bg-black/10 p-2 text-[13px] leading-relaxed text-left">{m.translatedMessage}</p>}
+                      <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                        {m.translatedMessage && <button type="button" onClick={() => setShowTranslation((current) => ({ ...current, [m.id]: !current[m.id] }))} className="text-[11px] font-semibold underline-offset-2 hover:underline">{showTranslation[m.id] ? 'Show Original' : 'Show Translation'}</button>}
+                        {!m.translatedMessage && <button type="button" onClick={() => translateMessage(m)} disabled={translatingId === m.id} className="text-[11px] font-semibold underline-offset-2 hover:underline">{translatingId === m.id ? 'Translating…' : 'Translate to English'}</button>}
+                        {m.translatedMessage && <button type="button" onClick={() => copyTranslation(m)} className="text-[11px] font-semibold underline-offset-2 hover:underline">{copiedTranslationId === m.id ? 'Copied' : 'Copy Translation'}</button>}
+                      </div>
+                    </div>
+                  )}
                   {m.attachments.map((a) => (
                     <a key={a.id} href={attachmentUrl(a.id)} target="_blank" rel="noreferrer" className={`mt-2 flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs ${mine ? 'bg-white/15 text-white' : 'bg-surface text-primary'}`}>
                       <Paperclip className="h-3 w-3 shrink-0" /> <span className="truncate">{a.fileName}</span>
@@ -384,16 +449,19 @@ export function SupportChat() {
               ))}
             </div>
           )}
-          <div className="flex items-end gap-1.5 rounded-2xl border border-border bg-white dark:bg-card p-1.5 transition-shadow focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
-            <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf,text/plain" className="hidden" onChange={(e) => { const f = Array.from(e.target.files || []).slice(0, 4); setFiles(f); if (f.length) playAttach(); }} />
-            <button type="button" onClick={() => fileRef.current?.click()} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-text-subtle transition-colors hover:bg-surface hover:text-primary" title="Attach screenshot" aria-label="Attach screenshot">
-              <Plus className="h-5 w-5" />
-            </button>
-            <textarea value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={onKeyDown} rows={1} maxLength={5000} placeholder={resolved ? 'Reply to reopen this conversation…' : 'Write a reply…'} className="max-h-28 flex-1 resize-none bg-transparent py-2 text-sm outline-none placeholder:text-text-subtle" />
-            <button onClick={sendMessage} disabled={!message.trim() || sending} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-brand text-white shadow-soft transition-opacity disabled:cursor-not-allowed disabled:opacity-40" aria-label="Send">
-              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            </button>
+          <div dir="ltr" className="flex items-end gap-2 rounded-2xl border border-border bg-white dark:bg-card p-2 transition-shadow focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
+            <textarea ref={composerRef} aria-label="Reply message" value={message} onChange={(e) => { setMessage(e.target.value); resizeTextarea(e.currentTarget); }} onKeyDown={onKeyDown} rows={3} maxLength={5000} placeholder={resolved ? 'Reply to reopen this conversation…' : 'Write a reply…'} dir={isRtl ? 'rtl' : 'ltr'} style={{ textAlign: isRtl ? 'right' : 'left', minHeight: 110 }} className="max-h-44 min-h-[110px] flex-1 resize-none bg-transparent p-2.5 text-sm leading-relaxed outline-none placeholder:text-text-subtle" />
+            <div className="flex shrink-0 items-center gap-1.5 pb-1">
+              <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf,text/plain" className="hidden" onChange={(e) => { const f = Array.from(e.target.files || []).slice(0, 4); setFiles(f); if (f.length) playAttach(); }} />
+              <button type="button" onClick={() => fileRef.current?.click()} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-text-subtle transition-colors hover:bg-surface hover:text-primary" title="Attach screenshot" aria-label="Attach screenshot">
+                <Plus className="h-5 w-5" />
+              </button>
+              <button type="button" onClick={sendMessage} disabled={!message.trim() || sending} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-brand text-white shadow-soft transition-opacity disabled:cursor-not-allowed disabled:opacity-40" aria-label="Send message">
+                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
+          {inlineError && <div role="alert" className="flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700"><span>{inlineError}</span><button type="button" onClick={() => retryRef.current?.()} disabled={sending} className="shrink-0 font-semibold underline underline-offset-2 disabled:opacity-50">Retry</button></div>}
           <p className="mt-1 px-1 text-[10px] text-text-subtle">Enter to send · Shift + Enter for a new line</p>
         </div>
       </div>

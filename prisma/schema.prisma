@@ -321,9 +321,13 @@ model SupportMessage {
   conversationId String
   senderType     String   // CUSTOMER | ADMIN | SYSTEM
   senderId       String?
-  body           String
-  internal       Boolean  @default(false)
-  createdAt      DateTime @default(now())
+  body               String
+  originalMessage    String?
+  detectedLanguage   String?
+  translatedMessage  String?
+  translationStatus  String?  // PENDING | TRANSLATED | NOT_NEEDED | FAILED
+  internal           Boolean  @default(false)
+  createdAt          DateTime @default(now())
 
   conversation SupportConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender       User?               @relation("SupportSender", fields: [senderId], references: [id], onDelete: SetNull)

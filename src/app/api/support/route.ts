@@ -4,9 +4,12 @@ import { prisma } from '@/lib/prisma';
 import { fail, ok } from '@/lib/api';
 import { getClientId, ratelimit } from '@/lib/ratelimit';
 import { SUPPORT_CATEGORIES, cleanSupportText, hashSupportGuestToken, supportActor, supportGuestToken, supportPreview } from '@/lib/support';
+import { detectSupportLanguage, translateSupportMessage } from '@/lib/support-translation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+const ACKNOWLEDGEMENT = 'Thanks for reaching out. Your message has been received. Our support team will respond here as soon as possible.';
 
 const Create = z.object({
   category: z.enum(SUPPORT_CATEGORIES),
@@ -33,6 +36,8 @@ export async function POST(request: Request) {
     const parsed = Create.parse(await request.json());
     const message = cleanSupportText(parsed.message);
     if (!message) return fail('Please enter a message.');
+    const detectedLanguage = detectSupportLanguage(message);
+    const translation = await translateSupportMessage(message, detectedLanguage);
     if (!actor.userId && (!parsed.name || !parsed.email)) return fail('Please enter your name and a valid email address.');
     const guestToken = actor.userId ? null : supportGuestToken();
     const conversation = await prisma.supportConversation.create({
@@ -44,7 +49,10 @@ export async function POST(request: Request) {
         category: parsed.category,
         status: 'OPEN', lastMessagePreview: supportPreview(message),
         adminUnreadCount: 1,
-        messages: { create: { senderType: 'CUSTOMER', senderId: actor.userId ?? null, body: message } },
+        messages: { create: [
+          { senderType: 'CUSTOMER', senderId: actor.userId ?? null, body: message, originalMessage: message, detectedLanguage: translation.detectedLanguage, translatedMessage: translation.translatedMessage, translationStatus: translation.translationStatus },
+          { senderType: 'SYSTEM', body: ACKNOWLEDGEMENT, originalMessage: ACKNOWLEDGEMENT, translationStatus: 'NOT_NEEDED' },
+        ] },
       },
       select: { id: true, category: true, status: true, priority: true, lastMessagePreview: true, lastMessageAt: true, customerUnreadCount: true, createdAt: true },
     });
