@@ -29,7 +29,7 @@ export function Checkbox({ checked, indeterminate, onChange, label, description,
           'mt-0.5 shrink-0 w-4 h-4 rounded-[5px] border flex items-center justify-center transition-all',
           checked || indeterminate
             ? 'bg-primary border-primary text-white'
-            : 'bg-white border-border-light hover:border-primary/50',
+            : 'bg-white dark:bg-card border-border-light hover:border-primary/50',
         )}
       >
         {indeterminate ? <Minus className="w-2.5 h-2.5" strokeWidth={3} /> : checked ? <Check className="w-2.5 h-2.5" strokeWidth={3} /> : null}

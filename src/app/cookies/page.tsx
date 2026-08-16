@@ -59,7 +59,7 @@ export default function CookiesPage() {
         </p>
       </NarrowContent>
       <NarrowContent className="pb-16">
-        <div className="overflow-hidden rounded-2xl border border-border-light bg-white shadow-soft">
+        <div className="overflow-hidden rounded-2xl border border-border-light bg-white dark:bg-card shadow-soft">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-surface text-left">
@@ -69,7 +69,7 @@ export default function CookiesPage() {
             </thead>
             <tbody>
               {essential.map((c, i) => (
-                <tr key={c.name} className={i % 2 === 0 ? 'bg-white' : 'bg-surface/50'}>
+                <tr key={c.name} className={i % 2 === 0 ? 'bg-white dark:bg-card' : 'bg-surface/50'}>
                   <td className="px-5 py-4 font-mono text-xs text-primary">{c.name}</td>
                   <td className="px-5 py-4 text-text-muted">{c.purpose}</td>
                 </tr>
@@ -94,19 +94,19 @@ export default function CookiesPage() {
         <InfoBlockGrid cols={3}>
           <InfoBlock
             icon={<BarChart3 className="w-5 h-5" />}
-            tile="bg-sky-50 text-sky-600"
+            tile="bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400"
             title="Aggregate only"
             description="We see which tool is popular, not who used it. No per-user profiles, ever."
           />
           <InfoBlock
             icon={<Settings className="w-5 h-5" />}
-            tile="bg-amber-50 text-amber-600"
+            tile="bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-warning"
             title="Opt out anytime"
             description="Toggle analytics off from the cookie banner. Your choice is remembered for one year."
           />
           <InfoBlock
             icon={<ShieldCheck className="w-5 h-5" />}
-            tile="bg-emerald-50 text-emerald-600"
+            tile="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"
             title="No cross-site tracking"
             description="We do not run retargeting pixels, ad networks, or third-party trackers of any kind."
           />
@@ -125,9 +125,9 @@ export default function CookiesPage() {
           {notUsed.map((item, i) => (
             <li
               key={i}
-              className="flex items-start gap-3 p-5 bg-white border border-border-light rounded-2xl shadow-soft"
+              className="flex items-start gap-3 p-5 bg-white dark:bg-card border border-border-light rounded-2xl shadow-soft"
             >
-              <span className="mt-0.5 w-6 h-6 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center flex-shrink-0">
+              <span className="mt-0.5 w-6 h-6 rounded-full bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center flex-shrink-0">
                 <XCircle className="w-3.5 h-3.5" />
               </span>
               <span className="text-sm text-text leading-relaxed">{item}</span>
@@ -147,13 +147,13 @@ export default function CookiesPage() {
         <InfoBlockGrid cols={2}>
           <InfoBlock
             icon={<Settings className="w-5 h-5" />}
-            tile="bg-indigo-50 text-indigo-600"
+            tile="bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400"
             title="Browser controls"
             description="You can clear cookies at any time through your browser settings. Note that clearing essential cookies will sign you out."
           />
           <InfoBlock
             icon={<Cookie className="w-5 h-5" />}
-            tile="bg-rose-50 text-rose-600"
+            tile="bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400"
             title="Cookie banner"
             description="The first time you visit, you will see a banner that explains what we use and lets you opt out of anything non-essential."
           />

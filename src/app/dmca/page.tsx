@@ -55,19 +55,19 @@ export default function DmcaPage() {
         <InfoBlockGrid cols={3}>
           <InfoBlock
             icon={<FileText className="w-5 h-5" />}
-            tile="bg-sky-50 text-sky-600"
+            tile="bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400"
             title="We do not host"
             description="No media file is stored on SavDown's servers. The download streams directly from the source."
           />
           <InfoBlock
             icon={<CheckCircle2 className="w-5 h-5" />}
-            tile="bg-emerald-50 text-emerald-600"
+            tile="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"
             title="Public content only"
             description="We only resolve public URLs. Private, restricted, or DRM-protected content is out of scope."
           />
           <InfoBlock
             icon={<Shield className="w-5 h-5" />}
-            tile="bg-violet-50 text-violet-600"
+            tile="bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400"
             title="Cooperative takedowns"
             description="Valid DMCA notices are actioned within 72 hours and we keep records to handle repeat infringers."
           />
@@ -90,7 +90,7 @@ export default function DmcaPage() {
           {noticeItems.map((item, i) => (
             <li
               key={i}
-              className="flex items-start gap-4 p-5 bg-white border border-border-light rounded-2xl shadow-soft"
+              className="flex items-start gap-4 p-5 bg-white dark:bg-card border border-border-light rounded-2xl shadow-soft"
             >
               <span className="shrink-0 w-9 h-9 rounded-xl bg-gradient-brand text-white text-sm font-bold flex items-center justify-center shadow-glow-lg">
                 {i + 1}
@@ -112,25 +112,25 @@ export default function DmcaPage() {
         <InfoBlockGrid cols={2}>
           <InfoBlock
             icon={<Mail className="w-5 h-5" />}
-            tile="bg-rose-50 text-rose-600"
+            tile="bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400"
             title="Where to send"
             description={<>Submit notices via our <InfoCtaLink text="contact form" href="/contact" /> with subject line &quot;DMCA Notice&quot;, or email our designated agent at <a href="mailto:dmca@savdown.com" className="font-medium text-primary underline underline-offset-4">dmca@savdown.com</a>.</>}
           />
           <InfoBlock
             icon={<Scale className="w-5 h-5" />}
-            tile="bg-amber-50 text-amber-600"
+            tile="bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-warning"
             title="Counter-notices"
             description="If you believe your content was removed in error, you may submit a counter-notice including identification of the material, a statement under penalty of perjury, and consent to jurisdiction."
           />
           <InfoBlock
             icon={<AlertTriangle className="w-5 h-5" />}
-            tile="bg-indigo-50 text-indigo-600"
+            tile="bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400"
             title="Repeat infringers"
             description="We terminate accounts of users who are found to be repeat infringers, in accordance with the DMCA and applicable law."
           />
           <InfoBlock
             icon={<Clock className="w-5 h-5" />}
-            tile="bg-emerald-50 text-emerald-600"
+            tile="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"
             title="Response time"
             description="Valid notices are reviewed and actioned within 72 hours. We send a confirmation email once a determination is made."
           />

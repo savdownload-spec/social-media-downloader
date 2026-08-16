@@ -24,7 +24,7 @@ export const dynamic = 'force-dynamic';
 /** Entry point to the billing page, alongside the other account panels. */
 function BillingCard() {
   return (
-    <div className="rounded-2xl border border-border bg-white p-6 shadow-soft">
+    <div className="rounded-2xl border border-border bg-white dark:bg-card p-6 shadow-soft">
       <div className="flex items-center gap-2">
         <Coins className="h-4 w-4 flex-shrink-0 text-primary" />
         <h2 className="text-sm font-semibold text-text">Plan &amp; credits</h2>
@@ -34,7 +34,7 @@ function BillingCard() {
       </p>
       <Link
         href="/account/billing"
-        className="mt-4 inline-flex w-full items-center justify-center rounded-2xl border border-border bg-white px-5 py-2.5 text-sm font-semibold text-text transition-all hover:border-primary/40 hover:bg-primary-light/40"
+        className="mt-4 inline-flex w-full items-center justify-center rounded-2xl border border-border bg-white dark:bg-card px-5 py-2.5 text-sm font-semibold text-text transition-all hover:border-primary/40 hover:bg-primary-light"
       >
         Open billing
       </Link>

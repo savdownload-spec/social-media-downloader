@@ -8,7 +8,7 @@ export function BlogCard({ post, compact = false }: { post: BlogPost; compact?: 
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-white shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:shadow-soft-lg ${compact ? '' : ''}`}
+      className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-white dark:bg-card shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:shadow-soft-lg ${compact ? '' : ''}`}
     >
       <BlogCover post={post} priority={!compact} className={compact ? 'aspect-[1.55]' : 'aspect-[1.72]'} />
       <div className="flex flex-1 flex-col p-5 md:p-6">

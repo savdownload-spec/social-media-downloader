@@ -28,7 +28,7 @@ export default function AboutPage() {
   return (
     <>
       {/* â”€â”€ 1. Hero Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-surface/60 via-white to-white pt-20 pb-24 md:pt-28 md:pb-32">
+      <section className="relative overflow-hidden bg-gradient-to-b from-surface/60 via-white to-white dark:from-background dark:via-background dark:to-background pt-20 pb-24 md:pt-28 md:pb-32">
         <div className="absolute inset-0 bg-grid [mask-image:radial-gradient(ellipse_70%_60%_at_50%_20%,black,transparent)] pointer-events-none opacity-60" />
         <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[40rem] h-[20rem] bg-indigo-brand/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -63,7 +63,7 @@ export default function AboutPage() {
                   </Link>
                   <Link
                     href="/contact"
-                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-text bg-white border border-border hover:border-primary/40 hover:bg-primary-light/40 transition-all shadow-soft active:scale-[0.98]"
+                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-text bg-white dark:bg-card border border-border hover:border-primary/40 hover:bg-primary-light transition-all shadow-soft active:scale-[0.98]"
                   >
                     Contact Team
                   </Link>
@@ -75,7 +75,7 @@ export default function AboutPage() {
               <Reveal delay={0.15}>
                 <div className="relative mx-auto max-w-md lg:max-w-none">
                   {/* Bespoke SVG Media & AI Illustration */}
-                  <div className="rounded-3xl bg-white border border-border p-8 shadow-soft-xl relative overflow-hidden">
+                  <div className="rounded-3xl bg-white dark:bg-card border border-border p-8 shadow-soft-xl relative overflow-hidden">
                     <div className="absolute -right-12 -bottom-12 w-48 h-48 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
                     <div className="flex items-center justify-between mb-6 pb-4 border-b border-border-light">
                       <div className="flex items-center gap-2.5">
@@ -97,7 +97,7 @@ export default function AboutPage() {
                             <p className="text-xs text-text-subtle">Lightning fast stream parsing</p>
                           </div>
                         </div>
-                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">Active</span>
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/25">Active</span>
                       </div>
 
                       <div className="p-4 rounded-2xl bg-surface border border-border-light flex items-center justify-between">
@@ -110,7 +110,7 @@ export default function AboutPage() {
                             <p className="text-xs text-text-subtle">Smart generation & enhancement</p>
                           </div>
                         </div>
-                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100">Ready</span>
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/25">Ready</span>
                       </div>
 
                       <div className="p-4 rounded-2xl bg-surface border border-border-light flex items-center justify-between">
@@ -212,7 +212,7 @@ export default function AboutPage() {
             const Icon = v.icon;
             return (
               <Reveal key={v.title} delay={i * 0.05}>
-                <div className="h-full p-8 rounded-3xl bg-white border border-border shadow-soft hover:shadow-soft-lg transition-all duration-300 flex flex-col justify-between group">
+                <div className="h-full p-8 rounded-3xl bg-white dark:bg-card border border-border shadow-soft hover:shadow-soft-lg transition-all duration-300 flex flex-col justify-between group">
                   <div>
                     <div className="w-12 h-12 rounded-2xl bg-surface border border-border flex items-center justify-center text-primary group-hover:bg-gradient-brand group-hover:text-white transition-all shadow-soft">
                       <Icon className="w-6 h-6" />
@@ -260,7 +260,7 @@ export default function AboutPage() {
             const Icon = tool.icon;
             return (
               <Reveal key={tool.title} delay={i * 0.06}>
-                <div className="p-7 rounded-3xl bg-white border border-border-light shadow-soft hover:border-primary/40 transition-all">
+                <div className="p-7 rounded-3xl bg-white dark:bg-card border border-border-light shadow-soft hover:border-primary/40 transition-all">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-5">
                     <Icon className="w-5 h-5" />
                   </div>
@@ -295,7 +295,7 @@ export default function AboutPage() {
                   'Dedicated support team with real human responses',
                 ].map((item, idx) => (
                   <div key={idx} className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                    <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                       <CheckCircle2 className="w-3.5 h-3.5" />
                     </div>
                     <span className="text-sm font-medium text-text">{item}</span>
@@ -350,7 +350,7 @@ export default function AboutPage() {
             <div className="mt-8">
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-text bg-white border border-border hover:border-primary/40 hover:bg-primary-light/40 transition-all shadow-soft active:scale-[0.98]"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-text bg-white dark:bg-card border border-border hover:border-primary/40 hover:bg-primary-light transition-all shadow-soft active:scale-[0.98]"
               >
                 Send Us Feedback <ArrowRight className="w-4 h-4" />
               </Link>

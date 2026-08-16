@@ -118,7 +118,7 @@ export function BlogComments({ postSlug }: BlogCommentsProps) {
       {authStatus === 'authenticated' && session?.user ? (
         <div className="mt-7 rounded-2xl border border-border bg-surface/55 p-4 md:p-5">
           <label htmlFor="blog-comment" className="text-sm font-semibold text-text">Add your perspective</label>
-          <textarea id="blog-comment" value={body} onChange={(event) => setBody(event.target.value)} maxLength={2000} rows={4} placeholder="Share a useful tip, question, or clarificationâ€¦" className="mt-3 w-full resize-y rounded-xl border border-border bg-white px-4 py-3 text-sm leading-6 text-text outline-none transition-shadow placeholder:text-text-subtle focus:border-primary focus:ring-4 focus:ring-primary/10" />
+          <textarea id="blog-comment" value={body} onChange={(event) => setBody(event.target.value)} maxLength={2000} rows={4} placeholder="Share a useful tip, question, or clarificationâ€¦" className="mt-3 w-full resize-y rounded-xl border border-border bg-white dark:bg-card px-4 py-3 text-sm leading-6 text-text outline-none transition-shadow placeholder:text-text-subtle focus:border-primary focus:ring-4 focus:ring-primary/10" />
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-text-subtle">{body.length}/2000 Â· Comments are reviewed before publication.</p>
             <button type="button" onClick={submit} disabled={submitting || body.trim().length < 2} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50">
@@ -138,16 +138,16 @@ export function BlogComments({ postSlug }: BlogCommentsProps) {
 
       <div className="mt-8 space-y-5">
         {loading ? <div className="flex items-center gap-2 text-sm text-text-muted"><Loader2 className="h-4 w-4 animate-spin" /> Loading commentsâ€¦</div> : null}
-        {!loading && comments.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-white p-6 text-sm text-text-muted">Be the first to add a thoughtful question or helpful tip.</div> : null}
+        {!loading && comments.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-white dark:bg-card p-6 text-sm text-text-muted">Be the first to add a thoughtful question or helpful tip.</div> : null}
         {comments.map((comment) => (
-          <article key={comment.id} className="rounded-2xl border border-border bg-white p-5 shadow-soft">
+          <article key={comment.id} className="rounded-2xl border border-border bg-white dark:bg-card p-5 shadow-soft">
             <div className="flex gap-3">
               {comment.user.image ? <img src={comment.user.image} alt="" className="h-9 w-9 rounded-full object-cover" /> : <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-light text-xs font-bold text-primary">{initials(comment.user.name)}</span>}
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <p className="text-sm font-semibold text-text">{comment.user.name}</p>
                   <span className="text-xs text-text-subtle">{formatCommentDate(comment.createdAt)}</span>
-                  {comment.status === 'PENDING' && comment.isOwner ? <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700"><AlertTriangle className="h-3 w-3" /> In review</span> : null}
+                  {comment.status === 'PENDING' && comment.isOwner ? <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-warning"><AlertTriangle className="h-3 w-3" /> In review</span> : null}
                 </div>
                 {editing === comment.id ? (
                   <div className="mt-3">

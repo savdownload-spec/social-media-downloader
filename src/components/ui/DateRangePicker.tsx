@@ -26,8 +26,8 @@ export function DateRangePicker({
             className={cn(
               'h-9 px-3 rounded-lg text-[12px] font-medium border transition-all text-left',
               preset === p.id
-                ? 'bg-text text-white border-text shadow-sm'
-                : 'bg-white border-border-light text-text-muted hover:text-text hover:border-border',
+                ? 'bg-text text-white border-text dark:bg-primary dark:border-primary shadow-sm'
+                : 'bg-white dark:bg-card border-border-light text-text-muted hover:text-text hover:border-border',
             )}
           >
             {p.label}
@@ -44,7 +44,7 @@ export function DateRangePicker({
               value={customFrom}
               max={customTo || undefined}
               onChange={(e) => onCustomFromChange(e.target.value)}
-              className="w-full h-9 rounded-lg border border-border-light bg-white px-3 text-[13px] text-text focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
+              className="w-full h-9 rounded-lg border border-border-light bg-white dark:bg-card px-3 text-[13px] text-text focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 [color-scheme:light] dark:[color-scheme:dark]"
             />
           </div>
           <div>
@@ -54,7 +54,7 @@ export function DateRangePicker({
               value={customTo}
               min={customFrom || undefined}
               onChange={(e) => onCustomToChange(e.target.value)}
-              className="w-full h-9 rounded-lg border border-border-light bg-white px-3 text-[13px] text-text focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
+              className="w-full h-9 rounded-lg border border-border-light bg-white dark:bg-card px-3 text-[13px] text-text focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 [color-scheme:light] dark:[color-scheme:dark]"
             />
           </div>
         </div>

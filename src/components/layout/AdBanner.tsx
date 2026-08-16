@@ -19,7 +19,7 @@ export function AdBanner() {
   return (
     <div className="border-b border-border-light bg-surface">
       <Container className="py-3 md:py-5">
-        <div className="relative overflow-hidden rounded-xl md:rounded-2xl border border-dashed border-primary/25 bg-gradient-brand-soft">
+        <div className="relative overflow-hidden rounded-xl md:rounded-2xl border border-dashed border-primary/25 bg-gradient-brand-soft dark:bg-none dark:bg-card">
           <div className="absolute inset-0 bg-grid [mask-image:radial-gradient(ellipse_80%_100%_at_50%_0%,black,transparent)] pointer-events-none" />
 
           {/* Mobile: a deliberate portrait ad card (not a squeezed leaderboard).
@@ -27,7 +27,7 @@ export function AdBanner() {
           <div className="relative flex sm:hidden min-h-[160px] flex-col px-5 py-5 text-left">
             {/* Top: advertisement label + icon */}
             <div className="flex items-center gap-2.5">
-              <span className="inline-flex w-9 h-9 flex-shrink-0 rounded-xl bg-white items-center justify-center shadow-soft-md">
+              <span className="inline-flex w-9 h-9 flex-shrink-0 rounded-xl bg-white dark:bg-card items-center justify-center shadow-soft-md">
                 <Sparkles className="w-4 h-4 text-primary" />
               </span>
               <p className="text-[10px] font-bold uppercase tracking-wider text-primary/70">Advertisement</p>
@@ -51,7 +51,7 @@ export function AdBanner() {
           {/* Tablet/desktop: full 970x250-style leaderboard */}
           <div className="relative hidden sm:flex min-h-[130px] flex-row items-center justify-between gap-6 px-10 py-6 text-left">
             <div className="flex items-center gap-5">
-              <span className="inline-flex w-11 h-11 flex-shrink-0 rounded-2xl bg-white items-center justify-center shadow-soft-md">
+              <span className="inline-flex w-11 h-11 flex-shrink-0 rounded-2xl bg-white dark:bg-card items-center justify-center shadow-soft-md">
                 <Sparkles className="w-5 h-5 text-primary" />
               </span>
               <div>

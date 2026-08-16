@@ -40,7 +40,7 @@ export function DangerZone({ email }: { email: string }) {
   }
 
   return (
-    <div className="rounded-2xl bg-white border border-border shadow-soft p-6">
+    <div className="rounded-2xl bg-white dark:bg-card border border-border shadow-soft p-6">
       <h2 className="text-lg font-bold text-text mb-1">Account</h2>
       <p className="text-sm text-text-muted mb-5 truncate">{email}</p>
 
@@ -61,7 +61,7 @@ export function DangerZone({ email }: { email: string }) {
           type="button"
           onClick={handleDeleteAccount}
           disabled={deleting}
-          className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold text-rose-600 border border-rose-200 hover:bg-rose-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30 hover:bg-rose-50 dark:hover:bg-rose-500/15 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {deleting ? 'Deleting…' : 'Delete Account'}
         </button>

@@ -69,7 +69,7 @@ export function Compatibility() {
           const title = t(`compatibility.cardTitles.${card.id}`) || card.fallback;
           return (
             <Reveal key={card.id} delay={index * 0.08}>
-              <article className="group h-full rounded-2xl border border-border bg-white p-6 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg">
+              <article className="group h-full rounded-2xl border border-border bg-white dark:bg-card p-6 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-light text-primary transition-colors group-hover:bg-primary group-hover:text-white">
                     <Icon className="h-6 w-6" strokeWidth={1.8} />
@@ -99,10 +99,10 @@ export function Compatibility() {
       </div>
 
       <Reveal delay={0.12} className="mt-5">
-        <div className="grid gap-6 rounded-2xl border border-primary/15 bg-gradient-to-br from-primary-light/70 via-white to-white p-6 md:grid-cols-[1.1fr_1fr] md:items-center md:p-8">
+        <div className="grid gap-6 rounded-2xl border border-primary/15 bg-gradient-to-br from-primary-light via-white to-white dark:from-primary-light dark:via-card dark:to-card p-6 md:grid-cols-[1.1fr_1fr] md:items-center md:p-8">
           <div>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-primary shadow-sm">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white dark:bg-card text-primary shadow-sm">
                 <MonitorSmartphone className="h-5 w-5" strokeWidth={1.8} />
               </div>
               <div>

@@ -118,7 +118,7 @@ export function QrGeneratorTool(_props: FunctionalToolProps) {
     <div className="w-full max-w-2xl mx-auto space-y-5">
       <div className="grid md:grid-cols-2 gap-5">
         {/* Controls */}
-        <div className="p-5 rounded-2xl border border-border bg-white shadow-soft space-y-4 md:order-1 order-2">
+        <div className="p-5 rounded-2xl border border-border bg-white dark:bg-card shadow-soft space-y-4 md:order-1 order-2">
           <div>
             <label className="text-xs font-semibold text-text-subtle uppercase tracking-wider mb-1.5 block">Content</label>
             <textarea
@@ -126,7 +126,7 @@ export function QrGeneratorTool(_props: FunctionalToolProps) {
               onChange={(e) => setText(e.target.value)}
               rows={3}
               placeholder="URL, text, email, phone…"
-              className="w-full bg-white border border-border rounded-xl px-4 py-2.5 text-sm text-text focus:outline-none focus:border-primary resize-none"
+              className="w-full bg-white dark:bg-card border border-border rounded-xl px-4 py-2.5 text-sm text-text focus:outline-none focus:border-primary resize-none"
             />
           </div>
 
@@ -139,7 +139,7 @@ export function QrGeneratorTool(_props: FunctionalToolProps) {
                   onClick={() => setFormat(f)}
                   className={cn(
                     'flex-1 py-2 rounded-xl text-xs font-semibold uppercase transition-all',
-                    format === f ? 'bg-primary text-white shadow-glow' : 'bg-surface text-text-muted hover:bg-primary-light/40',
+                    format === f ? 'bg-primary text-white shadow-glow' : 'bg-surface text-text-muted hover:bg-primary-light',
                   )}
                 >
                   {f}
@@ -175,7 +175,7 @@ export function QrGeneratorTool(_props: FunctionalToolProps) {
                   onClick={() => setEc(e)}
                   className={cn(
                     'flex-1 py-2 rounded-xl text-xs font-semibold transition-all',
-                    ec === e ? 'bg-primary text-white shadow-glow' : 'bg-surface text-text-muted hover:bg-primary-light/40',
+                    ec === e ? 'bg-primary text-white shadow-glow' : 'bg-surface text-text-muted hover:bg-primary-light',
                   )}
                 >
                   {e}
@@ -203,7 +203,7 @@ export function QrGeneratorTool(_props: FunctionalToolProps) {
         </div>
 
         {/* Live preview */}
-        <div className="p-5 rounded-2xl border border-border bg-white shadow-soft flex flex-col items-center justify-center min-h-[280px] md:order-2 order-1">
+        <div className="p-5 rounded-2xl border border-border bg-white dark:bg-card shadow-soft flex flex-col items-center justify-center min-h-[280px] md:order-2 order-1">
           {loading && !preview ? (
             <div className="flex flex-col items-center gap-3 text-text-muted">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -222,7 +222,7 @@ export function QrGeneratorTool(_props: FunctionalToolProps) {
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-100 rounded-2xl text-sm text-red-700">
+        <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-2xl text-sm text-red-700 dark:text-red-400">
           <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
         </div>
       )}

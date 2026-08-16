@@ -163,7 +163,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
           onClick={() => inputRef.current?.click()}
           className={cn(
             'relative cursor-pointer rounded-3xl border-2 border-dashed transition-all duration-200 p-8 text-center',
-            preview ? 'border-primary/40 bg-white' : 'border-border bg-white hover:border-primary/40 hover:bg-primary-light/20',
+            preview ? 'border-primary/40 bg-white dark:bg-card' : 'border-border bg-white dark:bg-card hover:border-primary/40 hover:bg-primary-light',
           )}
         >
           <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onPick} />
@@ -172,7 +172,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
             <div className="relative">
               <button
                 onClick={(e) => { e.stopPropagation(); reset(); }}
-                className="absolute -top-2 -right-2 z-10 w-8 h-8 rounded-full bg-white shadow-soft-md flex items-center justify-center hover:bg-surface"
+                className="absolute -top-2 -right-2 z-10 w-8 h-8 rounded-full bg-white dark:bg-card shadow-soft-md flex items-center justify-center hover:bg-surface"
                 aria-label="Remove image"
               >
                 <X className="w-4 h-4" />
@@ -195,7 +195,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
 
       {/* Controls */}
       {!resultUrl && file && (
-        <div className="p-5 rounded-2xl border border-border bg-white shadow-soft space-y-5">
+        <div className="p-5 rounded-2xl border border-border bg-white dark:bg-card shadow-soft space-y-5">
           {showQuality && (
             <div>
               <div className="flex items-center justify-between mb-1.5">
@@ -221,7 +221,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
                     onClick={() => setFormat(f)}
                     className={cn(
                       'px-4 py-2 rounded-xl text-xs font-semibold uppercase transition-all',
-                      format === f ? 'bg-primary text-white shadow-glow' : 'bg-surface text-text-muted hover:bg-primary-light/40',
+                      format === f ? 'bg-primary text-white shadow-glow' : 'bg-surface text-text-muted hover:bg-primary-light',
                     )}
                   >
                     {f === 'jpeg' ? 'JPG' : f}
@@ -239,7 +239,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
                   type="number" min={1} value={width}
                   onChange={(e) => setWidth(e.target.value)}
                   placeholder="auto"
-                  className="w-full bg-white border border-border rounded-xl px-4 py-2.5 text-text focus:outline-none focus:border-primary"
+                  className="w-full bg-white dark:bg-card border border-border rounded-xl px-4 py-2.5 text-text focus:outline-none focus:border-primary"
                 />
               </div>
               <div>
@@ -248,7 +248,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
                   type="number" min={1} value={height}
                   onChange={(e) => setHeight(e.target.value)}
                   placeholder="auto"
-                  className="w-full bg-white border border-border rounded-xl px-4 py-2.5 text-text focus:outline-none focus:border-primary"
+                  className="w-full bg-white dark:bg-card border border-border rounded-xl px-4 py-2.5 text-text focus:outline-none focus:border-primary"
                 />
               </div>
               <p className="col-span-2 text-[11px] text-text-subtle">Leave one field blank to keep the aspect ratio.</p>
@@ -263,14 +263,14 @@ export function ImageTool({ slug }: FunctionalToolProps) {
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-100 rounded-2xl text-sm text-red-700">
+        <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-2xl text-sm text-red-700 dark:text-red-400">
           <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
         </div>
       )}
 
       {/* Loading overlay */}
       {loading && (
-        <div className="flex items-center justify-center gap-3 p-6 bg-white border border-border rounded-2xl shadow-soft text-text-muted">
+        <div className="flex items-center justify-center gap-3 p-6 bg-white dark:bg-card border border-border rounded-2xl shadow-soft text-text-muted">
           <Loader2 className="w-5 h-5 animate-spin text-primary" />
           <span className="text-sm">Processing your image…</span>
         </div>
@@ -278,7 +278,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
 
       {/* Result */}
       {resultUrl && !loading && (
-        <div className="p-5 md:p-6 bg-white border border-border rounded-2xl shadow-soft-lg">
+        <div className="p-5 md:p-6 bg-white dark:bg-card border border-border rounded-2xl shadow-soft-lg">
           <div className="flex flex-col md:flex-row gap-5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={resultUrl} alt={resultName} className="w-full md:w-52 max-h-52 object-contain rounded-2xl bg-surface" />

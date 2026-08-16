@@ -8,18 +8,45 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: '#FFFFFF',
-        surface: '#F7F7FB',
+        // These resolve to CSS custom properties (see globals.css :root /
+        // .dark) rather than flat hex. :root's values are copied verbatim
+        // from what used to be hardcoded here, so light mode is byte-
+        // identical to before — only .dark introduces new values.
+        //
+        // Most use the rgb(var(--x) / <alpha-value>) form (not a bare
+        // var(--x) string) specifically so Tailwind's opacity-modifier
+        // syntax (bg-primary/20, border-border/60, ...) keeps working —
+        // it's used extensively throughout the site and silently produces
+        // no color at all when the underlying value is a plain var() string
+        // instead of RGB channels. primary-light/accent-light/border/
+        // border-light are the deliberate exception (see globals.css).
+        background: 'rgb(var(--background) / <alpha-value>)',
+        surface: 'rgb(var(--surface) / <alpha-value>)',
         primary: {
-          DEFAULT: '#7C3AED',
-          hover: '#6D28D9',
-          light: '#EDE9FE',
+          DEFAULT: 'rgb(var(--primary) / <alpha-value>)',
+          hover: 'rgb(var(--primary-hover) / <alpha-value>)',
+          light: 'var(--primary-light)',
         },
         accent: {
-          DEFAULT: '#22C55E',
-          hover: '#16A34A',
-          light: '#DCFCE7',
+          DEFAULT: 'rgb(var(--accent) / <alpha-value>)',
+          hover: 'rgb(var(--accent-hover) / <alpha-value>)',
+          light: 'var(--accent-light)',
         },
+        // Elevated surface (cards, modals, toasts, popovers) — previously
+        // these were raw `bg-white` throughout; formalized as a token here
+        // specifically so dark mode can give them a distinct dark value
+        // without ever touching the light-mode class that used them.
+        card: {
+          DEFAULT: 'rgb(var(--card) / <alpha-value>)',
+          hover: 'rgb(var(--card-hover) / <alpha-value>)',
+        },
+        // Dark-mode-only accent for warnings where the light design has
+        // nothing to reuse. (A same-purpose flat `violet` token was removed
+        // here — as a bare string it silently replaced Tailwind's entire
+        // built-in violet-50..900 scale instead of adding to it, breaking
+        // every `violet-*` class already used site-wide as a status color.
+        // It was never actually referenced anywhere, so removing it is safe.)
+        warning: '#F5B942',
         fuchsia: {
           brand: '#D946EF',
         },
@@ -27,13 +54,13 @@ const config: Config = {
           brand: '#6366F1',
         },
         text: {
-          DEFAULT: '#0F0B1E',
-          muted: '#6B7280',
-          subtle: '#9CA3AF',
+          DEFAULT: 'rgb(var(--text) / <alpha-value>)',
+          muted: 'rgb(var(--text-muted) / <alpha-value>)',
+          subtle: 'rgb(var(--text-subtle) / <alpha-value>)',
         },
         border: {
-          DEFAULT: '#EAE7F2',
-          light: '#F1EFF8',
+          DEFAULT: 'var(--border)',
+          light: 'var(--border-light)',
         },
         // Dark surfaces for high-contrast sections and the footer
         ink: {

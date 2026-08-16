@@ -96,8 +96,8 @@ export function ReviewsClient({
                   href={`/reviews?filter=${f.key}${highlightId ? `&review=${highlightId}` : ''}`}
                   className={`px-4 py-2 rounded-2xl text-sm font-semibold transition-all active:scale-[0.98] ${
                     activeFilter === f.key
-                      ? 'bg-text text-white shadow-soft-md'
-                      : 'bg-white text-text-muted border border-border hover:border-primary/40 hover:text-text'
+                      ? 'bg-text text-white dark:bg-primary shadow-soft-md'
+                      : 'bg-white dark:bg-card text-text-muted border border-border hover:border-primary/40 hover:text-text'
                   }`}
                 >
                   {f.label}

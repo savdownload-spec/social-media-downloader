@@ -82,7 +82,7 @@ export function ThemeToggle({ variant = 'header' }: ThemeToggleProps) {
             className={
               variant === 'footer'
                 ? 'z-50 bg-ink border border-white/10 rounded-xl shadow-soft-lg py-2'
-                : 'z-50 bg-white dark:bg-ink-800 border border-border dark:border-white/10 rounded-xl shadow-soft-lg py-2'
+                : 'z-50 bg-white dark:bg-card border border-border rounded-xl shadow-soft-lg py-2'
             }
           >
             {OPTIONS.map(({ mode: optMode, label, icon: Icon }) => (
@@ -93,10 +93,10 @@ export function ThemeToggle({ variant = 'header' }: ThemeToggleProps) {
                   optMode === mode
                     ? variant === 'footer'
                       ? 'text-white bg-white/10'
-                      : 'text-primary bg-primary-light/50'
+                      : 'text-primary bg-primary-light'
                     : variant === 'footer'
                       ? 'text-ink-muted hover:text-white hover:bg-white/5'
-                      : 'text-text-muted hover:text-text hover:bg-surface dark:hover:bg-white/5'
+                      : 'text-text-muted hover:text-text hover:bg-surface dark:hover:bg-card-hover'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -135,7 +135,7 @@ export function ThemeToggle({ variant = 'header' }: ThemeToggleProps) {
         aria-label="Change theme"
         title="Change theme"
         aria-expanded={open}
-        className="w-10 h-10 rounded-full hover:bg-primary-light/60 flex items-center justify-center transition-colors"
+        className="w-10 h-10 rounded-full hover:bg-primary-light flex items-center justify-center transition-colors"
       >
         <ActiveIcon className="w-4 h-4 text-text-muted" />
       </button>

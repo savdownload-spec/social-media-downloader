@@ -68,13 +68,13 @@ export function InstallSheet() {
           <div className="mt-6 w-full">
             <ol className="space-y-3 text-left">
               <li className="flex items-start gap-3 text-sm text-text">
-                <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-text text-xs font-bold text-white">1</span>
+                <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-text text-xs font-bold text-white dark:bg-primary">1</span>
                 <span className="pt-0.5">
                   Tap the <Share className="mx-0.5 inline h-4 w-4 -translate-y-px text-primary" /> Share icon in Safari
                 </span>
               </li>
               <li className="flex items-start gap-3 text-sm text-text">
-                <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-text text-xs font-bold text-white">2</span>
+                <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-text text-xs font-bold text-white dark:bg-primary">2</span>
                 <span className="pt-0.5">
                   Scroll down and tap{' '}
                   <span className="inline-flex items-center gap-1 font-semibold">
@@ -83,7 +83,7 @@ export function InstallSheet() {
                 </span>
               </li>
               <li className="flex items-start gap-3 text-sm text-text">
-                <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-text text-xs font-bold text-white">3</span>
+                <span className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-text text-xs font-bold text-white dark:bg-primary">3</span>
                 <span className="pt-0.5">Tap <span className="font-semibold">Add</span> in the top right</span>
               </li>
             </ol>

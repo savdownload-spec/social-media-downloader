@@ -122,7 +122,7 @@ export function ColorPickerTool() {
         )}
         <button
           onClick={() => fileRef.current?.click()}
-          className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl border border-border bg-white text-sm font-semibold text-text hover:border-primary/40 transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl border border-border bg-white dark:bg-card text-sm font-semibold text-text hover:border-primary/40 transition-colors"
         >
           <Upload className="w-4 h-4" /> Pick from Image
         </button>
@@ -134,7 +134,7 @@ export function ColorPickerTool() {
         <div className="relative rounded-2xl overflow-hidden border border-border shadow-soft">
           <button
             onClick={() => { setPreviewUrl(null); setColor(null); if (fileRef.current) fileRef.current.value = ''; }}
-            className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center shadow-soft hover:bg-white transition-colors"
+            className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-white/90 dark:bg-card/90 flex items-center justify-center shadow-soft hover:bg-white dark:hover:bg-card transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -166,7 +166,7 @@ export function ColorPickerTool() {
 
       {/* Result */}
       {color && (
-        <div className="p-6 rounded-2xl border border-border bg-white shadow-soft">
+        <div className="p-6 rounded-2xl border border-border bg-white dark:bg-card shadow-soft">
           <div className="flex items-center gap-5 mb-5">
             <div
               className="w-20 h-20 rounded-2xl border border-border shadow-soft shrink-0"
@@ -187,7 +187,7 @@ export function ColorPickerTool() {
               <button
                 key={label}
                 onClick={() => copyValue(value)}
-                className="flex items-center justify-between px-4 py-3 rounded-xl bg-surface hover:bg-primary-light/40 border border-border transition-colors text-left"
+                className="flex items-center justify-between px-4 py-3 rounded-xl bg-surface hover:bg-primary-light border border-border transition-colors text-left"
               >
                 <div>
                   <p className="text-xs font-semibold text-text-subtle uppercase tracking-wider">{label}</p>

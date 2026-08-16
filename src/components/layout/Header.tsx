@@ -42,7 +42,7 @@ export function Header() {
             href={accountHref}
             aria-label={session ? 'Account' : 'Log in'}
             title={session ? 'Account' : 'Log in'}
-            className="w-10 h-10 rounded-full hover:bg-primary-light/60 flex items-center justify-center transition-colors"
+            className="w-10 h-10 rounded-full hover:bg-primary-light flex items-center justify-center transition-colors"
           >
             <User className="w-4 h-4 text-text-muted" />
           </Link>
@@ -52,7 +52,7 @@ export function Header() {
               onClick={openSheet}
               aria-label="Install app"
               title="Install SavDown"
-              className="w-10 h-10 rounded-full hover:bg-primary-light/60 flex items-center justify-center transition-colors"
+              className="w-10 h-10 rounded-full hover:bg-primary-light flex items-center justify-center transition-colors"
             >
               <Download className="w-4 h-4 text-text-muted" />
             </button>
@@ -60,7 +60,7 @@ export function Header() {
           <Link
             href="/search"
             aria-label={t('common.search')}
-            className="w-10 h-10 rounded-full hover:bg-primary-light/60 flex items-center justify-center transition-colors"
+            className="w-10 h-10 rounded-full hover:bg-primary-light flex items-center justify-center transition-colors"
           >
             <Search className="w-4 h-4 text-text-muted" />
           </Link>
@@ -96,7 +96,7 @@ export function Header() {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="md:hidden overflow-hidden border-t border-border-light bg-white"
+            className="md:hidden overflow-hidden border-t border-border-light bg-white dark:bg-card"
           >
             <Container className="py-3">
               <div className="flex items-center justify-between pb-3 border-b border-border-light mb-1">

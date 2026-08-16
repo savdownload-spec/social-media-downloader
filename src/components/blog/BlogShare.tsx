@@ -39,11 +39,11 @@ export function BlogShare({ title, description }: BlogShareProps) {
   return (
     <div className="flex flex-wrap items-center gap-2" aria-label="Share this article">
       <span className="mr-1 text-xs font-semibold uppercase tracking-[0.16em] text-text-muted">Share</span>
-      <button type="button" onClick={copy} className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-white px-3 text-xs font-semibold text-text-muted transition-colors hover:border-primary/30 hover:text-primary" aria-label="Copy article link">
-        {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />} {copied ? 'Copied' : 'Copy link'}
+      <button type="button" onClick={copy} className="inline-flex h-9 items-center gap-1.5 rounded-full border border-border bg-white dark:bg-card px-3 text-xs font-semibold text-text-muted transition-colors hover:border-primary/30 hover:text-primary" aria-label="Copy article link">
+        {copied ? <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> : <Copy className="h-4 w-4" />} {copied ? 'Copied' : 'Copy link'}
       </button>
       {buttons.map((button) => (
-        <button key={button.label} type="button" onClick={button.onClick} className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-text-muted transition-colors hover:border-primary/30 hover:text-primary" aria-label={`Share on ${button.label}`} title={button.label}>{button.icon}</button>
+        <button key={button.label} type="button" onClick={button.onClick} className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white dark:bg-card text-text-muted transition-colors hover:border-primary/30 hover:text-primary" aria-label={`Share on ${button.label}`} title={button.label}>{button.icon}</button>
       ))}
       <button type="button" onClick={nativeShare} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-3 text-xs font-semibold text-white transition-colors hover:bg-primary-hover md:hidden" aria-label="Use device share menu">
         <Share2 className="h-4 w-4" /> Share

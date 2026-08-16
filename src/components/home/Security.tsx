@@ -25,7 +25,7 @@ export function Security() {
 
   return (
     <Section variant="white" id="security">
-      <div className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-gradient-to-br from-white via-white to-accent-light/30 px-6 py-14 shadow-soft md:px-10 lg:px-14 lg:py-20">
+      <div className="relative overflow-hidden rounded-[2rem] border border-border bg-gradient-to-br from-white via-white to-accent-light dark:from-card dark:via-card dark:to-accent-light px-6 py-14 shadow-soft md:px-10 lg:px-14 lg:py-20">
         <div className="pointer-events-none absolute -right-28 -top-32 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
         <div className="pointer-events-none absolute bottom-0 left-1/3 h-52 w-52 rounded-full bg-accent/10 blur-3xl" />
 
@@ -53,7 +53,7 @@ export function Security() {
 
               <div className="mt-10 grid max-w-2xl grid-cols-1 gap-x-8 gap-y-7 sm:grid-cols-2">
                 {points.map((point, index) => (
-                  <div key={index} className="group flex gap-3 border-t border-border/70 pt-4">
+                  <div key={index} className="group flex gap-3 border-t border-border pt-4">
                     <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-accent-light text-accent-hover ring-1 ring-accent/10 transition-transform duration-300 group-hover:-translate-y-0.5">
                       <point.icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
                     </span>
@@ -63,7 +63,7 @@ export function Security() {
                     </div>
                   </div>
                 ))}
-                <div className="group flex gap-3 border-t border-border/70 pt-4">
+                <div className="group flex gap-3 border-t border-border pt-4">
                   <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-accent-light text-accent-hover ring-1 ring-accent/10 transition-transform duration-300 group-hover:-translate-y-0.5">
                     <ShieldCheck className="h-[18px] w-[18px]" strokeWidth={1.8} />
                   </span>

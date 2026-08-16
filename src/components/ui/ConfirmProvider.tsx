@@ -81,7 +81,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                 'inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold transition-all',
                 pending?.variant === 'danger'
                   ? 'bg-rose-600 text-white hover:bg-rose-700 shadow-soft'
-                  : 'bg-text text-white hover:bg-text/90 shadow-soft',
+                  : 'bg-text text-white hover:bg-text/90 dark:bg-primary dark:hover:bg-primary-hover shadow-soft',
               )}
             >
               {pending?.confirmLabel ?? 'Confirm'}

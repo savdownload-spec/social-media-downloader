@@ -42,7 +42,8 @@ export function MediaShowcase() {
           if (!tool) return null;
           const Icon = tool.icon;
           const cta = t(`mediaShowcase.items.${item.slug}`);
-          
+          const iconColor = tool.tile.split(' ').filter((c) => c.includes('text-')).join(' ');
+
           return (
             <Link
               key={item.slug}
@@ -57,12 +58,12 @@ export function MediaShowcase() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
 
-              <span className={`absolute top-3 left-3 w-8 h-8 rounded-lg ${tool.tile} flex items-center justify-center shadow-soft`}>
+              <span className={`absolute top-3 left-3 w-8 h-8 rounded-lg bg-white/90 dark:bg-black/50 backdrop-blur flex items-center justify-center shadow-soft ${iconColor}`}>
                 <Icon className="w-4 h-4" />
               </span>
 
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="w-11 h-11 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-soft-lg">
+                <div className="w-11 h-11 rounded-full bg-white/90 dark:bg-card/90 backdrop-blur flex items-center justify-center shadow-soft-lg">
                   <ArrowUpRight className="w-4 h-4 text-text" />
                 </div>
               </div>

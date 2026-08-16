@@ -50,8 +50,8 @@ export function AllToolsGrid() {
               aria-pressed={active}
               className={`px-5 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-200 active:scale-[0.98] ${
                 active
-                  ? 'bg-text text-white shadow-soft-md'
-                  : 'bg-white text-text-muted border border-border hover:border-primary/40 hover:text-text'
+                  ? 'bg-text text-white dark:bg-primary shadow-soft-md'
+                  : 'bg-white dark:bg-card text-text-muted border border-border hover:border-primary/40 hover:text-text'
               }`}
             >
               {label}
@@ -82,7 +82,7 @@ export function AllToolsGrid() {
             >
               <Link
                 href={`/tools/${tool.slug}`}
-                className="group flex flex-col h-full bg-white border border-border rounded-2xl p-7 shadow-soft hover:shadow-soft-lg hover:-translate-y-1 hover:border-primary/30 transition-all duration-300"
+                className="group flex flex-col h-full bg-white dark:bg-card border border-border rounded-2xl p-7 shadow-soft hover:shadow-soft-lg hover:-translate-y-1 hover:border-primary/30 transition-all duration-300"
               >
                 <div className="flex items-start justify-between">
                   <span className={`w-14 h-14 rounded-2xl ${tool.tile} flex items-center justify-center group-hover:scale-105 transition-transform`}>

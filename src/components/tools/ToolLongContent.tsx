@@ -92,7 +92,7 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
           {content.keyFeatures.map((f, i) => (
             <div
               key={f.title}
-              className="group p-6 bg-white border border-border rounded-2xl shadow-soft hover:shadow-soft-md hover:-translate-y-0.5 hover:border-primary/30 transition-all"
+              className="group p-6 bg-white dark:bg-card border border-border rounded-2xl shadow-soft hover:shadow-soft-md hover:-translate-y-0.5 hover:border-primary/30 transition-all"
             >
               <div className="w-11 h-11 rounded-xl bg-gradient-brand flex items-center justify-center shadow-glow-lg group-hover:scale-105 transition-transform">
                 <Sparkles className="w-5 h-5 text-white" />
@@ -115,7 +115,7 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
           {content.benefits.map((b, i) => (
             <div
               key={b.title}
-              className="p-6 bg-white border border-border-light rounded-2xl"
+              className="p-6 bg-white dark:bg-card border border-border-light rounded-2xl"
             >
               <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-accent-light text-accent-hover">
                 <CheckCircle2 className="w-5 h-5" />
@@ -138,7 +138,7 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
           <ul className="space-y-4">
             {content.bestPractices.map((p, i) => (
               <li key={i} className="flex items-start gap-4">
-                <span className="shrink-0 w-8 h-8 rounded-lg bg-white border border-border-light text-primary text-sm font-bold flex items-center justify-center shadow-soft">
+                <span className="shrink-0 w-8 h-8 rounded-lg bg-white dark:bg-card border border-border-light text-primary text-sm font-bold flex items-center justify-center shadow-soft">
                   {i + 1}
                 </span>
                 <span className="text-base text-text leading-relaxed pt-0.5">{p}</span>
@@ -159,7 +159,7 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
           {content.supportedPlatforms.map((p) => (
             <span
               key={p}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white border border-border-light shadow-soft text-sm font-medium text-text-muted"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white dark:bg-card border border-border-light shadow-soft text-sm font-medium text-text-muted"
             >
               <CheckCircle2 className="w-3.5 h-3.5 text-accent" />
               {p}
@@ -179,7 +179,7 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
           {content.commonUseCases.map((u, i) => (
             <div
               key={u.title}
-              className="p-6 md:p-7 bg-white border border-border-light rounded-2xl shadow-soft"
+              className="p-6 md:p-7 bg-white dark:bg-card border border-border-light rounded-2xl shadow-soft"
             >
               <div className="flex items-center gap-2">
                 <span className="w-7 h-7 rounded-full bg-gradient-brand text-white text-xs font-bold flex items-center justify-center shadow-glow-lg">
@@ -269,7 +269,7 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
             </Link>
             <Link
               href="/tools"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-text bg-white border border-border hover:border-primary/40 hover:bg-primary-light/40 transition-all active:scale-[0.98]"
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-text bg-white dark:bg-card border border-border hover:border-primary/40 hover:bg-primary-light transition-all active:scale-[0.98]"
             >
               <ListChecks className="w-4 h-4" /> Browse All Tools
             </Link>

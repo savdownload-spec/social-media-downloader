@@ -73,7 +73,7 @@ function SearchInner() {
       <p className="mt-6 text-sm text-text-muted">{results.length} result{results.length === 1 ? '' : 's'}{query && <> for <span className="text-text">&quot;{query}&quot;</span></>}</p>
       <div className="mt-6 space-y-3">
         {results.map((item) => (
-          <Link key={item.href} href={item.href} className="group flex items-center gap-4 rounded-2xl border border-border bg-white p-5 shadow-soft transition-all duration-300 hover:-translate-y-0.5 hover:shadow-soft-lg">
+          <Link key={item.href} href={item.href} className="group flex items-center gap-4 rounded-2xl border border-border bg-white dark:bg-card p-5 shadow-soft transition-all duration-300 hover:-translate-y-0.5 hover:shadow-soft-lg">
             <div className="min-w-0 flex-1"><div className="mb-1 flex items-center gap-2"><span className="text-xs font-medium uppercase tracking-wider text-text-muted">{item.category}</span></div><h2 className="truncate font-semibold text-text transition-colors group-hover:text-primary">{item.title}</h2><p className="mt-0.5 truncate text-sm text-text-muted">{item.description}</p></div>
             <ArrowUpRight className="h-4 w-4 flex-shrink-0 text-text-muted" aria-hidden="true" />
           </Link>

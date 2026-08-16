@@ -55,7 +55,7 @@ export function InfoPageHero({
               {highlights.map((h, i) => (
                 <span
                   key={i}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-border-light text-sm font-medium text-text-muted shadow-soft"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white dark:bg-card border border-border-light text-sm font-medium text-text-muted shadow-soft"
                 >
                   {h.icon}
                   {h.label}
@@ -85,7 +85,7 @@ type InfoBlockProps = {
  */
 export function InfoBlock({ icon, tile, title, description, children }: InfoBlockProps) {
   return (
-    <div className="h-full bg-white border border-border-light p-6 md:p-7 rounded-2xl shadow-soft hover:shadow-soft-md hover:border-primary/20 transition-all">
+    <div className="h-full bg-white dark:bg-card border border-border-light p-6 md:p-7 rounded-2xl shadow-soft hover:shadow-soft-md hover:border-primary/20 transition-all">
       <div className="flex items-start gap-4">
         <span className={`shrink-0 w-12 h-12 rounded-2xl ${tile} flex items-center justify-center`}>
           {icon}
@@ -135,7 +135,7 @@ export function InfoCallout({ title, body, cta }: InfoCalloutProps) {
           {cta && (
             <Link
               href={cta.href}
-              className="mt-6 inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-white text-text font-semibold shadow-soft-md hover:shadow-soft-lg transition-all active:scale-[0.98]"
+              className="mt-6 inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-white text-ink-900 font-semibold shadow-soft-md hover:shadow-soft-lg transition-all active:scale-[0.98]"
             >
               {cta.label}
             </Link>

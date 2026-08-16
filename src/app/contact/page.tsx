@@ -105,7 +105,7 @@ export default function ContactPage() {
           onChange={(e) => { setForm({ ...form, message: e.target.value }); if (state === 'err') { setState('idle'); setValidationError(''); } }}
           placeholder={t('contact.placeholders.message') || 'How can we help you?'}
           rows={6}
-          className="w-full bg-white border border-border rounded-2xl px-5 py-3.5 text-text placeholder:text-text-subtle focus:outline-none focus:border-primary focus:shadow-glow resize-none"
+          className="w-full bg-white dark:bg-card border border-border rounded-2xl px-5 py-3.5 text-text placeholder:text-text-subtle focus:outline-none focus:border-primary focus:shadow-glow resize-none"
           required
         />
         <Button size="lg" onClick={submit} loading={state === 'loading'} disabled={state === 'ok'} className="w-full sm:w-auto">

@@ -116,7 +116,7 @@ export function FunctionalToolLayout({ tool, children }: Props) {
               {content.howTo.map((step, i) => (
                 <div
                   key={step.title}
-                  className="group w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33%-0.75rem)] min-w-[200px] max-w-xs p-6 bg-white border border-border rounded-2xl shadow-soft hover:shadow-soft-lg hover:-translate-y-1 transition-all duration-300"
+                  className="group w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(33%-0.75rem)] min-w-[200px] max-w-xs p-6 bg-white dark:bg-card border border-border rounded-2xl shadow-soft hover:shadow-soft-lg hover:-translate-y-1 transition-all duration-300"
                 >
                   <div className="w-9 h-9 rounded-xl bg-gradient-brand text-white text-sm font-bold flex items-center justify-center shadow-glow-lg group-hover:scale-105 transition-transform">
                     {i + 1}
@@ -146,7 +146,7 @@ export function FunctionalToolLayout({ tool, children }: Props) {
                 <Link
                   key={r.slug}
                   href={`/tools/${r.slug}`}
-                  className="group flex flex-col h-full bg-white border border-border rounded-2xl p-7 shadow-soft hover:shadow-soft-lg hover:-translate-y-1 hover:border-primary/30 transition-all duration-300"
+                  className="group flex flex-col h-full bg-white dark:bg-card border border-border rounded-2xl p-7 shadow-soft hover:shadow-soft-lg hover:-translate-y-1 hover:border-primary/30 transition-all duration-300"
                 >
                   <span className={`w-12 h-12 rounded-xl ${r.tile} flex items-center justify-center group-hover:scale-105 transition-transform`}>
                     <RIcon className="w-6 h-6" />

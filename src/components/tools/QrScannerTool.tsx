@@ -106,7 +106,7 @@ export function QrScannerTool(_props: FunctionalToolProps) {
           onClick={() => inputRef.current?.click()}
           className={cn(
             'relative cursor-pointer rounded-3xl border-2 border-dashed transition-all duration-200 p-8 text-center',
-            preview ? 'border-primary/40 bg-white' : 'border-border bg-white hover:border-primary/40 hover:bg-primary-light/20',
+            preview ? 'border-primary/40 bg-white dark:bg-card' : 'border-border bg-white dark:bg-card hover:border-primary/40 hover:bg-primary-light',
           )}
         >
           <input ref={inputRef} type="file" accept="image/*" className="hidden"
@@ -116,7 +116,7 @@ export function QrScannerTool(_props: FunctionalToolProps) {
             <div className="relative">
               <button
                 onClick={(e) => { e.stopPropagation(); reset(); }}
-                className="absolute -top-2 -right-2 z-10 w-8 h-8 rounded-full bg-white shadow-soft-md flex items-center justify-center hover:bg-surface"
+                className="absolute -top-2 -right-2 z-10 w-8 h-8 rounded-full bg-white dark:bg-card shadow-soft-md flex items-center justify-center hover:bg-surface"
                 aria-label="Remove image"
               >
                 <X className="w-4 h-4" />
@@ -151,14 +151,14 @@ export function QrScannerTool(_props: FunctionalToolProps) {
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-100 rounded-2xl text-sm text-red-700">
+        <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-2xl text-sm text-red-700 dark:text-red-400">
           <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
         </div>
       )}
 
       {/* Result */}
       {data && !loading && (
-        <div className="p-5 md:p-6 bg-white border border-border rounded-2xl shadow-soft-lg">
+        <div className="p-5 md:p-6 bg-white dark:bg-card border border-border rounded-2xl shadow-soft-lg">
           <div className="flex items-center gap-3 mb-4">
             <span className="px-2.5 py-1 rounded-full bg-accent-light text-xs font-semibold text-accent-hover">{type}</span>
             <h3 className="font-semibold text-text">Decoded content</h3>
@@ -182,14 +182,14 @@ export function QrScannerTool(_props: FunctionalToolProps) {
             {isUrl && (
               <a
                 href={data} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-text bg-white border border-border hover:border-primary/40 hover:bg-primary-light/40 transition-colors"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-text bg-white dark:bg-card border border-border hover:border-primary/40 hover:bg-primary-light transition-colors"
               >
                 <ExternalLink className="w-4 h-4" /> Open link
               </a>
             )}
             <button
               onClick={reset}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-text bg-white border border-border hover:border-primary/40 transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-text bg-white dark:bg-card border border-border hover:border-primary/40 transition-colors"
             >
               Scan another
             </button>

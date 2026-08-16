@@ -19,27 +19,27 @@ const SECTION_IDS: SectionId[] = ['tools', 'pricing', 'blog', 'resources', 'abou
 
 /* static icon/color config, labels come from i18n */
 const RESOURCE_CONFIG = [
-  { key: 'faq',     icon: HelpCircle, href: '/faq',     color: 'text-violet-600 bg-violet-50'   },
-  { key: 'blog',    icon: BookOpen,   href: '/blog',    color: 'text-sky-600 bg-sky-50'         },
-  { key: 'search',  icon: Search,     href: '/search',  color: 'text-emerald-600 bg-emerald-50' },
-  { key: 'privacy', icon: Shield,     href: '/privacy', color: 'text-slate-600 bg-slate-100'    },
-  { key: 'terms',   icon: FileText,   href: '/terms',   color: 'text-orange-600 bg-orange-50'   },
-  { key: 'cookies', icon: FileText,   href: '/cookies', color: 'text-amber-600 bg-amber-50'     },
+  { key: 'faq',     icon: HelpCircle, href: '/faq',     color: 'text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-500/15'   },
+  { key: 'blog',    icon: BookOpen,   href: '/blog',    color: 'text-sky-600 bg-sky-50 dark:text-sky-400 dark:bg-sky-500/15'         },
+  { key: 'search',  icon: Search,     href: '/search',  color: 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/15' },
+  { key: 'privacy', icon: Shield,     href: '/privacy', color: 'text-slate-600 bg-slate-100 dark:text-slate-300 dark:bg-slate-500/15'    },
+  { key: 'terms',   icon: FileText,   href: '/terms',   color: 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-500/15'   },
+  { key: 'cookies', icon: FileText,   href: '/cookies', color: 'text-amber-600 bg-amber-50 dark:text-warning dark:bg-amber-500/15'     },
 ] as const;
 
 const ABOUT_CONFIG = [
-  { key: 'about',   icon: Info,     href: '/about',   color: 'text-violet-600 bg-violet-50'   },
-  { key: 'contact', icon: Mail,     href: '/contact', color: 'text-sky-600 bg-sky-50'         },
-  { key: 'pricing', icon: Sparkles, href: '/pricing', color: 'text-fuchsia-600 bg-fuchsia-50' },
-  { key: 'careers', icon: Users,    href: '/contact', color: 'text-rose-600 bg-rose-50'        },
+  { key: 'about',   icon: Info,     href: '/about',   color: 'text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-500/15'   },
+  { key: 'contact', icon: Mail,     href: '/contact', color: 'text-sky-600 bg-sky-50 dark:text-sky-400 dark:bg-sky-500/15'         },
+  { key: 'pricing', icon: Sparkles, href: '/pricing', color: 'text-fuchsia-600 bg-fuchsia-50 dark:text-fuchsia-400 dark:bg-fuchsia-500/15' },
+  { key: 'careers', icon: Users,    href: '/contact', color: 'text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/15'        },
 ] as const;
 
 // Static icon/colour per plan id; prices/credits come from the shared pricing
 // model so this nav can never drift from the pricing page.
 const PRICING_TILE_STYLE: Record<string, { icon: typeof Zap; color: string }> = {
-  free:     { icon: Zap,      color: 'text-emerald-600 bg-emerald-50' },
+  free:     { icon: Zap,      color: 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/15' },
   pro:      { icon: Sparkles, color: 'text-primary bg-primary-light' },
-  lifetime: { icon: Coins,    color: 'text-amber-600 bg-amber-50' },
+  lifetime: { icon: Coins,    color: 'text-amber-600 bg-amber-50 dark:text-warning dark:bg-amber-500/15' },
 };
 
 export function MobileNav({ close }: { close: () => void }) {
@@ -141,7 +141,7 @@ export function MobileNav({ close }: { close: () => void }) {
                       <Link
                         href="/tools"
                         onClick={close}
-                        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-primary-light/60 text-primary text-sm font-semibold hover:bg-primary-light transition-all active:scale-[0.98]"
+                        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-primary-light text-primary text-sm font-semibold hover:bg-primary-light transition-all active:scale-[0.98]"
                       >
                         <ArrowRight className="w-4 h-4" /> {t('mobileNav.viewAllTools')}
                       </Link>
@@ -159,7 +159,7 @@ export function MobileNav({ close }: { close: () => void }) {
                             key={tile.id}
                             href={tile.href}
                             onClick={close}
-                            className="flex items-center gap-3 px-3 py-3 rounded-xl border border-border bg-white hover:border-primary/20 hover:shadow-soft transition-all"
+                            className="flex items-center gap-3 px-3 py-3 rounded-xl border border-border bg-white dark:bg-card hover:border-primary/20 hover:shadow-soft transition-all"
                           >
                             <span className={`w-9 h-9 rounded-xl shrink-0 flex items-center justify-center ${style.color}`}>
                               <PIcon className="w-4 h-4" />
@@ -177,7 +177,7 @@ export function MobileNav({ close }: { close: () => void }) {
                           </Link>
                         );
                       })}
-                      <Link href="/pricing" onClick={close} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-primary-light/60 text-primary text-sm font-semibold hover:bg-primary-light transition-all active:scale-[0.98]">
+                      <Link href="/pricing" onClick={close} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-primary-light text-primary text-sm font-semibold hover:bg-primary-light transition-all active:scale-[0.98]">
                         <ArrowRight className="w-4 h-4" /> {t('mobileNav.fullPricingDetails') || 'Full pricing details'}
                       </Link>
                     </div>
@@ -191,7 +191,7 @@ export function MobileNav({ close }: { close: () => void }) {
                           key={post.slug}
                           href={`/blog/${post.slug}`}
                           onClick={close}
-                          className="flex items-start gap-3 px-3 py-3 rounded-xl border border-border bg-white hover:border-primary/20 hover:shadow-soft transition-all"
+                          className="flex items-start gap-3 px-3 py-3 rounded-xl border border-border bg-white dark:bg-card hover:border-primary/20 hover:shadow-soft transition-all"
                         >
                           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-400 to-indigo-500 flex items-center justify-center shrink-0">
                             <BookOpen className="w-5 h-5 text-white" />
@@ -202,7 +202,7 @@ export function MobileNav({ close }: { close: () => void }) {
                           </div>
                         </Link>
                       ))}
-                      <Link href="/blog" onClick={close} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-primary-light/60 text-primary text-sm font-semibold hover:bg-primary-light transition-all active:scale-[0.98]">
+                      <Link href="/blog" onClick={close} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-primary-light text-primary text-sm font-semibold hover:bg-primary-light transition-all active:scale-[0.98]">
                         <ArrowRight className="w-4 h-4" /> {t('mobileNav.viewAllArticles')}
                       </Link>
                     </div>
@@ -212,7 +212,7 @@ export function MobileNav({ close }: { close: () => void }) {
                   {id === 'resources' && (
                     <div className="px-3 pb-3 grid grid-cols-2 gap-1.5">
                       {RESOURCE_CONFIG.map(({ key, icon: RIcon, href, color }) => (
-                        <Link key={href} href={href} onClick={close} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-border bg-white hover:border-primary/20 hover:shadow-soft transition-all">
+                        <Link key={href} href={href} onClick={close} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-border bg-white dark:bg-card hover:border-primary/20 hover:shadow-soft transition-all">
                           <span className={`w-7 h-7 rounded-lg shrink-0 flex items-center justify-center ${color}`}>
                             <RIcon className="w-3.5 h-3.5" />
                           </span>
@@ -226,7 +226,7 @@ export function MobileNav({ close }: { close: () => void }) {
                   {id === 'about' && (
                     <div className="px-3 pb-3 grid grid-cols-2 gap-1.5">
                       {ABOUT_CONFIG.map(({ key, icon: AIcon, href, color }) => (
-                        <Link key={key} href={href} onClick={close} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-border bg-white hover:border-primary/20 hover:shadow-soft transition-all">
+                        <Link key={key} href={href} onClick={close} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-border bg-white dark:bg-card hover:border-primary/20 hover:shadow-soft transition-all">
                           <span className={`w-7 h-7 rounded-lg shrink-0 flex items-center justify-center ${color}`}>
                             <AIcon className="w-3.5 h-3.5" />
                           </span>

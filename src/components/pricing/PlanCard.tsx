@@ -12,7 +12,7 @@ export function PlanCard({ plan }: { plan: PlanView }) {
 
   const cta = highlighted
     ? 'mt-7 flex items-center justify-center w-full py-3 rounded-2xl text-white font-semibold bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]'
-    : 'mt-7 flex items-center justify-center w-full py-3 rounded-2xl font-semibold bg-white text-text border border-border hover:border-primary/40 hover:bg-primary-light/40 transition-all active:scale-[0.98]';
+    : 'mt-7 flex items-center justify-center w-full py-3 rounded-2xl font-semibold bg-white dark:bg-card text-text border border-border hover:border-primary/40 hover:bg-primary-light transition-all active:scale-[0.98]';
 
   return (
     <HighlightFrame variant={plan.badge ?? 'none'} badge={plan.badgeLabel} className="p-6 md:p-7">

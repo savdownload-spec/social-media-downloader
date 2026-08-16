@@ -27,11 +27,11 @@ export function HowItWorks() {
           {steps.map((step, i) => (
             <Reveal key={step.title} delay={i * 0.08}>
               <div className="relative flex flex-col items-center text-center px-4 w-64">
-                <div className="relative w-24 h-24 rounded-3xl bg-white border border-border shadow-soft-md flex items-center justify-center">
+                <div className="relative w-24 h-24 rounded-3xl bg-white dark:bg-card border border-border shadow-soft-md flex items-center justify-center">
                   <div className="w-14 h-14 rounded-2xl bg-gradient-brand flex items-center justify-center text-white shadow-glow-lg">
                     <step.icon className="w-6 h-6" />
                   </div>
-                  <span className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-text text-white text-xs font-bold flex items-center justify-center shadow-soft">
+                  <span className="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-text text-white dark:bg-primary text-xs font-bold flex items-center justify-center shadow-soft">
                     {i + 1}
                   </span>
                 </div>

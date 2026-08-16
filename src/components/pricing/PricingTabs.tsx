@@ -61,7 +61,7 @@ export function PricingTabs() {
         <div
           role="tablist"
           aria-label="Pricing categories"
-          className="grid w-full max-w-md grid-cols-3 gap-1 rounded-full border border-border bg-white p-1 shadow-soft sm:inline-grid sm:w-auto sm:max-w-none"
+          className="grid w-full max-w-md grid-cols-3 gap-1 rounded-full border border-border bg-white dark:bg-card p-1 shadow-soft sm:inline-grid sm:w-auto sm:max-w-none"
         >
           {TABS.map((t, i) => {
             const active = tab === t.id;
@@ -100,7 +100,7 @@ export function PricingTabs() {
       >
         {/* Monthly / Yearly toggle */}
         <div className="mt-8 flex flex-col items-center gap-2.5">
-          <div className="inline-flex gap-1 rounded-full border border-border bg-white p-1 shadow-soft">
+          <div className="inline-flex gap-1 rounded-full border border-border bg-white dark:bg-card p-1 shadow-soft">
             {(['monthly', 'yearly'] as BillingPeriod[]).map((p) => {
               const active = period === p;
               return (
@@ -110,7 +110,7 @@ export function PricingTabs() {
                   onClick={() => setPeriod(p)}
                   aria-pressed={active}
                   className={`rounded-full px-5 py-2 text-sm font-semibold capitalize transition-all duration-200 ${
-                    active ? 'bg-text text-white shadow-soft-md' : 'text-text-muted hover:text-text'
+                    active ? 'bg-text text-white dark:bg-primary shadow-soft-md' : 'text-text-muted hover:text-text'
                   }`}
                 >
                   {p}

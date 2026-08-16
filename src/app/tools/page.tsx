@@ -59,7 +59,7 @@ export default function ToolsIndexPage() {
                 <a
                   key={g}
                   href={`#${g.toLowerCase()}`}
-                  className="px-4 py-2 rounded-full text-sm font-semibold bg-white text-text-muted border border-border hover:border-primary/40 hover:text-text transition-colors"
+                  className="px-4 py-2 rounded-full text-sm font-semibold bg-white dark:bg-card text-text-muted border border-border hover:border-primary/40 hover:text-text transition-colors"
                 >
                   {g}
                 </a>
@@ -88,7 +88,7 @@ export default function ToolsIndexPage() {
                   <Reveal key={tool.slug}>
                     <Link
                       href={`/tools/${tool.slug}`}
-                      className="group flex flex-col h-full bg-white border border-border rounded-2xl p-7 shadow-soft hover:shadow-soft-lg hover:-translate-y-1 hover:border-primary/30 transition-all duration-300"
+                      className="group flex flex-col h-full bg-white dark:bg-card border border-border rounded-2xl p-7 shadow-soft hover:shadow-soft-lg hover:-translate-y-1 hover:border-primary/30 transition-all duration-300"
                     >
                       <div className="flex items-start justify-between">
                         <span className={`w-14 h-14 rounded-2xl ${tool.tile} flex items-center justify-center group-hover:scale-105 transition-transform`}>

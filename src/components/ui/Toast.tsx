@@ -158,23 +158,23 @@ function ToastViewport({
 
 const variantStyles: Record<ToastVariant, { ring: string; icon: string; Icon: typeof CheckCircle2 }> = {
   success: {
-    ring: 'ring-1 ring-emerald-200/80',
-    icon: 'bg-emerald-50 text-emerald-600',
+    ring: 'ring-1 ring-emerald-200/80 dark:ring-emerald-500/25',
+    icon: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400',
     Icon: CheckCircle2,
   },
   error: {
-    ring: 'ring-1 ring-rose-200/80',
-    icon: 'bg-rose-50 text-rose-600',
+    ring: 'ring-1 ring-rose-200/80 dark:ring-rose-500/25',
+    icon: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400',
     Icon: XCircle,
   },
   warning: {
-    ring: 'ring-1 ring-amber-200/80',
-    icon: 'bg-amber-50 text-amber-600',
+    ring: 'ring-1 ring-amber-200/80 dark:ring-amber-500/25',
+    icon: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-warning',
     Icon: AlertTriangle,
   },
   info: {
-    ring: 'ring-1 ring-indigo-200/80',
-    icon: 'bg-indigo-50 text-indigo-600',
+    ring: 'ring-1 ring-indigo-200/80 dark:ring-indigo-500/25',
+    icon: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400',
     Icon: Info,
   },
 };
@@ -193,7 +193,7 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: str
       transition={{ type: 'spring', stiffness: 380, damping: 30 }}
       className={cn(
         'pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden',
-        'rounded-2xl bg-white p-4 pr-10 shadow-soft-lg',
+        'rounded-2xl bg-white dark:bg-card p-4 pr-10 shadow-soft-lg',
         style.ring,
       )}
     >

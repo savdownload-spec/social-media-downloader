@@ -199,7 +199,7 @@ export function PdfTool({ slug }: FunctionalToolProps) {
           onDragOver={(e) => e.preventDefault()}
           onDrop={onDrop}
           onClick={() => inputRef.current?.click()}
-          className="cursor-pointer rounded-3xl border-2 border-dashed border-border bg-white hover:border-primary/40 hover:bg-primary-light/20 transition-all duration-200 p-8 text-center"
+          className="cursor-pointer rounded-3xl border-2 border-dashed border-border bg-white dark:bg-card hover:border-primary/40 hover:bg-primary-light transition-all duration-200 p-8 text-center"
         >
           <input ref={inputRef} type="file" accept={accept} multiple={isMulti} className="hidden" onChange={onPick} />
           <div className="py-4 flex flex-col items-center gap-3">
@@ -216,11 +216,11 @@ export function PdfTool({ slug }: FunctionalToolProps) {
 
       {/* File list */}
       {!results && files.length > 0 && (
-        <div className="p-5 rounded-2xl border border-border bg-white shadow-soft space-y-4">
+        <div className="p-5 rounded-2xl border border-border bg-white dark:bg-card shadow-soft space-y-4">
           <ul className="space-y-2">
             {files.map((f, i) => (
               <li key={i} className="flex items-center gap-3 p-3 rounded-xl bg-surface">
-                <span className="w-9 h-9 rounded-lg bg-white border border-border flex items-center justify-center shrink-0">
+                <span className="w-9 h-9 rounded-lg bg-white dark:bg-card border border-border flex items-center justify-center shrink-0">
                   <FileText className="w-4 h-4 text-primary" />
                 </span>
                 <div className="flex-1 min-w-0">
@@ -231,19 +231,19 @@ export function PdfTool({ slug }: FunctionalToolProps) {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => move(i, -1)} disabled={i === 0}
-                      className="w-7 h-7 rounded-lg text-text-muted hover:bg-white disabled:opacity-30 text-xs"
+                      className="w-7 h-7 rounded-lg text-text-muted hover:bg-white dark:hover:bg-card disabled:opacity-30 text-xs"
                       aria-label="Move up"
                     >↑</button>
                     <button
                       onClick={() => move(i, 1)} disabled={i === files.length - 1}
-                      className="w-7 h-7 rounded-lg text-text-muted hover:bg-white disabled:opacity-30 text-xs"
+                      className="w-7 h-7 rounded-lg text-text-muted hover:bg-white dark:hover:bg-card disabled:opacity-30 text-xs"
                       aria-label="Move down"
                     >↓</button>
                   </div>
                 )}
                 <button
                   onClick={() => removeAt(i)}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-red-500 hover:bg-red-50 transition-colors"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/15 transition-colors"
                   aria-label="Remove file"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -259,7 +259,7 @@ export function PdfTool({ slug }: FunctionalToolProps) {
                 type="text" value={ranges}
                 onChange={(e) => setRanges(e.target.value)}
                 placeholder="e.g. 1-3,5,7-9"
-                className="w-full bg-white border border-border rounded-xl px-4 py-2.5 text-text focus:outline-none focus:border-primary"
+                className="w-full bg-white dark:bg-card border border-border rounded-xl px-4 py-2.5 text-text focus:outline-none focus:border-primary"
               />
               <p className="mt-1 text-[11px] text-text-subtle">Each comma-separated range becomes a separate file. Leave blank to split every page.</p>
             </div>
@@ -273,14 +273,14 @@ export function PdfTool({ slug }: FunctionalToolProps) {
 
       {/* Error */}
       {error && (
-        <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-100 rounded-2xl text-sm text-red-700">
+        <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-2xl text-sm text-red-700 dark:text-red-400">
           <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
         </div>
       )}
 
       {/* Loading */}
       {loading && (
-        <div className="flex items-center justify-center gap-3 p-6 bg-white border border-border rounded-2xl shadow-soft text-text-muted">
+        <div className="flex items-center justify-center gap-3 p-6 bg-white dark:bg-card border border-border rounded-2xl shadow-soft text-text-muted">
           <Loader2 className="w-5 h-5 animate-spin text-primary" />
           <span className="text-sm">Processing your files…</span>
         </div>
@@ -288,7 +288,7 @@ export function PdfTool({ slug }: FunctionalToolProps) {
 
       {/* Results */}
       {results && !loading && (
-        <div className="p-5 md:p-6 bg-white border border-border rounded-2xl shadow-soft-lg">
+        <div className="p-5 md:p-6 bg-white dark:bg-card border border-border rounded-2xl shadow-soft-lg">
           <div className="flex items-center gap-3 mb-4">
             <span className="w-11 h-11 rounded-xl bg-accent-light flex items-center justify-center">
               {results.length > 1 ? <Files className="w-5 h-5 text-accent-hover" /> : <FileText className="w-5 h-5 text-accent-hover" />}

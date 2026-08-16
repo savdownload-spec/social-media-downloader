@@ -22,9 +22,9 @@ export type MyReview = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  PENDING: 'bg-amber-50 text-amber-700',
-  APPROVED: 'bg-emerald-50 text-emerald-700',
-  REJECTED: 'bg-rose-50 text-rose-700',
+  PENDING: 'bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-warning',
+  APPROVED: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400',
+  REJECTED: 'bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-400',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -110,7 +110,7 @@ export function MyReviews({ reviews: initialReviews }: { reviews: MyReview[] }) 
   }
 
   return (
-    <div className="rounded-2xl bg-white border border-border shadow-soft p-6">
+    <div className="rounded-2xl bg-white dark:bg-card border border-border shadow-soft p-6">
       <h2 className="text-lg font-bold text-text mb-1">My Reviews</h2>
       <p className="text-sm text-text-muted mb-6">Reviews you&apos;ve submitted.</p>
 
@@ -127,7 +127,7 @@ export function MyReviews({ reviews: initialReviews }: { reviews: MyReview[] }) 
                       {STATUS_LABELS[r.status] ?? r.status}
                     </span>
                     {r.featured && (
-                      <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                      <span className="text-xs font-semibold text-amber-600 bg-amber-50 dark:bg-amber-500/15 dark:text-warning px-2 py-0.5 rounded-full">
                         ⭐ Featured
                       </span>
                     )}
@@ -159,7 +159,7 @@ export function MyReviews({ reviews: initialReviews }: { reviews: MyReview[] }) 
                     type="button"
                     onClick={() => handleDelete(r)}
                     aria-label="Delete review"
-                    className="w-8 h-8 rounded-lg hover:bg-rose-50 flex items-center justify-center text-text-muted hover:text-rose-600 transition-colors"
+                    className="w-8 h-8 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/15 flex items-center justify-center text-text-muted hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -225,7 +225,7 @@ export function MyReviews({ reviews: initialReviews }: { reviews: MyReview[] }) 
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
               rows={4}
-              className="w-full rounded-xl border border-border bg-white px-4 py-3 text-sm text-text focus:outline-none focus:border-primary/40 transition-colors resize-none"
+              className="w-full rounded-xl border border-border bg-white dark:bg-card px-4 py-3 text-sm text-text focus:outline-none focus:border-primary/40 transition-colors resize-none"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -236,7 +236,7 @@ export function MyReviews({ reviews: initialReviews }: { reviews: MyReview[] }) 
               <input
                 value={editRole}
                 onChange={(e) => setEditRole(e.target.value)}
-                className="w-full h-10 rounded-xl border border-border bg-white px-3 text-sm text-text focus:outline-none focus:border-primary/40 transition-colors"
+                className="w-full h-10 rounded-xl border border-border bg-white dark:bg-card px-3 text-sm text-text focus:outline-none focus:border-primary/40 transition-colors"
               />
             </div>
             <div>
@@ -246,7 +246,7 @@ export function MyReviews({ reviews: initialReviews }: { reviews: MyReview[] }) 
               <input
                 value={editCompany}
                 onChange={(e) => setEditCompany(e.target.value)}
-                className="w-full h-10 rounded-xl border border-border bg-white px-3 text-sm text-text focus:outline-none focus:border-primary/40 transition-colors"
+                className="w-full h-10 rounded-xl border border-border bg-white dark:bg-card px-3 text-sm text-text focus:outline-none focus:border-primary/40 transition-colors"
               />
             </div>
           </div>

@@ -32,8 +32,8 @@ export function UseCases() {
           const Icon = ICONS[i % ICONS.length];
           return (
             <Reveal key={c.title} delay={i * 0.05}>
-              <div className="group h-full rounded-2xl bg-surface border border-border-light p-7 hover:bg-white hover:shadow-soft-md hover:border-border transition-all duration-300">
-                <div className="w-12 h-12 rounded-2xl bg-white border border-border shadow-soft flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
+              <div className="group h-full rounded-2xl bg-surface border border-border-light p-7 hover:bg-white dark:hover:bg-card-hover hover:shadow-soft-md hover:border-border transition-all duration-300">
+                <div className="w-12 h-12 rounded-2xl bg-white dark:bg-card border border-border shadow-soft flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
                   <Icon className="w-6 h-6" />
                 </div>
                 <h3 className="mt-5 font-bold text-text">{c.title}</h3>

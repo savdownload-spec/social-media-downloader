@@ -131,7 +131,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
     .toUpperCase();
 
   return (
-    <div className="rounded-2xl bg-white border border-border shadow-soft p-6">
+    <div className="rounded-2xl bg-white dark:bg-card border border-border shadow-soft p-6">
       <h2 className="text-lg font-bold text-text mb-1">Profile</h2>
       <p className="text-sm text-text-muted mb-6">Your public profile information.</p>
 
@@ -218,7 +218,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
             onChange={(e) => setBio(e.target.value)}
             rows={3}
             placeholder="A short bio (optional)"
-            className="w-full rounded-2xl border border-border bg-white px-5 py-3.5 text-text placeholder:text-text-subtle focus:outline-none focus:border-primary focus:shadow-glow transition-all duration-200 resize-none"
+            className="w-full rounded-2xl border border-border bg-white dark:bg-card px-5 py-3.5 text-text placeholder:text-text-subtle focus:outline-none focus:border-primary focus:shadow-glow transition-all duration-200 resize-none"
           />
         </div>
 

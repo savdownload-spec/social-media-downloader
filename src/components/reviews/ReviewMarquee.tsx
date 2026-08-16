@@ -76,7 +76,7 @@ function MarqueeRow({ items, speed, direction, paused, onPauseChange }: MarqueeR
           >
             {/* Whole card is the link target. Hover lifts it slightly, deepens
                 the shadow and tints the border to signal it's clickable. */}
-            <div className="h-full rounded-2xl bg-white border border-border shadow-soft p-5 transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-soft-lg">
+            <div className="h-full rounded-2xl bg-white dark:bg-card border border-border shadow-soft p-5 transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/40 group-hover:shadow-soft-lg">
               <div className="flex items-center gap-1 text-amber-400 mb-2">
                 {Array.from({ length: 5 }).map((_, s) => (
                   <Star key={s} className={`w-3.5 h-3.5 ${s < review.rating ? 'fill-current' : 'fill-none text-text-subtle'}`} />

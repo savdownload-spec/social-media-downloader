@@ -64,7 +64,7 @@ function ResetPasswordClient() {
             ]}
           />
           <div className="max-w-md mx-auto text-center">
-            <div className="rounded-2xl bg-white border border-border shadow-soft p-8">
+            <div className="rounded-2xl bg-white dark:bg-card border border-border shadow-soft p-8">
               <h1 className="text-2xl font-bold tracking-tight mb-3">Password Updated</h1>
               <p className="text-sm text-text-muted mb-6">
                 Your password has been changed. You can now sign in with your new password.
@@ -101,9 +101,9 @@ function ResetPasswordClient() {
             </p>
           </div>
 
-          <div className="rounded-2xl bg-white border border-border shadow-soft p-6 md:p-8">
+          <div className="rounded-2xl bg-white dark:bg-card border border-border shadow-soft p-6 md:p-8">
             {!token ? (
-              <div className="rounded-xl bg-rose-50 border border-rose-200 p-4 text-sm text-rose-700">
+              <div className="rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/25 p-4 text-sm text-rose-700 dark:text-rose-400">
                 This reset link is invalid or has expired. Please request a new one.
               </div>
             ) : (

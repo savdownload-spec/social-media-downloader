@@ -53,7 +53,7 @@ export function Accordion({ items, multiple = false }: AccordionProps) {
         return (
           <div
             key={item.question}
-            className={`bg-white border rounded-2xl overflow-hidden shadow-soft transition-colors ${
+            className={`bg-white dark:bg-card border rounded-2xl overflow-hidden shadow-soft transition-colors ${
               isOpen ? 'border-primary/40' : 'border-border hover:border-primary/30'
             }`}
           >

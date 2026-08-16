@@ -58,19 +58,19 @@ export default function TermsPage() {
         <InfoBlockGrid cols={3}>
           <InfoBlock
             icon={<CheckCircle2 className="w-5 h-5" />}
-            tile="bg-emerald-50 text-emerald-600"
+            tile="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"
             title="Use SavDown freely"
             description="The service is free for personal, educational, and fair-use downloading of content you have the right to save."
           />
           <InfoBlock
             icon={<XCircle className="w-5 h-5" />}
-            tile="bg-rose-50 text-rose-600"
+            tile="bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400"
             title="Respect creators"
             description="Do not download or redistribute copyrighted content without permission. We follow DMCA takedowns strictly."
           />
           <InfoBlock
             icon={<AlertTriangle className="w-5 h-5" />}
-            tile="bg-amber-50 text-amber-600"
+            tile="bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-warning"
             title="Use it responsibly"
             description="No scraping, no automation, no abuse. Fair-use rate limits keep the service free for everyone."
           />
@@ -92,9 +92,9 @@ export default function TermsPage() {
           {acceptable.map((item, i) => (
             <li
               key={i}
-              className="flex items-start gap-3 p-5 bg-white border border-border-light rounded-2xl shadow-soft"
+              className="flex items-start gap-3 p-5 bg-white dark:bg-card border border-border-light rounded-2xl shadow-soft"
             >
-              <span className="mt-0.5 w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+              <span className="mt-0.5 w-6 h-6 rounded-full bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center flex-shrink-0">
                 <CheckCircle2 className="w-3.5 h-3.5" />
               </span>
               <span className="text-sm text-text leading-relaxed">{item}</span>
@@ -118,9 +118,9 @@ export default function TermsPage() {
           {prohibited.map((item, i) => (
             <li
               key={i}
-              className="flex items-start gap-3 p-5 bg-white border border-border-light rounded-2xl shadow-soft"
+              className="flex items-start gap-3 p-5 bg-white dark:bg-card border border-border-light rounded-2xl shadow-soft"
             >
-              <span className="mt-0.5 w-6 h-6 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center flex-shrink-0">
+              <span className="mt-0.5 w-6 h-6 rounded-full bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center flex-shrink-0">
                 <XCircle className="w-3.5 h-3.5" />
               </span>
               <span className="text-sm text-text leading-relaxed">{item}</span>
@@ -140,25 +140,25 @@ export default function TermsPage() {
         <InfoBlockGrid cols={2}>
           <InfoBlock
             icon={<BookOpen className="w-5 h-5" />}
-            tile="bg-violet-50 text-violet-600"
+            tile="bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400"
             title="Intellectual property"
             description="SavDown does not host, store, or claim ownership over any downloaded content. All content remains the property of its original creators. SavDown is a tool, how you use it is your responsibility."
           />
           <InfoBlock
             icon={<RefreshCw className="w-5 h-5" />}
-            tile="bg-sky-50 text-sky-600"
+            tile="bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400"
             title="Service availability"
             description="We aim for 99.9% uptime but make no guarantees. The service is provided 'as is' without warranty of any kind. We may modify, suspend, or discontinue any part of the service at any time."
           />
           <InfoBlock
             icon={<AlertTriangle className="w-5 h-5" />}
-            tile="bg-amber-50 text-amber-600"
+            tile="bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-warning"
             title="Rate limits"
             description="We enforce rate limits to keep the service fair for everyone. Excessive automated use may result in temporary or permanent blocks."
           />
           <InfoBlock
             icon={<Scale className="w-5 h-5" />}
-            tile="bg-indigo-50 text-indigo-600"
+            tile="bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400"
             title="Liability"
             description="SavDown is not liable for any damages arising from your use of the service, including but not limited to copyright infringement claims resulting from your downloads. You use the service at your own risk."
           />
@@ -174,13 +174,13 @@ export default function TermsPage() {
       </NarrowContent>
       <NarrowContent className="pb-16">
         <div className="space-y-4">
-          <div className="p-6 bg-white border border-border-light rounded-2xl shadow-soft">
+          <div className="p-6 bg-white dark:bg-card border border-border-light rounded-2xl shadow-soft">
             <h3 className="text-base font-bold text-text">DMCA</h3>
             <p className="mt-2 text-sm text-text-muted leading-relaxed">
               We respect intellectual property rights. See our <InfoCtaLink text="DMCA page" href="/dmca" /> for how to submit takedown notices.
             </p>
           </div>
-          <div className="p-6 bg-white border border-border-light rounded-2xl shadow-soft">
+          <div className="p-6 bg-white dark:bg-card border border-border-light rounded-2xl shadow-soft">
             <h3 className="text-base font-bold text-text">Changes to these terms</h3>
             <p className="mt-2 text-sm text-text-muted leading-relaxed">
               We may update these terms occasionally. Continued use of the service after changes constitutes acceptance. Material changes will be highlighted in the blog.

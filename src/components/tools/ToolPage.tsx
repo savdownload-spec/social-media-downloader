@@ -89,7 +89,7 @@ export function ToolPageView({ tool }: { tool: Tool }) {
           </div>
 
           <div className="mt-10 max-w-2xl mx-auto text-left">
-            <Suspense fallback={<div className="h-16 bg-white border border-border rounded-3xl shadow-soft-xl animate-pulse" />}>
+            <Suspense fallback={<div className="h-16 bg-white dark:bg-card border border-border rounded-3xl shadow-soft-xl animate-pulse" />}>
               <DownloaderForm
                 tool={{
                   slug: tool.slug,
@@ -104,7 +104,7 @@ export function ToolPageView({ tool }: { tool: Tool }) {
 
           <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
             {perks.map((p) => (
-              <div key={p.label} className="flex flex-col items-center text-center gap-2 p-6 bg-white/70 backdrop-blur border border-border-light rounded-2xl shadow-soft">
+              <div key={p.label} className="flex flex-col items-center text-center gap-2 p-6 bg-white/70 dark:bg-card/70 backdrop-blur border border-border-light rounded-2xl shadow-soft">
                 <div className="w-11 h-11 rounded-xl bg-gradient-brand flex items-center justify-center shadow-glow-lg">
                   <p.icon className="w-5 h-5 text-white" />
                 </div>
@@ -130,7 +130,7 @@ export function ToolPageView({ tool }: { tool: Tool }) {
           {tool.howTo.map((step, i) => (
             <div
               key={step.title}
-              className="group w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(25%-0.75rem)] min-w-[200px] max-w-xs p-6 bg-white border border-border rounded-2xl shadow-soft hover:shadow-soft-lg hover:-translate-y-1 transition-all duration-300"
+              className="group w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(25%-0.75rem)] min-w-[200px] max-w-xs p-6 bg-white dark:bg-card border border-border rounded-2xl shadow-soft hover:shadow-soft-lg hover:-translate-y-1 transition-all duration-300"
             >
               <div className="w-9 h-9 rounded-xl bg-gradient-brand text-white text-sm font-bold flex items-center justify-center shadow-glow-lg group-hover:scale-105 transition-transform">
                 {i + 1}
@@ -154,7 +154,7 @@ export function ToolPageView({ tool }: { tool: Tool }) {
           {tool.supportedFormats.map((f) => (
             <div
               key={f}
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white border border-border shadow-soft hover:border-primary/40 hover:shadow-soft-md transition-all"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white dark:bg-card border border-border shadow-soft hover:border-primary/40 hover:shadow-soft-md transition-all"
             >
               <CheckCircle2 className="w-4 h-4 text-accent" />
               <span className="font-medium text-text">{f}</span>
@@ -188,7 +188,7 @@ export function ToolPageView({ tool }: { tool: Tool }) {
                   <Link
                     key={r.slug}
                     href={`/tools/${r.slug}`}
-                    className="group flex flex-col h-full bg-white border border-border rounded-2xl p-7 shadow-soft hover:shadow-soft-lg hover:-translate-y-1 hover:border-primary/30 transition-all duration-300"
+                    className="group flex flex-col h-full bg-white dark:bg-card border border-border rounded-2xl p-7 shadow-soft hover:shadow-soft-lg hover:-translate-y-1 hover:border-primary/30 transition-all duration-300"
                   >
                     <div className="flex items-start justify-between">
                       <span className={`w-12 h-12 rounded-xl ${r.tile} flex items-center justify-center group-hover:scale-105 transition-transform`}>

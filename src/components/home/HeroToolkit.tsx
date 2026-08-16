@@ -7,7 +7,7 @@ function Tile({ tool }: { tool: CatalogTool }) {
   return (
     <Link
       href={`/tools/${tool.slug}`}
-      className="flex items-center gap-3 shrink-0 rounded-2xl bg-white border border-border shadow-soft px-4 py-3 hover:shadow-soft-md hover:border-primary/30 hover:-translate-y-0.5 transition-all"
+      className="flex items-center gap-3 shrink-0 rounded-2xl bg-white dark:bg-card border border-border shadow-soft px-4 py-3 hover:shadow-soft-md hover:border-primary/30 hover:-translate-y-0.5 transition-all"
     >
       <span className={`w-10 h-10 rounded-xl ${tool.tile} flex items-center justify-center`}>
         <Icon className="w-5 h-5" />

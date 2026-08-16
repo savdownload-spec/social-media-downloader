@@ -7,8 +7,8 @@ type Variant = 'default' | 'muted' | 'white' | 'tinted' | 'dark';
 const variants: Record<Variant, string> = {
   default: '',
   muted: 'bg-surface',
-  white: 'bg-white border-y border-border-light',
-  tinted: 'bg-gradient-brand-soft border-y border-border-light',
+  white: 'bg-white dark:bg-surface border-y border-border-light',
+  tinted: 'bg-gradient-brand-soft dark:bg-none dark:bg-surface border-y border-border-light',
   dark: 'bg-ink text-white',
 };
 

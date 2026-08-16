@@ -12,7 +12,7 @@ export function BlogCover({
   priority?: boolean;
 }) {
   return (
-    <div className={`relative overflow-hidden bg-gradient-brand-soft ${className}`}>
+    <div className={`relative overflow-hidden bg-gradient-brand-soft dark:bg-none dark:bg-card ${className}`}>
       {post.coverImage ? (
         <Image
           src={post.coverImage}

@@ -9,7 +9,7 @@ export function BlogSidebar({ post, headings, categories }: { post: BlogPost; he
   return (
     <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
       {headings.length >= 3 && (
-        <nav aria-label="Table of contents" className="rounded-2xl border border-border bg-white p-5 shadow-soft">
+        <nav aria-label="Table of contents" className="rounded-2xl border border-border bg-white dark:bg-card p-5 shadow-soft">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary"><ListTree className="h-4 w-4" /> In this guide</div>
           <ol className="mt-4 space-y-1.5">
             {headings.map((heading, index) => (
@@ -22,7 +22,7 @@ export function BlogSidebar({ post, headings, categories }: { post: BlogPost; he
           </ol>
         </nav>
       )}
-      <div className="rounded-2xl border border-border bg-white p-5 shadow-soft">
+      <div className="rounded-2xl border border-border bg-white dark:bg-card p-5 shadow-soft">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Explore topics</p>
         <div className="mt-4 space-y-1.5">
           {categories.map((category) => (
@@ -32,7 +32,7 @@ export function BlogSidebar({ post, headings, categories }: { post: BlogPost; he
           ))}
         </div>
       </div>
-      <div className="rounded-2xl border border-border bg-gradient-brand-soft p-5 shadow-soft">
+      <div className="rounded-2xl border border-border bg-gradient-brand-soft dark:bg-none dark:bg-card p-5 shadow-soft">
         <Mail className="h-5 w-5 text-primary" aria-hidden="true" />
         <h2 className="mt-3 text-lg font-semibold text-text">Useful updates, not noise</h2>
         <p className="mt-2 text-sm leading-6 text-text-muted">Get practical downloader guides, creator workflows, and clear format tips in one thoughtful email.</p>
@@ -40,7 +40,7 @@ export function BlogSidebar({ post, headings, categories }: { post: BlogPost; he
       </div>
       <BlogPromoCard post={post} />
       {post.tags.length > 0 && (
-        <div className="rounded-2xl border border-border bg-white p-5 shadow-soft">
+        <div className="rounded-2xl border border-border bg-white dark:bg-card p-5 shadow-soft">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-text-muted"><Tag className="h-3.5 w-3.5" /> Topics</div>
           <div className="mt-4 flex flex-wrap gap-2">{post.tags.slice(0, 6).map((tag) => <span key={tag} className="rounded-full bg-surface px-3 py-1.5 text-xs font-medium text-text-muted">{tag}</span>)}</div>
         </div>

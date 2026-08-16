@@ -85,7 +85,7 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
             className={
               variant === 'footer'
                 ? 'z-50 bg-ink border border-white/10 rounded-xl shadow-soft-lg py-2 max-h-[280px] overflow-y-auto'
-                : 'z-50 bg-white border border-border rounded-xl shadow-soft-lg py-2 max-h-[320px] overflow-y-auto'
+                : 'z-50 bg-white dark:bg-card border border-border rounded-xl shadow-soft-lg py-2 max-h-[320px] overflow-y-auto'
             }
           >
             {languages.map((lang) => (
@@ -96,7 +96,7 @@ export function LanguageSelector({ variant = 'header' }: LanguageSelectorProps) 
                   lang.code === language.code
                     ? variant === 'footer'
                       ? 'text-white bg-white/10'
-                      : 'text-primary bg-primary-light/50'
+                      : 'text-primary bg-primary-light'
                     : variant === 'footer'
                       ? 'text-ink-muted hover:text-white hover:bg-white/5'
                       : 'text-text-muted hover:text-text hover:bg-surface'

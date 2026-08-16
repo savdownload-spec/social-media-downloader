@@ -21,13 +21,13 @@ const variants: Record<Variant, string> = {
     'text-white bg-gradient-brand bg-[length:200%_200%] hover:bg-[position:100%_50%] ' +
     'shadow-glow-lg hover:shadow-[0_14px_48px_-8px_rgb(124_58_237_/_0.5)]',
   secondary:
-    'bg-white text-text hover:bg-white/90 shadow-soft-md hover:shadow-soft-lg',
+    'bg-white dark:bg-card text-text hover:bg-white/90 dark:hover:bg-card-hover shadow-soft-md hover:shadow-soft-lg',
   dark:
-    'bg-text text-white hover:bg-text/90 shadow-soft-md hover:shadow-soft-lg',
+    'bg-text text-white hover:bg-text/90 dark:bg-primary dark:hover:bg-primary-hover shadow-soft-md hover:shadow-soft-lg',
   ghost:
     'bg-transparent text-text hover:bg-surface',
   outline:
-    'bg-white text-text border border-border hover:border-primary/40 hover:bg-primary-light/40',
+    'bg-white dark:bg-card text-text border border-border hover:border-primary/40 hover:bg-primary-light',
 };
 
 const sizes: Record<Size, string> = {

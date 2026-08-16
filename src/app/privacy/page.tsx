@@ -16,42 +16,42 @@ export const metadata = buildMetadata({
 const principles = [
   {
     icon: <Lock className="w-5 h-5" />,
-    tile: 'bg-emerald-50 text-emerald-600',
+    tile: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400',
     title: 'We never store your downloads',
     description: 'The media files you download stream directly from the source. They never touch our disk.',
   },
   {
     icon: <Eye className="w-5 h-5" />,
-    tile: 'bg-violet-50 text-violet-600',
+    tile: 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400',
     title: 'We do not track you',
     description: 'No cross-site trackers, no ad pixels, no fingerprinting. We never sell or share your data.',
   },
   {
     icon: <Database className="w-5 h-5" />,
-    tile: 'bg-sky-50 text-sky-600',
+    tile: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400',
     title: 'Minimal data only',
     description: 'We collect the bare minimum needed to operate the service, and clearly explain each piece.',
   },
   {
     icon: <UserCheck className="w-5 h-5" />,
-    tile: 'bg-rose-50 text-rose-600',
+    tile: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400',
     title: 'You are in control',
     description: 'Access, correct, or delete your data at any time. We respond to requests within 30 days.',
   },
 ];
 
 const collect = [
-  { icon: <Server className="w-5 h-5" />, tile: 'bg-amber-50 text-amber-600', title: 'URLs you paste', body: 'Only for the duration of resolving your download. We cache metadata (title, thumbnail, formats) for up to 30 minutes to speed up repeat requests, then discard it.' },
-  { icon: <Globe className="w-5 h-5" />, tile: 'bg-indigo-50 text-indigo-600', title: 'Anonymous usage data', body: 'IP address hash, user agent, tool used, and timestamp, used only for rate limiting and aggregate analytics. Never linked back to you.' },
-  { icon: <UserCheck className="w-5 h-5" />, tile: 'bg-rose-50 text-rose-600', title: 'Account data (if you sign in)', body: 'Email, name, and profile image from your OAuth provider. Nothing more. We never ask for passwords.' },
-  { icon: <Mail className="w-5 h-5" />, tile: 'bg-fuchsia-50 text-fuchsia-600', title: 'Newsletter data (if you subscribe)', body: 'Just your email, used to send you the calm monthly update and absolutely nothing else.' },
+  { icon: <Server className="w-5 h-5" />, tile: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-warning', title: 'URLs you paste', body: 'Only for the duration of resolving your download. We cache metadata (title, thumbnail, formats) for up to 30 minutes to speed up repeat requests, then discard it.' },
+  { icon: <Globe className="w-5 h-5" />, tile: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400', title: 'Anonymous usage data', body: 'IP address hash, user agent, tool used, and timestamp, used only for rate limiting and aggregate analytics. Never linked back to you.' },
+  { icon: <UserCheck className="w-5 h-5" />, tile: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400', title: 'Account data (if you sign in)', body: 'Email, name, and profile image from your OAuth provider. Nothing more. We never ask for passwords.' },
+  { icon: <Mail className="w-5 h-5" />, tile: 'bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-500/15 dark:text-fuchsia-400', title: 'Newsletter data (if you subscribe)', body: 'Just your email, used to send you the calm monthly update and absolutely nothing else.' },
 ];
 
 const rights = [
-  { icon: <Eye className="w-5 h-5" />, tile: 'bg-sky-50 text-sky-600', title: 'Right to access', body: 'Ask what data we hold on you and we will send you a copy.' },
-  { icon: <FileText className="w-5 h-5" />, tile: 'bg-indigo-50 text-indigo-600', title: 'Right to correct', body: 'See something wrong? We will fix inaccurate information within 30 days.' },
-  { icon: <Trash2 className="w-5 h-5" />, tile: 'bg-rose-50 text-rose-600', title: 'Right to delete', body: 'One email and your account and all related data are gone, no hoops, no friction.' },
-  { icon: <Cookie className="w-5 h-5" />, tile: 'bg-amber-50 text-amber-600', title: 'Right to opt out', body: 'Decline optional analytics cookies, refuse marketing emails, and turn off anything non-essential.' },
+  { icon: <Eye className="w-5 h-5" />, tile: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400', title: 'Right to access', body: 'Ask what data we hold on you and we will send you a copy.' },
+  { icon: <FileText className="w-5 h-5" />, tile: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400', title: 'Right to correct', body: 'See something wrong? We will fix inaccurate information within 30 days.' },
+  { icon: <Trash2 className="w-5 h-5" />, tile: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400', title: 'Right to delete', body: 'One email and your account and all related data are gone, no hoops, no friction.' },
+  { icon: <Cookie className="w-5 h-5" />, tile: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-warning', title: 'Right to opt out', body: 'Decline optional analytics cookies, refuse marketing emails, and turn off anything non-essential.' },
 ];
 
 export default function PrivacyPage() {
@@ -136,8 +136,8 @@ export default function PrivacyPage() {
             'Device fingerprinting',
             'Behavioral profiling of any kind',
           ].map((item) => (
-            <div key={item} className="flex items-start gap-3 p-4 bg-white border border-border-light rounded-xl">
-              <span className="mt-0.5 w-5 h-5 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center flex-shrink-0">
+            <div key={item} className="flex items-start gap-3 p-4 bg-white dark:bg-card border border-border-light rounded-xl">
+              <span className="mt-0.5 w-5 h-5 rounded-full bg-rose-50 dark:bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center flex-shrink-0">
                 <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
               </span>
               <span className="text-sm text-text-muted leading-relaxed">{item}</span>
@@ -157,19 +157,19 @@ export default function PrivacyPage() {
         <div className="grid md:grid-cols-3 gap-5">
           <InfoBlock
             icon={<Cookie className="w-5 h-5" />}
-            tile="bg-amber-50 text-amber-600"
+            tile="bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-warning"
             title="Cookies"
             description="We use essential cookies for sign-in and rate limiting. Optional analytics only if you consent, see our Cookie Policy for the full list."
           />
           <InfoBlock
             icon={<Clock className="w-5 h-5" />}
-            tile="bg-sky-50 text-sky-600"
+            tile="bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400"
             title="Data retention"
             description="Download logs are kept for 90 days for abuse prevention, then deleted. Account data lives as long as your account exists."
           />
           <InfoBlock
             icon={<Server className="w-5 h-5" />}
-            tile="bg-indigo-50 text-indigo-600"
+            tile="bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400"
             title="Third parties"
             description="We use OAuth providers (Google, GitHub) for sign-in, Vercel for delivery, and a media-resolver micro-service. None of them receive personal data beyond what their function requires."
           />

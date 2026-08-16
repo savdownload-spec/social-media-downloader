@@ -29,13 +29,13 @@ const PLATFORM_LABELS: Record<string, { label: string; icon: string }> = {
 
 const PLATFORM_COLORS: Record<string, string> = {
   direct: 'bg-surface text-text-muted',
-  google: 'bg-blue-50 text-blue-600',
-  trustpilot: 'bg-emerald-50 text-emerald-600',
-  producthunt: 'bg-orange-50 text-orange-600',
-  facebook: 'bg-indigo-50 text-indigo-600',
-  g2: 'bg-violet-50 text-violet-600',
-  x: 'bg-slate-100 text-slate-600',
-  linkedin: 'bg-sky-50 text-sky-600',
+  google: 'bg-blue-50 text-blue-600 dark:bg-blue-500/15 dark:text-blue-400',
+  trustpilot: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400',
+  producthunt: 'bg-orange-50 text-orange-600 dark:bg-orange-500/15 dark:text-orange-400',
+  facebook: 'bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-400',
+  g2: 'bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-400',
+  x: 'bg-slate-100 text-slate-600 dark:bg-slate-500/15 dark:text-slate-300',
+  linkedin: 'bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400',
 };
 
 export function ReviewCard({ review }: { review: Review }) {
@@ -57,7 +57,7 @@ export function ReviewCard({ review }: { review: Review }) {
   return (
     <Link
       href={`/reviews?review=${review.id}`}
-      className="group flex flex-col h-full rounded-2xl bg-white border border-border shadow-soft hover:shadow-soft-lg hover:-translate-y-1 transition-all duration-300 p-6"
+      className="group flex flex-col h-full rounded-2xl bg-white dark:bg-card border border-border shadow-soft hover:shadow-soft-lg hover:-translate-y-1 transition-all duration-300 p-6"
     >
       <div className="flex items-center justify-between mb-3">
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${platformColor}`}>
@@ -65,7 +65,7 @@ export function ReviewCard({ review }: { review: Review }) {
           <span>{platformMeta.label}</span>
         </span>
         {review.featured && (
-          <span className="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+          <span className="text-xs font-semibold text-amber-600 bg-amber-50 dark:bg-amber-500/15 dark:text-warning px-2 py-1 rounded-full">
             ⭐ Featured
           </span>
         )}

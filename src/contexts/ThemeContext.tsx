@@ -22,7 +22,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'sd_theme_mode';
 const AUTO_RECHECK_MS = 5 * 60 * 1000; // catches a day/night boundary crossed mid-session
-const THEME_COLOR: Record<ResolvedTheme, string> = { light: '#FFFFFF', dark: '#0B0918' };
+const THEME_COLOR: Record<ResolvedTheme, string> = { light: '#FFFFFF', dark: '#0B0A14' };
 
 function applyTheme(resolved: ResolvedTheme) {
   const root = document.documentElement;

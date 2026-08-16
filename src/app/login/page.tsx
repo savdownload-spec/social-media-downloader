@@ -145,7 +145,7 @@ function LoginClient() {
             </p>
           </div>
 
-          <div className="rounded-2xl bg-white border border-border shadow-soft p-6 md:p-8">
+          <div className="rounded-2xl bg-white dark:bg-card border border-border shadow-soft p-6 md:p-8">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-6">
               {tabs.map((t) => (
                 <button
@@ -154,7 +154,7 @@ function LoginClient() {
                   onClick={() => switchTab(t.key)}
                   className={`px-4 py-2.5 rounded-2xl text-sm font-semibold transition-all active:scale-[0.98] ${
                     tab === t.key
-                      ? 'bg-text text-white shadow-soft-md'
+                      ? 'bg-text text-white dark:bg-primary shadow-soft-md'
                       : 'bg-surface text-text-muted hover:text-text hover:bg-surface/60'
                   }`}
                 >
@@ -169,7 +169,7 @@ function LoginClient() {
                 <button
                   type="button"
                   onClick={() => signIn('google', { callbackUrl })}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-2xl border border-border bg-white hover:bg-surface text-sm font-semibold text-text transition-all shadow-soft hover:shadow-soft-md active:scale-[0.98]"
+                  className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-2xl border border-border bg-white dark:bg-card hover:bg-surface text-sm font-semibold text-text transition-all shadow-soft hover:shadow-soft-md active:scale-[0.98]"
                 >
                   <GoogleIcon /> Continue with Google
                 </button>
@@ -218,7 +218,7 @@ function LoginClient() {
                 <button
                   type="button"
                   onClick={() => signIn('google', { callbackUrl })}
-                  className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-2xl border border-border bg-white hover:bg-surface text-sm font-semibold text-text transition-all shadow-soft hover:shadow-soft-md active:scale-[0.98]"
+                  className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-2xl border border-border bg-white dark:bg-card hover:bg-surface text-sm font-semibold text-text transition-all shadow-soft hover:shadow-soft-md active:scale-[0.98]"
                 >
                   <GoogleIcon /> Sign up with Google
                 </button>
@@ -290,13 +290,13 @@ function LoginClient() {
                 </div>
 
                 {resetSent && (
-                  <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-700">
+                  <div className="rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/25 p-3 text-sm text-emerald-700 dark:text-emerald-400">
                     If an account exists for that email, a reset link has been sent.
                   </div>
                 )}
 
                 {devResetLink && (
-                  <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-700 break-all">
+                  <div className="rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/25 p-3 text-sm text-amber-700 dark:text-warning break-all">
                     <p className="font-semibold mb-1">Development mode (no SMTP configured):</p>
                     <Link href={devResetLink} className="underline">
                       Open reset link

@@ -190,7 +190,7 @@ export function UniversalUrlInput() {
   return (
     <div className="mt-8 w-full max-w-3xl mx-auto text-left">
       <form onSubmit={submit} className="gradient-ring rounded-[26px] shadow-soft-xl">
-        <div className="p-2 bg-white rounded-[25px] flex flex-col sm:flex-row gap-2">
+        <div className="p-2 bg-white dark:bg-card rounded-[25px] flex flex-col sm:flex-row gap-2">
           <div className="relative flex-1 min-w-0">
             <Link2
               className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-text-subtle"
@@ -245,7 +245,7 @@ export function UniversalUrlInput() {
         </div>
       </form>
       {error && (
-        <p role="alert" className="mt-3 flex items-center gap-2 px-2 text-sm font-medium text-red-600">
+        <p role="alert" className="mt-3 flex items-center gap-2 px-2 text-sm font-medium text-red-600 dark:text-red-400">
           <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
         </p>

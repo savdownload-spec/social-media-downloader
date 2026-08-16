@@ -81,7 +81,7 @@ export function GenericToolPage({ tool }: { tool: CatalogTool }) {
               </Link>
               <Link
                 href="/contact"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-text bg-white border border-border hover:border-primary/40 hover:bg-primary-light/40 transition-all active:scale-[0.98]"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-text bg-white dark:bg-card border border-border hover:border-primary/40 hover:bg-primary-light transition-all active:scale-[0.98]"
               >
                 <Bell className="w-4 h-4" /> Request Early Access
               </Link>
@@ -103,7 +103,7 @@ export function GenericToolPage({ tool }: { tool: CatalogTool }) {
                 <Reveal key={r.slug}>
                   <Link
                     href={`/tools/${r.slug}`}
-                    className="group flex flex-col h-full bg-white border border-border rounded-2xl p-7 shadow-soft hover:shadow-soft-lg hover:-translate-y-1 hover:border-primary/30 transition-all duration-300"
+                    className="group flex flex-col h-full bg-white dark:bg-card border border-border rounded-2xl p-7 shadow-soft hover:shadow-soft-lg hover:-translate-y-1 hover:border-primary/30 transition-all duration-300"
                   >
                     <div className="flex items-start justify-between">
                       <span className={`w-12 h-12 rounded-xl ${r.tile} flex items-center justify-center group-hover:scale-105 transition-transform`}>

@@ -152,7 +152,7 @@ export function SupportChat() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 24, scale: 0.99 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-x-0 bottom-0 z-[105] flex max-h-[92dvh] flex-col overflow-hidden rounded-t-3xl border border-border bg-white shadow-soft-xl sm:inset-x-auto sm:bottom-5 sm:right-5 sm:max-h-[min(40rem,calc(100dvh-2.5rem))] sm:w-[400px] sm:rounded-3xl"
+            className="fixed inset-x-0 bottom-0 z-[105] flex max-h-[92dvh] flex-col overflow-hidden rounded-t-3xl border border-border bg-white dark:bg-card shadow-soft-xl sm:inset-x-auto sm:bottom-5 sm:right-5 sm:max-h-[min(40rem,calc(100dvh-2.5rem))] sm:w-[400px] sm:rounded-3xl"
             role="dialog"
             aria-label="Support"
           >
@@ -217,7 +217,7 @@ export function SupportChat() {
               {conversations.map((c) => {
                 const M = meta(c.category).icon;
                 return (
-                  <button key={c.id} onClick={() => { loadDetail(c.id); playTap(); }} className="flex w-full items-center gap-3 rounded-xl border border-border-light bg-white p-3 text-left transition-all hover:border-primary/30 hover:shadow-soft">
+                  <button key={c.id} onClick={() => { loadDetail(c.id); playTap(); }} className="flex w-full items-center gap-3 rounded-xl border border-border-light bg-white dark:bg-card p-3 text-left transition-all hover:border-primary/30 hover:shadow-soft">
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary-light text-primary"><M className="h-4 w-4" /></span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center justify-between gap-2">
@@ -257,7 +257,7 @@ export function SupportChat() {
                       key={key}
                       type="button"
                       onClick={() => { setCategory(key); playTap(); }}
-                      className="group flex flex-col gap-1.5 rounded-xl border border-border-light bg-white p-3 text-left transition-all duration-150 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft"
+                      className="group flex flex-col gap-1.5 rounded-xl border border-border-light bg-white dark:bg-card p-3 text-left transition-all duration-150 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-soft"
                     >
                       <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary-light text-primary transition-colors group-hover:bg-primary group-hover:text-white">
                         <Icon className="h-4 w-4" />
@@ -276,8 +276,8 @@ export function SupportChat() {
             ) : (
               <motion.form key="compose" onSubmit={startConversation} initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 8 }} transition={{ duration: 0.16 }} className="space-y-3">
                 {/* selected category */}
-                <div className="flex items-center gap-2.5 rounded-xl bg-primary-light/50 px-3 py-2.5">
-                  {(() => { const Icon = meta(category).icon; return <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white text-primary shadow-soft"><Icon className="h-4 w-4" /></span>; })()}
+                <div className="flex items-center gap-2.5 rounded-xl bg-primary-light px-3 py-2.5">
+                  {(() => { const Icon = meta(category).icon; return <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white dark:bg-card text-primary shadow-soft"><Icon className="h-4 w-4" /></span>; })()}
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold text-text">{label(category)}</span>
                     <span className="block truncate text-[11px] text-text-muted">{meta(category).desc}</span>
@@ -290,7 +290,7 @@ export function SupportChat() {
                   <textarea
                     required autoFocus value={message} onChange={(e) => setMessage(e.target.value)} rows={4} maxLength={5000}
                     placeholder={meta(category).placeholder}
-                    className="w-full resize-none rounded-xl border border-border bg-white p-3 text-sm leading-relaxed outline-none transition-shadow placeholder:text-text-subtle focus:border-primary focus:ring-2 focus:ring-primary/15"
+                    className="w-full resize-none rounded-xl border border-border bg-white dark:bg-card p-3 text-sm leading-relaxed outline-none transition-shadow placeholder:text-text-subtle focus:border-primary focus:ring-2 focus:ring-primary/15"
                   />
                   {message.length > 4000 && <p className="mt-1 text-right text-[11px] text-text-subtle">{message.length} / 5000</p>}
                 </div>
@@ -298,8 +298,8 @@ export function SupportChat() {
                 {!loggedIn && (
                   <div className="space-y-2 rounded-xl border border-border-light bg-surface/50 p-3">
                     <p className="text-[11px] text-text-muted">Add your email so our team can reply to you.</p>
-                    <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm outline-none transition-shadow focus:border-primary focus:ring-2 focus:ring-primary/15" />
-                    <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm outline-none transition-shadow focus:border-primary focus:ring-2 focus:ring-primary/15" />
+                    <input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" className="h-10 w-full rounded-lg border border-border bg-white dark:bg-card px-3 text-sm outline-none transition-shadow focus:border-primary focus:ring-2 focus:ring-primary/15" />
+                    <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email address" className="h-10 w-full rounded-lg border border-border bg-white dark:bg-card px-3 text-sm outline-none transition-shadow focus:border-primary focus:ring-2 focus:ring-primary/15" />
                   </div>
                 )}
 
@@ -337,7 +337,7 @@ export function SupportChat() {
 
         <div className="min-h-0 flex-1 overflow-y-auto bg-surface/40 px-4 py-4">
           {justCreated && (
-            <div className="mb-4 rounded-xl border border-accent/20 bg-accent-light/60 p-3.5">
+            <div className="mb-4 rounded-xl border border-accent/20 bg-accent-light p-3.5">
               <p className="flex items-center gap-1.5 text-sm font-semibold text-text"><Check className="h-4 w-4 text-accent-hover" /> Message sent</p>
               <p className="mt-1 text-xs leading-relaxed text-text-muted">Thanks for reaching out. Our support team will get back to you right here.</p>
               <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-text-subtle">
@@ -354,7 +354,7 @@ export function SupportChat() {
             if (system) return <p key={m.id} className="my-3 text-center text-[11px] text-text-subtle">{m.body}</p>;
             return (
               <div key={m.id} className={`mb-3 flex ${mine ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${mine ? 'rounded-br-sm bg-primary text-white' : 'rounded-bl-sm border border-border-light bg-white text-text shadow-soft'}`}>
+                <div className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${mine ? 'rounded-br-sm bg-primary text-white' : 'rounded-bl-sm border border-border-light bg-white dark:bg-card text-text shadow-soft'}`}>
                   <p className="whitespace-pre-wrap break-words">{m.body}</p>
                   {m.attachments.map((a) => (
                     <a key={a.id} href={attachmentUrl(a.id)} target="_blank" rel="noreferrer" className={`mt-2 flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs ${mine ? 'bg-white/15 text-white' : 'bg-surface text-primary'}`}>
@@ -370,7 +370,7 @@ export function SupportChat() {
         </div>
 
         {/* Composer */}
-        <div className="shrink-0 border-t border-border-light bg-white px-3 pt-2.5" style={{ paddingBottom: 'max(0.625rem, env(safe-area-inset-bottom))' }}>
+        <div className="shrink-0 border-t border-border-light bg-white dark:bg-card px-3 pt-2.5" style={{ paddingBottom: 'max(0.625rem, env(safe-area-inset-bottom))' }}>
           {files.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-1.5">
               {files.map((f, i) => (
@@ -384,7 +384,7 @@ export function SupportChat() {
               ))}
             </div>
           )}
-          <div className="flex items-end gap-1.5 rounded-2xl border border-border bg-white p-1.5 transition-shadow focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
+          <div className="flex items-end gap-1.5 rounded-2xl border border-border bg-white dark:bg-card p-1.5 transition-shadow focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
             <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf,text/plain" className="hidden" onChange={(e) => { const f = Array.from(e.target.files || []).slice(0, 4); setFiles(f); if (f.length) playAttach(); }} />
             <button type="button" onClick={() => fileRef.current?.click()} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-text-subtle transition-colors hover:bg-surface hover:text-primary" title="Attach screenshot" aria-label="Attach screenshot">
               <Plus className="h-5 w-5" />

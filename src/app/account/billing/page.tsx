@@ -92,7 +92,7 @@ export default async function BillingPage({
           )}
 
           {/* Plan */}
-          <div className="mt-8 rounded-2xl border border-border bg-white p-6 shadow-soft">
+          <div className="mt-8 rounded-2xl border border-border bg-white dark:bg-card p-6 shadow-soft">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
@@ -162,7 +162,7 @@ export default async function BillingPage({
           </div>
 
           {/* History */}
-          <div className="mt-6 rounded-2xl border border-border bg-white p-6 shadow-soft">
+          <div className="mt-6 rounded-2xl border border-border bg-white dark:bg-card p-6 shadow-soft">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
               Recent activity
             </p>
@@ -216,7 +216,7 @@ function BalanceTile({
   return (
     <div
       className={`rounded-2xl border p-5 ${
-        emphasis ? 'border-primary/20 bg-primary-light/40' : 'border-border bg-white'
+        emphasis ? 'border-primary/20 bg-primary-light' : 'border-border bg-white dark:bg-card'
       }`}
     >
       <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.13em] text-text-muted">

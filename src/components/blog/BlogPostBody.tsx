@@ -123,7 +123,7 @@ export function BlogPostBody({ post }: { post: BlogPost }) {
           <ol className="mt-4 grid gap-2">
             {headings.map((heading, index) => (
               <li key={heading.id}>
-                <a href={`#${heading.id}`} className={`flex gap-3 rounded-lg px-2 py-1.5 text-sm leading-5 text-text-muted transition-colors hover:bg-white hover:text-primary ${heading.level >= 3 ? 'pl-8' : ''}`}>
+                <a href={`#${heading.id}`} className={`flex gap-3 rounded-lg px-2 py-1.5 text-sm leading-5 text-text-muted transition-colors hover:bg-white dark:hover:bg-card-hover hover:text-primary ${heading.level >= 3 ? 'pl-8' : ''}`}>
                   <span className="font-semibold text-primary">{String(index + 1).padStart(2, '0')}</span>
                   <span>{heading.title}</span>
                 </a>

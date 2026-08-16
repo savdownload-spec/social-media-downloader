@@ -30,13 +30,13 @@ const GROUP_META_ICONS: Record<ToolGroup, {
   icon: React.ComponentType<{ className?: string }>;
   color: string;
 }> = {
-  Downloaders: { icon: MonitorPlay, color: 'text-violet-600 bg-violet-50'   },
-  Image:       { icon: Image,       color: 'text-sky-600 bg-sky-50'         },
-  Video:       { icon: Film,        color: 'text-rose-600 bg-rose-50'       },
-  PDF:         { icon: FileText,    color: 'text-orange-600 bg-orange-50'   },
-  AI:          { icon: Sparkles,    color: 'text-fuchsia-600 bg-fuchsia-50' },
-  SEO:         { icon: Search,      color: 'text-emerald-600 bg-emerald-50' },
-  Utility:     { icon: Layers,      color: 'text-slate-600 bg-slate-100'    },
+  Downloaders: { icon: MonitorPlay, color: 'text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-500/15'     },
+  Image:       { icon: Image,       color: 'text-sky-600 bg-sky-50 dark:text-sky-400 dark:bg-sky-500/15'                 },
+  Video:       { icon: Film,        color: 'text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/15'             },
+  PDF:         { icon: FileText,    color: 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-500/15'     },
+  AI:          { icon: Sparkles,    color: 'text-fuchsia-600 bg-fuchsia-50 dark:text-fuchsia-400 dark:bg-fuchsia-500/15' },
+  SEO:         { icon: Search,      color: 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/15' },
+  Utility:     { icon: Layers,      color: 'text-slate-600 bg-slate-100 dark:text-slate-300 dark:bg-slate-500/15'        },
 };
 
 const FEATURED_SLUGS = [
@@ -61,7 +61,7 @@ function ToolsPanel({ close }: { close: () => void }) {
     <div className="flex h-full min-h-0">
 
       {/* ── Zone 1: Category sidebar ── */}
-      <nav className="w-56 shrink-0 border-r border-border-light bg-[#fafafa] p-3 flex flex-col gap-0.5 overflow-y-auto">
+      <nav className="w-56 shrink-0 border-r border-border-light bg-[#fafafa] dark:bg-surface p-3 flex flex-col gap-0.5 overflow-y-auto">
         <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-widest text-text-subtle">{t('megaMenu.categories')}</p>
         {toolGroups.map((g) => {
           const { icon: GIcon, color } = GROUP_META_ICONS[g];
@@ -74,8 +74,8 @@ function ToolsPanel({ close }: { close: () => void }) {
               onClick={() => setActiveGroup(g)}
               className={`group flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-left transition-all ${
                 active
-                  ? 'bg-white shadow-soft border border-border text-text'
-                  : 'text-text-muted hover:text-text hover:bg-white/70'
+                  ? 'bg-white dark:bg-card shadow-soft border border-border text-text'
+                  : 'text-text-muted hover:text-text hover:bg-white/70 dark:hover:bg-card/70'
               }`}
             >
               <span className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center ${color}`}>
@@ -142,7 +142,7 @@ function ToolsPanel({ close }: { close: () => void }) {
       </div>
 
       {/* ── Zone 3: Spotlight ── */}
-      <div className="w-56 shrink-0 border-l border-border-light p-4 flex flex-col gap-2 bg-[#fafafa]">
+      <div className="w-56 shrink-0 border-l border-border-light p-4 flex flex-col gap-2 bg-[#fafafa] dark:bg-surface">
         <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{t('megaMenu.popular')}</p>
         {featured.map((tool) => {
           const TIcon = tool.icon;
@@ -152,7 +152,7 @@ function ToolsPanel({ close }: { close: () => void }) {
               key={tool.slug}
               href={`/tools/${tool.slug}`}
               onClick={close}
-              className="group flex items-center gap-3 p-3 rounded-xl bg-white border border-border hover:border-primary/30 hover:shadow-soft transition-all"
+              className="group flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-card border border-border hover:border-primary/30 hover:shadow-soft transition-all"
             >
               <span className={`w-9 h-9 rounded-xl shrink-0 flex items-center justify-center ${tool.tile}`}>
                 <TIcon className="w-4 h-4" />
@@ -168,7 +168,7 @@ function ToolsPanel({ close }: { close: () => void }) {
         })}
 
         {/* CTA card */}
-        <div className="mt-auto rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 border border-violet-100 p-4">
+        <div className="mt-auto rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 dark:from-violet-500/10 dark:to-fuchsia-500/10 border border-violet-100 dark:border-violet-500/20 p-4">
           <div className="w-8 h-8 rounded-xl bg-gradient-brand flex items-center justify-center shadow-glow mb-3">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
@@ -192,9 +192,9 @@ function ToolsPanel({ close }: { close: () => void }) {
    PRICING PANEL
 ═══════════════════════════════════════════════════════════ */
 const PRICING_TILE_STYLES: Record<string, { icon: typeof Zap; iconColor: string; iconBg: string }> = {
-  free:     { icon: Zap,      iconColor: 'text-emerald-600', iconBg: 'bg-emerald-50' },
+  free:     { icon: Zap,      iconColor: 'text-emerald-600 dark:text-emerald-400', iconBg: 'bg-emerald-50 dark:bg-emerald-500/15' },
   pro:      { icon: Sparkles, iconColor: 'text-primary',     iconBg: 'bg-primary-light' },
-  lifetime: { icon: Coins,    iconColor: 'text-amber-600',   iconBg: 'bg-amber-50' },
+  lifetime: { icon: Coins,    iconColor: 'text-amber-600 dark:text-warning',   iconBg: 'bg-amber-50 dark:bg-amber-500/15' },
 };
 
 /**
@@ -243,8 +243,8 @@ function PricingPanel({ close }: { close: () => void }) {
           return (
             <div key={tile.id} className={`relative flex flex-col rounded-2xl p-5 border transition-all ${
               tile.highlight
-                ? 'border-primary/30 bg-gradient-to-b from-primary-light/40 to-white shadow-soft-md'
-                : 'border-border bg-white hover:border-primary/20 hover:shadow-soft'
+                ? 'border-primary/30 bg-gradient-to-b from-primary-light to-white dark:to-card shadow-soft-md'
+                : 'border-border bg-white dark:bg-card hover:border-primary/20 hover:shadow-soft'
             }`}>
               {tile.highlight && (
                 <div className="absolute -top-3 inset-x-0 flex justify-center">
@@ -267,7 +267,7 @@ function PricingPanel({ close }: { close: () => void }) {
               <Link href={tile.href} onClick={close} className={`mt-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                 tile.highlight
                   ? 'bg-gradient-brand text-white shadow-glow hover:opacity-90'
-                  : 'bg-white border border-border text-text hover:border-primary/40 hover:text-primary'
+                  : 'bg-white dark:bg-card border border-border text-text hover:border-primary/40 hover:text-primary'
               }`}>
                 {tile.cta} <ArrowRight className="w-3.5 h-3.5" />
               </Link>
@@ -321,7 +321,7 @@ function BlogPanel({ close }: { close: () => void }) {
         {BLOG_TAGS.map((tagLabel) => (
           <button key={tagLabel} onClick={() => setTag(tagLabel)}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-              tag === tagLabel ? 'bg-primary text-white shadow-glow' : 'bg-surface text-text-muted hover:bg-primary-light/60 hover:text-primary'
+              tag === tagLabel ? 'bg-primary text-white shadow-glow' : 'bg-surface text-text-muted hover:bg-primary-light hover:text-primary'
             }`}>
             {tagLabel === 'All' ? t('common.all') : tagLabel}
           </button>
@@ -333,7 +333,7 @@ function BlogPanel({ close }: { close: () => void }) {
         {/* featured */}
         {posts[0] && (
           <Link href={`/blog/${posts[0].slug}`} onClick={close}
-            className="group w-56 shrink-0 flex flex-col rounded-2xl border border-border bg-white hover:border-primary/20 hover:shadow-soft transition-all overflow-hidden">
+            className="group w-56 shrink-0 flex flex-col rounded-2xl border border-border bg-white dark:bg-card hover:border-primary/20 hover:shadow-soft transition-all overflow-hidden">
             <div className={`h-28 bg-gradient-to-br ${POST_GRADIENTS[0]} flex items-center justify-center`}>
               <BookOpen className="w-10 h-10 text-white/90" />
             </div>
@@ -353,7 +353,7 @@ function BlogPanel({ close }: { close: () => void }) {
         <div className="flex-1 flex flex-col gap-2">
           {posts.slice(1, 5).map((post, i) => (
             <Link key={post.slug} href={`/blog/${post.slug}`} onClick={close}
-              className="group flex items-center gap-3 p-3 rounded-xl border border-border bg-white hover:border-primary/20 hover:shadow-soft transition-all">
+              className="group flex items-center gap-3 p-3 rounded-xl border border-border bg-white dark:bg-card hover:border-primary/20 hover:shadow-soft transition-all">
               <div className={`w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br ${POST_GRADIENTS[i % POST_GRADIENTS.length]} flex items-center justify-center`}>
                 <BookOpen className="w-5 h-5 text-white/90" />
               </div>
@@ -374,12 +374,12 @@ function BlogPanel({ close }: { close: () => void }) {
    RESOURCES PANEL
 ═══════════════════════════════════════════════════════════ */
 const RESOURCE_LINK_CONFIG = [
-  { key: 'faq',     icon: HelpCircle,    href: '/faq',    color: 'text-violet-600 bg-violet-50'  },
-  { key: 'blog',    icon: BookOpen,      href: '/blog',   color: 'text-sky-600 bg-sky-50'        },
-  { key: 'search',  icon: Search,        href: '/search',  color: 'text-emerald-600 bg-emerald-50'},
-  { key: 'contact', icon: MessageCircle, href: '/contact', color: 'text-pink-600 bg-pink-50'      },
-  { key: 'privacy', icon: Shield,        href: '/privacy', color: 'text-slate-600 bg-slate-100'   },
-  { key: 'terms',   icon: FileText,      href: '/terms',   color: 'text-orange-600 bg-orange-50'  },
+  { key: 'faq',     icon: HelpCircle,    href: '/faq',    color: 'text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-500/15'  },
+  { key: 'blog',    icon: BookOpen,      href: '/blog',   color: 'text-sky-600 bg-sky-50 dark:text-sky-400 dark:bg-sky-500/15'        },
+  { key: 'search',  icon: Search,        href: '/search',  color: 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/15'},
+  { key: 'contact', icon: MessageCircle, href: '/contact', color: 'text-pink-600 bg-pink-50 dark:text-pink-400 dark:bg-pink-500/15'      },
+  { key: 'privacy', icon: Shield,        href: '/privacy', color: 'text-slate-600 bg-slate-100 dark:text-slate-300 dark:bg-slate-500/15'   },
+  { key: 'terms',   icon: FileText,      href: '/terms',   color: 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-500/15'  },
 ] as const;
 
 function ResourcesPanel({ close }: { close: () => void }) {
@@ -397,7 +397,7 @@ function ResourcesPanel({ close }: { close: () => void }) {
           const link = t(`megaMenu.resourceLinks.${r.key}`) as unknown as { label: string; desc: string };
           return (
             <Link key={r.href} href={r.href} onClick={close}
-              className="group flex flex-col gap-3 p-4 rounded-2xl border border-border bg-white hover:border-primary/20 hover:shadow-soft transition-all">
+              className="group flex flex-col gap-3 p-4 rounded-2xl border border-border bg-white dark:bg-card hover:border-primary/20 hover:shadow-soft transition-all">
               <span className={`w-10 h-10 rounded-xl flex items-center justify-center ${r.color}`}>
                 <RIcon className="w-5 h-5" />
               </span>
@@ -428,12 +428,12 @@ function ResourcesPanel({ close }: { close: () => void }) {
    ABOUT PANEL
 ═══════════════════════════════════════════════════════════ */
 const ABOUT_LINK_CONFIG = [
-  { key: 'about',   icon: Info,     href: '/about',  color: 'text-violet-600 bg-violet-50'   },
-  { key: 'contact', icon: Mail,     href: '/contact', color: 'text-sky-600 bg-sky-50'         },
-  { key: 'pricing', icon: Sparkles, href: '/pricing',color: 'text-fuchsia-600 bg-fuchsia-50' },
-  { key: 'privacy', icon: Shield,   href: '/privacy', color: 'text-emerald-600 bg-emerald-50' },
-  { key: 'terms',   icon: FileText, href: '/terms',   color: 'text-orange-600 bg-orange-50'   },
-  { key: 'careers', icon: Users,    href: '/contact', color: 'text-rose-600 bg-rose-50'        },
+  { key: 'about',   icon: Info,     href: '/about',  color: 'text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-500/15'   },
+  { key: 'contact', icon: Mail,     href: '/contact', color: 'text-sky-600 bg-sky-50 dark:text-sky-400 dark:bg-sky-500/15'         },
+  { key: 'pricing', icon: Sparkles, href: '/pricing',color: 'text-fuchsia-600 bg-fuchsia-50 dark:text-fuchsia-400 dark:bg-fuchsia-500/15' },
+  { key: 'privacy', icon: Shield,   href: '/privacy', color: 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/15' },
+  { key: 'terms',   icon: FileText, href: '/terms',   color: 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-500/15'   },
+  { key: 'careers', icon: Users,    href: '/contact', color: 'text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/15'        },
 ] as const;
 
 const SOCIAL_LINKS = [
@@ -459,7 +459,7 @@ function AboutPanel({ close }: { close: () => void }) {
           const link = t(`megaMenu.aboutLinks.${a.key}`) as unknown as { label: string; desc: string };
           return (
             <Link key={a.key} href={a.href} onClick={close}
-              className="group flex flex-col gap-3 p-4 rounded-2xl border border-border bg-white hover:border-primary/20 hover:shadow-soft transition-all">
+              className="group flex flex-col gap-3 p-4 rounded-2xl border border-border bg-white dark:bg-card hover:border-primary/20 hover:shadow-soft transition-all">
               <span className={`w-10 h-10 rounded-xl flex items-center justify-center ${a.color}`}>
                 <AIcon className="w-5 h-5" />
               </span>
@@ -599,7 +599,7 @@ export function MegaMenu() {
               left: '50%',
               zIndex: 100,
             }}
-            className={`${PANEL_WIDTH[active]} ${PANEL_HEIGHT[active]} bg-white rounded-2xl border border-border-light shadow-[0_16px_64px_-12px_rgba(0,0,0,0.2)] overflow-hidden`}
+            className={`${PANEL_WIDTH[active]} ${PANEL_HEIGHT[active]} bg-white dark:bg-card rounded-2xl border border-border-light shadow-[0_16px_64px_-12px_rgba(0,0,0,0.2)] dark:shadow-[0_16px_64px_-12px_rgba(0,0,0,0.6)] overflow-hidden`}
             // Not role="dialog": focus is never moved into this panel and it
             // is not trapped, so announcing a dialog would set an expectation
             // the panel does not meet. It is a disclosure region revealed by

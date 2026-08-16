@@ -49,7 +49,7 @@ export function ComparisonTable() {
           </thead>
           <tbody>
             {rows.map((row, i) => (
-              <tr key={row.label} className={i % 2 === 0 ? 'bg-white' : 'bg-surface/60'}>
+              <tr key={row.label} className={i % 2 === 0 ? 'bg-white dark:bg-card' : 'bg-surface/60'}>
                 <td className="rounded-l-lg px-4 py-3 text-left text-sm font-medium text-text">{row.label}</td>
                 <td className="px-4 py-3 align-middle">
                   <Cell value={row.free} />

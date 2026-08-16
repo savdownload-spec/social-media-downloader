@@ -176,7 +176,7 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
   return (
     <div className="w-full">
       <div className="gradient-ring rounded-[26px] shadow-soft-xl">
-        <div className="p-2 bg-white rounded-[25px] flex flex-col sm:flex-row gap-3">
+        <div className="p-2 bg-white dark:bg-card rounded-[25px] flex flex-col sm:flex-row gap-3">
           <Input
             value={url}
             onChange={(e) => { setUrl(e.target.value); setError(''); }}
@@ -198,7 +198,7 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="mt-4 flex items-center gap-2 p-4 bg-red-50 border border-red-100 rounded-2xl text-sm text-red-700"
+            className="mt-4 flex items-center gap-2 p-4 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-2xl text-sm text-red-700 dark:text-red-400"
           >
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
             {error}
@@ -211,7 +211,7 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="mt-6 p-6 bg-white border border-border rounded-2xl shadow-soft flex items-center gap-3 text-text-muted"
+            className="mt-6 p-6 bg-white dark:bg-card border border-border rounded-2xl shadow-soft flex items-center gap-3 text-text-muted"
           >
             <Loader2 className="w-5 h-5 animate-spin text-primary" />
             <span className="text-sm">Analyzing your link…</span>
@@ -223,7 +223,7 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
             key="result"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-6 p-5 md:p-6 bg-white border border-border rounded-2xl shadow-soft-lg"
+            className="mt-6 p-5 md:p-6 bg-white dark:bg-card border border-border rounded-2xl shadow-soft-lg"
           >
             <div className="flex flex-col md:flex-row gap-5">
               {result.thumbnail && (
@@ -235,7 +235,7 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-white/90 dark:bg-card/90 flex items-center justify-center">
                       <Play className="w-4 h-4 text-text ml-0.5" />
                     </div>
                   </div>
@@ -259,7 +259,7 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
                         key={key}
                         onClick={() => handleDownload(f)}
                         disabled={isOtherDownloading}
-                        className="relative inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-text text-white text-sm font-medium hover:bg-text/90 active:scale-[0.98] transition-all overflow-hidden disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="relative inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-text text-white hover:bg-text/90 dark:bg-primary dark:hover:bg-primary-hover text-sm font-medium active:scale-[0.98] transition-all overflow-hidden disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {isDownloading && (
                           <span

@@ -85,10 +85,10 @@ export function CopyButton({
 
   const variantClass =
     variant === 'solid'
-      ? 'bg-text text-white hover:bg-text/90 shadow-soft'
+      ? 'bg-text text-white hover:bg-text/90 dark:bg-primary dark:hover:bg-primary-hover shadow-soft'
       : variant === 'ghost'
       ? 'text-text-muted hover:text-text hover:bg-surface'
-      : 'bg-white text-text border border-border hover:border-primary/40 hover:bg-primary-light/30';
+      : 'bg-white dark:bg-card text-text border border-border hover:border-primary/40 hover:bg-primary-light';
 
   return (
     <button

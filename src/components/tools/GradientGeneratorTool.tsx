@@ -102,21 +102,21 @@ export function GradientGeneratorTool() {
           <button
             key={p.name}
             onClick={() => applyPreset(p)}
-            className="px-3 py-1.5 rounded-full text-xs font-semibold border border-border bg-white hover:border-primary/40 hover:text-primary text-text-muted transition-all"
+            className="px-3 py-1.5 rounded-full text-xs font-semibold border border-border bg-white dark:bg-card hover:border-primary/40 hover:text-primary text-text-muted transition-all"
           >
             {p.name}
           </button>
         ))}
         <button
           onClick={randomise}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-border bg-white hover:border-primary/40 hover:text-primary text-text-muted transition-all"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-border bg-white dark:bg-card hover:border-primary/40 hover:text-primary text-text-muted transition-all"
         >
           <RefreshCw className="w-3 h-3" /> Random
         </button>
       </div>
 
       {/* Controls */}
-      <div className="p-5 rounded-2xl border border-border bg-white shadow-soft space-y-5">
+      <div className="p-5 rounded-2xl border border-border bg-white dark:bg-card shadow-soft space-y-5">
         {/* Type + angle */}
         <div className="flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-[120px]">
@@ -129,7 +129,7 @@ export function GradientGeneratorTool() {
                   className={`flex-1 py-2 rounded-xl text-xs font-semibold capitalize transition-all ${
                     type === t
                       ? 'bg-primary text-white shadow-glow'
-                      : 'bg-surface text-text-muted hover:text-text hover:bg-primary-light/40'
+                      : 'bg-surface text-text-muted hover:text-text hover:bg-primary-light'
                   }`}
                 >
                   {t}
@@ -179,7 +179,7 @@ export function GradientGeneratorTool() {
                 <button
                   onClick={() => removeStop(i)}
                   disabled={stops.length <= 2}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-30"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/15 transition-colors disabled:opacity-30"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>

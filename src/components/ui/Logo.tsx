@@ -5,8 +5,11 @@ import { cn } from '@/lib/utils';
 const ASPECT_RATIO = 500 / 88;
 
 type LogoProps = {
-  /** 'dark' renders the black wordmark (for light surfaces, e.g. the header).
-   *  'light' renders the white wordmark (for dark surfaces, e.g. the footer). */
+  /** 'dark' renders on the header's default surface, which itself adapts
+   *  with the site theme — so this variant swaps the wordmark (black/white)
+   *  via CSS to match, with no theme state needed from the caller.
+   *  'light' forces the white wordmark regardless of site theme (e.g. the
+   *  footer, whose background is always dark). */
   variant?: 'dark' | 'light';
   height?: number;
   className?: string;
@@ -15,20 +18,42 @@ type LogoProps = {
 };
 
 export function Logo({ variant = 'dark', height = 32, className, linked = true }: LogoProps) {
-  const src = variant === 'light' ? '/logo-white.png' : '/logo-black.png';
   const width = Math.round(height * ASPECT_RATIO);
+  const style = { height, width: 'auto' } as const;
 
-  const img = (
-    <Image
-      src={src}
-      alt="SavDown"
-      width={width}
-      height={height}
-      priority
-      className={cn('w-auto', className)}
-      style={{ height, width: 'auto' }}
-    />
-  );
+  const img =
+    variant === 'light' ? (
+      <Image
+        src="/logo-white.png"
+        alt="SavDown"
+        width={width}
+        height={height}
+        priority
+        className={cn('w-auto', className)}
+        style={style}
+      />
+    ) : (
+      <span className="inline-flex">
+        <Image
+          src="/logo-black.png"
+          alt="SavDown"
+          width={width}
+          height={height}
+          priority
+          className={cn('w-auto block dark:hidden', className)}
+          style={style}
+        />
+        <Image
+          src="/logo-white.png"
+          alt="SavDown"
+          width={width}
+          height={height}
+          priority
+          className={cn('w-auto hidden dark:block', className)}
+          style={style}
+        />
+      </span>
+    );
 
   if (!linked) return img;
 

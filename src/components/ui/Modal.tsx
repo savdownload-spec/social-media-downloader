@@ -120,7 +120,7 @@ export function Modal({
             exit={{ opacity: 0, y: 12, scale: 0.98, transition: { duration: 0.15 } }}
             transition={{ type: 'spring', stiffness: 380, damping: 30 }}
             className={cn(
-              'relative w-full overflow-hidden rounded-3xl bg-white shadow-soft-xl',
+              'relative w-full overflow-hidden rounded-3xl bg-white dark:bg-card shadow-soft-xl',
               'max-h-[calc(100vh-2rem)] flex flex-col',
               sizeClass[size],
             )}
@@ -235,7 +235,7 @@ export function ConfirmDialogShell({
               'inline-flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold transition-all',
               pending?.variant === 'danger'
                 ? 'bg-rose-600 text-white hover:bg-rose-700 shadow-soft'
-                : 'bg-text text-white hover:bg-text/90 shadow-soft',
+                : 'bg-text text-white hover:bg-text/90 dark:bg-primary dark:hover:bg-primary-hover shadow-soft',
             )}
           >
             {pending?.confirmLabel ?? 'Confirm'}

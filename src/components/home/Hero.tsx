@@ -23,32 +23,32 @@ export function Hero() {
       label: t('hero.trusted'),
       detail: 'Creators choose SavDown',
       icon: Users,
-      iconClass: 'text-violet-600',
-      iconBg: 'bg-violet-50',
+      iconClass: 'text-violet-600 dark:text-violet-400',
+      iconBg: 'bg-violet-50 dark:bg-violet-500/15',
     },
     {
       value: '100%',
       label: t('hero.stats.free'),
       detail: 'No paywall, no catch',
       icon: ShieldCheck,
-      iconClass: 'text-emerald-600',
-      iconBg: 'bg-emerald-50',
+      iconClass: 'text-emerald-600 dark:text-emerald-400',
+      iconBg: 'bg-emerald-50 dark:bg-emerald-500/15',
     },
     {
       value: '0',
       label: t('hero.stats.dataStored'),
       detail: 'Your files stay yours',
       icon: Database,
-      iconClass: 'text-sky-600',
-      iconBg: 'bg-sky-50',
+      iconClass: 'text-sky-600 dark:text-sky-400',
+      iconBg: 'bg-sky-50 dark:bg-sky-500/15',
     },
     {
       value: '4.9',
       label: t('hero.stats.rating'),
       detail: 'Loved by the community',
       icon: Star,
-      iconClass: 'text-amber-600',
-      iconBg: 'bg-amber-50',
+      iconClass: 'text-amber-600 dark:text-warning',
+      iconBg: 'bg-amber-50 dark:bg-amber-500/15',
       star: true,
     },
   ];
@@ -65,7 +65,7 @@ export function Hero() {
 
       <Container className="relative pt-20 pb-24 md:pt-28 md:pb-28">
         <div className="reveal text-center max-w-3xl mx-auto">
-          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/70 backdrop-blur border border-border text-xs font-medium text-text-muted shadow-soft">
+          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/70 dark:bg-card/70 backdrop-blur border border-border text-xs font-medium text-text-muted shadow-soft">
             <span className="flex items-center gap-0.5 text-amber-400">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star key={i} className="w-3 h-3 fill-current" />
@@ -91,7 +91,7 @@ export function Hero() {
             </Link>
             <Link
               href="/#how-it-works"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-text bg-white border border-border hover:border-primary/40 hover:bg-primary-light/40 transition-all active:scale-[0.98]"
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-text bg-white dark:bg-card border border-border hover:border-primary/40 hover:bg-primary-light transition-all active:scale-[0.98]"
             >
               {t('hero.howItWorks')} <ArrowRight className="w-4 h-4" />
             </Link>
@@ -117,7 +117,7 @@ export function Hero() {
 
         {/* Trust proof strip */}
         <div className="reveal mt-14 max-w-4xl mx-auto" style={{ animationDelay: '0.24s' }}>
-          <div className="rounded-[1.75rem] border border-border bg-white/70 backdrop-blur shadow-soft p-2.5 md:p-3">
+          <div className="rounded-[1.75rem] border border-border bg-white/70 dark:bg-card/70 backdrop-blur shadow-soft p-2.5 md:p-3">
             <div className="flex flex-col gap-3 px-3 pb-2 pt-1 md:flex-row md:items-end md:justify-between md:px-4 md:pb-3">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Why users trust SavDown</p>
@@ -126,13 +126,13 @@ export function Hero() {
               <span className="hidden h-px flex-1 bg-gradient-to-r from-border-light via-border to-transparent md:ml-8 md:block" aria-hidden />
             </div>
 
-            <dl className="grid grid-cols-2 overflow-hidden rounded-2xl border border-border-light bg-white/65 md:grid-cols-4">
+            <dl className="grid grid-cols-2 overflow-hidden rounded-2xl border border-border-light bg-white/65 dark:bg-card/65 md:grid-cols-4">
               {heroStats.map((s, index) => {
                 const Icon = s.icon;
                 return (
                   <div
                     key={s.label}
-                    className={`group relative flex min-h-[118px] flex-col justify-between gap-4 p-4 transition-colors duration-200 hover:bg-primary-light/30 md:min-h-[126px] md:p-5 ${index < 2 ? 'border-b border-border-light md:border-b-0' : ''} ${index < heroStats.length - 1 ? 'md:border-r' : ''}`}
+                    className={`group relative flex min-h-[118px] flex-col justify-between gap-4 p-4 transition-colors duration-200 hover:bg-primary-light md:min-h-[126px] md:p-5 ${index < 2 ? 'border-b border-border-light md:border-b-0' : ''} ${index < heroStats.length - 1 ? 'md:border-r' : ''}`}
                   >
                     <dt className="sr-only">{s.label}</dt>
                     <div className="flex items-start justify-between gap-3">

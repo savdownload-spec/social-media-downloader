@@ -52,7 +52,7 @@ export function HighlightFrame({
   if (variant === 'none') {
     return (
       <div className="relative h-full">
-        <div className={cn('h-full rounded-3xl border border-border bg-white shadow-soft', className)}>
+        <div className={cn('h-full rounded-3xl border border-border bg-white dark:bg-card shadow-soft', className)}>
           {children}
         </div>
       </div>
@@ -82,7 +82,7 @@ export function HighlightFrame({
           (rounded-3xl = 32px) minus the padding (1.5px) = 30.5px, or the
           gradient bunches up thicker at the corners than along the edges. */}
       <div className={cn('h-full rounded-3xl bg-gradient-to-br p-[1.5px]', styles.border, styles.glow)}>
-        <div className={cn('h-full rounded-[30.5px] bg-white', className)}>{children}</div>
+        <div className={cn('h-full rounded-[30.5px] bg-white dark:bg-card', className)}>{children}</div>
       </div>
     </div>
   );

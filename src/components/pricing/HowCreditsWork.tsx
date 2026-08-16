@@ -21,7 +21,7 @@ export function HowCreditsWork() {
         {creditFlow.map((step, i) => (
           <div key={step.title} className="contents">
             <Reveal delay={i * 0.08} className="flex-1">
-              <div className="h-full rounded-2xl border border-border bg-white p-6 text-center shadow-soft">
+              <div className="h-full rounded-2xl border border-border bg-white dark:bg-card p-6 text-center shadow-soft">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-brand text-white shadow-glow-lg">
                   <step.icon className="h-5 w-5" />
                 </div>
@@ -46,7 +46,7 @@ export function HowCreditsWork() {
         {creditCosts.map((cost) => (
           <div
             key={cost.label}
-            className="rounded-2xl border border-border bg-white p-6 text-center shadow-soft"
+            className="rounded-2xl border border-border bg-white dark:bg-card p-6 text-center shadow-soft"
           >
             <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-brand shadow-glow-lg">
               <cost.icon className="h-5 w-5 text-white" />

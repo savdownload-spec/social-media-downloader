@@ -30,7 +30,7 @@ export function Breadcrumb({ items, className, includeSchema = false }: { items:
           )}
         />
       )}
-      <ol className="inline-flex max-w-full items-center gap-1 sm:gap-1.5 rounded-full border border-border-light bg-white/70 px-3 sm:px-4 py-2 text-xs sm:text-sm shadow-soft backdrop-blur">
+      <ol className="inline-flex max-w-full items-center gap-1 sm:gap-1.5 rounded-full border border-border-light bg-white/70 dark:bg-card/70 px-3 sm:px-4 py-2 text-xs sm:text-sm shadow-soft backdrop-blur">
         {items.map((item, i) => {
           const isFirst = i === 0;
           const isLast = i === items.length - 1;
