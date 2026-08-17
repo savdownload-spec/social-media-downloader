@@ -111,21 +111,19 @@ export async function POST(req: Request) {
   );
 
   /* ── 6. Log download (non-blocking) ── */
-  if (result.ok) {
-    void prisma.download
-      .create({
-        data: {
-          platform:  tool.platform,
-          tool:      tool.slug,
-          sourceUrl: body.url,
-          status:    'success',
-          userId:    gate.userId,
-          ipHash:    await sha256(ip),
-          userAgent: req.headers.get('user-agent') ?? null,
-        },
-      })
-      .catch(() => { /* ignore DB errors */ });
-  }
+  void prisma.download
+    .create({
+      data: {
+        platform:  tool.platform,
+        tool:      tool.slug,
+        sourceUrl: body.url,
+        status:    result.ok ? 'success' : 'failed',
+        userId:    gate.userId,
+        ipHash:    await sha256(ip),
+        userAgent: req.headers.get('user-agent') ?? null,
+      },
+    })
+    .catch(() => { /* ignore DB errors */ });
 
   return NextResponse.json(result, {
     headers: {

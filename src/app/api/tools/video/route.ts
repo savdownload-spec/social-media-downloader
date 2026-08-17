@@ -91,7 +91,12 @@ export async function POST(req: Request) {
 
   const filename = `${baseName}.${result.extension}`;
 
-  await gate.spend('Video tool');
+  if (!(await gate.spend('Video tool'))) {
+    return NextResponse.json(
+      { error: 'Your balance changed before this could be charged. Please retry.' },
+      { status: 402 },
+    );
+  }
   return new NextResponse(Buffer.from(result.buffer), {
     status: 200,
     headers: {

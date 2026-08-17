@@ -232,6 +232,7 @@ export type BillingSummary = {
   purchasedCredits: number;
   totalCredits: number;
   planCreditsResetAt: Date | null;
+  role: string;
 };
 
 /**
@@ -251,6 +252,7 @@ export async function getBillingSummary(userId: string): Promise<BillingSummary 
       planCredits: true,
       planCreditsResetAt: true,
       purchasedCredits: true,
+      role: true,
     },
   });
   if (!user) return null;
@@ -277,6 +279,7 @@ export async function getBillingSummary(userId: string): Promise<BillingSummary 
       purchasedCredits: user.purchasedCredits,
       totalCredits: allowance.credits + user.purchasedCredits,
       planCreditsResetAt: resetAt,
+      role: user.role,
     };
   }
 
@@ -286,6 +289,7 @@ export async function getBillingSummary(userId: string): Promise<BillingSummary 
     purchasedCredits: user.purchasedCredits,
     totalCredits: user.planCredits + user.purchasedCredits,
     planCreditsResetAt: user.planCreditsResetAt,
+    role: user.role,
   };
 }
 

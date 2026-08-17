@@ -38,7 +38,7 @@ export function costForHeight(height: number): number {
 }
 
 export type CreditGate =
-  | { ok: true; userId: string; spend: (description: string) => Promise<void> }
+  | { ok: true; userId: string; spend: (description: string) => Promise<boolean> }
   | { ok: false; response: NextResponse };
 
 type GateOptions = {
@@ -77,6 +77,16 @@ export async function requireCredits({ cost, plainText }: GateOptions): Promise<
     return { ok: false, response: errorResponse('Account not found.', 401, plainText) };
   }
 
+  // The session's role claim can be stale (JWTs are not re-read from the DB on
+  // every request), so a suspension must be enforced from this fresh read, not
+  // from `session.user.role`.
+  if (summary.role === 'SUSPENDED') {
+    return {
+      ok: false,
+      response: errorResponse('This account has been suspended.', 403, plainText),
+    };
+  }
+
   if (cost > 0 && summary.totalCredits < cost) {
     return {
       ok: false,
@@ -92,9 +102,13 @@ export async function requireCredits({ cost, plainText }: GateOptions): Promise<
   return {
     ok: true,
     userId,
+    // Returns whether the charge actually landed. The up-front balance check
+    // above is only advisory — two concurrent requests can both pass it, so
+    // callers MUST check this return value and refuse to hand back the result
+    // (the paid-for file, merge, conversion, etc.) if it comes back `false`.
     spend: async (description: string) => {
-      if (cost <= 0) return;
-      await spendCredits(userId, cost, description);
+      if (cost <= 0) return true;
+      return spendCredits(userId, cost, description);
     },
   };
 }

@@ -40,7 +40,12 @@ export async function GET(req: Request) {
 
   const base = filename.replace(/\.[^.]+$/, '');
   const buffer = Buffer.from(result.buffer);
-  await gate.spend('URL to GIF');
+  if (!(await gate.spend('URL to GIF'))) {
+    return NextResponse.json(
+      { error: 'Your balance changed before this could be charged. Please retry.' },
+      { status: 402 },
+    );
+  }
   return new NextResponse(buffer, {
     status: 200,
     headers: {

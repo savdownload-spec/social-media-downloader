@@ -34,7 +34,12 @@ export async function POST(req: Request) {
   const result = await imagesToPdf(buffers);
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 422 });
 
-  await gate.spend('JPG to PDF');
+  if (!(await gate.spend('JPG to PDF'))) {
+    return NextResponse.json(
+      { error: 'Your balance changed before this could be charged. Please retry.' },
+      { status: 402 },
+    );
+  }
   return new NextResponse(Buffer.from(result.buffers[0]!.buffer), {
     headers: {
       'Content-Type':        'application/pdf',

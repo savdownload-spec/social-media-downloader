@@ -103,7 +103,11 @@ export async function GET(req: Request) {
     const safeFilename = filename.replace(/[/\\?%*:|"<>]/g, '-').slice(0, 200);
 
     // Charged once the upstream has accepted and the body is on its way.
-    await gate.spend(`Download — ${safeFilename}`);
+    if (!(await gate.spend(`Download — ${safeFilename}`))) {
+      return new NextResponse('Your balance changed before this could be charged. Please retry.', {
+        status: 402,
+      });
+    }
 
     return new NextResponse(upstream.body, {
       status: 200,

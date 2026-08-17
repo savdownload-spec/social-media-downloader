@@ -10,6 +10,11 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
 
   const summary = await getBillingSummary(session.user.id);
 
+  // The JWT's role claim is only refreshed on sign-in, so a suspension made
+  // after the user's session was issued would otherwise go unnoticed here
+  // until the token naturally rotates. Check the fresh DB read instead.
+  if (summary?.role === 'SUSPENDED') redirect('/login?callbackUrl=/workspace&suspended=1');
+
   return (
     <WorkspaceShell
       user={{

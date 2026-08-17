@@ -94,7 +94,12 @@ export async function GET(req: Request) {
     }
 
     const buffer = await readFile(outPath);
-    await gate.spend(`${height}p download`);
+    if (!(await gate.spend(`${height}p download`))) {
+      return NextResponse.json(
+        { error: 'Your balance changed before this could be charged. Please retry.' },
+        { status: 402 },
+      );
+    }
     return new NextResponse(buffer, {
       status: 200,
       headers: {

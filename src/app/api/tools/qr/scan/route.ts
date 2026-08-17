@@ -60,7 +60,12 @@ export async function POST(req: Request) {
       );
     }
 
-    await gate.spend('QR scan');
+    if (!(await gate.spend('QR scan'))) {
+      return NextResponse.json(
+        { error: 'Your balance changed before this could be charged. Please retry.' },
+        { status: 402 },
+      );
+    }
 
     return NextResponse.json({
       ok:   true,

@@ -72,7 +72,12 @@ export async function POST(req: Request) {
         type: 'svg',
       } as QRCode.QRCodeToStringOptions);
 
-      await gate.spend('QR code (SVG)');
+      if (!(await gate.spend('QR code (SVG)'))) {
+        return NextResponse.json(
+          { error: 'Your balance changed before this could be charged. Please retry.' },
+          { status: 402 },
+        );
+      }
       return new NextResponse(svg, {
         headers: {
           'Content-Type':        'image/svg+xml',
@@ -89,7 +94,12 @@ export async function POST(req: Request) {
         type: 'image/png',
       } as QRCode.QRCodeToDataURLOptions);
 
-      await gate.spend('QR code (base64)');
+      if (!(await gate.spend('QR code (base64)'))) {
+        return NextResponse.json(
+          { error: 'Your balance changed before this could be charged. Please retry.' },
+          { status: 402 },
+        );
+      }
       return NextResponse.json({ ok: true, dataUrl });
     }
 
@@ -99,7 +109,12 @@ export async function POST(req: Request) {
       type: 'png',
     } as QRCode.QRCodeToBufferOptions);
 
-    await gate.spend('QR code (PNG)');
+    if (!(await gate.spend('QR code (PNG)'))) {
+      return NextResponse.json(
+        { error: 'Your balance changed before this could be charged. Please retry.' },
+        { status: 402 },
+      );
+    }
     return new NextResponse(pngBuffer.buffer as ArrayBuffer, {
       headers: {
         'Content-Type':        'image/png',

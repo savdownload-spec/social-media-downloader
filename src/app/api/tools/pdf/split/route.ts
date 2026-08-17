@@ -39,7 +39,12 @@ export async function POST(req: Request) {
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 422 });
 
   // The split succeeded, so both response shapes below are billable.
-  await gate.spend('PDF split');
+  if (!(await gate.spend('PDF split'))) {
+    return NextResponse.json(
+      { error: 'Your balance changed before this could be charged. Please retry.' },
+      { status: 402 },
+    );
+  }
 
   // Single result → return binary directly
   if (result.buffers.length === 1) {

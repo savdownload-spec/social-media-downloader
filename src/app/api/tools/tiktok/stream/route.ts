@@ -91,7 +91,12 @@ export async function GET(req: Request) {
 
     if (!extractAudio) {
       const buffer = await readFile(videoPath);
-      await gate.spend('TikTok video download');
+      if (!(await gate.spend('TikTok video download'))) {
+        return NextResponse.json(
+          { error: 'Your balance changed before this could be charged. Please retry.' },
+          { status: 402 },
+        );
+      }
       return new NextResponse(buffer, {
         status: 200,
         headers: {
@@ -114,7 +119,12 @@ export async function GET(req: Request) {
     }
 
     const buffer = await readFile(mp3Path);
-    await gate.spend('TikTok audio download');
+    if (!(await gate.spend('TikTok audio download'))) {
+      return NextResponse.json(
+        { error: 'Your balance changed before this could be charged. Please retry.' },
+        { status: 402 },
+      );
+    }
     return new NextResponse(buffer, {
       status: 200,
       headers: {

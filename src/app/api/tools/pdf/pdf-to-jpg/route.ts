@@ -39,7 +39,12 @@ export async function POST(req: Request) {
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 422 });
 
   // The conversion succeeded, so both response shapes below are billable.
-  await gate.spend('PDF to JPG');
+  if (!(await gate.spend('PDF to JPG'))) {
+    return NextResponse.json(
+      { error: 'Your balance changed before this could be charged. Please retry.' },
+      { status: 402 },
+    );
+  }
 
   if (result.buffers.length === 1) {
     return new NextResponse(Buffer.from(result.buffers[0]!.buffer), {
