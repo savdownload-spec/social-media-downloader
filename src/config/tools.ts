@@ -1454,28 +1454,6 @@ export const tools: Tool[] = [
       { title: 'Paste And Download', body: 'Save the GIF as a real GIF or as MP4.' },
     ],
   },
-  {
-    slug: 'ai-image-generator',
-    platform: 'ai',
-    name: 'AI Image Generator',
-    shortName: 'AI Image Generator',
-    headline: 'Create Images From Your Ideas.',
-    subheadline: 'Turn a text prompt into an original image.',
-    description: 'Create original images from a prompt with SavDown AI Image Generator.',
-    keywords: ['ai image generator', 'text to image generator', 'ai image creator'],
-    placeholder: 'Describe the image you want to create…',
-    urlPattern: /^$/,
-    outputKind: 'image',
-    supportedFormats: ['PNG'],
-    featured: true,
-    trending: true,
-    faq: [],
-    howTo: [
-      { title: 'Describe your idea', body: 'Write the subject, style, setting, and details you want to see.' },
-      { title: 'Choose your output', body: 'Select the ratio, quality, and number of images.' },
-      { title: 'Download your result', body: 'Review the image on the page and download it.' },
-    ],
-  },
 ];
 export const toolsBySlug = new Map(tools.map((t) => [t.slug, t]));
 export const toolsByPlatform = tools.reduce<Record<Platform, Tool[]>>(

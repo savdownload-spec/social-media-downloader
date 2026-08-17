@@ -293,4 +293,18 @@ export const functionalToolContent: Record<string, FunctionalToolContent> = {
       { question: 'How do I check my schema is valid?', answer: 'Paste the generated JSON-LD into Google\'s Rich Results Test or the Schema.org validator to confirm it parses correctly before publishing.' },
     ],
   },
+
+  /* ── AI ── */
+  'ai-image-generator': {
+    howTo: [
+      { title: 'Describe your idea', body: 'Write the subject, style, setting, and details you want to see.' },
+      { title: 'Choose your output', body: 'Select the ratio, quality, and number of images.' },
+      { title: 'Download your result', body: 'Review the image on the page and download it.' },
+    ],
+    faq: [
+      { question: 'How many SavCredits does an image cost?', answer: 'The current cost is shown next to the Generate Image button before you submit. Cost can vary with image count and quality, so there are no surprises at checkout.' },
+      { question: 'What happens if generation fails?', answer: 'SavDown releases or refunds reserved credits when a generation fails. You will see a clear message instead of a raw provider error.' },
+      { question: 'Is there a free daily limit?', answer: 'Free accounts get a limited number of generations per day, shown when you reach it. Paid plans have a higher per-request image limit.' },
+    ],
+  },
 };

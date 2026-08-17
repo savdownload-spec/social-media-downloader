@@ -59,6 +59,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   downloads     Download[]
+  aiImageGenerations AiImageGeneration[]
   reviews       Review[]
   blogComments  BlogComment[] @relation("BlogCommentAuthor")
   moderatedBlogComments BlogComment[] @relation("BlogCommentModerator")
@@ -180,6 +181,29 @@ model Download {
   @@index([tool, createdAt])
   @@index([platform, createdAt])
   @@index([userId])
+}
+
+/// Dedicated history for AI image generations. `Download` above is an
+/// intentionally minimal write-only marker shared by every tool; this table
+/// holds the extra per-generation metadata (model, aspect ratio, quality,
+/// cost, failure reason) that the AI Image Generator's history view needs
+/// and `Download` has no columns for.
+model AiImageGeneration {
+  id             String   @id @default(cuid())
+  userId         String
+  prompt         String   @db.Text
+  aspectRatio    String
+  quality        String
+  model          String
+  numberOfImages Int
+  creditsUsed    Int
+  status         String // success | failed
+  failureReason  String?
+  createdAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 model AnalyticsEvent {

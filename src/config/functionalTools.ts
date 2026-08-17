@@ -23,6 +23,7 @@ import { PdfTool } from '@/components/tools/PdfTool';
 import { QrGeneratorTool } from '@/components/tools/QrGeneratorTool';
 import { QrScannerTool } from '@/components/tools/QrScannerTool';
 import { SeoTool } from '@/components/tools/SeoTool';
+import { AIImageGenerator } from '@/components/tools/AIImageGenerator';
 
 /** Props every functional-tool component accepts. */
 export type FunctionalToolProps = {
@@ -78,6 +79,9 @@ const functionalTools: Record<string, FunctionalToolEntry> = {
   'youtube-tags-generator':     { Component: SeoTool },
   'keyword-generator':          { Component: SeoTool },
   'schema-generator':           { Component: SeoTool },
+
+  /* ── AI tools (Cloudflare Workers AI) ────────────────────────── */
+  'ai-image-generator': { Component: AIImageGenerator },
 };
 
 /** Returns the live tool entry for a slug, or undefined if it isn't built yet. */

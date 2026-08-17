@@ -6,17 +6,19 @@ import { AlertCircle, Download, ImagePlus, Loader2, RefreshCw, Sparkles, WandSpa
 type GenerationStatus = 'idle' | 'validating' | 'generating' | 'completed' | 'failed' | 'insufficient_credits' | 'rate_limited' | 'unavailable';
 type ImageResult = { url: string; revisedPrompt?: string; id: string };
 
-type BalanceResponse = { ok: boolean; authenticated: boolean; credits?: number; creditCost?: number; message?: string };
+type BalanceResponse = { ok: boolean; authenticated: boolean; credits?: number; creditCost?: number; highQualityMultiplier?: number; maxImagesPerRequest?: number; message?: string };
 
 const ratioOptions = [
   { value: '1:1', label: 'Square', hint: '1:1' },
-  { value: '4:5', label: 'Portrait', hint: '4:5' },
   { value: '16:9', label: 'Landscape', hint: '16:9' },
+  { value: '9:16', label: 'Portrait', hint: '9:16' },
+  { value: '4:3', label: 'Standard', hint: '4:3' },
+  { value: '3:2', label: 'Classic', hint: '3:2' },
 ];
 
 const qualityOptions = [
-  { value: 'standard', label: 'Standard', costMultiplier: 1 },
-  { value: 'high', label: 'High quality', costMultiplier: 1.4 },
+  { value: 'standard', label: 'Standard' },
+  { value: 'high', label: 'High quality' },
 ];
 
 function statusCopy(status: GenerationStatus) {
@@ -41,16 +43,24 @@ export function AIImageGenerator() {
   const [error, setError] = useState('');
   const [balance, setBalance] = useState<number | null>(null);
   const [baseCost, setBaseCost] = useState(5);
+  const [highMultiplier, setHighMultiplier] = useState(1.4);
+  const [maxImages, setMaxImages] = useState(4);
   const [authenticated, setAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
     fetch('/api/tools/ai-image-generator', { method: 'GET' })
       .then((response) => response.json() as Promise<BalanceResponse>)
-      .then((data) => { setAuthenticated(data.authenticated); if (typeof data.credits === 'number') setBalance(data.credits); if (typeof data.creditCost === 'number') setBaseCost(data.creditCost); })
+      .then((data) => {
+        setAuthenticated(data.authenticated);
+        if (typeof data.credits === 'number') setBalance(data.credits);
+        if (typeof data.creditCost === 'number') setBaseCost(data.creditCost);
+        if (typeof data.highQualityMultiplier === 'number') setHighMultiplier(data.highQualityMultiplier);
+        if (typeof data.maxImagesPerRequest === 'number') { setMaxImages(data.maxImagesPerRequest); setCount((current) => Math.min(current, data.maxImagesPerRequest!)); }
+      })
       .catch(() => setAuthenticated(null));
   }, []);
 
-  const estimatedCost = useMemo(() => Math.ceil(baseCost * count * (quality === 'high' ? 1.4 : 1)), [baseCost, count, quality]);
+  const estimatedCost = useMemo(() => Math.ceil(baseCost * count * (quality === 'high' ? highMultiplier : 1)), [baseCost, count, quality, highMultiplier]);
   const busy = status === 'validating' || status === 'generating';
 
   async function generate() {
@@ -95,7 +105,7 @@ export function AIImageGenerator() {
       <div className="mt-5 grid gap-4 md:grid-cols-3">
         <label className="block"><span className="text-sm font-semibold text-text">Aspect ratio</span><select value={ratio} onChange={(event) => setRatio(event.target.value)} disabled={busy} className="mt-2 w-full rounded-xl border border-border bg-surface px-3 py-3 text-sm text-text outline-none focus:border-primary focus:ring-4 focus:ring-primary/10">{ratioOptions.map((option) => <option key={option.value} value={option.value}>{option.label} · {option.hint}</option>)}</select></label>
         <label className="block"><span className="text-sm font-semibold text-text">Image size / quality</span><select value={quality} onChange={(event) => setQuality(event.target.value)} disabled={busy} className="mt-2 w-full rounded-xl border border-border bg-surface px-3 py-3 text-sm text-text outline-none focus:border-primary focus:ring-4 focus:ring-primary/10">{qualityOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-        <label className="block"><span className="text-sm font-semibold text-text">Number of images</span><select value={count} onChange={(event) => setCount(Number(event.target.value))} disabled={busy} className="mt-2 w-full rounded-xl border border-border bg-surface px-3 py-3 text-sm text-text outline-none focus:border-primary focus:ring-4 focus:ring-primary/10">{[1, 2, 3, 4].map((value) => <option key={value} value={value}>{value} {value === 1 ? 'image' : 'images'}</option>)}</select></label>
+        <label className="block"><span className="text-sm font-semibold text-text">Number of images</span><select value={count} onChange={(event) => setCount(Number(event.target.value))} disabled={busy} className="mt-2 w-full rounded-xl border border-border bg-surface px-3 py-3 text-sm text-text outline-none focus:border-primary focus:ring-4 focus:ring-primary/10">{[1, 2, 3, 4].map((value) => <option key={value} value={value} disabled={value > maxImages}>{value} {value === 1 ? 'image' : 'images'}{value > maxImages ? ' · Pro' : ''}</option>)}</select></label>
       </div>
 
       <div className="mt-6 flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between"><p className="text-sm text-text-muted">This request uses <strong className="text-text">{estimatedCost} SavCredits</strong>.</p><button type="button" onClick={generate} disabled={busy} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-gradient-brand px-6 py-3 font-semibold text-white shadow-glow-lg transition hover:-translate-y-0.5 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60">{busy ? <Loader2 className="h-5 w-5 animate-spin" /> : <WandSparkles className="h-5 w-5" />}{busy ? 'Creating your image…' : 'Generate Image'}<span className="rounded-lg bg-white/15 px-2 py-0.5 text-xs">{estimatedCost} credits</span></button></div>

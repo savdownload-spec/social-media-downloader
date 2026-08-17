@@ -10,6 +10,7 @@ import {
   Wrench,
   BarChart3,
   Coins,
+  Sparkles,
   CreditCard,
   DollarSign,
   Tag,
@@ -57,6 +58,7 @@ const NAV_GROUPS: NavGroup[] = [
     section: 'Product',
     items: [
       { label: 'Tools', href: '/admin/tools', icon: Wrench },
+      { label: 'AI Image Generator', href: '/admin/ai-image', icon: Sparkles },
       { label: 'Usage', href: '/admin/usage', icon: BarChart3 },
       { label: 'Credits', href: '/admin/credits', icon: Coins },
     ],

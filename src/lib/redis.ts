@@ -11,6 +11,8 @@ import { Redis as UpstashRedis } from '@upstash/redis';
 type MinimalRedis = {
   get: (key: string) => Promise<string | null>;
   set: (key: string, value: string, ttlSeconds?: number) => Promise<unknown>;
+  /** Atomically sets `key` only if it doesn't already exist. Returns whether the lock was acquired. */
+  setNx: (key: string, value: string, ttlSeconds: number) => Promise<boolean>;
   incr: (key: string) => Promise<number>;
   expire: (key: string, ttlSeconds: number) => Promise<unknown>;
   del: (key: string) => Promise<unknown>;
@@ -29,6 +31,7 @@ export function getRedis(): MinimalRedis | null {
     client = {
       get: async (k) => (await r.get<string>(k)) ?? null,
       set: async (k, v, ttl) => (ttl ? r.set(k, v, { ex: ttl }) : r.set(k, v)),
+      setNx: async (k, v, ttl) => (await r.set(k, v, { nx: true, ex: ttl })) !== null,
       incr: (k) => r.incr(k),
       expire: (k, ttl) => r.expire(k, ttl),
       del: (k) => r.del(k),
@@ -42,6 +45,7 @@ export function getRedis(): MinimalRedis | null {
     client = {
       get: (k) => r.get(k),
       set: async (k, v, ttl) => (ttl ? r.set(k, v, 'EX', ttl) : r.set(k, v)),
+      setNx: async (k, v, ttl) => (await r.set(k, v, 'EX', ttl, 'NX')) === 'OK',
       incr: (k) => r.incr(k),
       expire: (k, ttl) => r.expire(k, ttl),
       del: (k) => r.del(k),
