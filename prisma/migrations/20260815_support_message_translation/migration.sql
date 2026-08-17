@@ -1,0 +1,1 @@
+﻿ALTER TABLE "SupportMessage" ADD COLUMN "originalMessage" TEXT, ADD COLUMN "detectedLanguage" TEXT, ADD COLUMN "translatedMessage" TEXT, ADD COLUMN "translationStatus" TEXT NOT NULL DEFAULT 'PENDING';
