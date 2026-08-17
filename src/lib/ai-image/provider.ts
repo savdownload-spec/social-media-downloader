@@ -62,9 +62,48 @@ class OpenAIImageProvider implements ImageProvider {
   }
 }
 
+function dimensionsFor(ratio: ImageProviderInput['aspectRatio'], quality: ImageProviderInput['quality']) {
+  const base = ratio === '16:9' ? { width: 1280, height: 720 } : ratio === '4:5' ? { width: 1024, height: 1280 } : { width: 1024, height: 1024 };
+  if (quality !== 'high') return base;
+  const scale = 1.3;
+  return { width: Math.round(base.width * scale), height: Math.round(base.height * scale) };
+}
+
+/** Free, keyless text-to-image API (https://pollinations.ai). No account or credentials required. */
+class PollinationsImageProvider implements ImageProvider {
+  async generate(input: ImageProviderInput) {
+    const { width, height } = dimensionsFor(input.aspectRatio, input.quality);
+    const timeoutMs = envNumber('AI_PROVIDER_TIMEOUT_MS', 60000);
+    const jobs = Array.from({ length: input.numberOfImages }, async () => {
+      const seed = Math.floor(Math.random() * 1_000_000_000);
+      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(input.prompt)}?width=${width}&height=${height}&seed=${seed}&nologo=true&model=flux`;
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(url, { signal: controller.signal, cache: 'no-store' });
+        if (response.status === 429) throw new ImageProviderError('rate_limited');
+        if (!response.ok) throw new ImageProviderError('unavailable');
+        const buffer = await response.arrayBuffer();
+        if (buffer.byteLength < 1000) throw new ImageProviderError('failed');
+        const contentType = response.headers.get('content-type') || 'image/jpeg';
+        const base64 = Buffer.from(buffer).toString('base64');
+        return { url: `data:${contentType};base64,${base64}`, revisedPrompt: input.prompt };
+      } catch (error) {
+        if (error instanceof ImageProviderError) throw error;
+        if (error instanceof Error && error.name === 'AbortError') throw new ImageProviderError('timeout');
+        throw new ImageProviderError('failed');
+      } finally {
+        clearTimeout(timeout);
+      }
+    });
+    return Promise.all(jobs);
+  }
+}
+
 export function getImageProvider(): ImageProvider {
-  switch ((process.env.AI_PROVIDER || 'mock').toLowerCase()) {
+  switch ((process.env.AI_PROVIDER || 'pollinations').toLowerCase()) {
     case 'openai': return new OpenAIImageProvider();
+    case 'pollinations': return new PollinationsImageProvider();
     case 'mock': return new MockImageProvider();
     default: throw new ImageProviderError('unavailable');
   }

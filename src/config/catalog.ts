@@ -104,6 +104,7 @@ const aiTools: CatalogTool[] = [
   { slug: 'ai-description-generator', name: 'AI Description Generator', group: 'AI', description: 'Write compelling descriptions in seconds.', icon: FileText, tile: TILE.blue },
   { slug: 'ai-hashtag-generator', name: 'AI Hashtag Generator', group: 'AI', description: 'Get relevant, trending hashtags with AI.', icon: Hash, tile: TILE.purple },
   { slug: 'ai-caption-generator', name: 'AI Caption Generator', group: 'AI', description: 'Generate captions for any post with AI.', icon: MessageSquareText, tile: TILE.teal },
+  { slug: 'ai-image-generator', name: 'AI Image Generator', group: 'AI', description: 'Turn a text prompt into an original image.', icon: Wand2, tile: TILE.purple },
 ];
 
 const seoTools: CatalogTool[] = [
