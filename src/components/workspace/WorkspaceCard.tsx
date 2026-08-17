@@ -42,8 +42,8 @@ export function WorkspaceCard({ href, icon: Icon, tile, title, description, meta
         )}
       </div>
       <div className="flex-1">
-        <h3 className="text-[15px] font-bold text-text">{title}</h3>
-        <p className="mt-1 text-sm text-text-muted leading-snug line-clamp-2">{description}</p>
+        <h3 className="text-base font-bold text-text tracking-tight">{title}</h3>
+        <p className="mt-1.5 text-sm text-text-muted leading-relaxed line-clamp-2">{description}</p>
       </div>
       {meta && <p className="text-xs font-semibold text-text-subtle">{meta}</p>}
     </Link>

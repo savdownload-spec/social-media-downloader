@@ -48,7 +48,7 @@ export default function AboutPage() {
                   <Sparkles className="w-3.5 h-3.5 text-accent" />
                   About SavDown Toolkit
                 </div>
-                <h1 className="text-4xl sm:text-6xl font-bold tracking-[-0.03em] text-text leading-[1.08]">
+                <h1 className="text-4xl sm:text-6xl font-bold tracking-[-0.03em] text-text leading-[1.05]">
                   Digital Media & AI Utilities, <span className="text-gradient">Refined for Clarity.</span>
                 </h1>
                 <p className="mt-6 text-lg md:text-xl text-text-muted leading-relaxed max-w-2xl mx-auto lg:mx-0 font-normal">

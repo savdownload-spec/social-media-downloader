@@ -1,4 +1,4 @@
-import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Header } from '@/components/layout/Header';
@@ -20,17 +20,11 @@ import { SupportChat } from '@/components/support/SupportChat';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { THEME_INIT_SCRIPT } from '@/lib/theme/theme-init-script';
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-});
-
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
   variable: '--font-jakarta',
   display: 'swap',
-  weight: ['500', '600', '700', '800'],
+  weight: ['400', '500', '600', '700', '800'],
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -111,7 +105,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     // theme flash; React never renders those attributes itself, so this
     // only silences the (harmless, expected) mismatch React would otherwise
     // warn about on this one node.
-    <html lang="en" className={`${inter.variable} ${jakarta.variable}`} suppressHydrationWarning>
+    <html lang="en" className={jakarta.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>

@@ -36,7 +36,7 @@ export function Security() {
                 <span className="h-px w-8 bg-primary/60" />
                 {t('security.eyebrow')}
               </div>
-              <h2 className="max-w-xl text-4xl font-bold leading-[0.98] tracking-[-0.055em] text-text md:text-6xl">
+              <h2 className="max-w-xl text-4xl font-bold leading-[1.05] tracking-[-0.03em] text-text md:text-6xl">
                 Your Content <span className="text-gradient">Stays Yours.</span>
               </h2>
               <p className="mt-7 max-w-lg text-base leading-7 text-text-muted">

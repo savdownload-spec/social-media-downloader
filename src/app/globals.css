@@ -108,9 +108,9 @@
     html { transition: none; }
   }
 
-  /* Headings use the premium display face for a distinct, trustworthy voice */
+  /* Headings share the site's single font family; only the tighter tracking
+     distinguishes them from body text now that there's one typeface. */
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-jakarta), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
     letter-spacing: -0.02em;
   }
 

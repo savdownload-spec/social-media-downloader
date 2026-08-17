@@ -75,8 +75,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['var(--font-jakarta)', 'var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-jakarta)', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['var(--font-jakarta)', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
       },
       borderRadius: {
         'xl': '16px',

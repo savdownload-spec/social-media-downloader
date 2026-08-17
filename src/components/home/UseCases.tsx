@@ -36,7 +36,7 @@ export function UseCases() {
                 <div className="w-12 h-12 rounded-2xl bg-white dark:bg-card border border-border shadow-soft flex items-center justify-center text-primary group-hover:scale-105 transition-transform">
                   <Icon className="w-6 h-6" />
                 </div>
-                <h3 className="mt-5 font-bold text-text">{c.title}</h3>
+                <h3 className="mt-5 text-lg font-bold text-text tracking-tight">{c.title}</h3>
                 <p className="mt-2 text-sm text-text-muted leading-relaxed">{c.body}</p>
               </div>
             </Reveal>
