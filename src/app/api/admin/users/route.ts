@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getBillingSummary } from '@/lib/billing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -45,15 +46,28 @@ export async function GET(req: NextRequest) {
     prisma.user.count({ where }),
   ]);
 
+  // Routes each row through the same lazy-refill logic as the Workspace/Account
+  // billing pages, so the list never shows a stale Free-tier balance that just
+  // hasn't been "touched" by a read elsewhere yet — one source of truth.
+  const summaries = await Promise.all(users.map((u) => getBillingSummary(u.id)));
+
   return NextResponse.json({
     ok: true,
     data: {
-      users: users.map((u) => ({
-        ...u,
-        createdAt: u.createdAt.toISOString(),
-        updatedAt: u.updatedAt.toISOString(),
-        totalCredits: u.planCredits + u.purchasedCredits,
-      })),
+      users: users.map((u, i) => {
+        const summary = summaries[i];
+        const planCredits = summary?.planCredits ?? u.planCredits;
+        const purchasedCredits = summary?.purchasedCredits ?? u.purchasedCredits;
+        return {
+          ...u,
+          createdAt: u.createdAt.toISOString(),
+          updatedAt: u.updatedAt.toISOString(),
+          plan: summary?.plan ?? u.plan,
+          planCredits,
+          purchasedCredits,
+          totalCredits: planCredits + purchasedCredits,
+        };
+      }),
       total,
       page,
       totalPages: Math.ceil(total / pageSize),

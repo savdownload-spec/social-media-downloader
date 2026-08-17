@@ -9,7 +9,7 @@ import { prisma } from '@/lib/prisma';
  * webhook looks up what Stripe says was bought, not what a client asked for.
  */
 
-export type PlanTier = 'FREE' | 'PRO' | 'LIFETIME';
+export type PlanTier = 'FREE' | 'PRO' | 'MAX' | 'LIFETIME';
 
 export type PurchasableKind = 'subscription' | 'pack' | 'lifetime';
 
@@ -220,6 +220,10 @@ function isUniqueViolation(error: unknown): boolean {
 export const TIER_ALLOWANCE: Record<PlanTier, { credits: number; period: 'day' | 'month' }> = {
   FREE: { credits: 10, period: 'day' },
   PRO: { credits: 1000, period: 'month' },
+  // Not yet sellable (no PURCHASABLES entry / Stripe price) — the number here
+  // only prevents a crash if a user's plan is ever set to MAX; update it
+  // before this tier is actually offered.
+  MAX: { credits: 5000, period: 'month' },
   // Lifetime is a fixed one-time bank, not a renewing allowance — it is granted
   // once into the (never-expiring) purchased balance, so it is not self-renewed
   // in getBillingSummary. This entry is only a display reference.
@@ -299,7 +303,7 @@ function addDays(date: Date, days: number): Date {
   return next;
 }
 
-function addMonths(date: Date, months: number): Date {
+export function addMonths(date: Date, months: number): Date {
   const next = new Date(date);
   next.setMonth(next.getMonth() + months);
   return next;

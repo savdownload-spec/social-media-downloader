@@ -6,6 +6,7 @@ import { SecondaryCTA } from './CTAButtons';
 const PLAN_LABEL: Record<BillingSummary['plan'], string> = {
   FREE: 'Free plan',
   PRO: 'Pro plan',
+  MAX: 'Max plan',
   LIFETIME: 'Lifetime plan',
 };
 
