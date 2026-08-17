@@ -132,7 +132,7 @@ export function Hero() {
                 return (
                   <div
                     key={s.label}
-                    className={`group relative flex min-h-[118px] flex-col justify-between gap-4 p-4 transition-colors duration-200 hover:bg-primary-light md:min-h-[126px] md:p-5 ${index < 2 ? 'border-b border-border-light md:border-b-0' : ''} ${index < heroStats.length - 1 ? 'md:border-r' : ''}`}
+                    className={`group relative flex min-h-[118px] flex-col justify-between gap-4 p-4 transition-colors duration-200 hover:bg-primary-light md:min-h-[126px] md:p-5 ${index < 2 ? 'border-b border-border-light md:border-b-0' : ''} ${index < heroStats.length - 1 ? 'md:border-r md:border-border-light' : ''}`}
                   >
                     <dt className="sr-only">{s.label}</dt>
                     <div className="flex items-start justify-between gap-3">
