@@ -9,8 +9,10 @@ import { Section } from '@/components/layout/Section';
 import { ProfileForm, type AccountUser } from '@/components/account/ProfileForm';
 import { MyReviews, type MyReview } from '@/components/account/MyReviews';
 import { DangerZone } from '@/components/account/DangerZone';
+import { AffiliateCard } from '@/components/account/AffiliateCard';
 import { buildMetadata } from '@/lib/seo';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
+import { siteConfig } from '@/config/site';
 
 export const metadata = buildMetadata({
   title: 'Account',
@@ -46,7 +48,7 @@ export default async function AccountPage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect('/login?callbackUrl=/account');
 
-  const [user, reviews] = await Promise.all([
+  const [user, reviews, affiliate] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
@@ -78,6 +80,10 @@ export default async function AccountPage() {
         updatedAt: true,
         approvedAt: true,
       },
+    }),
+    prisma.affiliate.findUnique({
+      where: { userId: session.user.id },
+      select: { code: true, status: true, totalSignups: true },
     }),
   ]);
 
@@ -112,6 +118,7 @@ export default async function AccountPage() {
             </div>
             <div className="space-y-6">
               <BillingCard />
+              <AffiliateCard affiliate={affiliate} siteUrl={siteConfig.url} />
               <DangerZone email={user.email ?? ''} />
             </div>
           </div>

@@ -1,10 +1,12 @@
 import type { NextAuthOptions } from 'next-auth';
+import { cookies } from 'next/headers';
 import GoogleProvider from 'next-auth/providers/google';
 import GitHubProvider from 'next-auth/providers/github';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from './prisma';
 import { verifyPassword } from './passwords';
 import { loginSchema } from './auth/validators';
+import { creditReferralSignup, REFERRAL_COOKIE } from './affiliates';
 
 const adminEmails = Array.from(new Set([
   'hafizm.farooq@gmail.com',
@@ -75,6 +77,10 @@ export const authOptions: NextAuthOptions = {
       if (user?.email) {
         const normalizedEmail = user.email.toLowerCase();
         const isConfiguredAdmin = adminEmails.includes(normalizedEmail);
+        // Checked ahead of the upsert so OAuth signups (which have no
+        // separate /api/auth/register step) can tell first sign-in apart
+        // from a returning user, and credit a referral exactly once.
+        const existed = await prisma.user.findUnique({ where: { email: user.email }, select: { id: true } });
         const dbUser = await prisma.user.upsert({
           where: { email: user.email },
           update: {
@@ -89,6 +95,10 @@ export const authOptions: NextAuthOptions = {
             role: isConfiguredAdmin ? 'ADMIN' : 'USER',
           },
         });
+        if (!existed) {
+          const refCode = cookies().get(REFERRAL_COOKIE)?.value;
+          await creditReferralSignup(refCode);
+        }
         token.id = dbUser.id;
         (token as Record<string, unknown>).role = dbUser.role;
       }

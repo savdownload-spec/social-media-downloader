@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { hashPassword } from '@/lib/passwords';
 import { registerSchema } from '@/lib/auth/validators';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { ok, fail } from '@/lib/api';
+import { creditReferralSignup, REFERRAL_COOKIE } from '@/lib/affiliates';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,6 +38,9 @@ export async function POST(request: Request) {
     data: { name, email, password: passwordHash },
     select: { id: true, name: true, email: true },
   });
+
+  const refCode = cookies().get(REFERRAL_COOKIE)?.value;
+  await creditReferralSignup(refCode);
 
   return NextResponse.json({ ok: true, user }, { status: 201 });
 }

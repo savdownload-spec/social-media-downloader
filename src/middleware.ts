@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getVercelGeo } from '@/lib/geo/vercel-geo';
 import { resolveDayNight } from '@/lib/theme/resolve-auto-theme';
+import { REFERRAL_COOKIE, REFERRAL_COOKIE_MAX_AGE } from '@/lib/affiliates-constants';
 
 // The site used to serve locale-prefixed URLs (/de/tools/..., /es/blog/...)
 // via next-intl routing. Real translation is now handled entirely
@@ -27,6 +28,21 @@ export function middleware(request: NextRequest) {
   }
 
   const response = NextResponse.next();
+
+  // Affiliate referral attribution: first-touch — a visitor's first `?ref=`
+  // wins and is kept for 30 days, so a later plain visit (no ref param)
+  // doesn't erase who referred them. The code itself isn't validated here
+  // (middleware can't reach Prisma on the edge runtime); an unknown code
+  // simply credits nothing when a signup later checks it.
+  const rawRef = request.nextUrl.searchParams.get('ref');
+  const refCode = rawRef && /^[a-z0-9-]{1,40}$/i.test(rawRef) ? rawRef : null;
+  if (refCode && !request.cookies.has(REFERRAL_COOKIE)) {
+    response.cookies.set(REFERRAL_COOKIE, refCode, {
+      maxAge: REFERRAL_COOKIE_MAX_AGE,
+      sameSite: 'lax',
+      path: '/',
+    });
+  }
 
   // Regional day/night for Auto theme mode, resolved from Vercel's free
   // edge geo headers only — no external API call, no latency added to
