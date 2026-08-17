@@ -59,6 +59,30 @@
     --card-hover: 27 27 43;
   }
 
+  /* Admin Panel: pinned to the light palette regardless of the public
+     site/Workspace theme (manual toggle, IP/time auto-detect, or OS
+     prefers-color-scheme). Declaring these directly on .admin-panel wins
+     over an inherited .dark ancestor without needing a specificity fight --
+     inheritance only applies where an element has no own declaration. */
+  .admin-panel {
+    color-scheme: light;
+    --background: 255 255 255;
+    --surface: 247 247 251;
+    --primary: 124 58 237;
+    --primary-hover: 109 40 217;
+    --primary-light: #EDE9FE;
+    --accent: 34 197 94;
+    --accent-hover: 22 163 74;
+    --accent-light: #DCFCE7;
+    --text: 15 11 30;
+    --text-muted: 107 114 128;
+    --text-subtle: 156 163 175;
+    --border: #EAE7F2;
+    --border-light: #F1EFF8;
+    --card: 255 255 255;
+    --card-hover: 243 241 250;
+  }
+
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

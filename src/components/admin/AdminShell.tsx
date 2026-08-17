@@ -36,7 +36,7 @@ export function AdminShell({ children }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F7FB] flex">
+    <div className="admin-panel min-h-screen bg-[#F7F7FB] flex">
       {/* Desktop sidebar */}
       <div className="hidden lg:flex flex-col h-screen sticky top-0">
         <AdminSidebar collapsed={collapsed} onToggleCollapse={toggleCollapse} />
