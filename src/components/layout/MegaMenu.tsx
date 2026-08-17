@@ -428,12 +428,13 @@ function ResourcesPanel({ close }: { close: () => void }) {
    ABOUT PANEL
 ═══════════════════════════════════════════════════════════ */
 const ABOUT_LINK_CONFIG = [
-  { key: 'about',   icon: Info,     href: '/about',  color: 'text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-500/15'   },
-  { key: 'contact', icon: Mail,     href: '/contact', color: 'text-sky-600 bg-sky-50 dark:text-sky-400 dark:bg-sky-500/15'         },
-  { key: 'pricing', icon: Sparkles, href: '/pricing',color: 'text-fuchsia-600 bg-fuchsia-50 dark:text-fuchsia-400 dark:bg-fuchsia-500/15' },
-  { key: 'privacy', icon: Shield,   href: '/privacy', color: 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/15' },
-  { key: 'terms',   icon: FileText, href: '/terms',   color: 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-500/15'   },
-  { key: 'careers', icon: Users,    href: '/contact', color: 'text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/15'        },
+  { key: 'about',      icon: Info,      href: '/about',      color: 'text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-500/15'   },
+  { key: 'contact',    icon: Mail,      href: '/contact',    color: 'text-sky-600 bg-sky-50 dark:text-sky-400 dark:bg-sky-500/15'         },
+  { key: 'pricing',    icon: Sparkles,  href: '/pricing',    color: 'text-fuchsia-600 bg-fuchsia-50 dark:text-fuchsia-400 dark:bg-fuchsia-500/15' },
+  { key: 'affiliates', icon: Coins,     href: '/affiliates', color: 'text-amber-600 bg-amber-50 dark:text-warning dark:bg-amber-500/15'     },
+  { key: 'privacy',    icon: Shield,    href: '/privacy',    color: 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/15' },
+  { key: 'terms',      icon: FileText,  href: '/terms',      color: 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-500/15'   },
+  { key: 'careers',    icon: Users,     href: '/contact',    color: 'text-rose-600 bg-rose-50 dark:text-rose-400 dark:bg-rose-500/15'        },
 ] as const;
 
 const SOCIAL_LINKS = [

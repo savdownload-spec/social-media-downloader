@@ -83,6 +83,7 @@ export const siteConfig = {
       { label: 'About Us', href: '/about' },
       { label: 'Contact Us', href: '/contact' },
       { label: 'Customer Reviews', href: '/reviews' },
+      { label: 'Affiliates', href: '/affiliates' },
       { label: 'Sign In', href: '/login' },
       { label: 'My Account', href: '/account' },
       { label: 'Billing', href: '/account/billing' },

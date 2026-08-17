@@ -1332,6 +1332,10 @@
       "careers": {
         "label": "Careers",
         "desc": "We're hiring, come build the future."
+      },
+      "affiliates": {
+        "label": "Affiliates",
+        "desc": "Earn by sharing SavDown."
       }
     },
     "footerLinks": {
@@ -1364,7 +1368,8 @@
       "about": "About Us",
       "contact": "Contact",
       "pricing": "Pricing",
-      "careers": "Careers"
+      "careers": "Careers",
+      "affiliates": "Affiliates"
     }
   }
 }
