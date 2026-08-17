@@ -109,31 +109,33 @@ export const benefits: Benefit[] = [
 export type Audience = {
   label: string;
   icon: LucideIcon;
+  href: string;
 };
 
 export const audiences: Audience[] = [
-  { label: 'YouTubers', icon: Youtube },
-  { label: 'Bloggers', icon: PenSquare },
-  { label: 'Creators', icon: Users },
-  { label: 'Website Owners', icon: Globe },
-  { label: 'SEO Professionals', icon: Search },
-  { label: 'Tech Communities', icon: Users },
-  { label: 'Agencies', icon: Building2 },
-  { label: 'Newsletter Creators', icon: Mail },
+  { label: 'YouTubers', icon: Youtube, href: '/tools/youtube-video-downloader' },
+  { label: 'Bloggers', icon: PenSquare, href: '/blog' },
+  { label: 'Creators', icon: Users, href: '/tools' },
+  { label: 'Website Owners', icon: Globe, href: '/tools' },
+  { label: 'SEO Professionals', icon: Search, href: '/tools#seo' },
+  { label: 'Tech Communities', icon: Users, href: '/blog' },
+  { label: 'Agencies', icon: Building2, href: '/contact' },
+  { label: 'Newsletter Creators', icon: Mail, href: '/blog' },
 ];
 
 export type Promotable = {
   label: string;
   icon: LucideIcon;
+  href: string;
 };
 
 export const promotables: Promotable[] = [
-  { label: 'SavDown Tools', icon: Sparkles },
-  { label: 'Subscriptions', icon: CreditCard },
-  { label: 'SavCredits', icon: Coins },
-  { label: 'Credit Packs', icon: Gift },
-  { label: 'Lifetime Offers', icon: InfinityIcon },
-  { label: 'Business Products', icon: Briefcase },
+  { label: 'SavDown Tools', icon: Sparkles, href: '/tools' },
+  { label: 'Subscriptions', icon: CreditCard, href: '/pricing' },
+  { label: 'SavCredits', icon: Coins, href: '/pricing' },
+  { label: 'Credit Packs', icon: Gift, href: '/pricing' },
+  { label: 'Lifetime Offers', icon: InfinityIcon, href: '/pricing' },
+  { label: 'Business Products', icon: Briefcase, href: '/pricing' },
 ];
 
 export type ResourceKind = {

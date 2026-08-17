@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Sparkles, Link2, LineChart, BadgeCheck } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { Section, SectionHeading } from '@/components/layout/Section';
@@ -115,13 +116,14 @@ export default function AffiliatesPage() {
         <SectionHeading eyebrow="Who Can Join" title="Built for people with an audience." />
         <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {audiences.map((audience) => (
-            <div
+            <Link
               key={audience.label}
-              className="flex items-center gap-2.5 rounded-2xl border border-border bg-white dark:bg-card p-4 shadow-soft"
+              href={audience.href}
+              className="flex items-center gap-2.5 rounded-2xl border border-border bg-white dark:bg-card p-4 shadow-soft transition-all hover:border-primary/30 hover:shadow-soft-md"
             >
               <audience.icon className="h-4 w-4 flex-shrink-0 text-primary" />
               <span className="text-sm font-medium text-text">{audience.label}</span>
-            </div>
+            </Link>
           ))}
         </div>
       </Section>
@@ -131,13 +133,14 @@ export default function AffiliatesPage() {
         <SectionHeading eyebrow="What You Can Promote" title="Everything SavDown offers." />
         <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
           {promotables.map((item) => (
-            <div
+            <Link
               key={item.label}
-              className="flex flex-col items-center gap-2.5 rounded-2xl border border-border bg-white dark:bg-card p-5 text-center shadow-soft"
+              href={item.href}
+              className="flex flex-col items-center gap-2.5 rounded-2xl border border-border bg-white dark:bg-card p-5 text-center shadow-soft transition-all hover:border-primary/30 hover:shadow-soft-md"
             >
               <item.icon className="h-5 w-5 flex-shrink-0 text-primary" />
               <span className="text-xs font-semibold text-text">{item.label}</span>
-            </div>
+            </Link>
           ))}
         </div>
       </Section>
@@ -165,7 +168,11 @@ export default function AffiliatesPage() {
             <div className="mt-4 text-sm font-semibold text-text">Tracking</div>
             <p className="mt-1.5 text-xs leading-relaxed text-text-muted">
               Every affiliate gets a unique referral link. Visits, signups, and conversions attributed to your
-              link are recorded against your account, so you always know what came from your audience.
+              link are recorded against your{' '}
+              <Link href="/account" className="font-medium text-primary hover:text-primary-hover underline underline-offset-4">
+                account
+              </Link>
+              , so you always know what came from your audience.
             </p>
           </div>
           <div className="rounded-2xl border border-border bg-white dark:bg-card p-6 shadow-soft">
@@ -186,7 +193,15 @@ export default function AffiliatesPage() {
         <SectionHeading
           eyebrow="Marketing Resources"
           title="Everything you need to promote SavDown well."
-          description="Made available to approved affiliates from their dashboard."
+          description={
+            <>
+              Made available to approved affiliates from their{' '}
+              <Link href="/account" className="font-medium text-primary hover:text-primary-hover underline underline-offset-4">
+                account
+              </Link>
+              .
+            </>
+          }
         />
         <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {resources.map((resource) => (
