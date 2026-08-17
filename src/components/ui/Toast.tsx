@@ -5,6 +5,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   CheckCircle2, XCircle, AlertTriangle, Info, X,
@@ -73,6 +74,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [mounted, setMounted] = useState(false);
   const timers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  // ToastProvider is mounted once above the router, so its portal is never a
+  // descendant of .admin-panel -- pin admin toasts to light by route instead.
+  const isAdminRoute = usePathname()?.startsWith('/admin') ?? false;
 
   useEffect(() => {
     setMounted(true);
@@ -123,7 +127,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       {mounted &&
         createPortal(
-          <ToastViewport toasts={toasts} onDismiss={dismiss} />,
+          <div className={cn(isAdminRoute && 'admin-panel', 'contents')}>
+            <ToastViewport toasts={toasts} onDismiss={dismiss} />
+          </div>,
           document.body,
         )}
     </ToastContext.Provider>

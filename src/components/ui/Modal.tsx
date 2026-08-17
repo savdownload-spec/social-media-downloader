@@ -4,6 +4,7 @@ import {
   useCallback, useEffect, useId, useRef, type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -56,6 +57,11 @@ export function Modal({
   const descId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousActive = useRef<HTMLElement | null>(null);
+  // Modals portal straight to document.body, escaping the .admin-panel
+  // subtree that pins the admin UI to the light palette. Without this,
+  // an admin modal picks up the public site's real (possibly dark) theme
+  // instead -- re-apply the pin here based on route rather than DOM position.
+  const isAdminRoute = usePathname()?.startsWith('/admin') ?? false;
 
   // ESC closes; body scroll locks; focus moves into the dialog.
   useEffect(() => {
@@ -97,72 +103,74 @@ export function Modal({
   if (typeof window === 'undefined') return null;
 
   return createPortal(
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          key="modal-backdrop"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.18 }}
-          className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center p-4 bg-ink/60 backdrop-blur-sm"
-          onClick={handleBackdropClick}
-        >
+    <div className={cn(isAdminRoute && 'admin-panel', 'contents')}>
+      <AnimatePresence>
+        {open && (
           <motion.div
-            key="modal-dialog"
-            ref={dialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={title ? titleId : undefined}
-            aria-describedby={description ? descId : undefined}
-            initial={{ opacity: 0, y: 24, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 12, scale: 0.98, transition: { duration: 0.15 } }}
-            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-            className={cn(
-              'relative w-full overflow-hidden rounded-3xl bg-white dark:bg-card shadow-soft-xl',
-              'max-h-[calc(100vh-2rem)] flex flex-col',
-              sizeClass[size],
-            )}
+            key="modal-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center p-4 bg-ink/60 backdrop-blur-sm"
+            onClick={handleBackdropClick}
           >
-            {(title || !hideCloseButton) && (
-              <div className="flex items-start justify-between gap-4 px-6 pt-6">
-                <div className="min-w-0 flex-1">
-                  {title && (
-                    <h2 id={titleId} className="text-lg md:text-xl font-bold tracking-tight text-text">
-                      {title}
-                    </h2>
-                  )}
-                  {description && (
-                    <p id={descId} className="mt-1.5 text-sm text-text-muted leading-relaxed">
-                      {description}
-                    </p>
+            <motion.div
+              key="modal-dialog"
+              ref={dialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={title ? titleId : undefined}
+              aria-describedby={description ? descId : undefined}
+              initial={{ opacity: 0, y: 24, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98, transition: { duration: 0.15 } }}
+              transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+              className={cn(
+                'relative w-full overflow-hidden rounded-3xl bg-white dark:bg-card shadow-soft-xl',
+                'max-h-[calc(100vh-2rem)] flex flex-col',
+                sizeClass[size],
+              )}
+            >
+              {(title || !hideCloseButton) && (
+                <div className="flex items-start justify-between gap-4 px-6 pt-6">
+                  <div className="min-w-0 flex-1">
+                    {title && (
+                      <h2 id={titleId} className="text-lg md:text-xl font-bold tracking-tight text-text">
+                        {title}
+                      </h2>
+                    )}
+                    {description && (
+                      <p id={descId} className="mt-1.5 text-sm text-text-muted leading-relaxed">
+                        {description}
+                      </p>
+                    )}
+                  </div>
+                  {!hideCloseButton && (
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      aria-label="Close dialog"
+                      className="-mr-1 -mt-1 inline-flex h-9 w-9 items-center justify-center rounded-xl text-text-subtle hover:bg-surface hover:text-text transition-colors"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                   )}
                 </div>
-                {!hideCloseButton && (
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close dialog"
-                    className="-mr-1 -mt-1 inline-flex h-9 w-9 items-center justify-center rounded-xl text-text-subtle hover:bg-surface hover:text-text transition-colors"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            )}
+              )}
 
-            <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
+              <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
 
-            {footer && (
-              <div className="flex flex-wrap items-center justify-end gap-2.5 border-t border-border-light bg-surface/40 px-6 py-4">
-                {footer}
-              </div>
-            )}
+              {footer && (
+                <div className="flex flex-wrap items-center justify-end gap-2.5 border-t border-border-light bg-surface/40 px-6 py-4">
+                  {footer}
+                </div>
+              )}
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>,
+        )}
+      </AnimatePresence>
+    </div>,
     document.body,
   );
 }

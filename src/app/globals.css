@@ -63,9 +63,19 @@
      site/Workspace theme (manual toggle, IP/time auto-detect, or OS
      prefers-color-scheme). Declaring these directly on .admin-panel wins
      over an inherited .dark ancestor without needing a specificity fight --
-     inheritance only applies where an element has no own declaration. */
+     inheritance only applies where an element has no own declaration.
+
+     `color` is set explicitly here (mirroring `body { color: var(--text) }`
+     below) and not just the --text custom property: `color` inherits by
+     computed value, resolved wherever it was last declared. Custom
+     properties re-resolve at each element, but nothing between .admin-panel
+     and a plain-text descendant (e.g. a <select> with no text-* class)
+     redeclares `color`, so without this line such elements would keep
+     inheriting the real (possibly dark-mode) color from `body` above,
+     silently ignoring every var redefined here. */
   .admin-panel {
     color-scheme: light;
+    color: rgb(15 11 30);
     --background: 255 255 255;
     --surface: 247 247 251;
     --primary: 124 58 237;

@@ -255,12 +255,12 @@ export function AdminUserDetail({ user }: { user: UserData }) {
           <div>
             <label className="text-xs font-semibold text-text-muted block mb-1">Amount</label>
             <input type="number" min={1} value={creditAmt} onChange={(e) => setCreditAmt(e.target.value)}
-              className="w-full h-10 rounded-lg border border-border-light px-3 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40" placeholder="e.g. 100" />
+              className="w-full h-10 rounded-lg border border-border-light px-3 text-[13px] text-text bg-white placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40" placeholder="e.g. 100" />
           </div>
           <div>
             <label className="text-xs font-semibold text-text-muted block mb-1">Reason (required)</label>
             <input value={creditReason} onChange={(e) => setCreditReason(e.target.value)}
-              className="w-full h-10 rounded-lg border border-border-light px-3 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40" placeholder="e.g. Refund for failed job" />
+              className="w-full h-10 rounded-lg border border-border-light px-3 text-[13px] text-text bg-white placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40" placeholder="e.g. Refund for failed job" />
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <button onClick={() => setCreditModal(null)} className="px-3 py-1.5 rounded-lg text-[13px] text-text-muted hover:bg-surface transition-colors">Cancel</button>
@@ -277,7 +277,7 @@ export function AdminUserDetail({ user }: { user: UserData }) {
           <div>
             <label className="text-xs font-semibold text-text-muted block mb-1">New Plan</label>
             <select value={newPlan} onChange={(e) => setNewPlan(e.target.value)}
-              className="w-full h-10 rounded-lg border border-border-light px-3 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 bg-white">
+              className="w-full h-10 rounded-lg border border-border-light px-3 text-[13px] text-text bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40">
               {['FREE', 'PRO', 'MAX', 'LIFETIME'].map((p) => <option key={p}>{p}</option>)}
             </select>
           </div>
@@ -296,7 +296,7 @@ export function AdminUserDetail({ user }: { user: UserData }) {
           <div>
             <label className="text-xs font-semibold text-text-muted block mb-1">New Role</label>
             <select value={newRole} onChange={(e) => setNewRole(e.target.value)}
-              className="w-full h-10 rounded-lg border border-border-light px-3 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 bg-white">
+              className="w-full h-10 rounded-lg border border-border-light px-3 text-[13px] text-text bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40">
               <option value="USER">USER</option>
               <option value="ADMIN">ADMIN</option>
             </select>
