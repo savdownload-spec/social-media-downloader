@@ -14,7 +14,7 @@ type Props = {
 };
 
 /**
- * Starts Stripe Checkout for one catalogue item.
+ * Starts Safepay Hosted Checkout for one catalogue item.
  *
  * Signed-out visitors are sent to log in first and returned to /pricing, since
  * a purchase has to attach to an account for its credits to land anywhere.
@@ -46,7 +46,7 @@ export function CheckoutButton({ item, label, className }: Props) {
         return;
       }
 
-      // Full navigation, not the router: this leaves the app for Stripe.
+      // Full navigation, not the router: this leaves the app for Safepay.
       window.location.assign(payload.data.url);
     } catch {
       toast.error('Could not reach the payment service. Please try again.');

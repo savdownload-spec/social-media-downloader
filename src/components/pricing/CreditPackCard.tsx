@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Coins, Infinity as InfinityIcon } from 'lucide-react';
 import { HighlightFrame } from '@/components/pricing/HighlightFrame';
+import { CheckoutButton } from '@/components/pricing/CheckoutButton';
 import type { PackView } from '@/config/pricing';
 
 /**
@@ -49,9 +50,11 @@ export function CreditPackCard({ pack }: { pack: PackView }) {
         </div>
 
         <div className="mt-auto">
-          <Link href={pack.ctaHref} className={cta}>
-            {pack.ctaLabel}
-          </Link>
+          {pack.ctaHref.startsWith('safepay:') ? (
+            <CheckoutButton item={`pack-${pack.id}`} label={pack.ctaLabel} className={cta} />
+          ) : (
+            <Link href={pack.ctaHref} className={cta}>{pack.ctaLabel}</Link>
+          )}
         </div>
       </div>
     </HighlightFrame>

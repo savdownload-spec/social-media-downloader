@@ -37,7 +37,7 @@ export const CURRENCY = 'USD';
 export const CURRENCY_SYMBOL = '$';
 
 /** Billing is not live yet; paid CTAs are a waitlist until this is true. */
-export const BILLING_LIVE = false;
+export const BILLING_LIVE = true;
 export const WAITLIST_HREF = '/contact';
 
 export type BillingPeriod = 'monthly' | 'yearly';
@@ -265,7 +265,7 @@ export function derivePlan(plan: RawPlan, period: BillingPeriod): PlanView {
     creditsNote,
     features: plan.features,
     ctaLabel: free ? 'Get started' : BILLING_LIVE ? `Get ${plan.name}` : 'Join the waitlist',
-    ctaHref: free ? '/#tools' : WAITLIST_HREF,
+    ctaHref: free ? '/#tools' : yearly ? 'safepay:pro-yearly' : 'safepay:pro-monthly',
   };
 }
 
@@ -324,7 +324,7 @@ export function derivePacks(packs: RawPack[]): PackView[] {
       badge,
       badgeLabel: badge === 'value' ? 'BEST VALUE' : badge === 'popular' ? 'MOST POPULAR' : undefined,
       ctaLabel: BILLING_LIVE ? 'Buy credits' : 'Join the waitlist',
-      ctaHref: WAITLIST_HREF,
+      ctaHref: `safepay:${p.id}`,
     };
   });
 }
@@ -353,7 +353,7 @@ export function deriveLifetime(lt: RawLifetime): LifetimeView {
     benefits: lt.benefits,
     fairUse: lt.fairUse,
     ctaLabel: BILLING_LIVE ? 'Get Lifetime' : 'Join the waitlist',
-    ctaHref: WAITLIST_HREF,
+    ctaHref: 'safepay:lifetime',
   };
 }
 

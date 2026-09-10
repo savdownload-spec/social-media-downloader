@@ -47,6 +47,7 @@ model User {
   // `plan` is the entitlement the user currently has; it is derived from Stripe
   // by the webhook and is never trusted from the client.
   stripeCustomerId   String?   @unique
+  safepayCustomerId  String?   @unique
   plan               String    @default("FREE") // FREE | PRO | MAX | LIFETIME
   /// Allowance that refills each period and does NOT roll over. Free users get
   /// a daily refill, paid plans a monthly one — `planCreditsResetAt` marks when
@@ -65,6 +66,7 @@ model User {
   moderatedBlogComments BlogComment[] @relation("BlogCommentModerator")
   subscriptions Subscription[]
   creditLedger  CreditTransaction[]
+  payments      Payment[]
   supportConversations SupportConversation[] @relation("SupportCustomer")
   assignedSupportConversations SupportConversation[] @relation("SupportAssignee")
   supportMessages SupportMessage[] @relation("SupportSender")
@@ -79,7 +81,9 @@ model User {
 model Subscription {
   id                   String    @id @default(cuid())
   userId               String
+  provider             String    @default("STRIPE") // STRIPE | SAFEPAY
   stripeSubscriptionId String    @unique
+  safepaySubscriptionId String?  @unique
   stripePriceId        String
   /// active | trialing | past_due | canceled | unpaid | incomplete
   status               String
@@ -94,6 +98,7 @@ model Subscription {
 
   @@index([userId])
   @@index([status])
+  @@index([provider, status])
 }
 
 /// Append-only audit trail of every credit movement, so a balance can always be
@@ -122,6 +127,37 @@ model CreditTransaction {
 /// its side effects.
 model ProcessedStripeEvent {
   id          String   @id // the Stripe event id
+  type        String
+  processedAt DateTime @default(now())
+}
+
+/// Provider-neutral payment audit record used by Admin for Safepay transactions.
+model Payment {
+  id                String    @id @default(cuid())
+  provider          String
+  providerPaymentId String
+  userId            String?
+  itemId            String?
+  amount            Int
+  currency          String
+  status            String
+  reference         String?
+  subscriptionId    String?
+  metadata          Json?
+  paidAt            DateTime?
+  refundedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, providerPaymentId])
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+model ProcessedSafepayEvent {
+  id          String   @id
   type        String
   processedAt DateTime @default(now())
 }

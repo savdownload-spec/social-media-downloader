@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Check, Coins, Infinity as InfinityIcon } from 'lucide-react';
 import { HighlightFrame } from '@/components/pricing/HighlightFrame';
+import { CheckoutButton } from '@/components/pricing/CheckoutButton';
 import type { LifetimeView } from '@/config/pricing';
 
 /**
@@ -30,12 +31,11 @@ export function LifetimeCard({ lifetime }: { lifetime: LifetimeView }) {
 
             <p className="mt-4 text-sm leading-relaxed text-text-muted">{lifetime.tagline}</p>
 
-            <Link
-              href={lifetime.ctaHref}
-              className="mt-6 flex w-full items-center justify-center rounded-2xl bg-gradient-brand bg-[length:200%_200%] py-3 font-semibold text-white shadow-glow-lg transition-all hover:bg-[position:100%_50%] active:scale-[0.98]"
-            >
-              {lifetime.ctaLabel}
-            </Link>
+            {lifetime.ctaHref.startsWith('safepay:') ? (
+              <CheckoutButton item={lifetime.ctaHref.slice('safepay:'.length)} label={lifetime.ctaLabel} className="mt-6 flex w-full items-center justify-center rounded-2xl bg-gradient-brand bg-[length:200%_200%] py-3 font-semibold text-white shadow-glow-lg transition-all hover:bg-[position:100%_50%] active:scale-[0.98]" />
+            ) : (
+              <Link href={lifetime.ctaHref} className="mt-6 flex w-full items-center justify-center rounded-2xl bg-gradient-brand bg-[length:200%_200%] py-3 font-semibold text-white shadow-glow-lg transition-all hover:bg-[position:100%_50%] active:scale-[0.98]">{lifetime.ctaLabel}</Link>
+            )}
           </div>
 
           {/* Benefits */}

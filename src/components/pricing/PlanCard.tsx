@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Check, Coins } from 'lucide-react';
 import { HighlightFrame } from '@/components/pricing/HighlightFrame';
+import { CheckoutButton } from '@/components/pricing/CheckoutButton';
 import type { PlanView } from '@/config/pricing';
 
 /**
@@ -54,9 +55,11 @@ export function PlanCard({ plan }: { plan: PlanView }) {
         </ul>
 
         <div className="mt-auto">
-          <Link href={plan.ctaHref} className={cta}>
-            {plan.ctaLabel}
-          </Link>
+          {plan.ctaHref.startsWith('safepay:') ? (
+            <CheckoutButton item={plan.ctaHref.slice('safepay:'.length)} label={plan.ctaLabel} className={cta} />
+          ) : (
+            <Link href={plan.ctaHref} className={cta}>{plan.ctaLabel}</Link>
+          )}
         </div>
       </div>
     </HighlightFrame>
