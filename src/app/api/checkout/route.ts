@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { ok, fail } from '@/lib/api';
 import { ratelimit } from '@/lib/ratelimit';
-import { findPurchasable, safepayAmountFor } from '@/lib/billing';
+import { findPurchasable, resolveSafepayPurchase } from '@/lib/billing';
 import { getSafepayClient, getSafepayConfig, checkoutUrl } from '@/lib/safepay';
 import { siteConfig } from '@/config/site';
 
@@ -30,8 +30,8 @@ export async function POST(request: Request) {
 
   const item = findPurchasable(itemId);
   if (!item) return fail('That plan is not available.', 404);
-  const amount = safepayAmountFor(item);
-  if (!amount) return fail('That plan is not configured for Safepay yet.', 503);
+  let purchase: { amount: number; currency: 'USD' };
+  try { purchase = await resolveSafepayPurchase(item); } catch { return fail('That plan is not configured for purchase yet.', 503); }
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -50,8 +50,8 @@ export async function POST(request: Request) {
       intent: config.intent,
       mode: item.kind === 'subscription' ? 'subscription' : 'payment',
       entry_mode: config.entryMode,
-      currency: config.currency,
-      amount,
+      currency: purchase.currency,
+      amount: purchase.amount,
       metadata,
       include_fees: false,
     });
@@ -72,8 +72,8 @@ export async function POST(request: Request) {
 
     await prisma.payment.upsert({
       where: { provider_providerPaymentId: { provider: 'SAFEPAY', providerPaymentId: tracker.token } },
-      create: { provider: 'SAFEPAY', providerPaymentId: tracker.token, userId: user.id, itemId: item.id, amount, currency: config.currency, status: 'pending', metadata },
-      update: { userId: user.id, itemId: item.id, amount, currency: config.currency, status: 'pending', metadata },
+      create: { provider: 'SAFEPAY', providerPaymentId: tracker.token, userId: user.id, itemId: item.id, amount: purchase.amount, currency: purchase.currency, status: 'pending', metadata },
+      update: { userId: user.id, itemId: item.id, amount: purchase.amount, currency: purchase.currency, status: 'pending', metadata },
     });
     return ok({ url });
   } catch (error) {

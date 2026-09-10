@@ -6,14 +6,19 @@ export type SafepayMode = 'sandbox' | 'production';
 export function getSafepayConfig() {
   const mode = (process.env.SAFEPAY_MODE ?? 'sandbox') as SafepayMode;
   const secretKey = process.env.SAFEPAY_SECRET_KEY?.trim();
-  const merchantApiKey = process.env.SAFEPAY_MERCHANT_API_KEY?.trim();
+  // Safepay documents this as the public merchant API key. Keep the older
+  // internal variable as a compatibility alias, but prefer the public name.
+  const merchantApiKey = (process.env.SAFEPAY_PUBLIC_KEY ?? process.env.SAFEPAY_MERCHANT_API_KEY)?.trim();
   if (!secretKey || !merchantApiKey) return null;
   return {
     mode,
     secretKey,
     merchantApiKey,
     host: mode === 'production' ? 'https://api.getsafepay.com' : 'https://sandbox.api.getsafepay.com',
-    currency: (process.env.SAFEPAY_CURRENCY ?? 'PKR').toUpperCase(),
+    // SavDown pricing is authored in USD. Safepay converts the quote to its
+    // PKR base/settlement currency; do not invent a local FX rate.
+    quoteCurrency: 'USD',
+    settlementCurrency: (process.env.SAFEPAY_CURRENCY ?? 'PKR').toUpperCase(),
     intent: process.env.SAFEPAY_INTENT ?? 'CYBERSOURCE',
     entryMode: process.env.SAFEPAY_ENTRY_MODE ?? 'raw',
   } as const;

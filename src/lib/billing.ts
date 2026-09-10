@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { getPricingConfig } from '@/lib/pricing-server';
 
 /**
  * The server-side purchase catalogue.
@@ -20,8 +21,6 @@ export type Purchasable = {
   label: string;
   /** Env var holding the Stripe price ID. */
   priceEnv: string;
-  /** Env var holding the Safepay amount in the configured settlement currency. */
-  safepayAmountEnv?: string;
   /** Entitlement granted. Packs leave the tier untouched. */
   tier?: PlanTier;
   /** Monthly allowance for subscriptions/lifetime; pack size for one-offs. */
@@ -53,7 +52,6 @@ export const PURCHASABLES: Purchasable[] = [
     kind: 'subscription',
     label: 'Pro (monthly)',
     priceEnv: 'STRIPE_PRICE_PRO_MONTHLY',
-    safepayAmountEnv: 'SAFEPAY_AMOUNT_PRO_MONTHLY',
     tier: 'PRO',
     credits: 1000,
     interval: 'month',
@@ -67,7 +65,6 @@ export const PURCHASABLES: Purchasable[] = [
     kind: 'subscription',
     label: 'Pro (yearly)',
     priceEnv: 'STRIPE_PRICE_PRO_YEARLY',
-    safepayAmountEnv: 'SAFEPAY_AMOUNT_PRO_YEARLY',
     tier: 'PRO',
     credits: 1000,
     interval: 'year',
@@ -82,7 +79,6 @@ export const PURCHASABLES: Purchasable[] = [
     kind: 'pack',
     label: 'Starter pack, 300 credits',
     priceEnv: 'STRIPE_PRICE_PACK_STARTER',
-    safepayAmountEnv: 'SAFEPAY_AMOUNT_PACK_STARTER',
     credits: 300,
     amountCents: 500,
     currency: 'usd',
@@ -94,7 +90,6 @@ export const PURCHASABLES: Purchasable[] = [
     kind: 'pack',
     label: 'Creator pack, 1,000 credits',
     priceEnv: 'STRIPE_PRICE_PACK_CREATOR',
-    safepayAmountEnv: 'SAFEPAY_AMOUNT_PACK_CREATOR',
     credits: 1000,
     amountCents: 1400,
     currency: 'usd',
@@ -106,7 +101,6 @@ export const PURCHASABLES: Purchasable[] = [
     kind: 'pack',
     label: 'Power pack, 3,000 credits',
     priceEnv: 'STRIPE_PRICE_PACK_POWER',
-    safepayAmountEnv: 'SAFEPAY_AMOUNT_PACK_POWER',
     credits: 3000,
     amountCents: 3600,
     currency: 'usd',
@@ -118,7 +112,6 @@ export const PURCHASABLES: Purchasable[] = [
     kind: 'lifetime',
     label: 'Lifetime',
     priceEnv: 'STRIPE_PRICE_LIFETIME',
-    safepayAmountEnv: 'SAFEPAY_AMOUNT_LIFETIME',
     tier: 'LIFETIME',
     credits: 30000,
     amountCents: 19900,
@@ -138,12 +131,20 @@ export function priceIdFor(item: Purchasable): string | undefined {
   return value && value.trim() ? value.trim() : undefined;
 }
 
-export function safepayAmountFor(item: Purchasable): number | undefined {
-  if (!item.safepayAmountEnv) return undefined;
-  const raw = process.env[item.safepayAmountEnv]?.trim();
-  if (!raw || !/^\d+$/.test(raw)) return undefined;
-  const amount = Number(raw);
-  return Number.isSafeInteger(amount) && amount > 0 ? amount : undefined;
+/** Resolve Safepay's quote amount from SavDown's centralized pricing source. */
+export async function resolveSafepayPurchase(item: Purchasable): Promise<{ amount: number; currency: 'USD' }> {
+  const pricing = await getPricingConfig();
+  const amount = item.id === 'pro-monthly'
+    ? pricing.plans.find((plan) => plan.id === 'pro')?.monthlyPrice
+    : item.id === 'pro-yearly'
+      ? pricing.plans.find((plan) => plan.id === 'pro')?.yearlyPrice
+      : item.id.startsWith('pack-')
+        ? pricing.packs.find((pack) => pack.id === item.id.slice('pack-'.length))?.price
+        : item.id === 'lifetime' ? pricing.lifetime.price : undefined;
+  if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) {
+    throw new Error(`No valid centralized price configured for ${item.id}`);
+  }
+  return { amount: Math.round(amount * 100), currency: 'USD' };
 }
 
 /** Reverse lookup used by the webhook: Stripe tells us the price, we resolve the grant. */
