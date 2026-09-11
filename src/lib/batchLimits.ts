@@ -27,7 +27,7 @@
  *               prevents abuse.
  */
 
-import type { PlanTier } from '@/lib/billing';
+import type { PlanTier } from '@/types/plans';
 
 // ---------------------------------------------------------------------------
 // Tool-level limits

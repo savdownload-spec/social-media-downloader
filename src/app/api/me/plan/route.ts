@@ -15,7 +15,7 @@ import { authOptions } from '@/lib/auth';
 import { getBillingSummary } from '@/lib/billing';
 import { prisma } from '@/lib/prisma';
 import { getToolBatchLimits, MULTI_FILE_TOOL_SLUGS } from '@/lib/batchLimits';
-import type { PlanTier } from '@/lib/billing';
+import type { PlanTier } from '@/types/plans';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

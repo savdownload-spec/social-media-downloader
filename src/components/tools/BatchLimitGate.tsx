@@ -24,7 +24,7 @@ import { ArrowRight, Info, Lock, Sparkles, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ToolBatchLimits } from '@/lib/batchLimits';
 import { PLAN_LABEL } from '@/lib/batchLimits';
-import type { PlanTier } from '@/lib/billing';
+import type { PlanTier } from '@/types/plans';
 
 // ---------------------------------------------------------------------------
 // Shared helpers

@@ -24,7 +24,7 @@ import {
   canUpgradeBatchLimit,
   type ToolBatchLimits,
 } from '@/lib/batchLimits';
-import type { PlanTier } from '@/lib/billing';
+import type { PlanTier } from '@/types/plans';
 
 export type BatchLimitResult = {
   plan: PlanTier;

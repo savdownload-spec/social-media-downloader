@@ -39,7 +39,7 @@ import {
   canUpgradeBatchLimit,
   PLAN_LABEL,
 } from '@/lib/batchLimits';
-import type { PlanTier } from '@/lib/billing';
+import type { PlanTier } from '@/types/plans';
 
 export type BatchLimitViolation = NextResponse;
 

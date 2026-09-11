@@ -10,7 +10,7 @@ import { getPricingConfig } from '@/lib/pricing-server';
  * webhook looks up what Stripe says was bought, not what a client asked for.
  */
 
-export type PlanTier = 'FREE' | 'PRO' | 'MAX' | 'LIFETIME';
+export type { PlanTier } from '@/types/plans';
 
 export type PurchasableKind = 'subscription' | 'pack' | 'lifetime';
 
