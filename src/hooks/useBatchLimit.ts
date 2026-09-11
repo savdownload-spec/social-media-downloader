@@ -104,7 +104,7 @@ export function useBatchLimit(slug: string): BatchLimitResult {
       } else {
         setState({ plan: 'FREE', loading: false, error: true, limitsMap: null });
       }
-    });
+    }).catch(() => undefined);
   }, []);
 
   // Derive the per-slug result from whatever state we have.

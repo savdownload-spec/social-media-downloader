@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     if (!files.length) return NextResponse.json({ error: 'Choose at least one PDF file.' }, { status: 400 });
 
     // Plan-aware batch limit check.
-    const limitViolation = await checkBatchLimit('split-pdf', files.length, req);
+    const limitViolation = await checkBatchLimit('split-pdf', files.length);
     if (limitViolation) return limitViolation;
 
     if (files.reduce((sum, file) => sum + (file.size || 0), 0) > PDF_MAX_BATCH_BYTES) return NextResponse.json({ error: 'Combined file size exceeds the 150 MB batch limit.' }, { status: 413 });

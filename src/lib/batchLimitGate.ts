@@ -49,12 +49,11 @@ export type BatchLimitViolation = NextResponse;
  *
  * @param slug       The catalog slug of the tool being called (e.g. 'merge-pdf').
  * @param fileCount  Number of files in the incoming request.
- * @param req        The incoming Request (used to resolve the auth session).
  */
 export async function checkBatchLimit(
   slug: string,
   fileCount: number,
-  req: Request,
+  _req?: Request,
 ): Promise<BatchLimitViolation | null> {
   // Identify the calling user — gracefully treat unauthenticated as FREE.
   const session = await getServerSession(authOptions);

@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     // Plan-aware batch limit — enforced server-side; returns 403 with structured
     // error body ({ code: 'BATCH_LIMIT_EXCEEDED', allowedCount, upgradeEligible })
     // when the user's plan does not cover this file count.
-    const limitViolation = await checkBatchLimit('merge-pdf', files.length, req);
+    const limitViolation = await checkBatchLimit('merge-pdf', files.length);
     if (limitViolation) return limitViolation;
 
     if (files.reduce((sum, file) => sum + (file.size || 0), 0) > PDF_MAX_BATCH_BYTES) return NextResponse.json({ error: 'Combined file size exceeds the 150 MB batch limit.' }, { status: 413 });

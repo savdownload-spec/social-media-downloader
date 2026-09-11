@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     if (!files.length) return NextResponse.json({ error: 'Upload at least one image.' }, { status: 400 });
 
     // Plan-aware batch limit check.
-    const limitViolation = await checkBatchLimit('jpg-to-pdf', files.length, req);
+    const limitViolation = await checkBatchLimit('jpg-to-pdf', files.length);
     if (limitViolation) return limitViolation;
 
     if (files.some((file) => !file.url.startsWith('https://'))) return NextResponse.json({ error: 'Invalid uploaded image reference.' }, { status: 400 });
