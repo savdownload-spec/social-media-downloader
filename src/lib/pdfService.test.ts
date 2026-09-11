@@ -49,4 +49,21 @@ describe('PDF toolkit service', () => {
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.buffers[0]?.name).toBe('source-page-01.jpg');
   });
+
+  it('processes five independent PDF sources without combining them', async () => {
+    const sources = await Promise.all(Array.from({ length: 5 }, () => samplePdf(2)));
+    const outputs = [];
+    for (let index = 0; index < sources.length; index += 1) {
+      const result = await splitPdf(sources[index]!, { mode: 'every-n', everyN: 2 }, `source-${index + 1}.pdf`);
+      expect(result.ok).toBe(true);
+      if (result.ok) outputs.push(result.buffers[0]?.name);
+    }
+    expect(outputs).toEqual([
+      'source-1-part-1-1-2.pdf',
+      'source-2-part-1-1-2.pdf',
+      'source-3-part-1-1-2.pdf',
+      'source-4-part-1-1-2.pdf',
+      'source-5-part-1-1-2.pdf',
+    ]);
+  });
 });

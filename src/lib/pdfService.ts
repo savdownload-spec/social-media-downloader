@@ -5,11 +5,12 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
+import { PDF_MAX_BATCH_BYTES, PDF_MAX_FILE_BYTES, PDF_MAX_PAGES } from './pdfConfig';
 
 const execFileAsync = promisify(execFile);
-export const MAX_PDF_BYTES = 50 * 1024 * 1024;
-export const MAX_TOTAL_BYTES = 150 * 1024 * 1024;
-export const MAX_PAGES = 500;
+export const MAX_PDF_BYTES = PDF_MAX_FILE_BYTES;
+export const MAX_TOTAL_BYTES = PDF_MAX_BATCH_BYTES;
+export const MAX_PAGES = PDF_MAX_PAGES;
 
 export type PdfOutput = { name: string; buffer: Uint8Array; pageCount?: number };
 export type PdfResult = { ok: true; buffers: PdfOutput[]; pageCount?: number; inputSize?: number } | { ok: false; error: string };

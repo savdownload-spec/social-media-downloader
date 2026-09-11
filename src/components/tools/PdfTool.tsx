@@ -7,15 +7,15 @@ import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 import type { FunctionalToolProps } from '@/config/functionalTools';
+import { PDF_MAX_BATCH_BYTES, PDF_MAX_BATCH_FILES, PDF_MAX_FILE_BYTES } from '@/lib/pdfConfig';
 
 type Op = 'merge' | 'split' | 'compress' | 'jpg-to-pdf' | 'pdf-to-jpg';
 type SplitMode = 'extract' | 'ranges' | 'every-n' | 'every-page' | 'size';
-type ResultFile = { name: string; url: string; size?: number; pageCount?: number };
-type ApiManifest = { files?: { name: string; base64: string; size?: number; pageCount?: number }[]; pageCount?: number };
+type ResultFile = { name: string; url: string; size?: number; pageCount?: number; group?: string; sourceName?: string };
+type FailedFile = { sourceName: string; error: string };
+type ApiManifest = { completed?: number; total?: number; files?: any[]; pageCount?: number };
 
 const SLUG_TO_OP: Record<string, Op> = { 'merge-pdf': 'merge', 'split-pdf': 'split', 'compress-pdf': 'compress', 'jpg-to-pdf': 'jpg-to-pdf', 'pdf-to-jpg': 'pdf-to-jpg' };
-const MAX_BYTES = 50 * 1024 * 1024;
-const MAX_TOTAL_BYTES = 150 * 1024 * 1024;
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -37,6 +37,10 @@ export function PdfTool({ slug }: FunctionalToolProps) {
   const [origSize, setOrigSize] = useState(0);
   const [outSize, setOutSize] = useState(0);
   const [pageCount, setPageCount] = useState(0);
+  const [failedFiles, setFailedFiles] = useState<FailedFile[]>([]);
+  const [failedInputs, setFailedInputs] = useState<File[]>([]);
+  const [batchCompleted, setBatchCompleted] = useState(0);
+  const [batchTotal, setBatchTotal] = useState(0);
   const [splitMode, setSplitMode] = useState<SplitMode>('every-page');
   const [ranges, setRanges] = useState('');
   const [separate, setSeparate] = useState(false);
@@ -46,7 +50,7 @@ export function PdfTool({ slug }: FunctionalToolProps) {
   const [removeMetadata, setRemoveMetadata] = useState(true);
   const [maxPages, setMaxPages] = useState('10');
 
-  const isMulti = op === 'merge' || op === 'jpg-to-pdf';
+  const isMulti = true;
   const wantsImages = op === 'jpg-to-pdf';
   const wantsPdf = !wantsImages;
   const accept = wantsImages ? 'image/jpeg,image/png,image/webp,image/gif' : 'application/pdf,.pdf';
@@ -57,15 +61,16 @@ export function PdfTool({ slug }: FunctionalToolProps) {
     if (!incoming?.length) return;
     setError(''); setResults(null);
     const incomingFiles = Array.from(incoming);
-    const invalid = incomingFiles.find((file) => file.size > MAX_BYTES);
+    const invalid = incomingFiles.find((file) => file.size > PDF_MAX_FILE_BYTES);
     if (invalid) { setError(`${invalid.name} exceeds the 50 MB per-file limit.`); return; }
+    if (files.length + incomingFiles.length > PDF_MAX_BATCH_FILES) { setError(`You can process up to ${PDF_MAX_BATCH_FILES} files at once.`); return; }
     const accepted = incomingFiles.filter((file) => wantsImages ? file.type.startsWith('image/') : file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
     if (accepted.length !== incomingFiles.length) { setError(`Only ${label} are accepted.`); return; }
-    if (totalSize + accepted.reduce((sum, file) => sum + file.size, 0) > MAX_TOTAL_BYTES) { setError('Combined upload size cannot exceed 150 MB.'); return; }
+    if (totalSize + accepted.reduce((sum, file) => sum + file.size, 0) > PDF_MAX_BATCH_BYTES) { setError('Combined upload size cannot exceed 150 MB.'); return; }
     setFiles((current) => isMulti ? [...current, ...accepted] : accepted.slice(0, 1));
-  }, [isMulti, label, totalSize, wantsImages]);
+  }, [files.length, isMulti, label, totalSize, wantsImages]);
 
-  const reset = useCallback(() => { abortRef.current?.abort(); setFiles([]); setResults(null); setError(''); setOrigSize(0); setOutSize(0); setPageCount(0); setRanges(''); if (inputRef.current) inputRef.current.value = ''; }, []);
+  const reset = useCallback(() => { abortRef.current?.abort(); setFiles([]); setResults(null); setFailedFiles([]); setFailedInputs([]); setBatchCompleted(0); setBatchTotal(0); setError(''); setOrigSize(0); setOutSize(0); setPageCount(0); setRanges(''); if (inputRef.current) inputRef.current.value = ''; }, []);
   const move = (index: number, direction: -1 | 1) => setFiles((current) => { const next = [...current]; const target = index + direction; if (target < 0 || target >= next.length) return current; [next[index], next[target]] = [next[target]!, next[index]!]; return next; });
   const removeAt = (index: number) => setFiles((current) => current.filter((_, item) => item !== index));
 
@@ -76,7 +81,7 @@ export function PdfTool({ slug }: FunctionalToolProps) {
     setLoading(true); setError(''); setResults(null); abortRef.current = new AbortController();
     try {
       const body = new FormData();
-      if (isMulti) files.forEach((file) => body.append('files', file)); else body.append('file', files[0]!);
+      files.forEach((file) => body.append('files', file));
       if (op === 'split') { body.append('mode', splitMode); body.append('ranges', ranges); body.append('separate', String(separate)); body.append('everyN', everyN); body.append('targetBytes', String(Number(targetMB) * 1024 * 1024)); }
       if (op === 'compress') { body.append('level', compression); body.append('removeMetadata', String(removeMetadata)); }
       if (op === 'pdf-to-jpg') body.append('maxPages', maxPages);
@@ -86,8 +91,18 @@ export function PdfTool({ slug }: FunctionalToolProps) {
       if (!response.ok) { const payload = contentType.includes('json') ? await response.json().catch(() => ({})) : {}; throw new Error(payload.error || `Processing failed (${response.status}).`); }
       if (contentType.includes('application/json')) {
         const manifest = await response.json() as ApiManifest;
-        const built = (manifest.files || []).map((file) => ({ name: file.name, size: file.size, pageCount: file.pageCount, url: URL.createObjectURL(fromBase64(file.base64)) }));
-        setResults(built); setPageCount(manifest.pageCount || 0); success('Files ready', `${built.length} output files generated.`);
+        const built: ResultFile[] = [];
+        const failed: FailedFile[] = [];
+        const failedSourceFiles: File[] = [];
+        for (const [index, item] of (manifest.files || []).entries()) {
+          if (item.status === 'failed') { failed.push({ sourceName: item.sourceName || item.name, error: item.error }); if (files[index]) failedSourceFiles.push(files[index]!); continue; }
+          if (item.outputs) {
+            for (const output of item.outputs) built.push({ name: output.name, group: output.group, sourceName: item.sourceName, size: output.size, pageCount: output.pageCount, url: URL.createObjectURL(fromBase64(output.base64)) });
+          } else if (item.base64) {
+            built.push({ name: item.name, sourceName: item.sourceName, size: item.size, pageCount: item.pageCount, url: URL.createObjectURL(fromBase64(item.base64)) });
+          }
+        }
+        setResults(built); setFailedFiles(failed); setFailedInputs(failedSourceFiles); setBatchCompleted(manifest.completed || 0); setBatchTotal(manifest.total || files.length); setPageCount(manifest.pageCount || 0); success('Batch complete', `${manifest.completed || 0} of ${manifest.total || files.length} source files completed.`);
       } else {
         const blob = await response.blob(); const url = URL.createObjectURL(blob); const size = Number(response.headers.get('X-Output-Size') || blob.size); setResults([{ name: getFilename(response.headers.get('Content-Disposition'), 'savdown-document.pdf'), url, size }]); setOrigSize(Number(response.headers.get('X-Original-Size') || files[0]!.size)); setOutSize(size); setPageCount(Number(response.headers.get('X-Page-Count') || 0)); success('File ready', 'Your processed file is ready to download.');
       }
@@ -95,7 +110,8 @@ export function PdfTool({ slug }: FunctionalToolProps) {
     finally { setLoading(false); abortRef.current = null; }
   }, [compression, errToast, everyN, files, isMulti, maxPages, op, ranges, removeMetadata, separate, splitMode, success, targetMB]);
 
-  const downloadZip = async () => { if (!results?.length) return; const zip = new JSZip(); await Promise.all(results.map(async (result) => zip.file(result.name, await (await fetch(result.url)).blob()))); const blob = await zip.generateAsync({ type: 'blob' }); const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'savdown-pdf-results.zip'; anchor.click(); URL.revokeObjectURL(url); };
+  const retryFailed = () => { if (!failedInputs.length) return; setFiles(failedInputs); setResults(null); setFailedFiles([]); setFailedInputs([]); setBatchCompleted(0); setBatchTotal(0); setError(''); };
+  const downloadZip = async () => { if (!results?.length) return; const zip = new JSZip(); await Promise.all(results.map(async (result) => zip.file(result.group ? `${result.group}/${result.name}` : result.name, await (await fetch(result.url)).blob()))); const blob = await zip.generateAsync({ type: 'blob' }); const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'savdown-pdf-results.zip'; anchor.click(); URL.revokeObjectURL(url); };
   const reduction = origSize && outSize ? ((origSize - outSize) / origSize) * 100 : 0;
 
   return <div className="mx-auto w-full max-w-3xl space-y-5">
@@ -115,8 +131,8 @@ export function PdfTool({ slug }: FunctionalToolProps) {
     </div>}
 
     {error && <div role="alert" className="flex items-start gap-2 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> <span>{error}</span></div>}
-    {loading && <div role="status" className="flex items-center gap-3 rounded-2xl border border-border bg-white p-5 text-sm text-text-muted shadow-soft dark:bg-card"><Loader2 className="h-5 w-5 animate-spin text-primary" /> Processing on the secure PDF worker. Large documents may take a little longer.</div>}
+    {loading && <div role="status" className="flex items-center gap-3 rounded-2xl border border-border bg-white p-5 text-sm text-text-muted shadow-soft dark:bg-card"><Loader2 className="h-5 w-5 animate-spin text-primary" /> Processing {files.length} PDF files sequentially on the secure PDF worker. Large documents may take a little longer.</div>}
 
-    {results && !loading && <div className="space-y-4 rounded-2xl border border-border bg-white p-5 shadow-soft dark:bg-card"><div className="flex items-start gap-3"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-light"><CheckCircle2 className="h-5 w-5 text-accent-hover" /></span><div><h2 className="font-semibold text-text">{results.length > 1 ? `${results.length} files ready` : 'Your file is ready'}</h2><p className="text-sm text-text-muted">{pageCount ? `${pageCount} source pages · ` : ''}{results.length > 1 ? 'Download individually or as a ZIP.' : origSize && outSize ? `${formatBytes(origSize)} → ${formatBytes(outSize)} · ${reduction > 0 ? `${reduction.toFixed(1)}% smaller` : 'size preserved'}` : formatBytes(results[0]?.size || 0)}</p></div></div><ul className="space-y-2">{results.map((result) => <li key={result.name} className="flex items-center gap-3 rounded-xl bg-surface p-3"><FileText className="h-4 w-4 shrink-0 text-primary" /><span className="min-w-0 flex-1 truncate text-sm font-medium text-text">{result.name}</span><span className="hidden text-xs text-text-subtle sm:inline">{result.size ? formatBytes(result.size) : ''}</span><a href={result.url} download={result.name} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-gradient-brand px-3.5 py-2 text-xs font-semibold text-white"><Download className="h-3.5 w-3.5" /> Download</a></li>)}</ul><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={reset}><RotateCcw className="h-4 w-4" /> Process another</Button>{results.length > 1 && <Button variant="outline" onClick={downloadZip}><FileArchive className="h-4 w-4" /> Download ZIP</Button>}</div></div>}
+    {results && !loading && <div className="space-y-4 rounded-2xl border border-border bg-white p-5 shadow-soft dark:bg-card"><div className="flex items-start gap-3"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-light"><CheckCircle2 className="h-5 w-5 text-accent-hover" /></span><div><h2 className="font-semibold text-text">{batchTotal > 1 ? `Batch complete: ${batchCompleted}/${batchTotal}` : results.length > 1 ? `${results.length} files ready` : 'Your file is ready'}</h2><p className="text-sm text-text-muted">{pageCount ? `${pageCount} source pages · ` : ''}{results.length > 1 ? 'Download individually or as a ZIP.' : origSize && outSize ? `${formatBytes(origSize)} → ${formatBytes(outSize)} · ${reduction > 0 ? `${reduction.toFixed(1)}% smaller` : 'size preserved'}` : formatBytes(results[0]?.size || 0)}</p></div></div>{failedFiles.length > 0 && <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-700"><strong>{failedFiles.length} failed:</strong> {failedFiles.map((file) => `${file.sourceName} — ${file.error}`).join(' · ')}</div>}<ul className="space-y-2">{results.map((result) => <li key={result.name} className="flex items-center gap-3 rounded-xl bg-surface p-3"><FileText className="h-4 w-4 shrink-0 text-primary" /><span className="min-w-0 flex-1 truncate text-sm font-medium text-text">{result.name}</span><span className="hidden text-xs text-text-subtle sm:inline">{result.size ? formatBytes(result.size) : ''}</span><a href={result.url} download={result.name} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-gradient-brand px-3.5 py-2 text-xs font-semibold text-white"><Download className="h-3.5 w-3.5" /> Download</a></li>)}</ul><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={reset}><RotateCcw className="h-4 w-4" /> Process another</Button>{failedInputs.length > 0 && <Button variant="outline" onClick={retryFailed}>Retry failed files</Button>}{results.length > 1 && <Button variant="outline" onClick={downloadZip}><FileArchive className="h-4 w-4" /> Download ZIP</Button>}</div></div>}
   </div>;
 }

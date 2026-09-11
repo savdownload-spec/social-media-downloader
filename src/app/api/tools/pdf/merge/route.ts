@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, JOB_COST } from '@/lib/credits';
 import { mergePdfs } from '@/lib/pdfService';
+import { PDF_MAX_BATCH_FILES } from '@/lib/pdfConfig';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,6 +16,7 @@ export async function POST(req: Request) {
     const formData = await req.formData();
     const entries = formData.getAll('files').filter((entry): entry is File => entry instanceof File);
     if (entries.length < 2) return NextResponse.json({ error: 'Upload at least 2 PDF files to merge.' }, { status: 400 });
+    if (entries.length > PDF_MAX_BATCH_FILES) return NextResponse.json({ error: `You can merge up to ${PDF_MAX_BATCH_FILES} PDFs at once.` }, { status: 413 });
     const buffers = await Promise.all(entries.map(async (file) => Buffer.from(await file.arrayBuffer())));
     const result = await mergePdfs(buffers, entries.map((file) => file.name));
     if (!result.ok) return NextResponse.json({ error: result.error }, { status: 422 });
