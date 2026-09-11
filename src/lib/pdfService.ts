@@ -1,214 +1,242 @@
-/**
- * PDF processing service using pdf-lib (MIT).
- *
- * Architecture: API Route → pdfService.ts → pdf-lib
- *
- * Supported operations:
- *   - merge:      combine multiple PDFs into one
- *   - split:      extract specific page ranges
- *   - compress:   re-save with optimised settings (reduces some bloat)
- *   - jpg-to-pdf: embed one or more images into a PDF
- *   - pdf-to-jpg: render PDF pages as JPEG images (via sharp / canvas)
- */
 import { PDFDocument, PageSizes } from 'pdf-lib';
 import sharp from 'sharp';
+import { execFile } from 'node:child_process';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
 
-const MAX_PDF_BYTES  = 50 * 1024 * 1024;  // 50 MB per file
-const MAX_TOTAL_BYTES = 150 * 1024 * 1024; // 150 MB combined
+const execFileAsync = promisify(execFile);
+export const MAX_PDF_BYTES = 50 * 1024 * 1024;
+export const MAX_TOTAL_BYTES = 150 * 1024 * 1024;
+export const MAX_PAGES = 500;
 
-/* ─── types ─────────────────────────────────────────────────── */
+export type PdfOutput = { name: string; buffer: Uint8Array; pageCount?: number };
+export type PdfResult = { ok: true; buffers: PdfOutput[]; pageCount?: number; inputSize?: number } | { ok: false; error: string };
 
-export type PdfResult =
-  | { ok: true;  buffers: { name: string; buffer: Uint8Array }[] }
-  | { ok: false; error: string };
+export type SplitOptions = {
+  mode?: 'extract' | 'ranges' | 'every-n' | 'every-page' | 'size';
+  ranges?: string;
+  separate?: boolean;
+  everyN?: number;
+  targetBytes?: number;
+};
 
-/* ─── validate ──────────────────────────────────────────────── */
+export type CompressionOptions = {
+  level?: 'extreme' | 'recommended' | 'balanced' | 'high' | 'custom';
+  imageQuality?: number;
+  removeMetadata?: boolean;
+};
 
-function validatePdf(buf: Buffer, label: string): string | null {
-  if (buf.length > MAX_PDF_BYTES) return `${label} exceeds 50 MB limit.`;
-  // Check PDF magic bytes %PDF
-  if (buf.slice(0, 4).toString('ascii') !== '%PDF') return `${label} is not a valid PDF file.`;
+function friendlyError(error: unknown, fallback: string): string {
+  const message = error instanceof Error ? error.message : String(error);
+  if (/encrypt|password|crypt/i.test(message)) return 'This PDF is encrypted or password-protected. Please unlock it before processing.';
+  if (/damaged|invalid|parse|trailer|xref|header/i.test(message)) return 'Unable to process this PDF. It may be encrypted or damaged.';
+  return fallback;
+}
+
+export function validatePdf(buf: Buffer, label = 'PDF'): string | null {
+  if (buf.length === 0) return `${label} is empty.`;
+  if (buf.length > MAX_PDF_BYTES) return `${label} exceeds the 50 MB per-file limit.`;
+  if (buf.subarray(0, 5).toString('ascii') !== '%PDF-') return `${label} is not a valid PDF file.`;
   return null;
 }
 
-/* ─── merge ─────────────────────────────────────────────────── */
+export function sanitizeFilename(name: string, fallback = 'document'): string {
+  const base = name.replace(/[/\\?%*:|"<>\u0000-\u001f]/g, '-').replace(/\.pdf$/i, '').trim();
+  return (base || fallback).slice(0, 100);
+}
 
-export async function mergePdfs(pdfs: Buffer[]): Promise<PdfResult> {
-  if (pdfs.length < 2) return { ok: false, error: 'Please upload at least 2 PDF files to merge.' };
-
-  const totalSize = pdfs.reduce((s, b) => s + b.length, 0);
-  if (totalSize > MAX_TOTAL_BYTES) return { ok: false, error: 'Combined file size exceeds 150 MB.' };
-
-  for (let i = 0; i < pdfs.length; i++) {
-    const err = validatePdf(pdfs[i]!, `File ${i + 1}`);
-    if (err) return { ok: false, error: err };
+async function loadPdf(buf: Buffer, label = 'PDF'): Promise<{ doc: PDFDocument } | { error: string }> {
+  const validation = validatePdf(buf, label);
+  if (validation) return { error: validation };
+  try {
+    const doc = await PDFDocument.load(buf, { updateMetadata: false, throwOnInvalidObject: false });
+    if (doc.getPageCount() < 1) return { error: `${label} does not contain any pages.` };
+    if (doc.getPageCount() > MAX_PAGES) return { error: `${label} exceeds the ${MAX_PAGES}-page limit.` };
+    return { doc };
+  } catch (error) {
+    return { error: friendlyError(error, 'Unable to process this PDF. It may be encrypted or damaged.') };
   }
+}
 
+function parsePageList(input: string, pageCount: number): number[] | { error: string } {
+  const pages: number[] = [];
+  for (const token of input.split(',').map((part) => part.trim()).filter(Boolean)) {
+    const match = /^(\d+)(?:\s*-\s*(\d+))?$/.exec(token);
+    if (!match) return { error: `Invalid page range “${token}”. Use values such as 1, 3-5, 8.` };
+    const start = Number(match[1]);
+    const end = Number(match[2] || match[1]);
+    if (start < 1 || end < start || end > pageCount) return { error: `Page range “${token}” is outside 1-${pageCount}.` };
+    for (let page = start; page <= end; page += 1) pages.push(page - 1);
+  }
+  if (!pages.length) return { error: 'Choose at least one page.' };
+  return pages;
+}
+
+function chunks<T>(items: T[], size: number): T[][] {
+  const result: T[][] = [];
+  for (let i = 0; i < items.length; i += size) result.push(items.slice(i, i + size));
+  return result;
+}
+
+async function createPdfFromPages(source: PDFDocument, pages: number[], name: string): Promise<PdfOutput> {
+  const doc = await PDFDocument.create();
+  const copied = await doc.copyPages(source, pages);
+  copied.forEach((page) => doc.addPage(page));
+  const buffer = await doc.save({ useObjectStreams: true, addDefaultPage: false });
+  return { name, buffer, pageCount: pages.length };
+}
+
+export async function mergePdfs(pdfs: Buffer[], names: string[] = []): Promise<PdfResult> {
+  if (pdfs.length < 2) return { ok: false, error: 'Upload at least 2 PDF files to merge.' };
+  if (pdfs.reduce((sum, file) => sum + file.length, 0) > MAX_TOTAL_BYTES) return { ok: false, error: 'Combined file size exceeds the 150 MB limit.' };
   try {
     const merged = await PDFDocument.create();
-    for (const pdfBuf of pdfs) {
-      const src = await PDFDocument.load(pdfBuf, { ignoreEncryption: true });
-      const pages = await merged.copyPages(src, src.getPageIndices());
-      pages.forEach(p => merged.addPage(p));
+    let totalPages = 0;
+    for (let i = 0; i < pdfs.length; i += 1) {
+      const loaded = await loadPdf(pdfs[i]!, `File ${i + 1}`);
+      if ('error' in loaded) return { ok: false, error: loaded.error };
+      const pages = await merged.copyPages(loaded.doc, loaded.doc.getPageIndices());
+      pages.forEach((page) => merged.addPage(page));
+      totalPages += pages.length;
     }
-    const bytes = await merged.save();
-    return { ok: true, buffers: [{ name: 'merged.pdf', buffer: bytes }] };
-  } catch (err) {
-    return { ok: false, error: `Merge failed: ${err instanceof Error ? err.message : String(err)}` };
+    const buffer = await merged.save({ useObjectStreams: true, addDefaultPage: false });
+    return { ok: true, buffers: [{ name: 'merged-document.pdf', buffer, pageCount: totalPages }], pageCount: totalPages, inputSize: pdfs.reduce((sum, file) => sum + file.length, 0) };
+  } catch (error) {
+    return { ok: false, error: friendlyError(error, 'The PDFs could not be merged.') };
   }
 }
 
-/* ─── split ─────────────────────────────────────────────────── */
-
-/**
- * Split a PDF by page ranges. ranges is a string like "1-3,5,7-9"
- * If ranges is empty/undefined, each page becomes its own file.
- */
-export async function splitPdf(pdf: Buffer, ranges?: string): Promise<PdfResult> {
-  const err = validatePdf(pdf, 'PDF');
-  if (err) return { ok: false, error: err };
-
-  try {
-    const src = await PDFDocument.load(pdf, { ignoreEncryption: true });
-    const totalPages = src.getPageCount();
-
-    // Parse ranges string → array of [start, end] (0-indexed)
-    let pageGroups: number[][] = [];
-
-    if (ranges?.trim()) {
-      for (const part of ranges.split(',').map(s => s.trim()).filter(Boolean)) {
-        const [a, b] = part.split('-').map(s => parseInt(s.trim(), 10));
-        const start = Math.max(1, a!) - 1;
-        const end   = Math.min(totalPages, b ?? a!) - 1;
-        if (!isNaN(start) && !isNaN(end) && start <= end) {
-          pageGroups.push(range(start, end));
-        }
+export async function splitPdf(pdf: Buffer, options: SplitOptions = {}, sourceName = 'document'): Promise<PdfResult> {
+  const loaded = await loadPdf(pdf);
+  if ('error' in loaded) return { ok: false, error: loaded.error };
+  const total = loaded.doc.getPageCount();
+  const mode = options.mode || (options.ranges ? 'ranges' : 'every-page');
+  let groups: number[][];
+  if (mode === 'extract') {
+    const parsed = parsePageList(options.ranges || '', total);
+    if ('error' in parsed) return { ok: false, error: parsed.error };
+    groups = options.separate ? parsed.map((page) => [page]) : [parsed];
+  } else if (mode === 'ranges') {
+    const ranges = (options.ranges || '').split(',').map((part) => part.trim()).filter(Boolean);
+    if (!ranges.length) return { ok: false, error: 'Add at least one range, such as 1-3, 5, 8-10.' };
+    const parsedGroups: number[][] = [];
+    for (const range of ranges) {
+      const parsed = parsePageList(range, total);
+      if ('error' in parsed) return { ok: false, error: parsed.error };
+      parsedGroups.push(parsed);
+    }
+    groups = parsedGroups;
+  } else if (mode === 'every-n') {
+    const n = Math.floor(options.everyN || 0);
+    if (n < 1 || n > total) return { ok: false, error: `Enter a page interval from 1 to ${total}.` };
+    groups = chunks(Array.from({ length: total }, (_, index) => index), n);
+  } else if (mode === 'size') {
+    const target = Math.floor(options.targetBytes || 0);
+    if (target < 64 * 1024) return { ok: false, error: 'Choose a target size of at least 64 KB.' };
+    groups = [];
+    let current: number[] = [];
+    for (let page = 0; page < total; page += 1) {
+      current.push(page);
+      const probe = await createPdfFromPages(loaded.doc, current, 'probe.pdf');
+      if (current.length > 1 && probe.buffer.length > target) {
+        current.pop();
+        groups.push(current);
+        current = [page];
       }
     }
-
-    // No ranges → split every page individually
-    if (!pageGroups.length) {
-      pageGroups = Array.from({ length: totalPages }, (_, i) => [i]);
-    }
-
-    const buffers: { name: string; buffer: Uint8Array }[] = [];
-    for (let gi = 0; gi < pageGroups.length; gi++) {
-      const doc = await PDFDocument.create();
-      const pages = await doc.copyPages(src, pageGroups[gi]!);
-      pages.forEach(p => doc.addPage(p));
-      const bytes = await doc.save();
-      const label = pageGroups.length === totalPages
-        ? `page-${pageGroups[gi]![0]! + 1}`
-        : `part-${gi + 1}`;
-      buffers.push({ name: `${label}.pdf`, buffer: bytes });
-    }
-
-    return { ok: true, buffers };
-  } catch (err) {
-    return { ok: false, error: `Split failed: ${err instanceof Error ? err.message : String(err)}` };
+    if (current.length) groups.push(current);
+  } else {
+    groups = Array.from({ length: total }, (_, index) => [index]);
   }
-}
-
-function range(start: number, end: number): number[] {
-  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-}
-
-/* ─── compress ──────────────────────────────────────────────── */
-
-/**
- * "Compress" by re-serialising the PDF without object streams.
- * True image re-compression requires a rasteriser; pdf-lib cannot
- * recompress embedded images, but it can strip redundant PDF structures.
- */
-export async function compressPdf(pdf: Buffer): Promise<PdfResult> {
-  const err = validatePdf(pdf, 'PDF');
-  if (err) return { ok: false, error: err };
-
   try {
-    const doc = await PDFDocument.load(pdf, { ignoreEncryption: true });
-    // Save with objectsPerTick=50 to reduce overhead in large files
-    const bytes = await doc.save({ useObjectStreams: true });
-    return { ok: true, buffers: [{ name: 'compressed.pdf', buffer: bytes }] };
-  } catch (err) {
-    return { ok: false, error: `Compress failed: ${err instanceof Error ? err.message : String(err)}` };
+    const base = sanitizeFilename(sourceName);
+    const outputs: PdfOutput[] = [];
+    for (let index = 0; index < groups.length; index += 1) {
+      const group = groups[index]!;
+      const first = group[0]! + 1;
+      const last = group[group.length - 1]! + 1;
+      const name = groups.length === total && group.length === 1 ? `${base}-page-${String(first).padStart(2, '0')}.pdf` : `${base}-part-${index + 1}-${first}-${last}.pdf`;
+      outputs.push(await createPdfFromPages(loaded.doc, group, name));
+    }
+    return { ok: true, buffers: outputs, pageCount: total, inputSize: pdf.length };
+  } catch (error) {
+    return { ok: false, error: friendlyError(error, 'The PDF could not be split.') };
   }
 }
 
-/* ─── jpg-to-pdf ────────────────────────────────────────────── */
+export async function compressPdf(pdf: Buffer, options: CompressionOptions = {}, sourceName = 'document'): Promise<PdfResult> {
+  const loaded = await loadPdf(pdf);
+  if ('error' in loaded) return { ok: false, error: loaded.error };
+  try {
+    const level = options.level || 'recommended';
+    const removeMetadata = options.removeMetadata ?? (level === 'extreme' || level === 'recommended');
+    if (removeMetadata) {
+      loaded.doc.setTitle('');
+      loaded.doc.setAuthor('');
+      loaded.doc.setSubject('');
+      loaded.doc.setKeywords([]);
+      loaded.doc.setProducer('SavDown PDF Tools');
+      loaded.doc.setCreator('SavDown PDF Tools');
+    }
+    const buffer = await loaded.doc.save({ useObjectStreams: level !== 'high', addDefaultPage: false, objectsPerTick: level === 'extreme' ? 100 : 50 });
+    if (buffer.length >= pdf.length && level !== 'custom') {
+      return { ok: false, error: 'This PDF is already optimized; no smaller safe result was produced.' };
+    }
+    return { ok: true, buffers: [{ name: `${sanitizeFilename(sourceName)}-compressed.pdf`, buffer, pageCount: loaded.doc.getPageCount() }], pageCount: loaded.doc.getPageCount(), inputSize: pdf.length };
+  } catch (error) {
+    return { ok: false, error: friendlyError(error, 'This PDF could not be safely optimized.') };
+  }
+}
 
-export async function imagesToPdf(images: Buffer[]): Promise<PdfResult> {
+export async function imagesToPdf(images: Buffer[], names: string[] = []): Promise<PdfResult> {
   if (!images.length) return { ok: false, error: 'Please upload at least one image.' };
   if (images.length > 50) return { ok: false, error: 'Maximum 50 images per conversion.' };
-
+  if (images.reduce((sum, image) => sum + image.length, 0) > MAX_TOTAL_BYTES) return { ok: false, error: 'Combined image size exceeds the 150 MB limit.' };
   try {
     const doc = await PDFDocument.create();
-
-    for (const imgBuf of images) {
-      // Use sharp to get metadata and normalise to JPEG
-      const { width = 800, height = 600 } = await sharp(imgBuf).metadata();
-
-      // Convert to JPEG for maximum pdf-lib compatibility
-      const jpegBuf = await sharp(imgBuf).jpeg({ quality: 90 }).toBuffer();
-      const pdfImg  = await doc.embedJpg(jpegBuf);
-
-      // A4 in points (595.28 × 841.89); scale image to fit
+    for (const image of images) {
+      const metadata = await sharp(image).metadata();
+      const width = metadata.width || 800;
+      const height = metadata.height || 600;
+      const jpeg = await sharp(image).jpeg({ quality: 90, mozjpeg: true }).toBuffer();
+      const embedded = await doc.embedJpg(jpeg);
       const [pageW, pageH] = PageSizes.A4;
-      const scale = Math.min(pageW! / (width || 800), pageH! / (height || 600), 1);
-
+      const scale = Math.min(pageW / width, pageH / height, 1);
       const page = doc.addPage(PageSizes.A4);
-      page.drawImage(pdfImg, {
-        x: (pageW! - (width || 800) * scale) / 2,
-        y: (pageH! - (height || 600) * scale) / 2,
-        width:  (width  || 800) * scale,
-        height: (height || 600) * scale,
-      });
+      page.drawImage(embedded, { x: (pageW - width * scale) / 2, y: (pageH - height * scale) / 2, width: width * scale, height: height * scale });
     }
-
-    const bytes = await doc.save();
-    return { ok: true, buffers: [{ name: 'document.pdf', buffer: bytes }] };
-  } catch (err) {
-    return { ok: false, error: `Conversion failed: ${err instanceof Error ? err.message : String(err)}` };
+    const buffer = await doc.save({ useObjectStreams: true, addDefaultPage: false });
+    return { ok: true, buffers: [{ name: 'images-to-pdf.pdf', buffer, pageCount: images.length }], pageCount: images.length };
+  } catch (error) {
+    return { ok: false, error: friendlyError(error, 'One or more images could not be converted.') };
   }
 }
 
-/* ─── pdf-to-jpg ────────────────────────────────────────────── */
-
-/**
- * Convert PDF pages to JPEGs using sharp's PDF input support (requires
- * libvips compiled with poppler). Falls back to a stub if not supported.
- */
-export async function pdfToImages(pdf: Buffer, maxPages = 10): Promise<PdfResult> {
-  const err = validatePdf(pdf, 'PDF');
-  if (err) return { ok: false, error: err };
-
+export async function pdfToImages(pdf: Buffer, maxPages = 10, sourceName = 'document'): Promise<PdfResult> {
+  const loaded = await loadPdf(pdf);
+  if ('error' in loaded) return { ok: false, error: loaded.error };
+  const pageLimit = Math.min(Math.max(1, Math.floor(maxPages)), loaded.doc.getPageCount(), 50);
+  const workDir = await mkdtemp(join(tmpdir(), 'savdown-pdf-'));
+  const input = join(workDir, 'input.pdf');
+  const prefix = join(workDir, 'page');
   try {
-    const doc = await PDFDocument.load(pdf, { ignoreEncryption: true });
-    const pageCount = Math.min(doc.getPageCount(), maxPages);
-
-    const buffers: { name: string; buffer: Uint8Array }[] = [];
-
-    for (let i = 0; i < pageCount; i++) {
-      try {
-        // sharp supports PDF with poppler; each page = one input
-        const imgBuf = await sharp(pdf, { page: i })
-          .resize({ width: 1200 })
-          .jpeg({ quality: 90 })
-          .toBuffer();
-        buffers.push({ name: `page-${i + 1}.jpg`, buffer: imgBuf });
-      } catch {
-        // If poppler not available, return a helpful error
-        return {
-          ok: false,
-          error:
-            'PDF to image conversion requires libvips with poppler support. ' +
-            'This feature is available in the Docker deployment.',
-        };
-      }
+    await writeFile(input, pdf, { mode: 0o600 });
+    await execFileAsync('pdftoppm', ['-jpeg', '-r', '144', '-f', '1', '-l', String(pageLimit), '-singlefile', input, prefix]);
+    const outputs: PdfOutput[] = [];
+    const single = await readFile(`${prefix}.jpg`);
+    outputs.push({ name: `${sanitizeFilename(sourceName)}-page-01.jpg`, buffer: single });
+    // pdftoppm -singlefile is intentionally used for a one-page conversion; render the remainder individually.
+    for (let page = 2; page <= pageLimit; page += 1) {
+      const pagePrefix = join(workDir, `page-${page}`);
+      await execFileAsync('pdftoppm', ['-jpeg', '-r', '144', '-f', String(page), '-l', String(page), '-singlefile', input, pagePrefix]);
+      outputs.push({ name: `${sanitizeFilename(sourceName)}-page-${String(page).padStart(2, '0')}.jpg`, buffer: await readFile(`${pagePrefix}.jpg`) });
     }
-
-    if (!buffers.length) return { ok: false, error: 'Could not render any pages from this PDF.' };
-    return { ok: true, buffers };
-  } catch (err) {
-    return { ok: false, error: `Conversion failed: ${err instanceof Error ? err.message : String(err)}` };
+    return { ok: true, buffers: outputs, pageCount: loaded.doc.getPageCount(), inputSize: pdf.length };
+  } catch (error) {
+    return { ok: false, error: friendlyError(error, 'Could not render this PDF as images.') };
+  } finally {
+    await rm(workDir, { recursive: true, force: true });
   }
 }
