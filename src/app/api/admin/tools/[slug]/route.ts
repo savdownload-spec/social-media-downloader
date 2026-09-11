@@ -11,9 +11,14 @@ export const dynamic = 'force-dynamic';
 function forbidden() { return NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403 }); }
 
 const patchSchema = z.object({
-  status:     z.enum(['LIVE', 'COMING_SOON', 'MAINTENANCE', 'DISABLED']).optional(),
-  creditCost: z.number().int().min(0).optional(),
-  freeLimit:  z.number().int().min(0).optional(),
+  status:             z.enum(['LIVE', 'COMING_SOON', 'MAINTENANCE', 'DISABLED']).optional(),
+  creditCost:         z.number().int().min(0).optional(),
+  freeLimit:          z.number().int().min(0).optional(),
+  // Per-plan batch limits. null = revert to the code default in batchLimits.ts.
+  batchLimitFree:     z.number().int().min(1).nullable().optional(),
+  batchLimitPro:      z.number().int().min(1).nullable().optional(),
+  batchLimitMax:      z.number().int().min(1).nullable().optional(),
+  batchLimitLifetime: z.number().int().min(1).nullable().optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: { slug: string } }) {
@@ -36,5 +41,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
     detail: parsed.data as Record<string, unknown>,
   });
 
-  return NextResponse.json({ ok: true, data: { ...updated, updatedAt: updated.updatedAt.toISOString(), createdAt: updated.createdAt.toISOString() } });
+  return NextResponse.json({
+    ok: true,
+    data: {
+      ...updated,
+      updatedAt: updated.updatedAt.toISOString(),
+      createdAt: updated.createdAt.toISOString(),
+    },
+  });
 }

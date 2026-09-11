@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, JOB_COST } from '@/lib/credits';
 import { mergePdfs } from '@/lib/pdfService';
-import { PDF_MAX_BATCH_FILES, PDF_MAX_BATCH_BYTES } from '@/lib/pdfConfig';
+import { PDF_MAX_BATCH_BYTES } from '@/lib/pdfConfig';
 import { cleanupPdfUploadRefs, readPdfUploadRefs, type PdfUploadRef } from '@/lib/pdfUpload';
+import { checkBatchLimit } from '@/lib/batchLimitGate';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,7 +17,13 @@ export async function POST(req: Request) {
     const body = await req.json() as { files?: PdfUploadRef[] };
     const files = body.files || [];
     if (files.length < 2) return NextResponse.json({ error: 'Upload at least 2 PDF files to merge.' }, { status: 400 });
-    if (files.length > PDF_MAX_BATCH_FILES) return NextResponse.json({ error: `You can merge up to ${PDF_MAX_BATCH_FILES} PDFs at once.` }, { status: 413 });
+
+    // Plan-aware batch limit — enforced server-side; returns 403 with structured
+    // error body ({ code: 'BATCH_LIMIT_EXCEEDED', allowedCount, upgradeEligible })
+    // when the user's plan does not cover this file count.
+    const limitViolation = await checkBatchLimit('merge-pdf', files.length, req);
+    if (limitViolation) return limitViolation;
+
     if (files.reduce((sum, file) => sum + (file.size || 0), 0) > PDF_MAX_BATCH_BYTES) return NextResponse.json({ error: 'Combined file size exceeds the 150 MB batch limit.' }, { status: 413 });
     const gate = await requireCredits({ cost: JOB_COST.pdfTool });
     if (!gate.ok) return gate.response;

@@ -3,7 +3,8 @@ import { del, get } from '@vercel/blob';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, JOB_COST } from '@/lib/credits';
 import { imagesToPdf } from '@/lib/pdfService';
-import { PDF_MAX_BATCH_FILES, PDF_MAX_BATCH_BYTES } from '@/lib/pdfConfig';
+import { PDF_MAX_BATCH_BYTES } from '@/lib/pdfConfig';
+import { checkBatchLimit } from '@/lib/batchLimitGate';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,7 +17,11 @@ export async function POST(req: Request) {
     const body = await req.json() as { files?: { url: string; name: string; size?: number }[] };
     const files = body.files || [];
     if (!files.length) return NextResponse.json({ error: 'Upload at least one image.' }, { status: 400 });
-    if (files.length > PDF_MAX_BATCH_FILES) return NextResponse.json({ error: `You can convert up to ${PDF_MAX_BATCH_FILES} images at once.` }, { status: 413 });
+
+    // Plan-aware batch limit check.
+    const limitViolation = await checkBatchLimit('jpg-to-pdf', files.length, req);
+    if (limitViolation) return limitViolation;
+
     if (files.some((file) => !file.url.startsWith('https://'))) return NextResponse.json({ error: 'Invalid uploaded image reference.' }, { status: 400 });
     if (files.reduce((sum, file) => sum + (file.size || 0), 0) > PDF_MAX_BATCH_BYTES) return NextResponse.json({ error: 'Combined image size exceeds the 150 MB batch limit.' }, { status: 413 });
     const gate = await requireCredits({ cost: JOB_COST.pdfTool });

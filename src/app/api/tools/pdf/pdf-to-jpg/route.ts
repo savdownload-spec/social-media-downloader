@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, JOB_COST } from '@/lib/credits';
 import { pdfToImages } from '@/lib/pdfService';
-import { PDF_MAX_BATCH_FILES, PDF_MAX_BATCH_BYTES } from '@/lib/pdfConfig';
+import { PDF_MAX_BATCH_BYTES } from '@/lib/pdfConfig';
 import { cleanupPdfUploadRefs, readPdfUploadRefs, type PdfUploadRef } from '@/lib/pdfUpload';
+import { checkBatchLimit } from '@/lib/batchLimitGate';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,7 +17,11 @@ export async function POST(req: Request) {
     const body = await req.json() as { files?: PdfUploadRef[]; maxPages?: number };
     const files = body.files || [];
     if (!files.length) return NextResponse.json({ error: 'Choose at least one PDF file.' }, { status: 400 });
-    if (files.length > PDF_MAX_BATCH_FILES) return NextResponse.json({ error: `You can process up to ${PDF_MAX_BATCH_FILES} PDFs at once.` }, { status: 413 });
+
+    // Plan-aware batch limit check.
+    const limitViolation = await checkBatchLimit('pdf-to-jpg', files.length, req);
+    if (limitViolation) return limitViolation;
+
     if (files.reduce((sum, file) => sum + (file.size || 0), 0) > PDF_MAX_BATCH_BYTES) return NextResponse.json({ error: 'Combined file size exceeds the 150 MB batch limit.' }, { status: 413 });
     const gate = await requireCredits({ cost: files.length * JOB_COST.pdfTool });
     if (!gate.ok) return gate.response;

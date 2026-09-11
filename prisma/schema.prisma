@@ -461,7 +461,7 @@ model AuditLog {
   @@index([action, createdAt])
 }
 
-/// Admin-managed per-tool configuration (status, free limit, credit cost).
+/// Admin-managed per-tool configuration (status, free limit, credit cost, batch limits).
 model ToolConfig {
   id          String   @id @default(cuid())
   slug        String   @unique
@@ -469,7 +469,14 @@ model ToolConfig {
   category    String
   status      String   @default("LIVE") // LIVE | COMING_SOON | MAINTENANCE | DISABLED
   creditCost  Int      @default(0)
-  freeLimit   Int      @default(0)       // 0 = unlimited
+  freeLimit   Int      @default(0)       // 0 = unlimited (legacy, kept for display)
+
+  /// Per-plan batch file limits. NULL means "use the code default from batchLimits.ts".
+  batchLimitFree     Int?
+  batchLimitPro      Int?
+  batchLimitMax      Int?
+  batchLimitLifetime Int?
+
   updatedAt   DateTime @updatedAt
   createdAt   DateTime @default(now())
 }
