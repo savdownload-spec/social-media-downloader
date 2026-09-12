@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { getPricingConfig } from '@/lib/pricing-server';
+import type { PlanTier } from '@/types/plans';
 
 /**
  * The server-side purchase catalogue.

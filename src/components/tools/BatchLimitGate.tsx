@@ -123,7 +123,7 @@ export function BatchLimitHint({
 
       {/* Already on highest plan */}
       {!canUpgrade && plan !== 'FREE' && (
-        <span className="text-text-subtle">You're on the highest plan</span>
+        <span className="text-text-subtle">You&apos;re on the highest plan</span>
       )}
     </div>
   );
@@ -203,7 +203,7 @@ export function BatchLimitWarning({
             {planName} plan: up to {limit} file{limit === 1 ? '' : 's'} per batch
           </p>
           <p className="mt-0.5 text-amber-800 dark:text-amber-300">
-            You've selected {selectedCount} files —{' '}
+            You&apos;ve selected {selectedCount} files —{' '}
             <span className="font-medium">{overBy} file{overBy === 1 ? '' : 's'} over the limit</span>.
             {' '}The first {limit} file{limit === 1 ? '' : 's'} will be kept; the rest are highlighted below.
           </p>
@@ -264,7 +264,7 @@ export function BatchLimitWarning({
             {/* Already at the highest plan — show a different message */}
             {!canUpgrade && (
               <span className="text-xs text-amber-700 dark:text-amber-400">
-                You're already on the highest plan.
+                You&apos;re already on the highest plan.
               </span>
             )}
           </div>
