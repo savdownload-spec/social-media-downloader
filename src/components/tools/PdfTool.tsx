@@ -30,9 +30,10 @@ function getFilename(header: string | null, fallback: string): string { const ma
 
 export function PdfTool({ slug }: FunctionalToolProps) {
   const op = SLUG_TO_OP[slug] ?? 'merge';
-  const { success, error: errToast } = useToast();
+  const { success } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const processingRef = useRef(false);
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -104,10 +105,13 @@ export function PdfTool({ slug }: FunctionalToolProps) {
   const removeExcess = useCallback(() => setFiles((current) => current.slice(0, batchLimit)), [batchLimit]);
 
   const process = useCallback(async () => {
+    if (processingRef.current) return;
     if (!files.length) { setError('Choose at least one file first.'); return; }
     if (op === 'merge' && files.length < 2) { setError('Merge needs at least 2 PDFs.'); return; }
     if (op === 'split' && ['extract', 'ranges'].includes(splitMode) && !ranges.trim()) { setError('Enter at least one page or range.'); return; }
-    setLoading(true); setError(''); setResults(null); abortRef.current = new AbortController();
+    const controller = new AbortController();
+    processingRef.current = true;
+    setLoading(true); setError(''); setResults(null); abortRef.current = controller;
     // Enforce the plan limit server-side as well; silently trim on the client
     // so the submit cannot race ahead if the user ignores the warning.
     const filesToProcess = files.slice(0, batchLimit);
@@ -118,7 +122,7 @@ export function PdfTool({ slug }: FunctionalToolProps) {
       const uploaded: { url: string; name: string; size: number }[] = [];
       for (const [index, file] of filesToProcess.entries()) {
         setUploadStatus(`Uploading ${index + 1}/${filesToProcess.length}: ${file.name}`);
-        const blob = await upload(`pdf-jobs/${Date.now()}-${index}-${file.name}`, file, { access: 'private', multipart: true, handleUploadUrl: '/api/tools/pdf/upload', abortSignal: abortRef.current.signal, contentType: file.type });
+        const blob = await upload(`pdf-jobs/${Date.now()}-${index}-${file.name}`, file, { access: 'private', multipart: true, handleUploadUrl: '/api/tools/pdf/upload', abortSignal: controller.signal, contentType: file.type });
         uploaded.push({ url: blob.url, name: file.name, size: file.size });
         uploadedUrls.push(blob.url);
       }
@@ -129,7 +133,7 @@ export function PdfTool({ slug }: FunctionalToolProps) {
       if (op === 'pdf-to-jpg') payload.maxPages = Number(maxPages);
       requestBody = JSON.stringify(payload);
       const endpoint = `/api/tools/pdf/${op}`;
-      const response = await fetch(endpoint, { method: 'POST', body: requestBody, headers: requestHeaders, signal: abortRef.current.signal });
+      const response = await fetch(endpoint, { method: 'POST', body: requestBody, headers: requestHeaders, signal: controller.signal });
       const contentType = response.headers.get('content-type') || '';
       if (!response.ok) { const payload = contentType.includes('json') ? await response.json().catch(() => ({})) : {}; throw new Error(payload.error || `Processing failed (${response.status}).`); }
       if (contentType.includes('application/json')) {
@@ -150,11 +154,15 @@ export function PdfTool({ slug }: FunctionalToolProps) {
         const blob = await response.blob(); const url = URL.createObjectURL(blob); const size = Number(response.headers.get('X-Output-Size') || blob.size); setResults([{ name: getFilename(response.headers.get('Content-Disposition'), wantsWord ? 'savdown-document.pdf' : op === 'pdf-to-word' ? 'savdown-document.docx' : 'savdown-document.pdf'), url, size }]); setOrigSize(Number(response.headers.get('X-Original-Size') || files[0]!.size)); setOutSize(size); setPageCount(Number(response.headers.get('X-Page-Count') || 0)); success('File ready', 'Your processed file is ready to download.');
       }
     } catch (caught) {
-      if (uploadedUrls.length) void fetch('/api/tools/pdf/jpg-to-pdf/cleanup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ urls: uploadedUrls }), keepalive: true }).catch(() => undefined);
-      if ((caught as Error).name !== 'AbortError') { const message = caught instanceof Error ? caught.message : 'Could not process the files.'; setError(message); errToast('Processing failed', message); }
+      if (uploadedUrls.length) void fetch('/api/tools/pdf/jpg-to-pdf/cleanup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ urls: uploadedUrls }) }).catch(() => undefined);
+      if ((caught as Error).name !== 'AbortError') { const message = caught instanceof Error ? caught.message : 'Could not process the files.'; setError(message); }
     }
-    finally { setLoading(false); setUploadStatus(''); abortRef.current = null; }
-  }, [batchLimit, compression, errToast, everyN, files, maxPages, op, ranges, removeMetadata, separate, splitMode, success, targetMB, wantsWord]);
+    finally {
+      if (abortRef.current === controller) abortRef.current = null;
+      processingRef.current = false;
+      setLoading(false); setUploadStatus('');
+    }
+  }, [batchLimit, compression, everyN, files, maxPages, op, ranges, removeMetadata, separate, splitMode, success, targetMB, wantsWord]);
 
   const retryFailed = () => { if (!failedInputs.length) return; setFiles(failedInputs); setResults(null); setFailedFiles([]); setFailedInputs([]); setBatchCompleted(0); setBatchTotal(0); setError(''); };
   const downloadZip = async () => { if (!results?.length) return; const zip = new JSZip(); await Promise.all(results.map(async (result) => zip.file(result.group ? `${result.group}/${result.name}` : result.name, await (await fetch(result.url)).blob()))); const blob = await zip.generateAsync({ type: 'blob' }); const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'savdown-pdf-results.zip'; anchor.click(); URL.revokeObjectURL(url); };
