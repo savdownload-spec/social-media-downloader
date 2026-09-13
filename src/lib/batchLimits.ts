@@ -70,6 +70,8 @@ const DEFAULTS: Record<string, ToolBatchLimits> = {
   'jpg-to-pdf':   { free: 10, pro: 50, max: 80, lifetime: 80, maxFileBytes: 50 * 1024 * 1024, maxBatchBytes: 150 * 1024 * 1024 },
   // PDF→JPG: rendering is CPU-heavy per page; keep Free lower.
   'pdf-to-jpg':   { free: 5,  pro: 20, max: 50, lifetime: 50, maxFileBytes: 50 * 1024 * 1024, maxBatchBytes: 150 * 1024 * 1024 },
+  'pdf-to-word':  { free: 5,  pro: 20, max: 50, lifetime: 50, maxFileBytes: 50 * 1024 * 1024, maxBatchBytes: 150 * 1024 * 1024 },
+  'word-to-pdf':  { free: 5,  pro: 20, max: 50, lifetime: 50, maxFileBytes: 50 * 1024 * 1024, maxBatchBytes: 150 * 1024 * 1024 },
 };
 
 /** Every slug that currently has multi-file batch support. */

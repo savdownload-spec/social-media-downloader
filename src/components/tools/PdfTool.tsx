@@ -12,13 +12,13 @@ import { PDF_MAX_BATCH_BYTES, PDF_MAX_FILE_BYTES } from '@/lib/pdfConfig';
 import { useBatchLimit } from '@/hooks/useBatchLimit';
 import { BatchLimitHint, BatchLimitWarning } from '@/components/tools/BatchLimitGate';
 
-type Op = 'merge' | 'split' | 'compress' | 'jpg-to-pdf' | 'pdf-to-jpg';
+type Op = 'merge' | 'split' | 'compress' | 'jpg-to-pdf' | 'pdf-to-jpg' | 'pdf-to-word' | 'word-to-pdf';
 type SplitMode = 'extract' | 'ranges' | 'every-n' | 'every-page' | 'size';
 type ResultFile = { name: string; url: string; size?: number; pageCount?: number; group?: string; sourceName?: string };
 type FailedFile = { sourceName: string; error: string };
 type ApiManifest = { completed?: number; total?: number; files?: any[]; pageCount?: number };
 
-const SLUG_TO_OP: Record<string, Op> = { 'merge-pdf': 'merge', 'split-pdf': 'split', 'compress-pdf': 'compress', 'jpg-to-pdf': 'jpg-to-pdf', 'pdf-to-jpg': 'pdf-to-jpg' };
+const SLUG_TO_OP: Record<string, Op> = { 'merge-pdf': 'merge', 'split-pdf': 'split', 'compress-pdf': 'compress', 'jpg-to-pdf': 'jpg-to-pdf', 'pdf-to-jpg': 'pdf-to-jpg', 'pdf-to-word': 'pdf-to-word', 'word-to-pdf': 'word-to-pdf' };
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -59,8 +59,9 @@ export function PdfTool({ slug }: FunctionalToolProps) {
 
   const isMulti = true;
   const wantsImages = op === 'jpg-to-pdf';
-  const accept = wantsImages ? 'image/jpeg,image/png,image/webp,image/gif' : 'application/pdf,.pdf';
-  const label = wantsImages ? 'JPG, PNG, WEBP or GIF images' : 'PDF files';
+  const wantsWord = op === 'word-to-pdf';
+  const accept = wantsImages ? 'image/jpeg,image/png,image/webp,image/gif' : wantsWord ? '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'application/pdf,.pdf';
+  const label = wantsImages ? 'JPG, PNG, WEBP or GIF images' : wantsWord ? 'Word documents' : 'PDF files';
   const totalSize = useMemo(() => files.reduce((sum, file) => sum + file.size, 0), [files]);
 
   // Files beyond the plan limit — derived, not state, so it is always in sync.
@@ -80,7 +81,7 @@ export function PdfTool({ slug }: FunctionalToolProps) {
     const accepted = incomingFiles.filter((file) =>
       wantsImages
         ? file.type.startsWith('image/')
-        : file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'),
+        : wantsWord ? /\.(doc|docx)$/i.test(file.name) : file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'),
     );
     if (accepted.length !== incomingFiles.length) { setError(`Only ${label} are accepted.`); return; }
 
@@ -94,7 +95,7 @@ export function PdfTool({ slug }: FunctionalToolProps) {
     // BatchLimitWarning will surface the overflow clearly and let the user
     // decide: remove excess files or upgrade. No silent truncation.
     setFiles((current) => isMulti ? [...current, ...accepted] : accepted.slice(0, 1));
-  }, [isMulti, label, totalSize, wantsImages]);
+  }, [isMulti, label, totalSize, wantsImages, wantsWord]);
 
   const reset = useCallback(() => { abortRef.current?.abort(); setFiles([]); setResults(null); setFailedFiles([]); setFailedInputs([]); setBatchCompleted(0); setBatchTotal(0); setUploadStatus(''); setError(''); setOrigSize(0); setOutSize(0); setPageCount(0); setRanges(''); if (inputRef.current) inputRef.current.value = ''; }, []);
   const move = (index: number, direction: -1 | 1) => setFiles((current) => { const next = [...current]; const target = index + direction; if (target < 0 || target >= next.length) return current; [next[index], next[target]] = [next[target]!, next[index]!]; return next; });
@@ -146,7 +147,7 @@ export function PdfTool({ slug }: FunctionalToolProps) {
         }
         setUploadStatus(''); setResults(built); setFailedFiles(failed); setFailedInputs(failedSourceFiles); setBatchCompleted(manifest.completed || 0); setBatchTotal(manifest.total || filesToProcess.length); setPageCount(manifest.pageCount || 0); success('Batch complete', `${manifest.completed || 0} of ${manifest.total || filesToProcess.length} source files completed.`);
       } else {
-        const blob = await response.blob(); const url = URL.createObjectURL(blob); const size = Number(response.headers.get('X-Output-Size') || blob.size); setResults([{ name: getFilename(response.headers.get('Content-Disposition'), 'savdown-document.pdf'), url, size }]); setOrigSize(Number(response.headers.get('X-Original-Size') || files[0]!.size)); setOutSize(size); setPageCount(Number(response.headers.get('X-Page-Count') || 0)); success('File ready', 'Your processed file is ready to download.');
+        const blob = await response.blob(); const url = URL.createObjectURL(blob); const size = Number(response.headers.get('X-Output-Size') || blob.size); setResults([{ name: getFilename(response.headers.get('Content-Disposition'), wantsWord ? 'savdown-document.pdf' : op === 'pdf-to-word' ? 'savdown-document.docx' : 'savdown-document.pdf'), url, size }]); setOrigSize(Number(response.headers.get('X-Original-Size') || files[0]!.size)); setOutSize(size); setPageCount(Number(response.headers.get('X-Page-Count') || 0)); success('File ready', 'Your processed file is ready to download.');
       }
     } catch (caught) {
       if (uploadedUrls.length) void fetch('/api/tools/pdf/jpg-to-pdf/cleanup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ urls: uploadedUrls }), keepalive: true }).catch(() => undefined);

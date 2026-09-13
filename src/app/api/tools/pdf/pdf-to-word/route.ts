@@ -1,0 +1,37 @@
+import { NextResponse } from 'next/server';
+import { ratelimit, getClientId } from '@/lib/ratelimit';
+import { requireCredits, JOB_COST } from '@/lib/credits';
+import { convertOfficeDocument } from '@/lib/pdfService';
+import { PDF_MAX_BATCH_BYTES } from '@/lib/pdfConfig';
+import { cleanupPdfUploadRefs, readPdfUploadRefs, type PdfUploadRef } from '@/lib/pdfUpload';
+import { checkBatchLimit } from '@/lib/batchLimitGate';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+export async function POST(req: Request) {
+  const rl = await ratelimit(`pdf:${getClientId(req)}`, { limit: 10, windowSeconds: 60 });
+  if (!rl.success) return NextResponse.json({ error: 'Too many requests. Please wait a minute and try again.' }, { status: 429 });
+  let urls: string[] = [];
+  try {
+    const body = await req.json() as { files?: PdfUploadRef[] };
+    const files = body.files || [];
+    if (!files.length) return NextResponse.json({ error: 'Choose at least one PDF file.' }, { status: 400 });
+    const limitViolation = await checkBatchLimit('pdf-to-word', files.length);
+    if (limitViolation) return limitViolation;
+    if (files.some((file) => !/\.pdf$/i.test(file.name))) return NextResponse.json({ error: 'PDF to Word accepts PDF files only.' }, { status: 400 });
+    if (files.reduce((sum, file) => sum + (file.size || 0), 0) > PDF_MAX_BATCH_BYTES) return NextResponse.json({ error: 'Combined file size exceeds the 150 MB batch limit.' }, { status: 413 });
+    const gate = await requireCredits({ cost: files.length * JOB_COST.pdfTool });
+    if (!gate.ok) return gate.response;
+    const input = await readPdfUploadRefs(files); urls = input.urls;
+    const results = [];
+    for (let index = 0; index < input.buffers.length; index += 1) {
+      const result = await convertOfficeDocument(input.buffers[index]!, input.names[index]!, 'pdf-to-word');
+      if (!result.ok) { results.push({ sourceName: input.names[index], status: 'failed', error: result.error }); continue; }
+      if (!(await gate.spend(`PDF to Word: ${input.names[index]}`))) { results.push({ sourceName: input.names[index], status: 'failed', error: 'Credit balance changed before this file could be charged. Please retry.' }); continue; }
+      results.push({ sourceName: input.names[index], status: 'completed', outputs: result.buffers.map((output) => ({ name: output.name, size: output.buffer.length, base64: Buffer.from(output.buffer).toString('base64') })) });
+    }
+    return NextResponse.json({ ok: true, completed: results.filter((result) => result.status === 'completed').length, total: results.length, files: results });
+  } catch { return NextResponse.json({ error: 'Unable to convert this PDF batch.' }, { status: 422 }); }
+  finally { await cleanupPdfUploadRefs(urls); }
+}

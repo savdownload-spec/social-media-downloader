@@ -64,6 +64,8 @@ const functionalTools: Record<string, FunctionalToolEntry> = {
   'compress-pdf':      { Component: PdfTool },
   'jpg-to-pdf':        { Component: PdfTool },
   'pdf-to-jpg':        { Component: PdfTool },
+  'pdf-to-word':        { Component: PdfTool },
+  'word-to-pdf':        { Component: PdfTool },
 
   /* ── QR tools (qrcode + jsqr) ────────────────────────────────── */
   'qr-code-generator': { Component: QrGeneratorTool },

@@ -20,7 +20,7 @@ export async function POST(req: Request) {
       onBeforeGenerateToken: async (pathname, _clientPayload, multipart) => {
         if (!pathname.startsWith('pdf-jobs/')) throw new Error('Invalid upload path.');
         return {
-          allowedContentTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+          allowedContentTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
           maximumSizeInBytes: PDF_MAX_FILE_BYTES,
           validUntil: Date.now() + 15 * 60 * 1000,
           addRandomSuffix: true,
