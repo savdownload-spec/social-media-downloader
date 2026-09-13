@@ -237,39 +237,35 @@ export async function pdfToImages(pdf: Buffer, maxPages = 10, sourceName = 'docu
       outputs.push({ name: `${sanitizeFilename(sourceName)}-page-${String(page).padStart(2, '0')}.jpg`, buffer: await readFile(`${pagePrefix}.jpg`) });
     }
 
-    /**
-     * Convert Office documents through LibreOffice's headless, sandboxable CLI.
-     * We deliberately fail when the engine is not installed instead of returning
-     * a fake or empty document.
-     */
-    export async function convertOfficeDocument(input: Buffer, sourceName: string, conversion: OfficeConversion): Promise<PdfResult> {
-      if (!input.length) return { ok: false, error: 'The uploaded document is empty.' };
-      if (input.length > MAX_PDF_BYTES) return { ok: false, error: 'The document exceeds the 50 MB per-file limit.' };
-      const extension = conversion === 'pdf-to-word' ? '.pdf' : /\.(docx?|DOCX?)$/.test(sourceName) ? sourceName.slice(sourceName.lastIndexOf('.')) : '.docx';
-      const outputExtension = conversion === 'pdf-to-word' ? '.docx' : '.pdf';
-      const workDir = await mkdtemp(join(tmpdir(), 'savdown-office-'));
-      const inputPath = join(workDir, `input${extension}`);
-      try {
-        await writeFile(inputPath, input, { mode: 0o600 });
-        await execFileAsync('soffice', ['--headless', '--nologo', '--nodefault', '--nofirststartwizard', '--convert-to', `${outputExtension.slice(1)}:`, '--outdir', workDir, inputPath], { timeout: 120_000 });
-        const outputPath = join(workDir, `input${outputExtension}`);
-        const output = await readFile(outputPath);
-        if (!output.length) return { ok: false, error: 'The conversion engine returned an empty document.' };
-        const base = sanitizeFilename(sourceName);
-        return { ok: true, buffers: [{ name: `${base}.${outputExtension.slice(1)}`, buffer: output }], inputSize: input.length };
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        if (/not found|enoent|cannot find/i.test(message)) {
-          return { ok: false, error: 'Document conversion is temporarily unavailable because the server conversion engine is not installed.' };
-        }
-        return { ok: false, error: 'The document could not be converted. Verify that it is a valid, non-password-protected file.' };
-      } finally {
-        await rm(workDir, { recursive: true, force: true });
-      }
-    }
     return { ok: true, buffers: outputs, pageCount: loaded.doc.getPageCount(), inputSize: pdf.length };
   } catch (error) {
     return { ok: false, error: friendlyError(error, 'Could not render this PDF as images.') };
+  } finally {
+    await rm(workDir, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Convert Office documents through LibreOffice's headless CLI.
+ * We fail when the engine is unavailable instead of returning a fake file.
+ */
+export async function convertOfficeDocument(input: Buffer, sourceName: string, conversion: OfficeConversion): Promise<PdfResult> {
+  if (!input.length) return { ok: false, error: 'The uploaded document is empty.' };
+  if (input.length > MAX_PDF_BYTES) return { ok: false, error: 'The document exceeds the 50 MB per-file limit.' };
+  const extension = conversion === 'pdf-to-word' ? '.pdf' : /\.(docx?|DOCX?)$/.test(sourceName) ? sourceName.slice(sourceName.lastIndexOf('.')) : '.docx';
+  const outputExtension = conversion === 'pdf-to-word' ? '.docx' : '.pdf';
+  const workDir = await mkdtemp(join(tmpdir(), 'savdown-office-'));
+  const inputPath = join(workDir, `input${extension}`);
+  try {
+    await writeFile(inputPath, input, { mode: 0o600 });
+    await execFileAsync('soffice', ['--headless', '--nologo', '--nodefault', '--nofirststartwizard', '--convert-to', `${outputExtension.slice(1)}:`, '--outdir', workDir, inputPath], { timeout: 120_000 });
+    const output = await readFile(join(workDir, `input${outputExtension}`));
+    if (!output.length) return { ok: false, error: 'The conversion engine returned an empty document.' };
+    return { ok: true, buffers: [{ name: `${sanitizeFilename(sourceName)}.${outputExtension.slice(1)}`, buffer: output }], inputSize: input.length };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/not found|enoent|cannot find/i.test(message)) return { ok: false, error: 'Document conversion is temporarily unavailable because the server conversion engine is not installed.' };
+    return { ok: false, error: 'The document could not be converted. Verify that it is a valid, non-password-protected file.' };
   } finally {
     await rm(workDir, { recursive: true, force: true });
   }

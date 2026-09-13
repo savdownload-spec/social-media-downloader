@@ -154,7 +154,7 @@ export function PdfTool({ slug }: FunctionalToolProps) {
       if ((caught as Error).name !== 'AbortError') { const message = caught instanceof Error ? caught.message : 'Could not process the files.'; setError(message); errToast('Processing failed', message); }
     }
     finally { setLoading(false); setUploadStatus(''); abortRef.current = null; }
-  }, [batchLimit, compression, errToast, everyN, files, maxPages, op, ranges, removeMetadata, separate, splitMode, success, targetMB]);
+  }, [batchLimit, compression, errToast, everyN, files, maxPages, op, ranges, removeMetadata, separate, splitMode, success, targetMB, wantsWord]);
 
   const retryFailed = () => { if (!failedInputs.length) return; setFiles(failedInputs); setResults(null); setFailedFiles([]); setFailedInputs([]); setBatchCompleted(0); setBatchTotal(0); setError(''); };
   const downloadZip = async () => { if (!results?.length) return; const zip = new JSZip(); await Promise.all(results.map(async (result) => zip.file(result.group ? `${result.group}/${result.name}` : result.name, await (await fetch(result.url)).blob()))); const blob = await zip.generateAsync({ type: 'blob' }); const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'savdown-pdf-results.zip'; anchor.click(); URL.revokeObjectURL(url); };
