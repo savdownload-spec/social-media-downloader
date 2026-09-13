@@ -8,7 +8,11 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return NextResponse.json({ error: 'Direct upload storage is not configured.' }, { status: 503 });
+  // Vercel private Blob stores can authenticate with OIDC via BLOB_STORE_ID;
+  // local/non-Vercel environments need the explicit read-write token.
+  if (!process.env.BLOB_READ_WRITE_TOKEN && !process.env.BLOB_STORE_ID && !process.env.VERCEL) {
+    return NextResponse.json({ error: 'Private Blob storage is not configured for this environment.' }, { status: 503 });
+  }
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: 'Sign in to upload files.' }, { status: 401 });
   try {
@@ -21,9 +25,15 @@ export async function POST(req: Request) {
     const extensionAllowed = /\.(pdf|jpe?g|png|webp|gif|docx?)$/i.test(file.name);
     if (!allowed.includes(file.type) && !extensionAllowed) return NextResponse.json({ error: 'Unsupported file type.' }, { status: 400 });
     const safeName = file.name.replace(/[/\\?%*:|"<>\u0000-\u001f]/g, '-').slice(0, 100) || 'document';
-    const blob = await put(`pdf-jobs/${Date.now()}-${safeName}`, file, { access: 'private', addRandomSuffix: true, token: process.env.BLOB_READ_WRITE_TOKEN });
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const blob = await put(`pdf-jobs/${Date.now()}-${safeName}`, buffer, {
+      access: 'private',
+      contentType: file.type || 'application/octet-stream',
+      addRandomSuffix: true,
+    });
     return NextResponse.json({ url: blob.url });
-  } catch {
-    return NextResponse.json({ error: 'Could not securely upload the file.' }, { status: 400 });
+  } catch (error) {
+    console.error('PDF upload failed', error);
+    return NextResponse.json({ error: 'Could not securely upload the file. Check the configured private Blob storage and try again.' }, { status: 502 });
   }
 }
