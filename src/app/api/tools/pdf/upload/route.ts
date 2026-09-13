@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { handleUpload } from '@vercel/blob/client';
+import { put } from '@vercel/blob';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { PDF_MAX_FILE_BYTES } from '@/lib/pdfConfig';
@@ -12,25 +12,18 @@ export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: 'Sign in to upload files.' }, { status: 401 });
   try {
-    const body = await req.json();
-    const result = await handleUpload({
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-      request: req,
-      body,
-      onBeforeGenerateToken: async (pathname, _clientPayload, multipart) => {
-        if (!pathname.startsWith('pdf-jobs/')) throw new Error('Invalid upload path.');
-        return {
-          allowedContentTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-          maximumSizeInBytes: PDF_MAX_FILE_BYTES,
-          validUntil: Date.now() + 15 * 60 * 1000,
-          addRandomSuffix: true,
-          allowOverwrite: false,
-          tokenPayload: JSON.stringify({ userId: session.user.id, multipart }),
-        };
-      },
-    });
-    return NextResponse.json(result);
+    const formData = await req.formData();
+    const file = formData.get('file');
+    if (!(file instanceof File)) return NextResponse.json({ error: 'Choose a file to upload.' }, { status: 400 });
+    if (file.size === 0) return NextResponse.json({ error: 'The uploaded file is empty.' }, { status: 400 });
+    if (file.size > PDF_MAX_FILE_BYTES) return NextResponse.json({ error: 'The file exceeds the 50 MB per-file limit.' }, { status: 413 });
+    const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const extensionAllowed = /\.(pdf|jpe?g|png|webp|gif|docx?)$/i.test(file.name);
+    if (!allowed.includes(file.type) && !extensionAllowed) return NextResponse.json({ error: 'Unsupported file type.' }, { status: 400 });
+    const safeName = file.name.replace(/[/\\?%*:|"<>\u0000-\u001f]/g, '-').slice(0, 100) || 'document';
+    const blob = await put(`pdf-jobs/${Date.now()}-${safeName}`, file, { access: 'private', addRandomSuffix: true, token: process.env.BLOB_READ_WRITE_TOKEN });
+    return NextResponse.json({ url: blob.url });
   } catch {
-    return NextResponse.json({ error: 'Could not initialize secure file upload.' }, { status: 400 });
+    return NextResponse.json({ error: 'Could not securely upload the file.' }, { status: 400 });
   }
 }

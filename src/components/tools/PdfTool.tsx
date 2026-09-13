@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react';
 import JSZip from 'jszip';
-import { upload } from '@vercel/blob/client';
 import { AlertCircle, CheckCircle2, Download, FileArchive, FileText, Loader2, Plus, RotateCcw, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
@@ -122,9 +121,13 @@ export function PdfTool({ slug }: FunctionalToolProps) {
       const uploaded: { url: string; name: string; size: number }[] = [];
       for (const [index, file] of filesToProcess.entries()) {
         setUploadStatus(`Uploading ${index + 1}/${filesToProcess.length}: ${file.name}`);
-        const blob = await upload(`pdf-jobs/${Date.now()}-${index}-${file.name}`, file, { access: 'private', multipart: true, handleUploadUrl: '/api/tools/pdf/upload', abortSignal: controller.signal, contentType: file.type });
-        uploaded.push({ url: blob.url, name: file.name, size: file.size });
-        uploadedUrls.push(blob.url);
+        const formData = new FormData();
+        formData.append('file', file);
+        const uploadResponse = await fetch('/api/tools/pdf/upload', { method: 'POST', body: formData, signal: controller.signal });
+        const uploadData = await uploadResponse.json().catch(() => ({})) as { url?: string; error?: string };
+        if (!uploadResponse.ok || !uploadData.url) throw new Error(uploadData.error || `Upload failed (${uploadResponse.status}).`);
+        uploaded.push({ url: uploadData.url, name: file.name, size: file.size });
+        uploadedUrls.push(uploadData.url);
       }
       setUploadStatus('Processing uploaded files…');
       const payload: Record<string, unknown> = { files: uploaded };
