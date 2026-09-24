@@ -13,12 +13,14 @@ import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 import type { FunctionalToolProps } from '@/config/functionalTools';
+import { useSignInGuard } from '@/hooks/useSignInGuard';
 
 type Fmt = 'png' | 'svg' | 'base64';
 type Ec = 'L' | 'M' | 'Q' | 'H';
 
 export function QrGeneratorTool(_props: FunctionalToolProps) {
   const { success, error: errToast } = useToast();
+  const { requireAuth, SignInModal } = useSignInGuard();
 
   const [text, setText]       = useState('https://savdown.com');
   const [format, setFormat]   = useState<Fmt>('png');
@@ -82,6 +84,7 @@ export function QrGeneratorTool(_props: FunctionalToolProps) {
 
   /* Download in the user's chosen format. */
   const download = useCallback(async () => {
+    if (!requireAuth()) return;
     if (!text.trim()) return;
     setError('');
     try {
@@ -94,7 +97,6 @@ export function QrGeneratorTool(_props: FunctionalToolProps) {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setError((data as { error?: string }).error || `Request failed (${res.status}).`);
-        errToast('Download failed', 'Could not generate the file.');
         return;
       }
 
@@ -112,10 +114,11 @@ export function QrGeneratorTool(_props: FunctionalToolProps) {
     } catch {
       setError('Network error. Please try again.');
     }
-  }, [text, format, size, margin, color, bgColor, ec, success, errToast]);
+  }, [requireAuth, text, format, size, margin, color, bgColor, ec, success]);
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-5">
+      {SignInModal}
       <div className="grid md:grid-cols-2 gap-5">
         {/* Controls */}
         <div className="p-5 rounded-2xl border border-border bg-white dark:bg-card shadow-soft space-y-4 md:order-1 order-2">

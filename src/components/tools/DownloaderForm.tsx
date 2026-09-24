@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { CopyButton } from '@/components/ui/CopyButton';
 import { useToast } from '@/components/ui/Toast';
 import type { DownloadResult, DownloadFormat } from '@/types';
+import { useSignInGuard } from '@/hooks/useSignInGuard';
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
@@ -87,6 +88,7 @@ export type ClientTool = {
 
 export function DownloaderForm({ tool }: { tool: ClientTool }) {
   const params = useSearchParams();
+  const { requireAuth, SignInModal } = useSignInGuard();
   const [url, setUrl] = useState('');
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [error, setError] = useState('');
@@ -136,6 +138,8 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
       return;
     }
 
+    if (!requireAuth()) return;
+
     setError('');
     setState('loading');
     setResult(null);
@@ -153,12 +157,8 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
         const message = data.ok ? 'Something went wrong.' : data.error;
         setError(message);
         setState('error');
-
-        // Toast for rate-limited or network-level errors
         if (res.status === 429) {
           warning('Slow down!', 'Too many requests, please wait a moment before trying again.');
-        } else {
-          errorToast('Download failed', message);
         }
         return;
       }
@@ -171,10 +171,11 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
       setState('error');
       errorToast('Network error', 'Could not reach the server. Check your connection and try again.');
     }
-  }, [url, tool, success, errorToast, warning]);
+  }, [requireAuth, url, tool, success, errorToast, warning]);
 
   return (
     <div className="w-full">
+      {SignInModal}
       <div className="gradient-ring rounded-[26px] shadow-soft-xl">
         <div className="p-2 bg-white dark:bg-card rounded-[25px] flex flex-col sm:flex-row gap-3">
           <Input

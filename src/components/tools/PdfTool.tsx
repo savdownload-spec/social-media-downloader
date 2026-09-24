@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 import type { FunctionalToolProps } from '@/config/functionalTools';
 import { PDF_MAX_BATCH_BYTES, PDF_MAX_FILE_BYTES } from '@/lib/pdfConfig';
+import { useSignInGuard } from '@/hooks/useSignInGuard';
 import { useBatchLimit } from '@/hooks/useBatchLimit';
 import { BatchLimitHint, BatchLimitWarning } from '@/components/tools/BatchLimitGate';
 
@@ -30,6 +31,7 @@ function getFilename(header: string | null, fallback: string): string { const ma
 export function PdfTool({ slug }: FunctionalToolProps) {
   const op = SLUG_TO_OP[slug] ?? 'merge';
   const { success } = useToast();
+  const { requireAuth, SignInModal } = useSignInGuard();
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const processingRef = useRef(false);
@@ -104,6 +106,7 @@ export function PdfTool({ slug }: FunctionalToolProps) {
   const removeExcess = useCallback(() => setFiles((current) => current.slice(0, batchLimit)), [batchLimit]);
 
   const process = useCallback(async () => {
+    if (!requireAuth()) return;
     if (processingRef.current) return;
     if (!files.length) { setError('Choose at least one file first.'); return; }
     if (op === 'merge' && files.length < 2) { setError('Merge needs at least 2 PDFs.'); return; }
@@ -165,13 +168,14 @@ export function PdfTool({ slug }: FunctionalToolProps) {
       processingRef.current = false;
       setLoading(false); setUploadStatus('');
     }
-  }, [batchLimit, compression, everyN, files, maxPages, op, ranges, removeMetadata, separate, splitMode, success, targetMB, wantsWord]);
+  }, [requireAuth, batchLimit, compression, everyN, files, maxPages, op, ranges, removeMetadata, separate, splitMode, success, targetMB, wantsWord]);
 
   const retryFailed = () => { if (!failedInputs.length) return; setFiles(failedInputs); setResults(null); setFailedFiles([]); setFailedInputs([]); setBatchCompleted(0); setBatchTotal(0); setError(''); };
   const downloadZip = async () => { if (!results?.length) return; const zip = new JSZip(); await Promise.all(results.map(async (result) => zip.file(result.group ? `${result.group}/${result.name}` : result.name, await (await fetch(result.url)).blob()))); const blob = await zip.generateAsync({ type: 'blob' }); const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'savdown-pdf-results.zip'; anchor.click(); URL.revokeObjectURL(url); };
   const reduction = origSize && outSize ? ((origSize - outSize) / origSize) * 100 : 0;
 
   return <div className="mx-auto w-full max-w-3xl space-y-5">
+    {SignInModal}
     {!results && <div onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); addFiles(event.dataTransfer.files); }} onClick={() => inputRef.current?.click()} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') inputRef.current?.click(); }} className="cursor-pointer rounded-3xl border-2 border-dashed border-border bg-white p-8 text-center transition hover:border-primary/50 hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-primary/30 dark:bg-card" aria-label={`Upload ${label}`}>
       <input ref={inputRef} type="file" accept={accept} multiple={isMulti} className="hidden" onChange={(event) => addFiles(event.target.files)} />
       <div className="flex flex-col items-center gap-3 py-5"><span className="grid h-14 w-14 place-items-center rounded-2xl bg-primary-light"><Upload className="h-6 w-6 text-primary" /></span><p className="font-semibold text-text">Drop {label} here, or browse</p><p className="text-xs text-text-subtle">Up to 50 MB per file · 150 MB combined · files are processed temporarily</p></div>

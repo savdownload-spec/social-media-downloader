@@ -9,11 +9,13 @@ import { Upload, Loader2, AlertCircle, ScanLine, X, Copy, Check, ExternalLink } 
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 import type { FunctionalToolProps } from '@/config/functionalTools';
+import { useSignInGuard } from '@/hooks/useSignInGuard';
 
 const MAX_BYTES = 10 * 1024 * 1024;
 
 export function QrScannerTool(_props: FunctionalToolProps) {
   const { success, error: errToast } = useToast();
+  const { requireAuth, SignInModal } = useSignInGuard();
   const [file, setFile]       = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -52,6 +54,7 @@ export function QrScannerTool(_props: FunctionalToolProps) {
   }, [handleFile]);
 
   const scan = useCallback(async () => {
+    if (!requireAuth()) return;
     if (!file) {
       setError('Please upload an image first.');
       return;
@@ -69,7 +72,6 @@ export function QrScannerTool(_props: FunctionalToolProps) {
       if (!res.ok || !result.ok) {
         const msg = result.error || `Scan failed (${res.status}).`;
         setError(msg);
-        errToast('No QR found', msg);
         setLoading(false);
         return;
       }
@@ -83,7 +85,7 @@ export function QrScannerTool(_props: FunctionalToolProps) {
     } finally {
       setLoading(false);
     }
-  }, [file, success, errToast]);
+  }, [requireAuth, file, success, errToast]);
 
   const copy = useCallback(() => {
     if (!data) return;
@@ -98,6 +100,7 @@ export function QrScannerTool(_props: FunctionalToolProps) {
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-5">
+      {SignInModal}
       {/* Dropzone / preview */}
       {!data && (
         <div

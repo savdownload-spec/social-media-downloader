@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 import type { FunctionalToolProps } from '@/config/functionalTools';
+import { useSignInGuard } from '@/hooks/useSignInGuard';
 
 type Op =
   | 'compress' | 'resize' | 'convert' | 'enhance'
@@ -41,6 +42,7 @@ function formatBytes(b: number): string {
 export function ImageTool({ slug }: FunctionalToolProps) {
   const op = SLUG_TO_OP[slug] ?? 'compress';
   const { success, error: errToast } = useToast();
+  const { requireAuth, SignInModal } = useSignInGuard();
 
   const [file, setFile]       = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -98,6 +100,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
   }, []);
 
   const process = useCallback(async () => {
+    if (!requireAuth()) return;
     if (!file) {
       setError('Please upload an image first.');
       return;
@@ -122,7 +125,6 @@ export function ImageTool({ slug }: FunctionalToolProps) {
         const data = await res.json().catch(() => ({}));
         const msg = (data as { error?: string }).error || `Request failed (${res.status}).`;
         setError(msg);
-        errToast('Processing failed', msg);
         setLoading(false);
         return;
       }
@@ -148,13 +150,14 @@ export function ImageTool({ slug }: FunctionalToolProps) {
     } finally {
       setLoading(false);
     }
-  }, [file, op, showQuality, showSize, showFormat, quality, width, height, format, success, errToast]);
+  }, [requireAuth, file, op, showQuality, showSize, showFormat, quality, width, height, format, success, errToast]);
 
   const delta = origSize && outSize ? ((origSize - outSize) / origSize) * 100 : 0;
   const smaller = delta > 0;
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-5">
+      {SignInModal}
       {/* Dropzone / preview */}
       {!resultUrl && (
         <div
