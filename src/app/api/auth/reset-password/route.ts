@@ -37,7 +37,13 @@ export async function POST(request: Request) {
   const passwordHash = await hashPassword(password);
   await prisma.user.update({
     where: { email: record.identifier },
-    data: { password: passwordHash },
+    data: {
+      password: passwordHash,
+      // Stamp the change time so the JWT callback can invalidate all sessions
+      // that were issued before this reset. Any token with issuedAt < this
+      // timestamp will be treated as expired on its next request.
+      passwordChangedAt: new Date(),
+    },
   });
 
   await prisma.verificationToken.delete({ where: { token } });

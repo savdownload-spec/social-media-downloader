@@ -5,9 +5,11 @@ import { signOut } from 'next-auth/react';
 import { LogOut } from 'lucide-react';
 import { useConfirm } from '@/components/ui/ConfirmProvider';
 import { useToast } from '@/components/ui/Toast';
+import { Input } from '@/components/ui/Input';
 
-export function DangerZone({ email }: { email: string }) {
+export function DangerZone({ email, isOAuthUser = false }: { email: string; isOAuthUser?: boolean }) {
   const [deleting, setDeleting] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
   const { confirm } = useConfirm();
   const { error: errorToast } = useToast();
 
@@ -23,7 +25,11 @@ export function DangerZone({ email }: { email: string }) {
 
     setDeleting(true);
     try {
-      const res = await fetch('/api/account', { method: 'DELETE' });
+      const res = await fetch('/api/account', {
+        method: 'DELETE',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ confirmPassword }),
+      });
       const data = await res.json().catch(() => null);
 
       if (!res.ok || !data?.ok) {
@@ -57,10 +63,25 @@ export function DangerZone({ email }: { email: string }) {
         <p className="text-xs text-text-muted mb-3">
           Deleting your account removes your profile and reviews permanently.
         </p>
+
+        {/* Require password (or email for OAuth users) before deleting */}
+        <div className="mb-3">
+          <label className="block text-xs font-semibold text-text-subtle mb-1.5">
+            {isOAuthUser ? 'Type your email to confirm' : 'Enter your password to confirm'}
+          </label>
+          <Input
+            type={isOAuthUser ? 'email' : 'password'}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder={isOAuthUser ? email : 'Your current password'}
+            autoComplete={isOAuthUser ? 'email' : 'current-password'}
+          />
+        </div>
+
         <button
           type="button"
           onClick={handleDeleteAccount}
-          disabled={deleting}
+          disabled={deleting || !confirmPassword.trim()}
           className="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-sm font-semibold text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30 hover:bg-rose-50 dark:hover:bg-rose-500/15 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {deleting ? 'Deleting…' : 'Delete Account'}

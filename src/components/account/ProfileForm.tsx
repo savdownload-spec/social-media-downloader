@@ -79,7 +79,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
       }
       setImage(data.data.url);
       success('Profile picture updated!');
-      update();
+      // Pass the new URL directly to update() so the session header avatar
+      // refreshes immediately without requiring a full re-login.
+      await update({ user: { image: data.data.url } });
     } catch {
       errorToast('Network error', 'Could not reach the server.');
     } finally {
@@ -115,7 +117,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
       success('Profile updated!');
       setCurrentPassword('');
       setNewPassword('');
-      update(); // refresh the session name/image
+      // Propagate name/image changes into the active session so the workspace
+      // header shows the fresh values without requiring re-login.
+      await update({ user: { name, image: image.trim() || undefined } });
     } catch {
       errorToast('Network error', 'Could not reach the server.');
     } finally {

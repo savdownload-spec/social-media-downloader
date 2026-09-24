@@ -8,13 +8,14 @@ import { verifyPassword } from './passwords';
 import { loginSchema } from './auth/validators';
 import { creditReferralSignup, REFERRAL_COOKIE } from './affiliates';
 
-const adminEmails = Array.from(new Set([
-  'hafizm.farooq@gmail.com',
-  ...(process.env.ADMIN_EMAILS || '')
+// Admin emails are configured exclusively via the ADMIN_EMAILS environment
+// variable (comma-separated). Never hardcode privileged addresses in source.
+const adminEmails = Array.from(new Set(
+  (process.env.ADMIN_EMAILS || '')
     .split(',')
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean),
-]));
+));
 
 const providers = [];
 
@@ -74,6 +75,7 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user }) {
+      // ── Initial sign-in: populate the token from the DB ─────────────────
       if (user?.email) {
         const normalizedEmail = user.email.toLowerCase();
         const isConfiguredAdmin = adminEmails.includes(normalizedEmail);
@@ -101,10 +103,38 @@ export const authOptions: NextAuthOptions = {
         }
         token.id = dbUser.id;
         (token as Record<string, unknown>).role = dbUser.role;
+        // Record when this token was issued so subsequent requests can compare
+        // it against passwordChangedAt to invalidate post-reset sessions.
+        (token as Record<string, unknown>).issuedAt = Date.now();
+        return token;
       }
+
+      // ── Subsequent requests: reject tokens issued before a password change ─
+      // If the user changed/reset their password after this token was issued,
+      // return an empty token — NextAuth treats this as unauthenticated and the
+      // session callback returns no user, forcing re-login.
+      const issuedAt = (token as Record<string, unknown>).issuedAt as number | undefined;
+      if (issuedAt && token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { passwordChangedAt: true },
+        });
+        if (dbUser?.passwordChangedAt && dbUser.passwordChangedAt.getTime() > issuedAt) {
+          return {};
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
+      // Token was invalidated (password changed after issuance) — strip the
+      // user identity so server-side guards see no authenticated user.
+      if (!token.id) {
+        return {
+          ...session,
+          user: { name: null, email: null, image: null },
+        };
+      }
       if (session.user) {
         (session.user as { id?: string }).id = token.id as string;
         (session.user as { role?: string }).role = token.role as string;

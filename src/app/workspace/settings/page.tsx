@@ -30,6 +30,8 @@ export default async function WorkspaceSettingsPage() {
         company: true,
         bio: true,
         createdAt: true,
+        // Used by DangerZone to determine whether this is an OAuth-only account.
+        password: true,
         accounts: { select: { provider: true }, take: 1 },
       },
     }),
@@ -75,7 +77,7 @@ export default async function WorkspaceSettingsPage() {
               <LanguageSelector />
             </div>
           </div>
-          <DangerZone email={user.email ?? ''} />
+          <DangerZone email={user.email ?? ''} isOAuthUser={!!user.accounts[0]?.provider && !user.password} />
         </div>
       </div>
     </WorkspaceContainer>

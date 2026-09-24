@@ -40,6 +40,10 @@ model User {
   /// 'auto'). localStorage is the source of truth per-device; this column
   /// only seeds a fresh device that has no local value yet.
   themePreference String?
+  /// Stamped whenever the user's password changes. JWT tokens issued before
+  /// this timestamp are treated as expired, forcing re-login after a password
+  /// reset or change. NULL means no change has occurred — all tokens valid.
+  passwordChangedAt DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

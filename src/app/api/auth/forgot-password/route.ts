@@ -36,11 +36,12 @@ export async function POST(request: Request) {
     const token = randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + RESET_TOKEN_TTL_HOURS * 60 * 60 * 1000);
 
-    await prisma.verificationToken.upsert({
-      where: { identifier_token: { identifier: email, token } },
-      update: { expires },
-      create: { identifier: email, token, expires },
-    });
+    // Delete any existing reset tokens for this email before creating the new
+    // one. This prevents multiple valid tokens from coexisting — the previous
+    // upsert used the new random token in the where clause so it always
+    // inserted rather than updating, leaving old tokens alive.
+    await prisma.verificationToken.deleteMany({ where: { identifier: email } });
+    await prisma.verificationToken.create({ data: { identifier: email, token, expires } });
 
     const resetLink = `${siteConfig.url}/reset-password?token=${token}`;
 
@@ -51,7 +52,10 @@ export async function POST(request: Request) {
       html: `<p>We received a request to reset your SavDown password.</p><p><a href="${resetLink}">Choose a new password</a> (valid for 1 hour).</p><p>If you didn't request this, you can safely ignore this email.</p>`,
     });
 
-    if (!emailResult.sent) {
+    // Only surface the link in the response body in local development when
+    // no email transport is configured. Never do this in production — it
+    // would leak a valid reset token over the wire to the browser.
+    if (!emailResult.sent && process.env.NODE_ENV === 'development') {
       response.resetLink = resetLink;
     }
   }
