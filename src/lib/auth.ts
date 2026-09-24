@@ -113,14 +113,22 @@ export const authOptions: NextAuthOptions = {
       // If the user changed/reset their password after this token was issued,
       // return an empty token — NextAuth treats this as unauthenticated and the
       // session callback returns no user, forcing re-login.
+      // Wrapped in try-catch: a DB error (e.g. during a migration window where
+      // the passwordChangedAt column doesn't exist yet) must NEVER invalidate
+      // an otherwise valid session — fail open, not closed.
       const issuedAt = (token as Record<string, unknown>).issuedAt as number | undefined;
       if (issuedAt && token.id) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: { passwordChangedAt: true },
-        });
-        if (dbUser?.passwordChangedAt && dbUser.passwordChangedAt.getTime() > issuedAt) {
-          return {};
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { passwordChangedAt: true },
+          });
+          if (dbUser?.passwordChangedAt && dbUser.passwordChangedAt.getTime() > issuedAt) {
+            return {};
+          }
+        } catch {
+          // Column may not exist yet on this database instance (e.g. migration
+          // pending). Allow the session to continue rather than forcing logout.
         }
       }
 
