@@ -39,12 +39,13 @@ export function AllToolsGrid() {
       </div>
 
       {/* Category filter tabs — sticky within this section only.
-          `position: sticky` is naturally bounded by the parent Section,
-          so the tabs stick while the section is in view and scroll away
-          with it once the section's bottom edge passes the viewport top.
-          top-16 accounts for the 64px sticky site header. */}
-      <div className="sticky top-16 z-20 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 mt-10 bg-background/80 dark:bg-background/80 backdrop-blur-md border-b border-border/40 dark:border-border/30">
-        <div className="flex flex-wrap items-center justify-center gap-2.5">
+          The outer div is a transparent sticky positioner with no background
+          or border of its own. The visible surface lives on the inner pill
+          row so it stays content-width, rounded, and contained — matching
+          the card grid below rather than bleeding edge-to-edge.
+          top-16 accounts for the 64 px sticky site header. */}
+      <div className="sticky top-16 z-20 mt-10 py-2">
+        <div className="flex flex-wrap items-center justify-center gap-2.5 rounded-2xl bg-surface/70 dark:bg-card/70 backdrop-blur-md border border-border/50 dark:border-border/40 px-4 py-3">
           {filters.map((f) => {
             const active = filter === f;
             const label = f === 'all' ? t('common.all') || 'All' : t(`catalog.groups.${f}`) || f;
