@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, ArrowRight } from 'lucide-react';
@@ -19,16 +19,43 @@ type Filter = 'all' | ToolGroup;
 export function AllToolsGrid() {
   const t = useTranslation();
   const [filter, setFilter] = useState<Filter>('all');
-  
+
+  // Ref placed just above the tab bar. On tab change we scroll here so the
+  // first row of cards is visible below the sticky header + sticky tabs.
+  // The scroll target sits at the section heading, which means the heading
+  // briefly comes into view then the tabs stick naturally as the user sees
+  // the refreshed card list — no extra jump, no flicker on load.
+  const scrollAnchorRef = useRef<HTMLDivElement>(null);
+
   const filters: Filter[] = ['all', ...toolGroups];
-  
+
   const visible =
     filter === 'all'
       ? catalog.slice(0, HOMEPAGE_DESKTOP_LIMIT)
       : catalog.filter((t) => t.group === filter);
 
+  function selectFilter(f: Filter) {
+    setFilter(f);
+    // Scroll the anchor into view, offset so it lands just below the sticky
+    // header (64 px) + a little breathing room. requestAnimationFrame gives
+    // React one tick to commit the new filter before we measure positions.
+    requestAnimationFrame(() => {
+      const el = scrollAnchorRef.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      // 64px header + 8px breathing room
+      const offset = 64 + 8;
+      window.scrollTo({ top: top - offset, behavior: 'smooth' });
+    });
+  }
+
   return (
     <Section variant="default" id="tools">
+      {/* Scroll anchor — sits at the very top of the Tools section content.
+          Clicking a tab scrolls here so the section heading is visible and
+          the sticky tab bar takes its position naturally beneath the header. */}
+      <div ref={scrollAnchorRef} aria-hidden />
+
       <div className="max-w-3xl mx-auto text-center">
         <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-text leading-[1.05]">
           {t('catalog.title') || 'Every Tool You Need, In One Place.'}
@@ -52,7 +79,7 @@ export function AllToolsGrid() {
             return (
               <button
                 key={f}
-                onClick={() => setFilter(f)}
+                onClick={() => selectFilter(f)}
                 aria-pressed={active}
                 className={`px-5 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-200 active:scale-[0.98] ${
                   active
