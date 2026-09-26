@@ -2,7 +2,6 @@ import { Hero } from '@/components/home/Hero';
 import { AllToolsGrid } from '@/components/home/AllToolsGrid';
 import { HowItWorks } from '@/components/home/HowItWorks';
 import { Features } from '@/components/home/Features';
-import { MediaShowcase } from '@/components/home/MediaShowcase';
 import { Security } from '@/components/home/Security';
 import { Compatibility } from '@/components/home/Compatibility';
 import { UseCases } from '@/components/home/UseCases';
@@ -29,7 +28,6 @@ export default async function HomePage() {
       <AllToolsGrid />
       <HowItWorks />
       <Features />
-      <MediaShowcase />
       <Security />
       <Compatibility />
       <UseCases />
