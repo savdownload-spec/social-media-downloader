@@ -38,26 +38,32 @@ export function AllToolsGrid() {
         </p>
       </div>
 
-      {/* Category filter tabs */}
-      <div className="mt-10 flex flex-wrap items-center justify-center gap-2.5">
-        {filters.map((f) => {
-          const active = filter === f;
-          const label = f === 'all' ? t('common.all') || 'All' : t(`catalog.groups.${f}`) || f;
-          return (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              aria-pressed={active}
-              className={`px-5 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-200 active:scale-[0.98] ${
-                active
-                  ? 'bg-text text-white dark:bg-primary shadow-soft-md'
-                  : 'bg-white dark:bg-card text-text-muted border border-border hover:border-primary/40 hover:text-text'
-              }`}
-            >
-              {label}
-            </button>
-          );
-        })}
+      {/* Category filter tabs — sticky within this section only.
+          `position: sticky` is naturally bounded by the parent Section,
+          so the tabs stick while the section is in view and scroll away
+          with it once the section's bottom edge passes the viewport top.
+          top-16 accounts for the 64px sticky site header. */}
+      <div className="sticky top-16 z-20 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-3 mt-10 bg-background/80 dark:bg-background/80 backdrop-blur-md border-b border-border/40 dark:border-border/30">
+        <div className="flex flex-wrap items-center justify-center gap-2.5">
+          {filters.map((f) => {
+            const active = filter === f;
+            const label = f === 'all' ? t('common.all') || 'All' : t(`catalog.groups.${f}`) || f;
+            return (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                aria-pressed={active}
+                className={`px-5 py-2.5 rounded-2xl text-sm font-semibold transition-all duration-200 active:scale-[0.98] ${
+                  active
+                    ? 'bg-text text-white dark:bg-primary shadow-soft-md'
+                    : 'bg-white dark:bg-card text-text-muted border border-border hover:border-primary/40 hover:text-text'
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Tool cards */}
