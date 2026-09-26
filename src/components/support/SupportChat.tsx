@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowLeft,
+  Bot,
   Check,
   CircleHelp,
   Coins,
@@ -21,6 +22,7 @@ import {
   Plus,
   ReceiptText,
   Send,
+  Sparkles,
   UserRound,
   Wrench,
   X,
@@ -81,6 +83,13 @@ export function SupportChat() {
   const [starting, setStarting] = useState(false); const [category, setCategory] = useState<string>(''); const [message, setMessage] = useState(''); const [name, setName] = useState(''); const [email, setEmail] = useState(''); const [files, setFiles] = useState<File[]>([]); const [sending, setSending] = useState(false); const [loading, setLoading] = useState(false);
   const [showMore, setShowMore] = useState(false); const [justCreatedId, setJustCreatedId] = useState<string | null>(null);
   const [keyboardInset, setKeyboardInset] = useState(0); const [translatingId, setTranslatingId] = useState<string | null>(null); const [showTranslation, setShowTranslation] = useState<Record<string, boolean>>({}); const [copiedTranslationId, setCopiedTranslationId] = useState<string | null>(null); const [inlineError, setInlineError] = useState<string | null>(null);
+
+  // ── AI assistant state ───────────────────────────────────────────────────
+  type AiMsg = { role: 'user' | 'assistant'; content: string; sources?: { title: string; url: string }[] };
+  const [aiMessages, setAiMessages] = useState<AiMsg[]>([]);
+  const [aiInput, setAiInput] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [showHumanSupport, setShowHumanSupport] = useState(false);
   const endRef = useRef<HTMLDivElement>(null); const fileRef = useRef<HTMLInputElement>(null); const composerRef = useRef<HTMLTextAreaElement>(null); const retryRef = useRef<(() => void | Promise<void>) | null>(null);
   const loggedIn = !!session?.user?.id; const { language } = useLanguage(); const isRtl = language.code === 'ar' || language.code === 'ur'; const { error, success } = useToast();
   const loadList = useCallback(async () => {
@@ -117,6 +126,46 @@ export function SupportChat() {
   if (pathname.startsWith('/admin')) return null;
 
   function resetComposer() { setCategory(''); setMessage(''); setFiles([]); setShowMore(false); setInlineError(null); retryRef.current = null; }
+
+  async function sendAiMessage(inputOverride?: string) {
+    const text = (inputOverride ?? aiInput).trim();
+    if (!text || aiLoading) return;
+    const history = aiMessages.slice(-6); // keep last 6 turns
+    const newMessages: AiMsg[] = [...aiMessages, { role: 'user', content: text }];
+    setAiMessages(newMessages);
+    setAiInput('');
+    setAiLoading(true);
+    playSend();
+    try {
+      const res = await fetch('/api/support/ai', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          message: text,
+          history: history.map(m => ({ role: m.role, content: m.content })),
+        }),
+      });
+      const data = await res.json() as { ok?: boolean; data?: { answer: string; sources: { title: string; url: string }[]; canAnswer: boolean } };
+      if (!res.ok || !data?.ok || !data.data) throw new Error('AI unavailable');
+      playReceive();
+      setAiMessages(prev => [...prev, {
+        role: 'assistant',
+        content: data.data!.answer,
+        sources: data.data!.sources,
+      }]);
+      // If the AI signalled it can't answer, show the human support CTA
+      if (!data.data.canAnswer) setShowHumanSupport(true);
+    } catch {
+      setAiMessages(prev => [...prev, {
+        role: 'assistant',
+        content: "I'm having trouble right now. Please submit a support request and our team will help you shortly.",
+        sources: [],
+      }]);
+      setShowHumanSupport(true);
+    } finally {
+      setAiLoading(false);
+    }
+  }
 
   async function startConversation(e: FormEvent) {
     e.preventDefault();
@@ -255,7 +304,144 @@ export function SupportChat() {
     );
   }
 
-  // ── Start flow: category picker → composer (progressive disclosure) ─────
+  // ── AI Chat flow — first screen before category picker ─────────────────
+  function AiChatFlow({ onEscalate }: { onEscalate: () => void }) {
+    const aiEndRef = useRef<HTMLDivElement>(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => { aiEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [aiMessages.length, aiLoading]);
+
+    function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void sendAiMessage(); }
+    }
+
+    const hasMessages = aiMessages.length > 0;
+
+    return (
+      <>
+        <Header
+          subtitle={
+            <span className="inline-flex items-center gap-1.5 text-xs text-text-muted">
+              <Sparkles className="h-3 w-3 text-primary" />
+              AI assistant · answers instantly
+            </span>
+          }
+        />
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex-1 overflow-y-auto bg-surface/30 px-4 py-4 space-y-3">
+            {!hasMessages && (
+              <div className="flex flex-col items-center gap-3 pt-4 text-center">
+                <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-brand text-white shadow-soft">
+                  <Bot className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-text">Ask anything about SavDown</p>
+                  <p className="mt-1 text-xs text-text-muted leading-relaxed">I&apos;ll search our help content and answer instantly. No wait.</p>
+                </div>
+                <div className="w-full space-y-2 pt-1">
+                  {[
+                    'How do I compress a PDF?',
+                    'What are the available plans?',
+                    'Why is my download failing?',
+                    'How many files can I process?',
+                  ].map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      onClick={() => { void sendAiMessage(suggestion); }}
+                      className="w-full rounded-xl border border-border-light bg-white dark:bg-card px-3 py-2.5 text-left text-xs font-medium text-text-muted transition-all hover:border-primary/40 hover:text-text hover:shadow-soft"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {aiMessages.map((m, i) => (
+              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {m.role === 'assistant' && (
+                  <span className="mr-2 mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-light text-primary self-start">
+                    <Bot className="h-3.5 w-3.5" />
+                  </span>
+                )}
+                <div className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${m.role === 'user' ? 'rounded-br-sm bg-primary text-white' : 'rounded-bl-sm border border-border-light bg-white dark:bg-card text-text shadow-soft'}`}>
+                  <p className="whitespace-pre-wrap break-words">{m.content}</p>
+                  {m.role === 'assistant' && m.sources && m.sources.length > 0 && (
+                    <div className="mt-2 border-t border-border/30 pt-2 flex flex-wrap gap-1.5">
+                      {m.sources.map((s) => (
+                        <a key={s.url} href={s.url} target="_blank" rel="noreferrer"
+                          className="inline-flex items-center gap-1 rounded-lg bg-primary-light px-2 py-1 text-[10px] font-semibold text-primary hover:bg-primary/15 transition-colors">
+                          {s.title.length > 28 ? s.title.slice(0, 25) + '…' : s.title} →
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {aiLoading && (
+              <div className="flex justify-start">
+                <span className="mr-2 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-primary-light text-primary">
+                  <Bot className="h-3.5 w-3.5" />
+                </span>
+                <div className="rounded-2xl rounded-bl-sm border border-border-light bg-white dark:bg-card px-4 py-3 shadow-soft">
+                  <span className="flex gap-1">
+                    {[0,1,2].map(i => <span key={i} className="h-1.5 w-1.5 rounded-full bg-text-muted/40 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Escalation CTA — shown after AI has tried to answer */}
+            {hasMessages && !aiLoading && (
+              <div className="mt-2 rounded-xl border border-border-light bg-white dark:bg-card p-3 text-center">
+                <p className="text-xs text-text-muted mb-2">
+                  {showHumanSupport ? 'Need more help?' : 'Still need help?'}
+                </p>
+                <button
+                  onClick={onEscalate}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-text transition-all hover:border-primary/40 hover:text-primary hover:shadow-soft"
+                >
+                  <Headset className="h-3.5 w-3.5" /> Submit a support request
+                </button>
+              </div>
+            )}
+
+            <div ref={aiEndRef} />
+          </div>
+
+          {/* Input */}
+          <div className="shrink-0 border-t border-border-light bg-white dark:bg-card px-3 pt-2.5" style={{ paddingBottom: 'max(0.625rem, env(safe-area-inset-bottom))' }}>
+            <div className="flex items-end gap-2 rounded-2xl border border-border bg-white dark:bg-card p-2 transition-shadow focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
+              <textarea
+                aria-label="Ask a question"
+                value={aiInput}
+                onChange={(e) => setAiInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                rows={1}
+                maxLength={800}
+                placeholder="Ask a question…"
+                className="max-h-28 min-h-[40px] flex-1 resize-none bg-transparent p-2 text-sm leading-relaxed outline-none placeholder:text-text-subtle"
+                style={{ minHeight: 40 }}
+              />
+              <button
+                type="button"
+                onClick={() => void sendAiMessage()}
+                disabled={!aiInput.trim() || aiLoading}
+                className="mb-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-brand text-white shadow-soft transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Send message"
+              >
+                {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              </button>
+            </div>
+            <p className="mt-1 px-1 text-[10px] text-text-subtle">Enter to send · Shift+Enter for new line</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // ── Start flow: AI chat first → category picker → composer ──────────────
   function StartFlow() {
     // Logged-in users with history see their conversations first.
     if (loading && !detail) return <><Header /><Loading /></>;
@@ -296,9 +482,14 @@ export function SupportChat() {
     const shown = showMore ? CATEGORIES : CATEGORIES.slice(0, PRIMARY_COUNT);
     const canSend = !!category && !!message.trim() && (loggedIn || (!!name.trim() && !!email.trim()));
 
+    // Show AI chat first for new conversations, unless the user has chosen to escalate
+    if (!starting && !showHumanSupport && !category) {
+      return <AiChatFlow onEscalate={() => { setShowHumanSupport(true); setStarting(true); resetComposer(); }} />;
+    }
+
     return (
       <>
-        <Header onBack={picking ? (hasHistory ? () => setStarting(false) : undefined) : () => setCategory('')} subtitle={<StatusLine />} />
+        <Header onBack={picking ? (hasHistory || showHumanSupport ? () => { setStarting(false); setShowHumanSupport(false); } : undefined) : () => setCategory('')} subtitle={<StatusLine />} />
         <div className="flex-1 overflow-y-auto px-4 py-4" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
           <AnimatePresence mode="wait">
             {picking ? (
