@@ -99,14 +99,25 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+import type { AdminBadges } from './AdminShell';
+
 interface Props {
   onClose?: () => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  badges?: AdminBadges;
 }
 
-export function AdminSidebar({ onClose, collapsed, onToggleCollapse }: Props) {
+export function AdminSidebar({ onClose, collapsed, onToggleCollapse, badges }: Props) {
   const pathname = usePathname();
+
+  // Resolve live badge counts for each section.
+  // Static badge values in NAV_GROUPS are intentionally left as undefined so
+  // they are overridden here rather than duplicated in two places.
+  const liveBadge: Record<string, number | undefined> = {
+    '/admin/support': badges?.supportUnread || undefined,
+    '/admin/reviews': badges?.pendingReviews || undefined,
+  };
 
   function isActive(href: string) {
     if (href === '/admin') return pathname === '/admin';
@@ -158,8 +169,9 @@ export function AdminSidebar({ onClose, collapsed, onToggleCollapse }: Props) {
               <div className="w-full h-px bg-border-light mb-2 mt-1" />
             )}
             <div className="space-y-0.5">
-              {group.items.map(({ label, href, icon: Icon, badge }) => {
+              {group.items.map(({ label, href, icon: Icon, badge: _staticBadge }) => {
                 const active = isActive(href);
+                const badge = liveBadge[href] ?? _staticBadge;
                 return (
                   <Link
                     key={href}
@@ -167,7 +179,7 @@ export function AdminSidebar({ onClose, collapsed, onToggleCollapse }: Props) {
                     onClick={onClose}
                     title={collapsed ? label : undefined}
                     className={cn(
-                      'group flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all duration-150',
+                      'group relative flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all duration-150',
                       collapsed ? 'justify-center p-2.5' : 'px-3 py-2',
                       active
                         ? 'bg-primary/[0.08] text-primary'
@@ -187,6 +199,10 @@ export function AdminSidebar({ onClose, collapsed, onToggleCollapse }: Props) {
                           </span>
                         )}
                       </>
+                    )}
+                    {/* Collapsed: show a small dot when there's a badge */}
+                    {collapsed && badge !== undefined && badge > 0 && (
+                      <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary" />
                     )}
                   </Link>
                 );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { AdminSidebar } from './AdminSidebar';
 import { AdminHeader } from './AdminHeader';
@@ -9,11 +9,19 @@ interface Props {
   children: React.ReactNode;
 }
 
+export type AdminBadges = {
+  supportUnread: number;
+  pendingReviews: number;
+  total: number;
+};
+
 const COLLAPSE_KEY = 'savdown-admin-sidebar-collapsed';
+const POLL_INTERVAL_MS = 30_000; // 30 s — cheap enough, no websockets needed
 
 export function AdminShell({ children }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [badges, setBadges] = useState<AdminBadges>({ supportUnread: 0, pendingReviews: 0, total: 0 });
   const pathname = usePathname();
 
   useEffect(() => {
@@ -27,6 +35,33 @@ export function AdminShell({ children }: Props) {
     setMobileOpen(false);
   }, [pathname]);
 
+  // Fetch badge counts from the lightweight /api/admin/badges endpoint.
+  // Called on mount and then every 30 s so the bell + sidebar stay in sync
+  // without needing websockets or SSE. Re-fetches whenever the pathname
+  // changes so navigating to /admin/support immediately reflects reads.
+  const fetchBadges = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/badges', { cache: 'no-store' });
+      if (!res.ok) return; // silently ignore on non-200 (e.g. session expired)
+      const json = await res.json() as { ok: boolean; data?: AdminBadges };
+      if (json.ok && json.data) setBadges(json.data);
+    } catch {
+      // Network error — keep the last known counts rather than zeroing out.
+    }
+  }, []);
+
+  // Initial fetch + poll
+  useEffect(() => {
+    void fetchBadges();
+    const id = setInterval(() => { void fetchBadges(); }, POLL_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [fetchBadges]);
+
+  // Refresh counts when the admin navigates (e.g. opens support → resets unread)
+  useEffect(() => {
+    void fetchBadges();
+  }, [pathname, fetchBadges]);
+
   function toggleCollapse() {
     setCollapsed((prev) => {
       const next = !prev;
@@ -39,7 +74,11 @@ export function AdminShell({ children }: Props) {
     <div className="admin-panel min-h-screen bg-[#F7F7FB] flex">
       {/* Desktop sidebar */}
       <div className="hidden lg:flex flex-col h-screen sticky top-0">
-        <AdminSidebar collapsed={collapsed} onToggleCollapse={toggleCollapse} />
+        <AdminSidebar
+          collapsed={collapsed}
+          onToggleCollapse={toggleCollapse}
+          badges={badges}
+        />
       </div>
 
       {/* Mobile drawer */}
@@ -50,7 +89,10 @@ export function AdminShell({ children }: Props) {
             onClick={() => setMobileOpen(false)}
           />
           <div className="fixed inset-y-0 left-0 z-50 flex flex-col lg:hidden animate-slide-in">
-            <AdminSidebar onClose={() => setMobileOpen(false)} />
+            <AdminSidebar
+              onClose={() => setMobileOpen(false)}
+              badges={badges}
+            />
           </div>
         </>
       )}
@@ -61,6 +103,7 @@ export function AdminShell({ children }: Props) {
           onMenuClick={() => setMobileOpen(true)}
           collapsed={collapsed}
           onToggleCollapse={toggleCollapse}
+          badges={badges}
         />
         {/*
           No overflow-auto here. This root is min-h-screen (not h-screen), so

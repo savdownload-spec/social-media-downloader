@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import type { AdminBadges } from './AdminShell';
 
 const PAGE_TITLES: Record<string, string> = {
   '/admin': 'Dashboard',
@@ -66,15 +67,17 @@ interface Props {
   onMenuClick: () => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
+  badges: AdminBadges;
 }
 
-export function AdminHeader({ onMenuClick, collapsed, onToggleCollapse }: Props) {
+export function AdminHeader({ onMenuClick, collapsed, onToggleCollapse, badges }: Props) {
   const { data: session } = useSession();
   const pathname = usePathname();
   const router = useRouter();
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [bellOpen, setBellOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -180,14 +183,80 @@ export function AdminHeader({ onMenuClick, collapsed, onToggleCollapse }: Props)
           </kbd>
         </button>
 
-        {/* Notifications */}
-        <Link
-          href="/admin/reviews"
-          className="relative p-2 rounded-lg hover:bg-surface text-text-muted hover:text-text transition-colors"
-          title="Notifications"
-        >
-          <Bell className="w-4 h-4" />
-        </Link>
+        {/* Notifications bell */}
+        <div className="relative">
+          <button
+            onClick={() => setBellOpen((v) => !v)}
+            className="relative p-2 rounded-lg hover:bg-surface text-text-muted hover:text-text transition-colors"
+            aria-label={badges.total > 0 ? `${badges.total} unread notifications` : 'Notifications'}
+          >
+            <Bell className="w-4 h-4" />
+            {badges.total > 0 && (
+              <span className="absolute top-1 right-1 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-primary text-white text-[9px] font-bold px-0.5 leading-none">
+                {badges.total > 99 ? '99+' : badges.total}
+              </span>
+            )}
+          </button>
+
+          {bellOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setBellOpen(false)} />
+              <div className="absolute right-0 top-full mt-1.5 w-64 bg-white border border-border rounded-xl shadow-soft-lg z-20 py-1 overflow-hidden">
+                <p className="px-4 py-2 text-[10px] font-semibold text-text-subtle uppercase tracking-wider border-b border-border-light">
+                  Activity
+                </p>
+
+                {badges.supportUnread > 0 && (
+                  <Link
+                    href="/admin/support"
+                    onClick={() => setBellOpen(false)}
+                    className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-surface transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Bell className="w-3.5 h-3.5 text-primary" />
+                      </span>
+                      <div>
+                        <p className="text-[13px] font-semibold text-text">Support</p>
+                        <p className="text-[11px] text-text-muted">New customer messages</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold bg-primary text-white rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shrink-0">
+                      {badges.supportUnread > 99 ? '99+' : badges.supportUnread}
+                    </span>
+                  </Link>
+                )}
+
+                {badges.pendingReviews > 0 && (
+                  <Link
+                    href="/admin/reviews"
+                    onClick={() => setBellOpen(false)}
+                    className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-surface transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+                        <Star className="w-3.5 h-3.5 text-amber-500" />
+                      </span>
+                      <div>
+                        <p className="text-[13px] font-semibold text-text">Reviews</p>
+                        <p className="text-[11px] text-text-muted">Pending approval</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold bg-amber-500 text-white rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shrink-0">
+                      {badges.pendingReviews > 99 ? '99+' : badges.pendingReviews}
+                    </span>
+                  </Link>
+                )}
+
+                {badges.total === 0 && (
+                  <p className="px-4 py-5 text-[13px] text-text-muted text-center">
+                    No pending activity
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Profile dropdown */}
         <div className="relative">
