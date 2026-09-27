@@ -32,7 +32,9 @@ const PAGE_DOCS: KnowledgeDocument[] = [
   // ── Troubleshooting (high priority) ──
   { id: 'trouble-download', title: 'Download Failing Not Working Error Fix Troubleshoot', body: 'If your download is failing or not working: 1) Make sure the URL is a public video (private videos cannot be downloaded). 2) Check your SavCredits balance you need at least 1 credit. 3) Try a different browser or clear your browser cache. 4) Some platforms temporarily block downloads wait a few minutes and try again. 5) For TikTok copy the link from the Share menu. 6) For Instagram make sure the account is public. If the problem persists submit a support request.', url: '/tools', category: 'tool-guide', baseWeight: 0.97 },
   { id: 'trouble-tool', title: 'Tool Not Working Error Problem Fix', body: 'If a SavDown tool is not working: 1) Refresh the page and try again. 2) Check the file size limits: PDF max 50 MB per file, video max 100 MB, image max 25 MB. 3) Make sure you have enough SavCredits. 4) Try a different browser. 5) Check that your file format is supported by the tool. If the issue continues please submit a support request with details.', url: '/tools', category: 'tool-guide', baseWeight: 0.95 },
-  { id: 'trouble-login', title: 'Cannot Login Sign In Problem Google', body: 'If you cannot sign in or login: 1) For Google sign-in: clear cookies, try incognito mode, or sign out of all Google accounts then sign back in. 2) For email/password: use the Forgot Password link on the login page. 3) Make sure cookies are enabled in your browser. 4) Try a different browser. If none of these work submit a support request.', url: '/login', category: 'page', baseWeight: 0.93 },
+  { id: 'trouble-login', title: 'Cannot Login Sign In Problem Google Failing', body: 'If you cannot sign in or login: 1) For Google sign-in: clear cookies, try incognito mode, or sign out of all Google accounts then sign back in. 2) For email/password: use the Forgot Password link on the login page. 3) Make sure cookies are enabled in your browser. 4) Try a different browser. If none of these work submit a support request.', url: '/login', category: 'page', baseWeight: 0.88 },
+  // How-to sign in (positive case, not troubleshooting)
+  { id: 'page-login-howto', title: 'How to Sign In Create Account Google Login SavDown', body: 'To sign in to SavDown: Go to savdown.com and click "Sign In" or "Open App". You can sign in with Google (one click), GitHub, or your email and password. For Google sign-in, click "Continue with Google" and select your Google account. For email, enter the email and password you registered with. If you do not have an account yet, click "Create Account" on the login page to register for free.', url: '/login', category: 'page', baseWeight: 0.95 },
   // ── Regular page docs ──
   { id: 'page-about', title: 'What Is SavDown About Overview', body: 'SavDown is a free web-based toolkit for downloading media and processing files online. It supports YouTube, TikTok, Instagram, Facebook, Pinterest, and X (Twitter) video downloads. It also has image tools, PDF tools, video tools, AI tools, SEO tools, and utility tools. No watermarks, no signup required for basic use. Free daily credits included.', url: '/about', category: 'page', baseWeight: 0.85 },
   { id: 'page-privacy', title: 'Privacy Does SavDown Store Save Files', body: 'SavDown does not store downloaded files on its servers. Files stream directly to the user and are discarded immediately. SavDown does not log what you download or build a profile of your activity. All connections use HTTPS encryption.', url: '/privacy', category: 'page', baseWeight: 0.75 },
@@ -127,6 +129,9 @@ function scoreDoc(doc: KnowledgeDocument, queryTokens: string[]): number {
 
 let _corpus: KnowledgeDocument[] | null = null;
 
+/** Call this to force a corpus rebuild (e.g. after changing static docs in dev). */
+export function invalidateCorpus() { _corpus = null; }
+
 export function buildKnowledgeCorpus(): KnowledgeDocument[] {
   if (_corpus) return _corpus;
   const docs: KnowledgeDocument[] = [];
@@ -161,7 +166,7 @@ export function buildKnowledgeCorpus(): KnowledgeDocument[] {
         baseWeight: 0.96,
       });
     }
-    // Also index howTo steps as a guide doc
+    // Also index howTo steps as a guide doc — highest priority for "how do I use X" questions
     if (content.howTo.length) {
       const howToBody = content.howTo.map(s => s.title + ': ' + s.body).join(' ');
       docs.push({
@@ -171,7 +176,7 @@ export function buildKnowledgeCorpus(): KnowledgeDocument[] {
         url: href,
         toolSlug: slug,
         category: 'tool-guide',
-        baseWeight: 0.9,
+        baseWeight: 0.97,  // higher than tool-faq so "how do I use X" hits the guide first
       });
     }
   }
@@ -218,9 +223,9 @@ export function buildKnowledgeCorpus(): KnowledgeDocument[] {
 
 export function retrieveKnowledge(
   query: string,
-  opts: { topK?: number; minScore?: number; toolSlugHint?: string; pricingBoost?: boolean } = {},
+  opts: { topK?: number; minScore?: number; toolSlugHint?: string; pricingBoost?: boolean; loginHowTo?: boolean } = {},
 ): KnowledgeDocument[] {
-  const { topK = 6, minScore = 0.08, toolSlugHint, pricingBoost } = opts;
+  const { topK = 6, minScore = 0.08, toolSlugHint, pricingBoost, loginHowTo } = opts;
   const corpus = buildKnowledgeCorpus();
   const rawTokens = tokenize(query);
   const tokens = expandSynonyms(rawTokens);
@@ -229,10 +234,13 @@ export function retrieveKnowledge(
   const scored = corpus
     .map(doc => {
       let score = scoreDoc(doc, tokens);
-      // Boost docs that belong to a tool explicitly hinted by the caller
-      if (toolSlugHint && doc.toolSlug === toolSlugHint) score *= 1.4;
-      // Boost pricing/plan docs for pricing-intent questions
-      if (pricingBoost && doc.category === 'pricing') score *= 1.5;
+      if (toolSlugHint && doc.toolSlug === toolSlugHint) score *= 1.5;
+      if (pricingBoost && doc.category === 'pricing') score *= 1.6;
+      // For login HOW-TO, boost the positive login guide and penalise the troubleshooting doc
+      if (loginHowTo) {
+        if (doc.id === 'page-login') score *= 1.5;
+        if (doc.id === 'trouble-login') score *= 0.4;
+      }
       return { doc, score };
     })
     .filter(({ score }) => score >= minScore)

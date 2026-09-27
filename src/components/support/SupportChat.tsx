@@ -155,6 +155,9 @@ type AiChatFlowProps = {
   onSend: (inputOverride?: string) => void;
   onEscalate: () => void;
   onNewChat: () => void;
+  onAttach?: (file: File) => void;
+  pendingFile?: File | null;
+  onRemoveFile?: () => void;
   isRtl: boolean;
 };
 
@@ -162,10 +165,11 @@ type AiChatFlowProps = {
  *  state changes — the root cause of the one-character focus-loss bug. */
 function AiChatFlow({
   aiMessages, aiInput, setAiInput, aiLoading, showHumanSupport,
-  onSend, onEscalate, onNewChat, isRtl,
+  onSend, onEscalate, onNewChat, onAttach, pendingFile, onRemoveFile, isRtl,
 }: AiChatFlowProps) {
   const aiEndRef = useRef<HTMLDivElement>(null);
   const aiInputRef = useRef<HTMLTextAreaElement>(null);
+  const aiFileRef = useRef<HTMLInputElement>(null);
   const [showEmoji, setShowEmoji] = useState(false);
   const emojiRef = useRef<HTMLDivElement>(null);
 
@@ -382,6 +386,17 @@ function AiChatFlow({
           </div>
         )}
 
+        {/* Pending attachment chip */}
+        {pendingFile && (
+          <div className="mb-2 flex items-center gap-2 rounded-xl border border-border-light bg-surface px-3 py-2 text-xs text-text-muted">
+            <Paperclip className="h-3.5 w-3.5 shrink-0 text-primary" />
+            <span className="truncate flex-1 font-medium text-text">{pendingFile.name}</span>
+            <span className="shrink-0 text-[11px]">{(pendingFile.size / 1024).toFixed(0)} KB</span>
+            <button type="button" onClick={onRemoveFile} className="shrink-0 text-text-subtle hover:text-text" aria-label="Remove attachment">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
         <div className="flex items-end gap-1.5 rounded-2xl border border-border bg-white dark:bg-card p-2 transition-shadow focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
           {/* Emoji button */}
           <button
@@ -392,6 +407,29 @@ function AiChatFlow({
           >
             <span className="text-base leading-none">😊</span>
           </button>
+
+          {/* Attachment button */}
+          <button
+            type="button"
+            onClick={() => aiFileRef.current?.click()}
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-text-subtle transition-colors hover:bg-surface hover:text-text-muted"
+            aria-label="Attach file"
+          >
+            <Paperclip className="h-4 w-4" />
+          </button>
+          <input
+            ref={aiFileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,application/pdf,text/plain"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = '';
+              if (!f) return;
+              if (f.size > 4 * 1024 * 1024) { alert('File must be under 4 MB.'); return; }
+              onAttach?.(f);
+            }}
+          />
 
           <textarea
             ref={aiInputRef}
@@ -435,6 +473,7 @@ export function SupportChat() {
   const [aiInput, setAiInput] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
   const [showHumanSupport, setShowHumanSupport] = useState(false);
+  const [aiPendingFile, setAiPendingFile] = useState<File | null>(null);
   const endRef = useRef<HTMLDivElement>(null); const fileRef = useRef<HTMLInputElement>(null); const composerRef = useRef<HTMLTextAreaElement>(null); const retryRef = useRef<(() => void | Promise<void>) | null>(null);
   const loggedIn = !!session?.user?.id; const { language } = useLanguage(); const isRtl = language.code === 'ar' || language.code === 'ur'; const { error, success } = useToast();
   const loadList = useCallback(async () => {
@@ -477,6 +516,7 @@ export function SupportChat() {
     setAiInput('');
     setAiLoading(false);
     setShowHumanSupport(false);
+    setAiPendingFile(null);
   }
 
   async function sendAiMessage(inputOverride?: string) {
@@ -722,6 +762,9 @@ export function SupportChat() {
             onSend={(override) => { void sendAiMessage(override); }}
             onEscalate={escalate}
             onNewChat={resetAiChat}
+            onAttach={(f) => { setAiPendingFile(f); }}
+            pendingFile={aiPendingFile}
+            onRemoveFile={() => setAiPendingFile(null)}
             isRtl={isRtl}
           />
         </>
