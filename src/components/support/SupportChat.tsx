@@ -87,6 +87,7 @@ type AiChatFlowProps = {
   showHumanSupport: boolean;
   onSend: (inputOverride?: string) => void;
   onEscalate: () => void;
+  onNewChat: () => void;
   isRtl: boolean;
 };
 
@@ -94,23 +95,53 @@ type AiChatFlowProps = {
  *  state changes — the root cause of the one-character focus-loss bug. */
 function AiChatFlow({
   aiMessages, aiInput, setAiInput, aiLoading, showHumanSupport,
-  onSend, onEscalate, isRtl,
+  onSend, onEscalate, onNewChat, isRtl,
 }: AiChatFlowProps) {
   const aiEndRef = useRef<HTMLDivElement>(null);
+  const aiInputRef = useRef<HTMLTextAreaElement>(null);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const emojiRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     aiEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  // Intentionally only scroll when messages/loading change, not on every render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiMessages.length, aiLoading]);
+
+  // Close emoji picker on outside click
+  useEffect(() => {
+    if (!showEmoji) return;
+    function handler(e: MouseEvent) {
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) setShowEmoji(false);
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showEmoji]);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSend(); }
   }
 
+  function insertEmoji(emoji: string) {
+    const el = aiInputRef.current;
+    if (!el) { setAiInput(aiInput + emoji); setShowEmoji(false); return; }
+    const start = el.selectionStart ?? aiInput.length;
+    const end = el.selectionEnd ?? aiInput.length;
+    const next = aiInput.slice(0, start) + emoji + aiInput.slice(end);
+    setAiInput(next);
+    setShowEmoji(false);
+    // Restore cursor position after React re-render
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = start + emoji.length;
+      el.setSelectionRange(pos, pos);
+    });
+  }
+
   const hasMessages = aiMessages.length > 0;
 
-  // Starter suggestions — each maps to a question the knowledge base can answer
+  // Minimal emoji set — no external library needed
+  const EMOJIS = ['😊','😄','🙏','👍','❤️','🔥','✅','❌','⚠️','💡','🔗','📄','🖼️','🎬','🔍','💬','📧','🔑','⬇️','📱'];
+
   const SUGGESTIONS = [
     'How do I compress a PDF?',
     'What plans are available?',
@@ -120,11 +151,36 @@ function AiChatFlow({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
+      {/* Language selector + new chat — only shown on start screen */}
+      {!hasMessages && (
+        <div className="shrink-0 border-b border-border-light bg-white dark:bg-card px-4 py-2.5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-1.5 text-[11px] text-text-muted">
+            <span>Language:</span>
+            <LanguageSelector variant="header" alwaysShowLabel />
+          </div>
+        </div>
+      )}
+
+      {/* Back / new chat bar — shown once conversation starts */}
+      {hasMessages && (
+        <div className="shrink-0 border-b border-border-light bg-white dark:bg-card px-3 py-2 flex items-center gap-2">
+          <button
+            onClick={onNewChat}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border-light px-3 py-1.5 text-xs font-semibold text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> New question
+          </button>
+          <div className="ml-auto flex items-center gap-1.5 text-[11px] text-text-muted">
+            <LanguageSelector variant="header" />
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto bg-surface/30 px-4 py-4 space-y-3">
         {!hasMessages && (
-          <div className="flex flex-col items-center gap-3 pt-4 text-center">
-            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-brand text-white shadow-soft">
-              <Bot className="h-6 w-6" />
+          <div className="flex flex-col items-center gap-3 pt-3 text-center">
+            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-brand text-white shadow-soft">
+              <Bot className="h-5 w-5" />
             </div>
             <div>
               <p className="text-sm font-bold text-text">Ask anything about SavDown</p>
@@ -161,7 +217,6 @@ function AiChatFlow({
               <p className="whitespace-pre-wrap break-words" dir={isRtl ? 'rtl' : 'ltr'}>
                 {m.content}
               </p>
-              {/* Source links — full-width buttons, not truncated pills */}
               {m.role === 'assistant' && m.sources && m.sources.length > 0 && (
                 <div className="mt-3 border-t border-border/20 pt-2.5 space-y-1.5">
                   {m.sources.map((s) => (
@@ -190,18 +245,13 @@ function AiChatFlow({
             <div className="rounded-2xl rounded-bl-sm border border-border-light bg-white dark:bg-card px-4 py-3 shadow-soft">
               <span className="flex gap-1">
                 {[0, 1, 2].map(i => (
-                  <span
-                    key={i}
-                    className="h-1.5 w-1.5 rounded-full bg-text-muted/40 animate-bounce"
-                    style={{ animationDelay: `${i * 0.15}s` }}
-                  />
+                  <span key={i} className="h-1.5 w-1.5 rounded-full bg-text-muted/40 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
                 ))}
               </span>
             </div>
           </div>
         )}
 
-        {/* Escalation CTA — appears after the first AI response */}
         {hasMessages && !aiLoading && (
           <div className="mt-1 rounded-xl border border-border-light bg-white dark:bg-card p-3 text-center">
             <p className="text-xs text-text-muted mb-2">
@@ -219,10 +269,43 @@ function AiChatFlow({
         <div ref={aiEndRef} />
       </div>
 
-      {/* Input — stable DOM element, never recreated */}
-      <div className="shrink-0 border-t border-border-light bg-white dark:bg-card px-3 pt-2.5" style={{ paddingBottom: 'max(0.625rem, env(safe-area-inset-bottom))' }}>
-        <div className="flex items-end gap-2 rounded-2xl border border-border bg-white dark:bg-card p-2 transition-shadow focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
+      {/* Input area — stable, never remounted */}
+      <div className="shrink-0 border-t border-border-light bg-white dark:bg-card px-3 pt-2.5 relative" style={{ paddingBottom: 'max(0.625rem, env(safe-area-inset-bottom))' }}>
+        {/* Emoji picker */}
+        {showEmoji && (
+          <div
+            ref={emojiRef}
+            className="absolute bottom-full mb-2 left-3 right-3 z-50 rounded-2xl border border-border bg-white dark:bg-card shadow-soft-lg p-3"
+          >
+            <div className="flex flex-wrap gap-1.5">
+              {EMOJIS.map(e => (
+                <button
+                  key={e}
+                  type="button"
+                  onClick={() => insertEmoji(e)}
+                  className="text-lg leading-none w-9 h-9 flex items-center justify-center rounded-xl hover:bg-surface transition-colors"
+                  aria-label={e}
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-end gap-1.5 rounded-2xl border border-border bg-white dark:bg-card p-2 transition-shadow focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
+          {/* Emoji button */}
+          <button
+            type="button"
+            onClick={() => setShowEmoji(v => !v)}
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-text-subtle transition-colors hover:bg-surface hover:text-text-muted"
+            aria-label="Add emoji"
+          >
+            <span className="text-base leading-none">😊</span>
+          </button>
+
           <textarea
+            ref={aiInputRef}
             aria-label="Ask a question"
             value={aiInput}
             onChange={(e) => setAiInput(e.target.value)}
@@ -230,18 +313,19 @@ function AiChatFlow({
             rows={1}
             maxLength={800}
             placeholder="Ask a question…"
-            className="max-h-28 min-h-[40px] flex-1 resize-none bg-transparent p-2 text-sm leading-relaxed outline-none placeholder:text-text-subtle"
-            style={{ minHeight: 40 }}
+            className="max-h-28 min-h-[36px] flex-1 resize-none bg-transparent px-1 py-1 text-sm leading-relaxed outline-none placeholder:text-text-subtle"
+            style={{ minHeight: 36 }}
             dir={isRtl ? 'rtl' : 'ltr'}
           />
+
           <button
             type="button"
             onClick={() => onSend()}
             disabled={!aiInput.trim() || aiLoading}
-            className="mb-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-brand text-white shadow-soft transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-gradient-brand text-white shadow-soft transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Send message"
           >
-            {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
           </button>
         </div>
         <p className="mt-1 px-1 text-[10px] text-text-subtle">Enter to send · Shift+Enter for new line</p>
@@ -298,6 +382,13 @@ export function SupportChat() {
   if (pathname.startsWith('/admin')) return null;
 
   function resetComposer() { setCategory(''); setMessage(''); setFiles([]); setShowMore(false); setInlineError(null); retryRef.current = null; }
+
+  function resetAiChat() {
+    setAiMessages([]);
+    setAiInput('');
+    setAiLoading(false);
+    setShowHumanSupport(false);
+  }
 
   async function sendAiMessage(inputOverride?: string) {
     const text = (inputOverride ?? aiInput).trim();
@@ -541,6 +632,7 @@ export function SupportChat() {
             showHumanSupport={showHumanSupport}
             onSend={(override) => { void sendAiMessage(override); }}
             onEscalate={escalate}
+            onNewChat={resetAiChat}
             isRtl={isRtl}
           />
         </>

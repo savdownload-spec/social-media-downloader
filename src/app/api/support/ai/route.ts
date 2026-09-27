@@ -22,7 +22,7 @@ import { z } from 'zod';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { getBillingSummary } from '@/lib/billing';
-import { retrieveKnowledge, formatKnowledgeContext } from '@/lib/support-knowledge';
+import { retrieveKnowledge, formatKnowledgeContext, selectSources } from '@/lib/support-knowledge';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { ok, fail } from '@/lib/api';
 
@@ -152,27 +152,53 @@ export async function POST(request: Request) {
   const { message, history } = parsed.data;
 
   // ── Conversational intent (greetings, thanks, etc.) ───────────────────
-  // Handle these without FAQ retrieval so they never return unrelated docs.
   const intent = detectIntent(message);
   if (intent !== 'faq') {
-    return ok({
-      answer: INTENT_REPLIES[intent],
-      sources: [],
-      canAnswer: true,
-    });
+    return ok({ answer: INTENT_REPLIES[intent], sources: [], canAnswer: true });
+  }
+
+  // ── Tool entity detection ──────────────────────────────────────────────
+  // Detect which specific SavDown tool the user is asking about so we can
+  // boost relevant docs and suppress irrelevant source links.
+  const TOOL_ALIASES: Record<string, string[]> = {
+    'compress-pdf':     ['compress pdf','compress a pdf','make pdf smaller','reduce pdf','shrink pdf','pdf too large','pdf compression'],
+    'merge-pdf':        ['merge pdf','combine pdf','join pdf','merge pdfs','combine pdfs'],
+    'split-pdf':        ['split pdf','separate pdf','divide pdf','extract pages from pdf'],
+    'jpg-to-pdf':       ['jpg to pdf','image to pdf','images to pdf','convert image pdf'],
+    'pdf-to-jpg':       ['pdf to jpg','pdf to image','convert pdf image','pdf to png'],
+    'pdf-to-word':      ['pdf to word','convert pdf word','pdf to docx'],
+    'word-to-pdf':      ['word to pdf','docx to pdf','convert word pdf'],
+    'youtube-video-downloader': ['youtube','yt download','youtube video','download youtube'],
+    'tiktok-video-downloader':  ['tiktok','tik tok download','download tiktok'],
+    'instagram-photo-downloader': ['instagram photo','instagram download','save instagram'],
+    'instagram-reels-downloader': ['instagram reels','download reels','save reel'],
+    'facebook-video-downloader':  ['facebook video','download facebook','fb video'],
+    'x-video-downloader':         ['twitter video','x video','download x','tweet video'],
+    'pinterest-image-downloader': ['pinterest image','download pinterest','save pinterest'],
+    'background-remover':  ['background remover','remove background','remove bg'],
+    'image-compressor':    ['image compressor','compress image','compress photo'],
+    'image-resizer':       ['image resizer','resize image','resize photo'],
+    'video-compressor':    ['video compressor','compress video','reduce video size'],
+    'qr-code-generator':   ['qr code','qr generator','create qr','make qr'],
+    'ai-image-generator':  ['ai image','generate image','ai generator'],
+  };
+
+  const msgLower = message.toLowerCase();
+  let detectedSlug: string | undefined;
+  outer: for (const [slug, aliases] of Object.entries(TOOL_ALIASES)) {
+    for (const alias of aliases) {
+      if (msgLower.includes(alias)) { detectedSlug = slug; break outer; }
+    }
   }
 
   // ── Build search query (include last user turn for follow-up context) ──
   const prevUserMsg = [...history].reverse().find(m => m.role === 'user');
   const searchQuery = prevUserMsg ? prevUserMsg.content + ' ' + message : message;
 
-  const docs = retrieveKnowledge(searchQuery, { topK: 6, minScore: 0.08 });
+  const docs = retrieveKnowledge(searchQuery, { topK: 6, minScore: 0.08, toolSlugHint: detectedSlug });
 
-  // ── Source links for the UI ───────────────────────────────────────────────
-  const sources = docs
-    .filter(d => d.url)
-    .slice(0, 3)
-    .map(d => ({ title: d.title.replace(/\s*-\s*SavDown.*$/i, ''), url: d.url! }));
+  // ── Source links — only genuinely relevant ones ───────────────────────
+  const sources = selectSources(docs, 3);
 
   // ── Account context (authenticated users only) ────────────────────────────
   let accountContext = '';
