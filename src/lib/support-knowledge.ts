@@ -24,6 +24,11 @@ const PRICING_DOCS: KnowledgeDocument[] = [
 ];
 
 const PAGE_DOCS: KnowledgeDocument[] = [
+  // ── Troubleshooting (high priority — matches "fail/error/not working/broken") ──
+  { id: 'trouble-download', title: 'Download Failing Not Working Error Fix Troubleshoot', body: 'If your download is failing or not working: 1) Make sure the URL is a public video (private videos cannot be downloaded). 2) Check your SavCredits balance — you need at least 1 credit. 3) Try a different browser or clear your browser cache. 4) Some platforms temporarily block downloads — wait a few minutes and try again. 5) For TikTok, copy the link from the Share menu rather than the address bar. 6) For Instagram, make sure the account is public. If the problem persists, submit a support request.', url: '/tools', category: 'tool-guide', baseWeight: 0.97 },
+  { id: 'trouble-tool', title: 'Tool Not Working Error Problem Fix', body: 'If a SavDown tool is not working: 1) Refresh the page and try again. 2) Check the file size limits: PDF max 50 MB per file, video max 100 MB, image max 25 MB. 3) Make sure you have enough SavCredits. 4) Try a different browser. 5) Check that your file format is supported by the tool. If the issue continues, please submit a support request with details.', url: '/tools', category: 'tool-guide', baseWeight: 0.95 },
+  { id: 'trouble-login', title: 'Cannot Login Sign In Problem Google', body: 'If you cannot sign in or login: 1) For Google sign-in: clear cookies, try incognito mode, or sign out of all Google accounts then sign back in. 2) For email/password: use the Forgot Password link on the login page. 3) Make sure cookies are enabled in your browser. 4) Try a different browser. If none of these work, submit a support request.', url: '/login', category: 'page', baseWeight: 0.93 },
+  // ── Regular page docs ──
   { id: 'page-about', title: 'What Is SavDown About', body: 'SavDown is a free web-based toolkit for downloading media and processing files online. It supports YouTube, TikTok, Instagram, Facebook, Pinterest, and X (Twitter) video downloads. It also has image tools, PDF tools, video tools, AI tools, SEO tools, and utility tools. No watermarks, no signup required for basic use. Free daily credits included.', url: '/about', category: 'page', baseWeight: 0.85 },
   { id: 'page-privacy', title: 'Privacy Does SavDown Store Files', body: 'SavDown does not store downloaded files on its servers. Files stream directly to the user and are discarded immediately. SavDown does not log what you download or build a profile of your activity. All connections use HTTPS encryption.', url: '/privacy', category: 'page', baseWeight: 0.75 },
   { id: 'page-login', title: 'How to Sign In Login Google Account', body: 'Sign in to SavDown at /login using Google, GitHub, or email and password. If Google sign-in keeps returning to the login page, try clearing cookies, using a different browser, or signing out of all Google accounts first. Email sign-in requires the password you registered with. Forgot password option is available on the login page.', url: '/login', category: 'page', baseWeight: 0.9 },
@@ -58,7 +63,8 @@ const SYNONYMS: Record<string, string[]> = {
   plan:       ['subscription', 'tier', 'membership', 'upgrade'],
   free:       ['no cost', 'gratis', 'zero'],
   batch:      ['multiple', 'bulk', 'several', 'many'],
-  error:      ['fail', 'failed', 'broken', 'not working', 'issue', 'problem', 'wrong'],
+  error:      ['fail', 'failing', 'failed', 'broken', 'not working', 'issue', 'problem', 'wrong', 'doesnt work', 'wont work', 'cant', 'cannot'],
+  troubleshoot: ['fix', 'solve', 'help', 'debug', 'issue', 'problem', 'error', 'fail', 'broken'],
   watermark:  ['logo', 'stamp', 'overlay'],
   quality:    ['resolution', 'hd', '4k', '1080p', '720p'],
 };

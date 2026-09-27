@@ -29,6 +29,32 @@ import { ok, fail } from '@/lib/api';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+// ── Conversational intent detection ───────────────────────────────────────
+// Catches greetings/thanks/small-talk BEFORE FAQ retrieval so these never
+// return random product documents.
+
+type Intent = 'greeting' | 'thanks' | 'bye' | 'capabilities' | 'faq';
+
+function detectIntent(msg: string): Intent {
+  const t = msg.trim().toLowerCase().replace(/[^a-z\s]/g, '').trim();
+  const GREETINGS = ['hi', 'hello', 'hey', 'good morning', 'good afternoon', 'good evening', 'howdy', 'sup', 'hiya', 'yo'];
+  const THANKS = ['thanks', 'thank you', 'thank u', 'ty', 'thx', 'cheers', 'appreciated', 'great thanks', 'many thanks'];
+  const BYES = ['bye', 'goodbye', 'see you', 'later', 'cya', 'take care', 'good night'];
+  const CAPS = ['what can you help', 'what do you know', 'what can you do', 'help me with', 'what topics', 'what questions'];
+  if (GREETINGS.includes(t) || GREETINGS.some(g => t === g)) return 'greeting';
+  if (THANKS.some(tk => t === tk || t.startsWith(tk + ' '))) return 'thanks';
+  if (BYES.some(b => t === b || t.startsWith(b + ' '))) return 'bye';
+  if (CAPS.some(c => t.includes(c))) return 'capabilities';
+  return 'faq';
+}
+
+const INTENT_REPLIES: Record<Exclude<Intent, 'faq'>, string> = {
+  greeting: "Hi! 👋 I'm SavDown Support. I can answer questions about downloading videos, using tools, credits, plans, account settings, and more. What can I help you with?",
+  thanks: "You're welcome! If you need anything else, I'm here.",
+  bye: "Take care! Feel free to come back anytime if you have more questions.",
+  capabilities: "I can help with:\n• Downloading videos from YouTube, TikTok, Instagram, Facebook, Pinterest, and X\n• PDF tools (merge, compress, convert)\n• Image and video tools\n• SavDown credits and plans\n• Account and login issues\n• File size limits and errors\n\nJust ask your question and I'll search SavDown's help content for the best answer.",
+};
+
 const MAX_HISTORY = 6;
 const MAX_MESSAGE_LEN = 800;
 
@@ -125,7 +151,18 @@ export async function POST(request: Request) {
 
   const { message, history } = parsed.data;
 
-  // ── Build search query (include last user turn for follow-up context) ────
+  // ── Conversational intent (greetings, thanks, etc.) ───────────────────
+  // Handle these without FAQ retrieval so they never return unrelated docs.
+  const intent = detectIntent(message);
+  if (intent !== 'faq') {
+    return ok({
+      answer: INTENT_REPLIES[intent],
+      sources: [],
+      canAnswer: true,
+    });
+  }
+
+  // ── Build search query (include last user turn for follow-up context) ──
   const prevUserMsg = [...history].reverse().find(m => m.role === 'user');
   const searchQuery = prevUserMsg ? prevUserMsg.content + ' ' + message : message;
 
