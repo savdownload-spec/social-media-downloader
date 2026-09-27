@@ -161,6 +161,8 @@ export async function POST(request: Request) {
   // Detect which specific SavDown tool the user is asking about so we can
   // boost relevant docs and suppress irrelevant source links.
   const TOOL_ALIASES: Record<string, string[]> = {
+    // pricing/plans — not a tool but treated as an entity for boosting
+    '__pricing__':      ['plans available','what plans','pricing','how much','pro plan','free plan','lifetime plan','pro cost','subscription cost','credit packs','how much does'],
     'compress-pdf':     ['compress pdf','compress a pdf','make pdf smaller','reduce pdf','shrink pdf','pdf too large','pdf compression'],
     'merge-pdf':        ['merge pdf','combine pdf','join pdf','merge pdfs','combine pdfs'],
     'split-pdf':        ['split pdf','separate pdf','divide pdf','extract pages from pdf'],
@@ -191,16 +193,39 @@ export async function POST(request: Request) {
     }
   }
 
-  // ── Build search query (include last user turn for follow-up context) ──
-  const prevUserMsg = [...history].reverse().find(m => m.role === 'user');
+  // ── Build search query ────────────────────────────────────────────────
+  // CRITICAL: Do NOT blindly prepend the previous message to the current one.
+  // That was causing contamination: asking "What plans are available?" after
+  // "How does TikTok audio work?" would prepend TikTok/audio tokens, making
+  // retrieval return audio/Instagram content for a pricing question.
+  //
+  // Only carry context forward when the current message contains follow-up
+  // pronouns that require context resolution (it, that, them, this, the same).
+  const FOLLOWUP_SIGNALS = /\b(it|that|them|this|those|these|the same|also|too|as well|more about|what about|and|does it|can it|will it|is it)\b/i;
+  const isFollowUp = FOLLOWUP_SIGNALS.test(message) && history.length > 0;
+  const prevUserMsg = isFollowUp ? [...history].reverse().find(m => m.role === 'user') : null;
   const searchQuery = prevUserMsg ? prevUserMsg.content + ' ' + message : message;
 
-  const docs = retrieveKnowledge(searchQuery, { topK: 6, minScore: 0.08, toolSlugHint: detectedSlug });
+  const docs = retrieveKnowledge(searchQuery, {
+    topK: 6,
+    minScore: 0.08,
+    toolSlugHint: detectedSlug === '__pricing__' ? undefined : detectedSlug,
+    pricingBoost: detectedSlug === '__pricing__',
+  });
+
+  // ── Evidence gate: return fallback if nothing relevant found ──────────
+  if (!docs.length) {
+    return ok({
+      answer: "I couldn't find that information in SavDown's help content. Please submit a support request and our team will help you directly.",
+      sources: [],
+      canAnswer: false,
+    });
+  }
 
   // ── Source links — only genuinely relevant ones ───────────────────────
   const sources = selectSources(docs, 3);
 
-  // ── Account context (authenticated users only) ────────────────────────────
+  // ── Account context (authenticated users only) ────────────────────────
   let accountContext = '';
   if (userId) {
     try {

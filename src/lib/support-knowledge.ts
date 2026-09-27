@@ -20,6 +20,8 @@ export type KnowledgeDocument = {
 // ── Static knowledge ──────────────────────────────────────────────────────
 
 const PRICING_DOCS: KnowledgeDocument[] = [
+  // Explicit plans overview — high priority for "what plans are available", "pricing", "how much does it cost"
+  { id: 'pricing-overview', title: 'SavDown Plans Available Pricing What Plans Are There', body: 'SavDown has three main plans: Free, Pro, and Lifetime. Free plan: 10 credits/day (300/month), 1080p HD downloads, no watermarks, no card required. Pro plan: $9.99/month or $89/year, 1,000 credits/month, 4K downloads, batch jobs, priority processing. Lifetime plan: $199 one-time payment, 30,000 credits that never expire. You can also buy credit packs (Starter 300 credits/$5, Creator 1000 credits/$14, Power 3000 credits/$36) without a subscription.', url: '/pricing', category: 'pricing', baseWeight: 0.98 },
   { id: 'pricing-free', title: 'Free Plan Credits Daily', body: 'Every SavDown account gets 10 free SavCredits per day (up to 300 per month). No credit card required. Free users can download up to 1080p HD with no watermarks. Credits refresh every day automatically.', url: '/pricing', category: 'pricing', baseWeight: 0.92 },
   { id: 'pricing-pro', title: 'Pro Plan Subscription Cost', body: 'Pro plan costs $9.99/month or $89/year. Includes 1,000 SavCredits per month, 4K downloads, batch jobs, and priority processing. Cancel any time.', url: '/pricing', category: 'pricing', baseWeight: 0.92 },
   { id: 'pricing-credits', title: 'SavCredits How Credits Work Run Out Buy', body: 'Proxy downloads cost 1 credit. 4K or server-side merges cost 2 credits. Image and PDF tool operations cost 1 credit. QR tools cost 1 credit. Free plan refills 10 credits daily. Purchased credits never expire. When you run out of credits, wait for the daily refill, buy a credit pack, or upgrade to Pro. Credit packs: Starter 300 credits, Creator 1000 credits, Power 3000 credits.', url: '/pricing', category: 'pricing', baseWeight: 0.92 },
@@ -216,19 +218,21 @@ export function buildKnowledgeCorpus(): KnowledgeDocument[] {
 
 export function retrieveKnowledge(
   query: string,
-  opts: { topK?: number; minScore?: number; toolSlugHint?: string } = {},
+  opts: { topK?: number; minScore?: number; toolSlugHint?: string; pricingBoost?: boolean } = {},
 ): KnowledgeDocument[] {
-  const { topK = 6, minScore = 0.08, toolSlugHint } = opts;
+  const { topK = 6, minScore = 0.08, toolSlugHint, pricingBoost } = opts;
   const corpus = buildKnowledgeCorpus();
   const rawTokens = tokenize(query);
   const tokens = expandSynonyms(rawTokens);
   if (!tokens.length) return corpus.slice(0, topK);
 
-  let scored = corpus
+  const scored = corpus
     .map(doc => {
       let score = scoreDoc(doc, tokens);
       // Boost docs that belong to a tool explicitly hinted by the caller
       if (toolSlugHint && doc.toolSlug === toolSlugHint) score *= 1.4;
+      // Boost pricing/plan docs for pricing-intent questions
+      if (pricingBoost && doc.category === 'pricing') score *= 1.5;
       return { doc, score };
     })
     .filter(({ score }) => score >= minScore)

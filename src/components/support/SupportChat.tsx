@@ -79,6 +79,73 @@ function resizeTextarea(element: HTMLTextAreaElement) { element.style.height = '
 
 type AiMsg = { role: 'user' | 'assistant'; content: string; sources?: { title: string; url: string }[] };
 
+/** Renders a bot answer with basic markdown: numbered lists, bullets, bold, newlines. */
+function AiBotMessage({ text }: { text: string }) {
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+  let listItems: string[] = [];
+  let listType: 'ol' | 'ul' | null = null;
+
+  function flushList() {
+    if (!listItems.length) return;
+    if (listType === 'ol') {
+      elements.push(
+        <ol key={elements.length} className="list-decimal list-inside space-y-0.5 my-1">
+          {listItems.map((li, i) => <li key={i} className="text-sm">{renderInline(li)}</li>)}
+        </ol>
+      );
+    } else {
+      elements.push(
+        <ul key={elements.length} className="list-disc list-inside space-y-0.5 my-1">
+          {listItems.map((li, i) => <li key={i} className="text-sm">{renderInline(li)}</li>)}
+        </ul>
+      );
+    }
+    listItems = [];
+    listType = null;
+  }
+
+  function renderInline(s: string): React.ReactNode {
+    // Bold: **text**
+    const parts = s.split(/\*\*(.+?)\*\*/g);
+    return parts.map((p, i) => i % 2 === 1 ? <strong key={i}>{p}</strong> : p);
+  }
+
+  for (const line of lines) {
+    const olMatch = line.match(/^(\d+)\.\s+(.+)/);
+    const ulMatch = line.match(/^[-*•]\s+(.+)/);
+    if (olMatch) {
+      if (listType === 'ul') flushList();
+      listType = 'ol';
+      listItems.push(olMatch[2]!);
+    } else if (ulMatch) {
+      if (listType === 'ol') flushList();
+      listType = 'ul';
+      listItems.push(ulMatch[1]!);
+    } else {
+      flushList();
+      if (line.trim() === '') {
+        elements.push(<div key={elements.length} className="h-1.5" />);
+      } else {
+        elements.push(<p key={elements.length} className="text-sm leading-relaxed">{renderInline(line)}</p>);
+      }
+    }
+  }
+  flushList();
+  return <>{elements}</>;
+}
+
+// ── Full emoji data grouped by category ───────────────────────────────────
+const EMOJI_CATEGORIES: { label: string; emojis: string[] }[] = [
+  { label: 'Smileys', emojis: ['😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','🥰','😘','😗','☺️','🙂','🤗','🤩','😐','😑','🤔','🤨','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','😈','👿','💀','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🫠','🥴','😵','🤪','😜','😝','😛','🤑','🤠','🥸','🤡','👻','👹','👺','🤖','👾','🎭'] },
+  { label: 'People', emojis: ['👋','🤚','🖐️','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','🫶','👐','🤲','🙏','🫱','🫲','💪','🦾','🧠','👁️','👅','👂','👃','🫀','🫁','🦷','🦴','👤','👥','🤝','💅','🦶','🦵','👶','👦','👧','🧒','👱','👩','👨','🧔','👴','👵','🧓','👲','👳','🧕','👼','🎅','🤶','🦸','🦹','🧙','🧝','🧛','🧟','🧞','🧜','🧚','👮','🕵️','💂','🥷','👷','🤵','👰','🫅','🤴','👸','🫄','🤰','🫃','🙍','🙎','🙅','🙆','💁','🙋','🧏','🙇','🤦','🤷'] },
+  { label: 'Animals', emojis: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐔','🐧','🐦','🦅','🦆','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🐛','🦋','🐌','🐞','🐜','🦟','🦗','🕷️','🦂','🐢','🐍','🦎','🦕','🦖','🦑','🦐','🦞','🦀','🐡','🐠','🐟','🐬','🐳','🐋','🦈','🦭','🐊','🐅','🐆','🦓','🦍','🦧','🦣','🐘','🦛','🦏','🐪','🦒','🦘','🦬','🐃','🐂','🐄','🦙','🐑','🐐','🦌','🐕','🐩','🦮','🐈','🐈‍⬛','🐓','🦃','🦤','🦚','🦜','🦢','🦩','🕊️','🐇','🦝','🦨','🦡','🦫','🦦','🦥','🐿️','🦔'] },
+  { label: 'Food', emojis: ['🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑','🥦','🥬','🥒','🌶️','🫑','🧄','🧅','🥔','🍠','🥐','🥯','🍞','🥖','🥨','🧀','🥚','🍳','🧈','🥞','🧇','🥓','🥩','🍗','🍖','🦴','🌮','🌯','🫔','🥙','🧆','🥚','🍿','🧂','🥫','🍱','🍘','🍙','🍚','🍛','🍜','🍝','🍠','🍢','🍣','🍤','🍥','🥮','🍡','🥟','🥠','🥡','🦪','🍦','🍧','🍨','🍩','🍪','🎂','🍰','🧁','🥧','🍫','🍬','🍭','🍮','🍯','🍷','🍸','🍹','🍺','☕','🫖','🧋','🥛','🍼'] },
+  { label: 'Objects', emojis: ['📱','💻','🖥️','🖨️','⌨️','🖱️','💾','💿','📀','📷','📸','📹','🎥','📽️','🎞️','📞','☎️','📟','📠','📺','📻','🧭','⏰','🕰️','📡','🔋','🔌','💡','🔦','🕯️','🪔','🧯','🛢️','💰','💵','💴','💶','💷','💸','💳','🪙','💎','⚖️','🔧','🪛','🔨','⛏️','⚒️','🛠️','🗡️','🪃','🪚','🗡️','🪝','🪤','🔑','🗝️','🔐','🔒','🔓','🪣','🔮','📿','🧿','🪬','💈','⚗️','🔭','🔬','🩺','🩻','🩹','💊','💉','🩸','🧬','🦠','🫀','🫁','🧫','🧪','🪤','🌡️','📦','📫','📬','📭','📮','📯','📢','📣','🔔','🔕','🎵','🎶','📝','📒','📓','📔','📕','📗','📘','📙','📚','📖','🔖','🏷️','💡','🔍','🔎','📌','📍','📎','🖇️','✂️'] },
+  { label: 'Symbols', emojis: ['✅','❌','⭕','🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','🟤','🔶','🔷','🔸','🔹','🔺','🔻','💠','🔘','🔲','🔳','⬛','⬜','◼️','◻️','◾','◽','▪️','▫️','🚫','⛔','📵','🔞','♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓','⛎','🔯','🔰','♻️','✔️','❎','🆗','🆕','🆙','🆒','🆓','🆖','🅰️','🅱️','🆑','🆘','🚾','💲','🎫','🎟️','🎗️','🎀','🎁','🎄','🎆','🎇','🧨','✨','🎉','🎊','🎈','🎃','🎋','🎍','🎎','🎏','🎐','🎑','🧧','🎠','🎡','🎢','🎪','🎭','🎨','🎬','🎤','🎧','🎼','🎹','🪘','🥁','🎷','🎺','🎸','🪕','🎻','🎲','♟️','🎯','🎱','🎮','🕹️'] },
+  { label: 'Travel', emojis: ['🚀','✈️','🛸','🛩️','🚁','🛥️','⛵','🚤','🛶','🚢','⚓','🪝','⛽','🚧','🚦','🚥','🗺️','🧭','🏔️','⛰️','🌋','🗻','🏕️','🏖️','🏜️','🏝️','🏞️','🏟️','🏛️','🏗️','🧱','🏘️','🏚️','🏠','🏡','🏢','🏣','🏤','🏥','🏦','🏨','🏩','🏪','🏫','🏬','🏭','🏯','🏰','💒','🗼','🗽','⛪','🕌','🛕','🕍','⛩️','🕋','⛲','⛺','🌁','🌃','🌄','🌅','🌆','🌇','🌉','🌌','🌠','🎇','🌈','🗾','🌍','🌎','🌏'] },
+];
+
 type AiChatFlowProps = {
   aiMessages: AiMsg[];
   aiInput: string;
@@ -138,9 +205,7 @@ function AiChatFlow({
   }
 
   const hasMessages = aiMessages.length > 0;
-
-  // Minimal emoji set — no external library needed
-  const EMOJIS = ['😊','😄','🙏','👍','❤️','🔥','✅','❌','⚠️','💡','🔗','📄','🖼️','🎬','🔍','💬','📧','🔑','⬇️','📱'];
+  const [emojiTab, setEmojiTab] = useState(0);
 
   const SUGGESTIONS = [
     'How do I compress a PDF?',
@@ -199,6 +264,16 @@ function AiChatFlow({
                 </button>
               ))}
             </div>
+            {/* Escalation path always visible on start screen */}
+            <div className="w-full border-t border-border-light pt-3 mt-1 text-center">
+              <p className="text-[11px] text-text-subtle mb-2">Can&apos;t find what you&apos;re looking for?</p>
+              <button
+                onClick={onEscalate}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-text transition-all hover:border-primary/40 hover:text-primary hover:shadow-soft"
+              >
+                <Headset className="h-3.5 w-3.5" /> Submit a support request
+              </button>
+            </div>
           </div>
         )}
 
@@ -214,9 +289,9 @@ function AiChatFlow({
                 ? 'rounded-br-sm bg-primary text-white'
                 : 'rounded-bl-sm border border-border-light bg-white dark:bg-card text-text shadow-soft'
             }`}>
-              <p className="whitespace-pre-wrap break-words" dir={isRtl ? 'rtl' : 'ltr'}>
-                {m.content}
-              </p>
+              <div className="whitespace-pre-wrap break-words" dir={isRtl ? 'rtl' : 'ltr'}>
+                <AiBotMessage text={m.content} />
+              </div>
               {m.role === 'assistant' && m.sources && m.sources.length > 0 && (
                 <div className="mt-3 border-t border-border/20 pt-2.5 space-y-1.5">
                   {m.sources.map((s) => (
@@ -271,19 +346,33 @@ function AiChatFlow({
 
       {/* Input area — stable, never remounted */}
       <div className="shrink-0 border-t border-border-light bg-white dark:bg-card px-3 pt-2.5 relative" style={{ paddingBottom: 'max(0.625rem, env(safe-area-inset-bottom))' }}>
-        {/* Emoji picker */}
+        {/* Emoji picker — tabbed, full Unicode categories */}
         {showEmoji && (
           <div
             ref={emojiRef}
-            className="absolute bottom-full mb-2 left-3 right-3 z-50 rounded-2xl border border-border bg-white dark:bg-card shadow-soft-lg p-3"
+            className="absolute bottom-full mb-2 left-0 right-0 z-50 rounded-2xl border border-border bg-white dark:bg-card shadow-soft-lg overflow-hidden"
           >
-            <div className="flex flex-wrap gap-1.5">
-              {EMOJIS.map(e => (
+            {/* Category tabs */}
+            <div className="flex overflow-x-auto border-b border-border-light px-2 pt-2 gap-1 scrollbar-hide">
+              {EMOJI_CATEGORIES.map((cat, idx) => (
+                <button
+                  key={cat.label}
+                  type="button"
+                  onClick={() => setEmojiTab(idx)}
+                  className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition-colors whitespace-nowrap ${emojiTab === idx ? 'bg-primary text-white' : 'text-text-muted hover:bg-surface'}`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+            {/* Emoji grid */}
+            <div className="flex flex-wrap gap-0.5 p-2 max-h-36 overflow-y-auto">
+              {(EMOJI_CATEGORIES[emojiTab]?.emojis ?? []).map(e => (
                 <button
                   key={e}
                   type="button"
                   onClick={() => insertEmoji(e)}
-                  className="text-lg leading-none w-9 h-9 flex items-center justify-center rounded-xl hover:bg-surface transition-colors"
+                  className="text-lg leading-none w-9 h-9 flex items-center justify-center rounded-lg hover:bg-surface transition-colors"
                   aria-label={e}
                 >
                   {e}
