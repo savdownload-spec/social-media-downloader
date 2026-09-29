@@ -77,7 +77,7 @@ function time(value: string) { return new Date(value).toLocaleTimeString([], { h
 function statusLabel(status: string) { return status === 'RESOLVED' || status === 'CLOSED' ? 'Resolved' : status === 'PENDING' ? 'Awaiting your reply' : 'Open'; }
 function resizeTextarea(element: HTMLTextAreaElement) { element.style.height = 'auto'; const max = 176; const height = Math.min(element.scrollHeight, max); element.style.height = `${height}px`; element.style.overflowY = element.scrollHeight > max ? 'auto' : 'hidden'; }
 
-type AiMsg = { role: 'user' | 'assistant'; content: string; sources?: { title: string; url: string }[] };
+type AiMsg = { role: 'user' | 'assistant'; content: string; sources?: { title: string; url: string }[]; fileName?: string; fileDataUrl?: string; fileType?: string };
 
 /** Renders a bot answer with basic markdown: numbered lists, bullets, bold, newlines. */
 function AiBotMessage({ text }: { text: string }) {
@@ -311,6 +311,26 @@ function AiChatFlow({
                 ? 'rounded-br-sm bg-primary text-white'
                 : 'rounded-bl-sm border border-border-light bg-white dark:bg-card text-text shadow-soft'
             }`}>
+              {/* File attachment bubble — shown in user messages */}
+              {m.role === 'user' && m.fileName && (
+                <div className="mb-2 overflow-hidden rounded-xl border border-white/20">
+                  {m.fileDataUrl && m.fileType?.startsWith('image/') ? (
+                    // Image preview
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={m.fileDataUrl}
+                      alt={m.fileName}
+                      className="max-h-40 w-full object-cover"
+                    />
+                  ) : (
+                    // Non-image file chip
+                    <div className="flex items-center gap-2 bg-white/15 px-3 py-2">
+                      <Paperclip className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate text-xs font-medium">{m.fileName}</span>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="whitespace-pre-wrap break-words" dir={isRtl ? 'rtl' : 'ltr'}>
                 <AiBotMessage text={m.content} />
               </div>
@@ -349,11 +369,9 @@ function AiChatFlow({
           </div>
         )}
 
-        {hasMessages && !aiLoading && (
+        {hasMessages && !aiLoading && showHumanSupport && (
           <div className="mt-1 rounded-xl border border-border-light bg-white dark:bg-card p-3 text-center">
-            <p className="text-xs text-text-muted mb-2">
-              {showHumanSupport ? 'Need more help?' : 'Still need help?'}
-            </p>
+            <p className="text-xs text-text-muted mb-2">Need more help?</p>
             <button
               onClick={onEscalate}
               className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-text transition-all hover:border-primary/40 hover:text-primary hover:shadow-soft"
@@ -438,13 +456,13 @@ function AiChatFlow({
           <input
             ref={aiFileRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,application/pdf,text/plain"
+            accept="image/jpeg,image/png,image/webp,image/gif,image/heic,application/pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip,video/mp4,video/webm"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
               e.target.value = '';
               if (!f) return;
-              if (f.size > 4 * 1024 * 1024) { alert('File must be under 4 MB.'); return; }
+              if (f.size > 10 * 1024 * 1024) { alert('File must be under 10 MB.'); return; }
               onAttach?.(f);
             }}
           />
@@ -466,7 +484,7 @@ function AiChatFlow({
           <button
             type="button"
             onClick={() => onSend()}
-            disabled={!aiInput.trim() || aiLoading}
+            disabled={(!aiInput.trim() && !pendingFile) || aiLoading}
             className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-gradient-brand text-white shadow-soft transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Send message"
           >
@@ -539,11 +557,36 @@ export function SupportChat() {
 
   async function sendAiMessage(inputOverride?: string) {
     const text = (inputOverride ?? aiInput).trim();
-    if (!text || aiLoading) return;
+    const file = aiPendingFile;
+    if (!text && !file) return;
+    if (aiLoading) return;
     const history = aiMessages.slice(-6); // keep last 6 turns
-    const newMessages: AiMsg[] = [...aiMessages, { role: 'user', content: text }];
+
+    // If a file is attached, read it as a data URL so we can show a preview
+    // and pass a description to the AI as context.
+    let fileDataUrl: string | undefined;
+    let fileContextNote = '';
+    if (file) {
+      try {
+        fileDataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      } catch { /* non-fatal — show chip only, no preview */ }
+      fileContextNote = ` [Attached file: ${file.name} (${file.type || 'unknown'}, ${(file.size / 1024).toFixed(0)} KB)]`;
+    }
+
+    const userMsg: AiMsg = {
+      role: 'user',
+      content: text || '(see attached file)',
+      ...(file ? { fileName: file.name, fileDataUrl, fileType: file.type } : {}),
+    };
+    const newMessages: AiMsg[] = [...aiMessages, userMsg];
     setAiMessages(newMessages);
     setAiInput('');
+    setAiPendingFile(null);
     setAiLoading(true);
     playSend();
     try {
@@ -551,7 +594,7 @@ export function SupportChat() {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          message: text,
+          message: (text || '(attached file)') + fileContextNote,
           history: history.map(m => ({ role: m.role, content: m.content })),
         }),
       });
