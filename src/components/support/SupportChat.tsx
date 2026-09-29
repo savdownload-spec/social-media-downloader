@@ -77,9 +77,23 @@ function time(value: string) { return new Date(value).toLocaleTimeString([], { h
 function statusLabel(status: string) { return status === 'RESOLVED' || status === 'CLOSED' ? 'Resolved' : status === 'PENDING' ? 'Awaiting your reply' : 'Open'; }
 function resizeTextarea(element: HTMLTextAreaElement) { element.style.height = 'auto'; const max = 176; const height = Math.min(element.scrollHeight, max); element.style.height = `${height}px`; element.style.overflowY = element.scrollHeight > max ? 'auto' : 'hidden'; }
 
-type AiMsg = { role: 'user' | 'assistant'; content: string; sources?: { title: string; url: string }[]; fileName?: string; fileDataUrl?: string; fileType?: string };
+type AiMsg = {
+  role: 'user' | 'assistant';
+  content: string;
+  sources?: { title: string; url: string }[];
+  toolCta?: { url: string; label: string } | null;
+  fileName?: string;
+  fileDataUrl?: string;
+  fileType?: string;
+};
 
-/** Renders a bot answer with basic markdown: numbered lists, bullets, bold, newlines. */
+/** Renders AI answer text with full markdown-like support:
+ *  - ### headings → small bold section headers
+ *  - 1. / 1) numbered lists → <ol>
+ *  - - / * / • bullets → <ul>
+ *  - **bold** inline
+ *  - blank lines → paragraph spacing
+ */
 function AiBotMessage({ text }: { text: string }) {
   const lines = text.split('\n');
   const elements: React.ReactNode[] = [];
@@ -90,14 +104,22 @@ function AiBotMessage({ text }: { text: string }) {
     if (!listItems.length) return;
     if (listType === 'ol') {
       elements.push(
-        <ol key={elements.length} className="list-decimal list-inside space-y-0.5 my-1">
-          {listItems.map((li, i) => <li key={i} className="text-sm">{renderInline(li)}</li>)}
+        <ol key={elements.length} className="list-decimal list-outside ml-4 space-y-1.5 my-2">
+          {listItems.map((li, i) => (
+            <li key={i} className="text-[14px] leading-[1.6] text-inherit pl-0.5">
+              {renderInline(li)}
+            </li>
+          ))}
         </ol>
       );
     } else {
       elements.push(
-        <ul key={elements.length} className="list-disc list-inside space-y-0.5 my-1">
-          {listItems.map((li, i) => <li key={i} className="text-sm">{renderInline(li)}</li>)}
+        <ul key={elements.length} className="list-disc list-outside ml-4 space-y-1 my-2">
+          {listItems.map((li, i) => (
+            <li key={i} className="text-[14px] leading-[1.6] text-inherit pl-0.5">
+              {renderInline(li)}
+            </li>
+          ))}
         </ul>
       );
     }
@@ -106,23 +128,29 @@ function AiBotMessage({ text }: { text: string }) {
   }
 
   function renderInline(s: string): React.ReactNode {
-    // Bold: **text**
     const parts = s.split(/\*\*(.+?)\*\*/g);
-    return parts.map((p, i) => i % 2 === 1 ? <strong key={i}>{p}</strong> : p);
+    return parts.map((p, i) => i % 2 === 1 ? <strong key={i} className="font-semibold">{p}</strong> : p);
   }
 
   for (const line of lines) {
-    const olMatch = line.match(/^(\d+)\.\s+(.+)/);
-    const olParenMatch = line.match(/^(\d+)\)\s+(.+)/);
+    // ### heading
+    const h3Match = line.match(/^###\s+(.+)/);
+    // Numbered list: 1. or 1)
+    const olMatch = line.match(/^(\d+)[.)]\s+(.+)/);
+    // Bullet list
     const ulMatch = line.match(/^[-*•]\s+(.+)/);
-    if (olMatch) {
+
+    if (h3Match) {
+      flushList();
+      elements.push(
+        <p key={elements.length} className="mt-3 mb-1 text-[12px] font-bold uppercase tracking-wider text-text-muted">
+          {h3Match[1]}
+        </p>
+      );
+    } else if (olMatch) {
       if (listType === 'ul') flushList();
       listType = 'ol';
       listItems.push(olMatch[2]!);
-    } else if (olParenMatch) {
-      if (listType === 'ul') flushList();
-      listType = 'ol';
-      listItems.push(olParenMatch[2]!);
     } else if (ulMatch) {
       if (listType === 'ol') flushList();
       listType = 'ul';
@@ -130,17 +158,40 @@ function AiBotMessage({ text }: { text: string }) {
     } else {
       flushList();
       if (line.trim() === '') {
-        elements.push(<div key={elements.length} className="h-1.5" />);
+        elements.push(<div key={elements.length} className="h-2" />);
       } else {
-        elements.push(<p key={elements.length} className="text-sm leading-relaxed">{renderInline(line)}</p>);
+        elements.push(
+          <p key={elements.length} className="text-[14px] leading-[1.65]">
+            {renderInline(line)}
+          </p>
+        );
       }
     }
   }
   flushList();
-  return <>{elements}</>;
+  return <div className="space-y-0.5">{elements}</div>;
 }
 
-// ── Full emoji data grouped by category ───────────────────────────────────
+// ── FAQ suggestions — deterministic, computed once at module load ─────────
+// The day offset is computed once when the module loads. This means all users
+// on the same day see the same 4 questions, and the list never reshuffles
+// during the session (even when parent state updates).
+const _ALL_SUGGESTIONS = [
+  'How do I compress a PDF?',
+  'What plans are available?',
+  'Why is my download failing?',
+  'How do I sign in with Google?',
+  'How do I download a YouTube video?',
+  'How do I merge multiple PDFs?',
+  'How many free credits do I get?',
+  'Can I remove an image background?',
+  'How do I convert JPG to PDF?',
+  'What is the Pro plan?',
+];
+const _DAY_OFFSET = Math.floor(Date.now() / 86400000) % _ALL_SUGGESTIONS.length;
+const _DAILY_SUGGESTIONS = Array.from({ length: 4 }, (_, i) =>
+  _ALL_SUGGESTIONS[(_DAY_OFFSET + i) % _ALL_SUGGESTIONS.length]
+) as [string, string, string, string];
 const EMOJI_CATEGORIES: { label: string; emojis: string[] }[] = [
   { label: 'Smileys', emojis: ['😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','🥰','😘','😗','☺️','🙂','🤗','🤩','😐','😑','🤔','🤨','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','😈','👿','💀','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🫠','🥴','😵','🤪','😜','😝','😛','🤑','🤠','🥸','🤡','👻','👹','👺','🤖','👾','🎭'] },
   { label: 'People', emojis: ['👋','🤚','🖐️','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','🫶','👐','🤲','🙏','🫱','🫲','💪','🦾','🧠','👁️','👅','👂','👃','🫀','🫁','🦷','🦴','👤','👥','🤝','💅','🦶','🦵','👶','👦','👧','🧒','👱','👩','👨','🧔','👴','👵','🧓','👲','👳','🧕','👼','🎅','🤶','🦸','🦹','🧙','🧝','🧛','🧟','🧞','🧜','🧚','👮','🕵️','💂','🥷','👷','🤵','👰','🫅','🤴','👸','🫄','🤰','🫃','🙍','🙎','🙅','🙆','💁','🙋','🧏','🙇','🤦','🤷'] },
@@ -216,25 +267,8 @@ function AiChatFlow({
   const hasMessages = aiMessages.length > 0;
   const [emojiTab, setEmojiTab] = useState(0);
 
-  // 10 curated questions — rotate by day so the start screen feels fresh
-  // Math.floor(Date.now() / 86400000) gives today's day-index (UTC)
-  const ALL_SUGGESTIONS = [
-    'How do I compress a PDF?',
-    'What plans are available?',
-    'Why is my download failing?',
-    'How do I sign in with Google?',
-    'How do I download a YouTube video?',
-    'How do I merge multiple PDFs?',
-    'How many free credits do I get?',
-    'Can I remove an image background?',
-    'How do I convert JPG to PDF?',
-    'What is the Pro plan?',
-  ];
-  const DAY_OFFSET = Math.floor(Date.now() / 86400000) % ALL_SUGGESTIONS.length;
-  // Show 4 suggestions starting from today's offset, wrapping around
-  const SUGGESTIONS = Array.from({ length: 4 }, (_, i) =>
-    ALL_SUGGESTIONS[(DAY_OFFSET + i) % ALL_SUGGESTIONS.length]
-  );
+  // Use module-level pre-computed suggestions (stable across renders and state updates)
+  const SUGGESTIONS = _DAILY_SUGGESTIONS;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -263,24 +297,24 @@ function AiChatFlow({
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto bg-surface/30 px-4 py-4 space-y-3">
+      <div className="flex-1 overflow-y-auto bg-surface/30 px-3 py-4 space-y-3">
         {!hasMessages && (
-          <div className="flex flex-col items-center gap-3 pt-3 text-center">
+          <div className="flex flex-col items-center gap-3 pt-2 text-center">
             <div className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-brand text-white shadow-soft">
               <Bot className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm font-bold text-text">Ask anything about SavDown</p>
-              <p className="mt-1 text-xs text-text-muted leading-relaxed">
+              <p className="text-[15px] font-bold text-text">Ask anything about SavDown</p>
+              <p className="mt-1 text-[13px] text-text-muted leading-relaxed">
                 I&apos;ll search our help content and answer instantly.
               </p>
             </div>
-            <div className="w-full space-y-2 pt-1">
+            <div className="w-full space-y-1.5 pt-1">
               {SUGGESTIONS.map((suggestion) => (
                 <button
                   key={suggestion}
                   onClick={() => onSend(suggestion)}
-                  className="w-full rounded-xl border border-border-light bg-white dark:bg-card px-3 py-2.5 text-left text-xs font-medium text-text-muted transition-all hover:border-primary/40 hover:text-text hover:shadow-soft"
+                  className="w-full rounded-xl border border-border-light bg-white dark:bg-card px-3.5 py-2.5 text-left text-[13px] font-medium text-text-muted transition-all hover:border-primary/40 hover:text-text hover:shadow-soft"
                 >
                   {suggestion}
                 </button>
@@ -288,10 +322,10 @@ function AiChatFlow({
             </div>
             {/* Escalation path always visible on start screen */}
             <div className="w-full border-t border-border-light pt-3 mt-1 text-center">
-              <p className="text-[11px] text-text-subtle mb-2">Can&apos;t find what you&apos;re looking for?</p>
+              <p className="text-[12px] text-text-subtle mb-2">Can&apos;t find what you&apos;re looking for?</p>
               <button
                 onClick={onEscalate}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-text transition-all hover:border-primary/40 hover:text-primary hover:shadow-soft"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-[12px] font-semibold text-text transition-all hover:border-primary/40 hover:text-primary hover:shadow-soft"
               >
                 <Headset className="h-3.5 w-3.5" /> Submit a support request
               </button>
@@ -300,30 +334,24 @@ function AiChatFlow({
         )}
 
         {aiMessages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}>
             {m.role === 'assistant' && (
-              <span className="mr-2 mt-0.5 grid h-7 w-7 shrink-0 self-start place-items-center rounded-full bg-primary-light text-primary">
+              <span className="mb-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-primary-light text-primary">
                 <Bot className="h-3.5 w-3.5" />
               </span>
             )}
-            <div className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+            <div className={`min-w-0 rounded-2xl px-4 py-3 ${
               m.role === 'user'
-                ? 'rounded-br-sm bg-primary text-white'
-                : 'rounded-bl-sm border border-border-light bg-white dark:bg-card text-text shadow-soft'
+                ? 'max-w-[78%] rounded-br-sm bg-primary text-white'
+                : 'max-w-[88%] rounded-bl-sm border border-border-light bg-white dark:bg-card text-text shadow-soft'
             }`}>
-              {/* File attachment bubble — shown in user messages */}
+              {/* File attachment — user messages only */}
               {m.role === 'user' && m.fileName && (
-                <div className="mb-2 overflow-hidden rounded-xl border border-white/20">
+                <div className="mb-2.5 overflow-hidden rounded-xl border border-white/20">
                   {m.fileDataUrl && m.fileType?.startsWith('image/') ? (
-                    // Image preview
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={m.fileDataUrl}
-                      alt={m.fileName}
-                      className="max-h-40 w-full object-cover"
-                    />
+                    <img src={m.fileDataUrl} alt={m.fileName} className="max-h-40 w-full object-cover" />
                   ) : (
-                    // Non-image file chip
                     <div className="flex items-center gap-2 bg-white/15 px-3 py-2">
                       <Paperclip className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate text-xs font-medium">{m.fileName}</span>
@@ -331,21 +359,45 @@ function AiChatFlow({
                   )}
                 </div>
               )}
-              <div className="whitespace-pre-wrap break-words" dir={isRtl ? 'rtl' : 'ltr'}>
-                <AiBotMessage text={m.content} />
+
+              {/* Message body */}
+              <div dir={isRtl ? 'rtl' : 'ltr'}>
+                {m.role === 'user' ? (
+                  <p className="text-[14px] leading-[1.6] break-words whitespace-pre-wrap">{m.content}</p>
+                ) : (
+                  <AiBotMessage text={m.content} />
+                )}
               </div>
+
+              {/* Tool CTA button */}
+              {m.role === 'assistant' && m.toolCta && (
+                <div className="mt-3">
+                  <a
+                    href={m.toolCta.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-[13px] font-semibold text-white transition-opacity hover:opacity-90"
+                  >
+                    {m.toolCta.label}
+                    <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
+                  </a>
+                </div>
+              )}
+
+              {/* Source links */}
               {m.role === 'assistant' && m.sources && m.sources.length > 0 && (
-                <div className="mt-3 border-t border-border/20 pt-2.5 space-y-1.5">
+                <div className="mt-3 space-y-1.5 border-t border-border/15 pt-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-text-subtle">Sources</p>
                   {m.sources.map((s) => (
                     <a
                       key={s.url}
                       href={s.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center justify-between gap-2 w-full rounded-xl border border-primary/20 bg-primary-light/60 px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/10 hover:border-primary/40 transition-colors"
+                      className="flex items-center justify-between gap-2 w-full rounded-lg border border-border-light bg-surface/60 px-3 py-2 transition-colors hover:bg-primary-light hover:border-primary/30"
                     >
-                      <span className="truncate">{s.title}</span>
-                      <ArrowUpRight className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate text-[12px] font-medium text-text-muted">{s.title}</span>
+                      <ArrowUpRight className="h-3 w-3 shrink-0 text-text-subtle" />
                     </a>
                   ))}
                 </div>
@@ -598,13 +650,14 @@ export function SupportChat() {
           history: history.map(m => ({ role: m.role, content: m.content })),
         }),
       });
-      const data = await res.json() as { ok?: boolean; data?: { answer: string; sources: { title: string; url: string }[]; canAnswer: boolean } };
+      const data = await res.json() as { ok?: boolean; data?: { answer: string; sources: { title: string; url: string }[]; canAnswer: boolean; toolCta?: { url: string; label: string } | null } };
       if (!res.ok || !data?.ok || !data.data) throw new Error('AI unavailable');
       playReceive();
       setAiMessages(prev => [...prev, {
         role: 'assistant',
         content: data.data!.answer,
         sources: data.data!.sources,
+        toolCta: data.data!.toolCta ?? null,
       }]);
       // If the AI signalled it can't answer, show the human support CTA
       if (!data.data.canAnswer) setShowHumanSupport(true);
@@ -628,7 +681,14 @@ export function SupportChat() {
     if (!category || !submittedMessage) { setInlineError('Please enter a message.'); return; }
     setInlineError(null); setSending(true); playSend();
     try {
-      const res = await fetch('/api/support', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ category, message: submittedMessage, name: name.trim(), email: email.trim() }) });
+      // Send as FormData so attachments are included in the initial message
+      const fd = new FormData();
+      fd.set('category', category);
+      fd.set('message', submittedMessage);
+      if (name.trim()) fd.set('name', name.trim());
+      if (email.trim()) fd.set('email', email.trim());
+      files.forEach((f) => fd.append('attachments', f));
+      const res = await fetch('/api/support', { method: 'POST', body: fd });
       const data = await res.json(); if (!res.ok || !data?.ok) throw new Error(data?.error || 'Could not start conversation.');
       if (data.data.guestToken) localStorage.setItem(guestKey, JSON.stringify({ id: data.data.conversation.id, token: data.data.guestToken }));
       setJustCreatedId(data.data.conversation.id); setInlineError(null); playSuccess();

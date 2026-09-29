@@ -203,24 +203,78 @@ export function buildKnowledgeCorpus(): KnowledgeDocument[] {
       // Compress-PDF needs a specific body because it shares the generic pdfHowTo
       // with merge/split, which causes "how do I compress a PDF?" to return
       // "Upload your file(s): Drag in one or more PDFs..." — same as every other PDF tool.
+      // Every PDF tool shares the generic `pdfHowTo` constant in functionalToolContent.ts,
+      // which produces identical howTo bodies for merge, split, compress, jpg-to-pdf, pdf-to-jpg.
+      // These overrides give each tool a distinct, accurate body so the retrieval system can
+      // distinguish them and return a correct answer.
       const HOWTO_OVERRIDES: Record<string, string> = {
+        'merge-pdf':
+          'How to merge PDFs on SavDown: ' +
+          '1. Open the Merge PDF tool at savdown.com/tools/merge-pdf. ' +
+          '2. Upload the PDFs you want to combine — drag them in or click to browse. You can add up to 150 MB total. ' +
+          '3. Arrange the files in the order you want them to appear in the final document. ' +
+          '4. Click "Merge PDFs" to combine them. ' +
+          '5. Download the single merged PDF. No watermarks. Costs 1 SavCredit.',
+        'split-pdf':
+          'How to split a PDF on SavDown: ' +
+          '1. Open the Split PDF tool at savdown.com/tools/split-pdf. ' +
+          '2. Upload the PDF you want to split (up to 50 MB). ' +
+          '3. Enter page ranges in the format "1-3,5,7-9". Each range becomes a separate output file. Leave blank to split every page into individual files. ' +
+          '4. Click "Split PDF". ' +
+          '5. Download each split file individually or download them all as a ZIP.',
         'compress-pdf':
-          'How to compress a PDF: ' +
-          '1. Upload your PDF — drag it onto the page or click to browse (up to 50 MB). ' +
-          '2. Click "Compress PDF" — the tool re-serialises the file and strips redundant structure. ' +
-          '3. Download the result — grab your smaller PDF, no watermarks, no quality loss on images. ' +
-          'Typical reduction is 5–30%; image-heavy PDFs see the biggest gains. Already-optimised PDFs will be close to the original size.',
+          'How to compress a PDF on SavDown: ' +
+          '1. Open the Compress PDF tool at savdown.com/tools/compress-pdf. ' +
+          '2. Upload your PDF — drag it onto the page or click to browse (up to 50 MB). ' +
+          '3. Click "Compress PDF" — the tool re-serialises the file and strips redundant structure. ' +
+          '4. Download the smaller PDF. No watermarks, no image quality loss. ' +
+          'Typical size reduction is 5–30%. Already-optimised PDFs may not reduce much.',
+        'jpg-to-pdf':
+          'How to convert JPG images to PDF on SavDown: ' +
+          '1. Open the JPG to PDF tool at savdown.com/tools/jpg-to-pdf. ' +
+          '2. Upload your images — JPG, PNG, WEBP, or GIF are all supported. Each image becomes one page. ' +
+          '3. Upload them in the order you want them to appear as pages in the PDF. ' +
+          '4. Click "Convert to PDF". ' +
+          '5. Download the resulting PDF. Supports up to 50 images per PDF.',
+        'pdf-to-jpg':
+          'How to convert a PDF to JPG images on SavDown: ' +
+          '1. Open the PDF to JPG tool at savdown.com/tools/pdf-to-jpg. ' +
+          '2. Upload your PDF (up to 50 MB). ' +
+          '3. Click "Convert" — each page is rendered as a high-resolution JPG at 1200px wide. ' +
+          '4. Download each page image individually or as a ZIP. Up to 10 pages per conversion.',
+        'pdf-to-word':
+          'How to convert a PDF to Word on SavDown: ' +
+          '1. Open the PDF to Word tool at savdown.com/tools/pdf-to-word. ' +
+          '2. Upload your PDF file. ' +
+          '3. Click "Convert to Word". The tool extracts text and structure into a DOCX file. ' +
+          '4. Download the resulting Word document.',
+        'word-to-pdf':
+          'How to convert a Word document to PDF on SavDown: ' +
+          '1. Open the Word to PDF tool at savdown.com/tools/word-to-pdf. ' +
+          '2. Upload your DOCX or DOC file. ' +
+          '3. Click "Convert to PDF". The layout and formatting are preserved. ' +
+          '4. Download the resulting PDF.',
       };
       const howToBody = HOWTO_OVERRIDES[slug]
         ?? content.howTo.map(s => s.title + ': ' + s.body).join(' ');
+      // Use tool-specific titles for overridden tools so the title is also searchable
+      const HOWTO_TITLE_OVERRIDES: Record<string, string> = {
+        'merge-pdf': 'How to Merge PDFs Combine Join Multiple PDF Files',
+        'split-pdf': 'How to Split PDF Separate Divide Extract Pages',
+        'compress-pdf': 'How to Compress PDF Reduce Size Make Smaller',
+        'jpg-to-pdf': 'How to Convert JPG Images to PDF Convert Images Photos',
+        'pdf-to-jpg': 'How to Convert PDF to JPG Images Export Pages',
+        'pdf-to-word': 'How to Convert PDF to Word DOCX Document',
+        'word-to-pdf': 'How to Convert Word DOCX to PDF Document',
+      };
       docs.push({
         id: 'functional-howto-' + slug,
-        title: 'How to use ' + toolName + ' Step by Step Guide',
-        body: howToBody.slice(0, 600),
+        title: HOWTO_TITLE_OVERRIDES[slug] ?? ('How to use ' + toolName + ' Step by Step Guide'),
+        body: howToBody.slice(0, 700),
         url: href,
         toolSlug: slug,
         category: 'tool-guide',
-        baseWeight: 0.97,  // higher than tool-faq so "how do I use X" hits the guide first
+        baseWeight: 0.98,  // highest priority — tool-specific howTo beats everything else
       });
     }
   }

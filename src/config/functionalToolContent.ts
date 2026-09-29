@@ -178,6 +178,22 @@ export const functionalToolContent: Record<string, FunctionalToolContent> = {
       { question: 'Why did I get an error?', answer: 'PDF rendering needs poppler support on the server. If unavailable, try the Docker deployment, which bundles it.' },
     ],
   },
+  'pdf-to-word': {
+    howTo: pdfHowTo,
+    faq: [
+      { question: 'Is the formatting preserved?', answer: 'Basic text, headings, and paragraph structure are preserved. Complex layouts with tables, columns, or embedded images may need manual touch-up in Word.' },
+      { question: 'What file format do I get?', answer: 'You get a .docx file compatible with Microsoft Word, Google Docs, LibreOffice, and any modern word processor.' },
+      { question: 'Is there a file size limit?', answer: 'Yes, up to 50 MB per PDF. Text-heavy PDFs convert fastest; scanned image PDFs may not convert well.' },
+    ],
+  },
+  'word-to-pdf': {
+    howTo: pdfHowTo,
+    faq: [
+      { question: 'Is the formatting preserved?', answer: 'Yes. Fonts, layout, headings, tables, and images are preserved in the resulting PDF.' },
+      { question: 'Which Word formats are supported?', answer: '.docx and .doc files are both supported.' },
+      { question: 'Is there a file size limit?', answer: 'Up to 50 MB per file. Most Word documents are well within this.' },
+    ],
+  },
 
   /* ── QR ── */
   'qr-code-generator': {
