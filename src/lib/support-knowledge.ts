@@ -30,11 +30,43 @@ const PRICING_DOCS: KnowledgeDocument[] = [
 
 const PAGE_DOCS: KnowledgeDocument[] = [
   // ── Troubleshooting (high priority) ──
-  { id: 'trouble-download', title: 'Download Failing Not Working Error Fix Troubleshoot', body: 'If your download is failing or not working: 1) Make sure the URL is a public video (private videos cannot be downloaded). 2) Check your SavCredits balance you need at least 1 credit. 3) Try a different browser or clear your browser cache. 4) Some platforms temporarily block downloads wait a few minutes and try again. 5) For TikTok copy the link from the Share menu. 6) For Instagram make sure the account is public. If the problem persists submit a support request.', url: '/tools', category: 'tool-guide', baseWeight: 0.97 },
-  { id: 'trouble-tool', title: 'Tool Not Working Error Problem Fix', body: 'If a SavDown tool is not working: 1) Refresh the page and try again. 2) Check the file size limits: PDF max 50 MB per file, video max 100 MB, image max 25 MB. 3) Make sure you have enough SavCredits. 4) Try a different browser. 5) Check that your file format is supported by the tool. If the issue continues please submit a support request with details.', url: '/tools', category: 'tool-guide', baseWeight: 0.95 },
-  { id: 'trouble-login', title: 'Cannot Login Sign In Problem Google Failing', body: 'If you cannot sign in or login: 1) For Google sign-in: clear cookies, try incognito mode, or sign out of all Google accounts then sign back in. 2) For email/password: use the Forgot Password link on the login page. 3) Make sure cookies are enabled in your browser. 4) Try a different browser. If none of these work submit a support request.', url: '/login', category: 'page', baseWeight: 0.88 },
+  {
+    id: 'trouble-download',
+    title: 'Download Failing Not Working Error Fix Troubleshoot',
+    body: 'If your download is failing:\n1. Make sure the URL is a public video (private videos cannot be downloaded).\n2. Check your SavCredits balance — you need at least 1 credit.\n3. Try a different browser or clear your browser cache.\n4. Some platforms temporarily block downloads — wait a few minutes and try again.\n5. For TikTok, copy the link from the Share menu rather than the address bar.\n6. For Instagram, make sure the account is public.\n\nIf the problem persists, submit a support request with the URL that is failing.',
+    url: '/tools',
+    category: 'tool-guide' as const,
+    baseWeight: 0.97,
+    toolSlug: undefined,
+  },
+  {
+    id: 'trouble-tool',
+    title: 'Tool Not Working Error Problem Fix',
+    body: 'If a SavDown tool is not working:\n1. Refresh the page and try again.\n2. Check the file size limits: PDF max 50 MB per file, video max 100 MB, image max 25 MB.\n3. Make sure you have enough SavCredits.\n4. Try a different browser.\n5. Check that your file format is supported by the tool.\n\nIf the issue continues, submit a support request with details about which tool and what happened.',
+    url: '/tools',
+    category: 'tool-guide' as const,
+    baseWeight: 0.95,
+    toolSlug: undefined,
+  },
+  {
+    id: 'trouble-login',
+    title: 'Cannot Login Sign In Problem Google Failing',
+    body: 'If you cannot sign in:\n1. For Google sign-in: clear cookies, try incognito mode, or sign out of all Google accounts then sign back in.\n2. For email/password: use the Forgot Password link on the login page.\n3. Make sure cookies are enabled in your browser.\n4. Try a different browser.\n\nIf none of these work, submit a support request.',
+    url: '/login',
+    category: 'page' as const,
+    baseWeight: 0.88,
+    toolSlug: 'login',
+  },
   // How-to sign in (positive case, not troubleshooting)
-  { id: 'page-login-howto', title: 'How to Sign In Create Account Google Login SavDown', body: 'To sign in to SavDown: Go to savdown.com and click "Sign In" or "Open App". You can sign in with Google (one click), GitHub, or your email and password. For Google sign-in, click "Continue with Google" and select your Google account. For email, enter the email and password you registered with. If you do not have an account yet, click "Create Account" on the login page to register for free.', url: '/login', category: 'page', baseWeight: 0.95 },
+  {
+    id: 'page-login-howto',
+    title: 'How to Sign In Create Account Google Login SavDown',
+    body: 'To sign in to SavDown:\n1. Go to savdown.com and click "Sign In" or "Open App".\n2. Choose Google (one click), GitHub, or email and password.\n3. For Google: click "Continue with Google" and select your account.\n4. For email: enter your email and password.\n5. No account yet? Click "Create Account" on the login page to register free.',
+    url: '/login',
+    category: 'page' as const,
+    baseWeight: 0.95,
+    toolSlug: 'login',
+  },
   // ── Regular page docs ──
   { id: 'page-about', title: 'What Is SavDown About Overview', body: 'SavDown is a free web-based toolkit for downloading media and processing files online. It supports YouTube, TikTok, Instagram, Facebook, Pinterest, and X (Twitter) video downloads. It also has image tools, PDF tools, video tools, AI tools, SEO tools, and utility tools. No watermarks, no signup required for basic use. Free daily credits included.', url: '/about', category: 'page', baseWeight: 0.85 },
   { id: 'page-privacy', title: 'Privacy Does SavDown Store Save Files', body: 'SavDown does not store downloaded files on its servers. Files stream directly to the user and are discarded immediately. SavDown does not log what you download or build a profile of your activity. All connections use HTTPS encryption.', url: '/privacy', category: 'page', baseWeight: 0.75 },
@@ -168,11 +200,23 @@ export function buildKnowledgeCorpus(): KnowledgeDocument[] {
     }
     // Also index howTo steps as a guide doc — highest priority for "how do I use X" questions
     if (content.howTo.length) {
-      const howToBody = content.howTo.map(s => s.title + ': ' + s.body).join(' ');
+      // Compress-PDF needs a specific body because it shares the generic pdfHowTo
+      // with merge/split, which causes "how do I compress a PDF?" to return
+      // "Upload your file(s): Drag in one or more PDFs..." — same as every other PDF tool.
+      const HOWTO_OVERRIDES: Record<string, string> = {
+        'compress-pdf':
+          'How to compress a PDF: ' +
+          '1. Upload your PDF — drag it onto the page or click to browse (up to 50 MB). ' +
+          '2. Click "Compress PDF" — the tool re-serialises the file and strips redundant structure. ' +
+          '3. Download the result — grab your smaller PDF, no watermarks, no quality loss on images. ' +
+          'Typical reduction is 5–30%; image-heavy PDFs see the biggest gains. Already-optimised PDFs will be close to the original size.',
+      };
+      const howToBody = HOWTO_OVERRIDES[slug]
+        ?? content.howTo.map(s => s.title + ': ' + s.body).join(' ');
       docs.push({
         id: 'functional-howto-' + slug,
         title: 'How to use ' + toolName + ' Step by Step Guide',
-        body: howToBody.slice(0, 500),
+        body: howToBody.slice(0, 600),
         url: href,
         toolSlug: slug,
         category: 'tool-guide',
@@ -251,8 +295,11 @@ export function retrieveKnowledge(
 
 /**
  * Returns only sources genuinely relevant to the answer.
- * Takes the top docs and the winning doc's toolSlug; filters out docs from
- * unrelated tools so sources don't include Instagram links for a PDF question.
+ * When the top doc has a toolSlug, ALL other docs in the list must either:
+ *   a) share the same toolSlug, OR
+ *   b) have no toolSlug at all (pricing, page, site-faq docs)
+ * This prevents unrelated tool pages (e.g. schema-generator) from appearing
+ * as sources when the question is about login, compress-pdf, etc.
  */
 export function selectSources(
   docs: KnowledgeDocument[],
@@ -263,10 +310,12 @@ export function selectSources(
   const topDoc = docs[0];
   const topSlug = topDoc.toolSlug;
 
-  // Prefer sources that share the tool slug with the top answer doc
-  const relevant = topSlug
-    ? docs.filter(d => d.url && (d.toolSlug === topSlug || !d.toolSlug))
-    : docs.filter(d => d.url);
+  const relevant = docs.filter(d => {
+    if (!d.url) return false;
+    if (!topSlug) return true;                    // top is a generic page doc — accept all
+    if (!d.toolSlug) return true;                 // no slug = pricing/page/site-faq — always ok
+    return d.toolSlug === topSlug;                // must match the winning tool exactly
+  });
 
   // Deduplicate by URL, keep only distinctly titled ones
   const seen = new Set<string>();

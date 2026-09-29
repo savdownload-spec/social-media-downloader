@@ -113,11 +113,16 @@ function AiBotMessage({ text }: { text: string }) {
 
   for (const line of lines) {
     const olMatch = line.match(/^(\d+)\.\s+(.+)/);
+    const olParenMatch = line.match(/^(\d+)\)\s+(.+)/);
     const ulMatch = line.match(/^[-*•]\s+(.+)/);
     if (olMatch) {
       if (listType === 'ul') flushList();
       listType = 'ol';
       listItems.push(olMatch[2]!);
+    } else if (olParenMatch) {
+      if (listType === 'ul') flushList();
+      listType = 'ol';
+      listItems.push(olParenMatch[2]!);
     } else if (ulMatch) {
       if (listType === 'ol') flushList();
       listType = 'ul';
@@ -211,12 +216,25 @@ function AiChatFlow({
   const hasMessages = aiMessages.length > 0;
   const [emojiTab, setEmojiTab] = useState(0);
 
-  const SUGGESTIONS = [
+  // 10 curated questions — rotate by day so the start screen feels fresh
+  // Math.floor(Date.now() / 86400000) gives today's day-index (UTC)
+  const ALL_SUGGESTIONS = [
     'How do I compress a PDF?',
     'What plans are available?',
     'Why is my download failing?',
     'How do I sign in with Google?',
+    'How do I download a YouTube video?',
+    'How do I merge multiple PDFs?',
+    'How many free credits do I get?',
+    'Can I remove an image background?',
+    'How do I convert JPG to PDF?',
+    'What is the Pro plan?',
   ];
+  const DAY_OFFSET = Math.floor(Date.now() / 86400000) % ALL_SUGGESTIONS.length;
+  // Show 4 suggestions starting from today's offset, wrapping around
+  const SUGGESTIONS = Array.from({ length: 4 }, (_, i) =>
+    ALL_SUGGESTIONS[(DAY_OFFSET + i) % ALL_SUGGESTIONS.length]
+  );
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -832,6 +850,37 @@ export function SupportChat() {
                     className="w-full resize-none rounded-xl border border-border bg-white dark:bg-card p-3 text-sm leading-relaxed outline-none transition-shadow placeholder:text-text-subtle focus:border-primary focus:ring-2 focus:ring-primary/15"
                   />
                   {message.length > 4000 && <p className="mt-1 text-right text-[11px] text-text-subtle">{message.length} / 5000</p>}
+                  {/* Attachment row */}
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      multiple
+                      accept="image/jpeg,image/png,image/webp,application/pdf,text/plain"
+                      className="hidden"
+                      onChange={(e) => { const f = Array.from(e.target.files || []).slice(0, 4); setFiles(f); if (f.length) playAttach(); }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileRef.current?.click()}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-border-light px-2.5 py-1.5 text-[11px] font-semibold text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
+                      aria-label="Attach screenshot or file"
+                    >
+                      <Paperclip className="h-3.5 w-3.5" /> Attach file
+                    </button>
+                    {files.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {files.map((f, i) => (
+                          <span key={i} className="inline-flex max-w-[9rem] items-center gap-1 rounded-lg border border-border-light bg-surface py-1 pl-2 pr-1 text-[11px] text-text-muted">
+                            <span className="truncate">{f.name}</span>
+                            <button type="button" onClick={() => { setFiles(files.filter((_, j) => j !== i)); playRemove(); }} className="grid h-4 w-4 shrink-0 place-items-center rounded text-text-subtle hover:bg-border-light hover:text-text" aria-label={`Remove ${f.name}`}>
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {!loggedIn && (
