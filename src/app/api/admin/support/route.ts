@@ -35,6 +35,8 @@ export async function GET(request: Request) {
   ];
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const week = new Date(Date.now() - 7 * 86400000);
+  // Analytics sample: fetch at most 300 conversations (was 1500) and only
+  // the first 2 messages per conversation (enough for first-response timing).
   const metricsSince = new Date(Date.now() - 90 * 86400000);
   const [conversations, admins, open, waiting, unassigned, urgent, resolvedToday, todayCount, weekCount, analyticsSample] = await Promise.all([
     prisma.supportConversation.findMany({ where, orderBy: { lastMessageAt: sort }, take: 100, include: { user: { select: { id: true, name: true, email: true, image: true } }, assignedAdmin: { select: { id: true, name: true, email: true } }, messages: { orderBy: { createdAt: 'desc' }, take: 1, select: { senderType: true, internal: true } } } }),
@@ -46,7 +48,8 @@ export async function GET(request: Request) {
     prisma.supportConversation.count({ where: { status: 'RESOLVED', resolvedAt: { gte: today } } }),
     prisma.supportConversation.count({ where: { createdAt: { gte: today } } }),
     prisma.supportConversation.count({ where: { createdAt: { gte: week } } }),
-    prisma.supportConversation.findMany({ where: { createdAt: { gte: metricsSince } }, take: 1500, select: { createdAt: true, resolvedAt: true, messages: { select: { senderType: true, internal: true, createdAt: true }, orderBy: { createdAt: 'asc' } } } }),
+    // Cap at 300, fetch only first 4 messages per conversation (customer + first reply is enough for timing)
+    prisma.supportConversation.findMany({ where: { createdAt: { gte: metricsSince } }, take: 300, select: { createdAt: true, resolvedAt: true, messages: { select: { senderType: true, internal: true, createdAt: true }, orderBy: { createdAt: 'asc' }, take: 4 } } }),
   ]);
   const responseMinutes: number[] = []; const resolutionMinutes: number[] = [];
   for (const conversation of analyticsSample) {

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { catalog } from '@/config/catalog';
+import { cacheJson } from '@/lib/redis';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,11 +34,19 @@ export async function GET(_req: NextRequest) {
 
   const configs = await prisma.toolConfig.findMany({ orderBy: { name: 'asc' } });
 
-  // Attach usage counts
-  const usageCounts = await prisma.download.groupBy({
-    by: ['tool'], _count: { tool: true },
-  });
-  const usageMap = Object.fromEntries(usageCounts.map((r) => [r.tool, r._count.tool]));
+  // Cache usage counts for 5 min — this groups the entire downloads table
+  // and is expensive to recompute on every admin page load.
+  const usageMap = await cacheJson<Record<string, number>>(
+    'admin:tool-usage-counts',
+    300,
+    async () => {
+      const usageCounts = await prisma.download.groupBy({
+        by: ['tool'],
+        _count: { tool: true },
+      });
+      return Object.fromEntries(usageCounts.map((r) => [r.tool, r._count.tool]));
+    },
+  );
 
   const tools = configs.map((c) => ({
     ...c,

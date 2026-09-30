@@ -14,8 +14,12 @@ export async function GET(req: NextRequest) {
 
   const sp     = req.nextUrl.searchParams;
   const type   = sp.get('type') ?? 'usage';
-  const days   = parseInt(sp.get('days') ?? '30', 10);
+  // Cap `days` to 365 to prevent a single query returning years of data.
+  const days   = Math.min(Math.max(1, parseInt(sp.get('days') ?? '30', 10)), 365);
   const format = sp.get('format') ?? 'json';
+  // Hard cap on rows returned — prevents a large date window from OOM-ing
+  // the serverless function. Raise only if export tooling handles it in chunks.
+  const MAX_ROWS = 5000;
 
   const since = new Date(); since.setDate(since.getDate() - days);
 
@@ -24,6 +28,7 @@ export async function GET(req: NextRequest) {
 
   if (type === 'usage') {
     const rows = await prisma.download.findMany({
+      take: MAX_ROWS,
       where: { createdAt: { gte: since } },
       orderBy: { createdAt: 'desc' },
       select: { id: true, tool: true, platform: true, status: true, createdAt: true },
@@ -32,6 +37,7 @@ export async function GET(req: NextRequest) {
     data = rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() }));
   } else if (type === 'users') {
     const rows = await prisma.user.findMany({
+      take: MAX_ROWS,
       where: { createdAt: { gte: since } },
       orderBy: { createdAt: 'desc' },
       select: { id: true, name: true, email: true, role: true, plan: true, createdAt: true },
@@ -40,6 +46,7 @@ export async function GET(req: NextRequest) {
     data = rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString() }));
   } else if (type === 'subscriptions') {
     const rows = await prisma.subscription.findMany({
+      take: MAX_ROWS,
       where: { createdAt: { gte: since } },
       orderBy: { createdAt: 'desc' },
       include: { user: { select: { email: true } } },
@@ -52,6 +59,7 @@ export async function GET(req: NextRequest) {
     }));
   } else if (type === 'credits') {
     const rows = await prisma.creditTransaction.findMany({
+      take: MAX_ROWS,
       where: { createdAt: { gte: since } },
       orderBy: { createdAt: 'desc' },
       include: { user: { select: { email: true } } },
