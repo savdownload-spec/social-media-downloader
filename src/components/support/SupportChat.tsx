@@ -1125,7 +1125,7 @@ export function SupportChat() {
             <div className="flex shrink-0 items-center gap-1.5 pb-1">
               <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf,text/plain" className="hidden" onChange={(e) => { const f = Array.from(e.target.files || []).slice(0, 4); setFiles(f); if (f.length) playAttach(); }} />
               <button type="button" onClick={() => fileRef.current?.click()} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-text-subtle transition-colors hover:bg-surface hover:text-primary" title="Attach screenshot" aria-label="Attach screenshot">
-                <Plus className="h-5 w-5" />
+                <Paperclip className="h-4 w-4" />
               </button>
               <button type="button" onClick={sendMessage} disabled={!message.trim() || sending} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-brand text-white shadow-soft transition-opacity disabled:cursor-not-allowed disabled:opacity-40" aria-label="Send message">
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
