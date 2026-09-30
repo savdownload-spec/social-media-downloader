@@ -526,12 +526,17 @@ function AiChatFlow({
             onChange={(e) => setAiInput(e.target.value)}
             onKeyDown={handleKeyDown}
             rows={1}
-            maxLength={800}
+            maxLength={4000}
             placeholder="Ask a question…"
             className="max-h-28 min-h-[36px] flex-1 resize-none bg-transparent px-1 py-1 text-sm leading-relaxed outline-none placeholder:text-text-subtle"
             style={{ minHeight: 36 }}
             dir={isRtl ? 'rtl' : 'ltr'}
           />
+          {aiInput.length > 3000 && (
+            <span className="absolute bottom-2 right-12 text-[10px] text-amber-500 font-medium pointer-events-none">
+              {aiInput.length}/4000
+            </span>
+          )}
 
           <button
             type="button"
@@ -562,6 +567,8 @@ export function SupportChat() {
   const [aiLoading, setAiLoading] = useState(false);
   const [showHumanSupport, setShowHumanSupport] = useState(false);
   const [aiPendingFile, setAiPendingFile] = useState<File | null>(null);
+  // Track the last detected entity slug so follow-up messages carry context
+  const [lastEntitySlug, setLastEntitySlug] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null); const fileRef = useRef<HTMLInputElement>(null); const composerRef = useRef<HTMLTextAreaElement>(null); const retryRef = useRef<(() => void | Promise<void>) | null>(null);
   const loggedIn = !!session?.user?.id; const { language } = useLanguage(); const isRtl = language.code === 'ar' || language.code === 'ur'; const { error, success } = useToast();
   const loadList = useCallback(async () => {
@@ -605,6 +612,7 @@ export function SupportChat() {
     setAiLoading(false);
     setShowHumanSupport(false);
     setAiPendingFile(null);
+    setLastEntitySlug(null);
   }
 
   async function sendAiMessage(inputOverride?: string) {
@@ -612,6 +620,16 @@ export function SupportChat() {
     const file = aiPendingFile;
     if (!text && !file) return;
     if (aiLoading) return;
+
+    // Hard character limit — 4000 chars / ~500 words
+    if (text.length > 4000) {
+      setAiMessages(prev => [...prev,
+        { role: 'user', content: text },
+        { role: 'assistant', content: "Your message is too long. Please shorten it to about 500 words so I can process it clearly.", sources: [] },
+      ]);
+      return;
+    }
+
     const history = aiMessages.slice(-6); // keep last 6 turns
 
     // If a file is attached, read it as a data URL so we can show a preview
@@ -648,11 +666,16 @@ export function SupportChat() {
         body: JSON.stringify({
           message: (text || '(attached file)') + fileContextNote,
           history: history.map(m => ({ role: m.role, content: m.content })),
+          // Pass last known entity so follow-up questions like "how many can I merge?"
+          // resolve correctly without repeating the tool name
+          ...(lastEntitySlug ? { entityHint: lastEntitySlug } : {}),
         }),
       });
-      const data = await res.json() as { ok?: boolean; data?: { answer: string; sources: { title: string; url: string }[]; canAnswer: boolean; toolCta?: { url: string; label: string } | null } };
+      const data = await res.json() as { ok?: boolean; data?: { answer: string; sources: { title: string; url: string }[]; canAnswer: boolean; toolCta?: { url: string; label: string } | null; entitySlug?: string | null } };
       if (!res.ok || !data?.ok || !data.data) throw new Error('AI unavailable');
       playReceive();
+      // Store detected entity for next turn's context
+      if (data.data.entitySlug) setLastEntitySlug(data.data.entitySlug);
       setAiMessages(prev => [...prev, {
         role: 'assistant',
         content: data.data!.answer,
@@ -863,7 +886,16 @@ export function SupportChat() {
 
     // Show AI chat first for new conversations, unless the user has chosen to escalate
     if (!starting && !showHumanSupport && !category) {
-      const escalate = () => { setShowHumanSupport(true); setStarting(true); resetComposer(); };
+      const escalate = () => {
+        setShowHumanSupport(true);
+        setStarting(true);
+        resetComposer();
+        // Carry any AI chat pending attachment into the ticket form
+        if (aiPendingFile) {
+          setFiles([aiPendingFile]);
+          setAiPendingFile(null);
+        }
+      };
       return (
         <>
           <Header

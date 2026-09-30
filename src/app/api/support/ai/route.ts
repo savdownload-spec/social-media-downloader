@@ -168,6 +168,15 @@ const ENTITY_MAP: Record<string, EntityEntry> = {
     toolUrl: '/pricing',
     toolLabel: 'View Plans & Credits',
   },
+  '__download_trouble__': {
+    aliases: [
+      'download failing', 'download not working', 'download failed', 'cant download',
+      "can't download", 'download error', 'download problem', 'why is my download',
+      'video not downloading', 'download stuck', 'download broken',
+    ],
+    toolUrl: '/tools',
+    toolLabel: 'Browse Downloaders',
+  },
   'compress-pdf': {
     aliases: [
       'compress pdf', 'compress a pdf', 'make pdf smaller', 'reduce pdf size',
@@ -199,7 +208,8 @@ const ENTITY_MAP: Record<string, EntityEntry> = {
       'jpg to pdf', 'jpeg to pdf', 'image to pdf', 'images to pdf',
       'convert image to pdf', 'photos to pdf', 'convert jpg to pdf',
       'convert images to pdf', 'picture to pdf', 'turn image into pdf',
-      'find me the jpg to pdf', 'jpg to pdf tool',
+      'find me the jpg to pdf', 'jpg to pdf tool', 'convert photos to pdf',
+      'turn photos into pdf', 'make pdf from images', 'make pdf from photos',
     ],
     toolUrl: '/tools/jpg-to-pdf',
     toolLabel: 'Open JPG to PDF',
@@ -375,7 +385,7 @@ function hasSufficientEvidence(docs: KnowledgeDocument[], entitySlug: string | n
 // ── Schema / config ───────────────────────────────────────────────────────
 
 const MAX_HISTORY = 6;
-const MAX_MESSAGE_LEN = 800;
+const MAX_MESSAGE_LEN = 4000; // raised from 800 — client warns at 3000, hard blocks at 4000
 
 const MessageSchema = z.object({
   role: z.enum(['user', 'assistant']),
@@ -385,6 +395,8 @@ const MessageSchema = z.object({
 const BodySchema = z.object({
   message: z.string().min(1).max(MAX_MESSAGE_LEN),
   history: z.array(MessageSchema).max(MAX_HISTORY).default([]),
+  /** Client-provided entity hint from the previous turn — used for follow-up context */
+  entityHint: z.string().max(60).optional(),
 });
 
 type AiMessage = { role: 'system' | 'user' | 'assistant'; content: string };
@@ -473,19 +485,45 @@ export async function POST(request: Request) {
   const parsed = BodySchema.safeParse(body);
   if (!parsed.success) return fail(parsed.error.errors[0]?.message ?? 'Invalid input.');
 
-  const { message, history } = parsed.data;
+  const { message, history, entityHint } = parsed.data;
 
   // ── 1. Conversational intent ──────────────────────────────────────────
   const intent = detectIntent(message);
   if (intent === 'out_of_scope') {
-    return ok({ answer: OUT_OF_SCOPE_REPLY, sources: [], canAnswer: false, toolCta: null });
+    return ok({ answer: OUT_OF_SCOPE_REPLY, sources: [], canAnswer: false, toolCta: null, entitySlug: null });
   }
   if (intent !== 'faq') {
-    return ok({ answer: INTENT_REPLIES[intent], sources: [], canAnswer: true, toolCta: null });
+    return ok({ answer: INTENT_REPLIES[intent], sources: [], canAnswer: true, toolCta: null, entitySlug: null });
   }
 
   // ── 2. Entity resolution ──────────────────────────────────────────────
-  const entity = resolveEntity(message);
+  // Use the client's entity hint from the previous turn for follow-up questions,
+  // but only when the current message doesn't resolve to a new entity itself.
+  const rawEntity = resolveEntity(message);
+  const entity: ResolvedEntity | null = rawEntity ?? (
+    entityHint && ENTITY_MAP[entityHint]
+      ? { slug: entityHint, toolUrl: ENTITY_MAP[entityHint]!.toolUrl, toolLabel: ENTITY_MAP[entityHint]!.toolLabel }
+      : null
+  );
+
+  // ── 2a. Download trouble without a platform → ask for clarification ──
+  // "Why is my download failing?" with no platform detected is better served
+  // by asking which platform, rather than dumping a generic TikTok+Instagram
+  // checklist that may be wrong for YouTube, Facebook, etc.
+  if (entity?.slug === '__download_trouble__') {
+    // Check if the message mentions a specific platform
+    const PLATFORMS = ['youtube', 'tiktok', 'instagram', 'facebook', 'pinterest', 'twitter', 'x.com'];
+    const mentionsPlatform = PLATFORMS.some(p => message.toLowerCase().includes(p));
+    if (!mentionsPlatform) {
+      return ok({
+        answer: "Which platform or video are you trying to download from? For example: YouTube, TikTok, Instagram, Facebook, Pinterest, or X (Twitter).\n\nThat will help me give you the right troubleshooting steps.",
+        sources: [],
+        canAnswer: true,
+        toolCta: { url: '/tools', label: 'Browse Downloaders' },
+        entitySlug: '__download_trouble__',
+      });
+    }
+  }
 
   // ── 3. Build search query ─────────────────────────────────────────────
   // Only carry prior context for genuine follow-up pronouns
@@ -524,6 +562,7 @@ export async function POST(request: Request) {
       sources: [],
       canAnswer: false,
       toolCta: null,
+      entitySlug: entity?.slug ?? null,
     });
   }
 
@@ -586,11 +625,11 @@ export async function POST(request: Request) {
       const canAnswer = !aiAnswer.toLowerCase().includes("couldn't find") &&
         !aiAnswer.toLowerCase().includes("could not find") &&
         !aiAnswer.toLowerCase().includes("don't have");
-      return ok({ answer: aiAnswer, sources, canAnswer, toolCta });
+      return ok({ answer: aiAnswer, sources, canAnswer, toolCta, entitySlug: entity?.slug ?? null });
     }
   }
 
   // ── 11. Deterministic fallback ────────────────────────────────────────
   const { answer, canAnswer } = buildDeterministicAnswer(finalDocs);
-  return ok({ answer, sources, canAnswer, toolCta });
+  return ok({ answer, sources, canAnswer, toolCta, entitySlug: entity?.slug ?? null });
 }
