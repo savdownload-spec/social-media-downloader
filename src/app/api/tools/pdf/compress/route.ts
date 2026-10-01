@@ -26,7 +26,14 @@ export async function POST(req: Request) {
     const gate = await requireCredits({ cost: files.length * JOB_COST.pdfTool });
     if (!gate.ok) return gate.response;
     const input = await readPdfUploadRefs(files); urls = input.urls;
-    const options: CompressionOptions = { level: body.level || 'recommended', imageQuality: body.imageQuality, removeMetadata: body.removeMetadata !== false };
+
+    // Validate compression options before passing to service layer
+    const VALID_LEVELS = new Set(['extreme', 'recommended', 'balanced', 'high', 'custom']);
+    const level = VALID_LEVELS.has(body.level ?? '') ? body.level : 'recommended';
+    const imageQuality = typeof body.imageQuality === 'number'
+      ? Math.floor(Math.max(1, Math.min(body.imageQuality, 100)))
+      : undefined;
+    const options: CompressionOptions = { level, imageQuality, removeMetadata: body.removeMetadata !== false };
     const results = [];
     for (let index = 0; index < input.buffers.length; index += 1) {
       const result = await compressPdf(input.buffers[index]!, options, input.names[index]);

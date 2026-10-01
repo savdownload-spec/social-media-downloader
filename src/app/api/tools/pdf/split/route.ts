@@ -26,7 +26,13 @@ export async function POST(req: Request) {
     const gate = await requireCredits({ cost: files.length * JOB_COST.pdfTool });
     if (!gate.ok) return gate.response;
     const input = await readPdfUploadRefs(files); urls = input.urls;
-    const options: SplitOptions = { mode: body.mode || 'every-page', ranges: body.ranges || '', separate: body.separate, everyN: body.everyN, targetBytes: body.targetBytes };
+
+    // Validate and sanitise split options before passing to service layer
+    const mode = body.mode || 'every-page';
+    const ranges = typeof body.ranges === 'string' ? body.ranges.slice(0, 500) : '';
+    const everyN = typeof body.everyN === 'number' ? Math.floor(Math.max(1, Math.min(body.everyN, 500))) : undefined;
+    const targetBytes = typeof body.targetBytes === 'number' ? Math.floor(Math.max(64 * 1024, Math.min(body.targetBytes, 50 * 1024 * 1024))) : undefined;
+    const options: SplitOptions = { mode, ranges, separate: body.separate, everyN, targetBytes };
     const results = [];
     for (let index = 0; index < input.buffers.length; index += 1) {
       const result = await splitPdf(input.buffers[index]!, options, input.names[index]);
