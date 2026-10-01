@@ -53,6 +53,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'No file uploaded.' }, { status: 400 });
   }
 
+  // Guard against oversized uploads before buffering
+  const MAX_IMAGE_BYTES = 25 * 1024 * 1024; // 25 MB — matches imageService.ts MAX_INPUT_BYTES
+  if ((file as File).size > MAX_IMAGE_BYTES) {
+    return NextResponse.json({ error: 'File too large. Maximum image size is 25 MB.' }, { status: 413 });
+  }
+
   const op = (formData.get('op') as string | null)?.toLowerCase() || 'compress';
   if (!VALID_OPS.has(op)) {
     return NextResponse.json({ error: `Unknown operation: ${op}` }, { status: 400 });
@@ -62,6 +68,7 @@ export async function POST(req: Request) {
   const width   = parseInt(formData.get('width')   as string || '0', 10) || undefined;
   const height  = parseInt(formData.get('height')  as string || '0', 10) || undefined;
   const format  = (formData.get('format') as OutputFormat | null) || undefined;
+  const fit     = (formData.get('fit') as string | null) || undefined;
 
   /* ── read buffer ── */
   const arrayBuffer = await (file as File).arrayBuffer();
@@ -73,7 +80,7 @@ export async function POST(req: Request) {
   let operation: ImageOperation;
   switch (op) {
     case 'compress':   operation = { op: 'compress', quality, format }; break;
-    case 'resize':     operation = { op: 'resize', width, height }; break;
+    case 'resize':     operation = { op: 'resize', width, height, ...(fit ? { fit: fit as 'cover' | 'contain' | 'fill' | 'inside' | 'outside' } : {}) }; break;
     case 'convert':    operation = { op: 'convert', format: format ?? 'jpeg' }; break;
     case 'enhance':    operation = { op: 'enhance' }; break;
     case 'jpg-to-png': operation = { op: 'jpg-to-png' }; break;

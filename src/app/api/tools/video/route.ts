@@ -49,6 +49,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'No file uploaded.' }, { status: 400 });
   }
 
+  const inputFile = file as File;
+  // Guard against oversized uploads before buffering — prevents OOM on large files
+  const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100 MB
+  if (inputFile.size > MAX_VIDEO_BYTES) {
+    return NextResponse.json({ error: 'File too large. Maximum video size is 100 MB.' }, { status: 413 });
+  }
+
   const op = (formData.get('op') as string | null)?.toLowerCase() || 'compress';
   if (!VALID_OPS.has(op)) {
     return NextResponse.json({ error: `Unknown operation: ${op}` }, { status: 400 });
@@ -60,9 +67,7 @@ export async function POST(req: Request) {
   const fps     = parseInt(formData.get('fps')     as string || '0', 10) || undefined;
   const width   = parseInt(formData.get('width')   as string || '0', 10) || undefined;
 
-  const inputFile = file as File;
-  const arrayBuffer = await inputFile.arrayBuffer();
-  const inputBuf    = Buffer.from(arrayBuffer);
+  const inputBuf    = Buffer.from(await inputFile.arrayBuffer());
   const origName    = inputFile.name.replace(/[/\\?%*:|"<>]/g, '-') || 'video';
   const baseName    = origName.replace(/\.[^.]+$/, '');
   const inputExt    = origName.split('.').pop()?.toLowerCase() || 'mp4';

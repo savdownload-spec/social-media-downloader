@@ -3,11 +3,16 @@ import { put } from '@vercel/blob';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { PDF_MAX_FILE_BYTES } from '@/lib/pdfConfig';
+import { ratelimit, getClientId } from '@/lib/ratelimit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
+  // Rate limit: 60 uploads/min per client — generous enough for batches, tight enough to prevent abuse
+  const rl = await ratelimit(`pdf:upload:${getClientId(req)}`, { limit: 60, windowSeconds: 60 });
+  if (!rl.success) return NextResponse.json({ error: 'Too many upload requests. Please wait a moment.' }, { status: 429 });
+
   // Vercel private Blob stores can authenticate with OIDC via BLOB_STORE_ID;
   // local/non-Vercel environments need the explicit read-write token.
   if (!process.env.BLOB_READ_WRITE_TOKEN && !process.env.BLOB_STORE_ID && !process.env.VERCEL) {
@@ -21,9 +26,13 @@ export async function POST(req: Request) {
     if (!(file instanceof File)) return NextResponse.json({ error: 'Choose a file to upload.' }, { status: 400 });
     if (file.size === 0) return NextResponse.json({ error: 'The uploaded file is empty.' }, { status: 400 });
     if (file.size > PDF_MAX_FILE_BYTES) return NextResponse.json({ error: 'The file exceeds the 50 MB per-file limit.' }, { status: 413 });
+
+    // Validate MIME type AND extension — require both to match, not just one
     const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
     const extensionAllowed = /\.(pdf|jpe?g|png|webp|gif|docx?)$/i.test(file.name);
-    if (!allowed.includes(file.type) && !extensionAllowed) return NextResponse.json({ error: 'Unsupported file type.' }, { status: 400 });
+    if (!allowed.includes(file.type) || !extensionAllowed) {
+      return NextResponse.json({ error: 'Unsupported file type.' }, { status: 400 });
+    }
     const safeName = file.name.replace(/[/\\?%*:|"<>\u0000-\u001f]/g, '-').slice(0, 100) || 'document';
     const buffer = Buffer.from(await file.arrayBuffer());
     const blob = await put(`pdf-jobs/${Date.now()}-${safeName}`, buffer, {
