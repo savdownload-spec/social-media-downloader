@@ -19,6 +19,7 @@ import { getPricingConfig } from '@/lib/pricing-server';
 import { SupportChat } from '@/components/support/SupportChat';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { THEME_INIT_SCRIPT } from '@/lib/theme/theme-init-script';
+import { Analytics } from '@vercel/analytics/next';
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -136,6 +137,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </PricingProvider>
           </NextIntlClientProvider>
         </Providers>
+        <Analytics />
       </body>
     </html>
   );

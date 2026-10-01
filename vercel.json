@@ -12,18 +12,21 @@
     }
   ],
   "functions": {
-    "src/app/api/tools/pdf/merge/route.ts":     { "maxDuration": 60 },
-    "src/app/api/tools/pdf/split/route.ts":     { "maxDuration": 60 },
-    "src/app/api/tools/pdf/compress/route.ts":  { "maxDuration": 60 },
-    "src/app/api/tools/pdf/jpg-to-pdf/route.ts":{ "maxDuration": 60 },
-    "src/app/api/tools/pdf/pdf-to-jpg/route.ts":{ "maxDuration": 60 },
+    "src/app/api/tools/pdf/merge/route.ts":      { "maxDuration": 60 },
+    "src/app/api/tools/pdf/split/route.ts":      { "maxDuration": 60 },
+    "src/app/api/tools/pdf/compress/route.ts":   { "maxDuration": 60 },
+    "src/app/api/tools/pdf/jpg-to-pdf/route.ts": { "maxDuration": 60 },
+    "src/app/api/tools/pdf/pdf-to-jpg/route.ts": { "maxDuration": 60 },
     "src/app/api/tools/pdf/pdf-to-word/route.ts":{ "maxDuration": 120 },
     "src/app/api/tools/pdf/word-to-pdf/route.ts":{ "maxDuration": 120 },
-    "src/app/api/tools/pdf/upload/route.ts":    { "maxDuration": 30 },
-    "src/app/api/tools/image/route.ts":         { "maxDuration": 30 },
-    "src/app/api/tools/video/route.ts":         { "maxDuration": 120 },
-    "src/app/api/download/route.ts":            { "maxDuration": 60 },
-    "src/app/api/proxy/route.ts":               { "maxDuration": 60 },
-    "src/app/api/tools/pdf/cleanup/route.ts":   { "maxDuration": 60 }
+    "src/app/api/tools/pdf/upload/route.ts":     { "maxDuration": 30 },
+    "src/app/api/tools/pdf/cleanup/route.ts":    { "maxDuration": 60 },
+    "src/app/api/tools/image/route.ts":          { "maxDuration": 30 },
+    "src/app/api/tools/video/route.ts":          { "maxDuration": 120 },
+    "src/app/api/tools/ai-image-generator/route.ts": { "maxDuration": 120 },
+    "src/app/api/download/route.ts":             { "maxDuration": 60 },
+    "src/app/api/download/merge/route.ts":       { "maxDuration": 300 },
+    "src/app/api/proxy/route.ts":                { "maxDuration": 60 },
+    "src/app/api/tools/tiktok/stream/route.ts":  { "maxDuration": 120 }
   }
 }

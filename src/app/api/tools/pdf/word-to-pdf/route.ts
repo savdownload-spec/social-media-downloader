@@ -5,13 +5,34 @@ import { convertOfficeDocument } from '@/lib/pdfService';
 import { PDF_MAX_BATCH_BYTES } from '@/lib/pdfConfig';
 import { cleanupPdfUploadRefs, readPdfUploadRefs, type PdfUploadRef } from '@/lib/pdfUpload';
 import { checkBatchLimit } from '@/lib/batchLimitGate';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+const execFileAsync = promisify(execFile);
+
+async function isLibreOfficeAvailable(): Promise<boolean> {
+  try {
+    await execFileAsync('soffice', ['--version'], { timeout: 5000 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(req: Request) {
   const rl = await ratelimit(`pdf:${getClientId(req)}`, { limit: 10, windowSeconds: 60 });
   if (!rl.success) return NextResponse.json({ error: 'Too many requests. Please wait a minute and try again.' }, { status: 429 });
+
+  if (!await isLibreOfficeAvailable()) {
+    return NextResponse.json(
+      { error: 'Word to PDF conversion requires LibreOffice and is not available on this server. Please contact support.' },
+      { status: 503 },
+    );
+  }
+
   let urls: string[] = [];
   try {
     const body = await req.json() as { files?: PdfUploadRef[] };
