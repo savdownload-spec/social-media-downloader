@@ -114,7 +114,13 @@
 #### AI Tools (Cloudflare Workers AI)
 | Tool | Slug | Provider | Status |
 |------|------|----------|--------|
-| AI Image Generator | `ai-image-generator` | Cloudflare Workers AI | ✅ READY (requires `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN`) |
+| AI Image Generator | `ai-image-generator` | Cloudflare Workers AI (FLUX-2) | ✅ READY (requires `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN`) |
+| AI YouTube Title Generator | `ai-youtube-title-generator` | Cloudflare Workers AI (llama-3.1-8b) | ✅ READY (same credentials) |
+| AI Description Generator | `ai-description-generator` | Cloudflare Workers AI (llama-3.1-8b) | ✅ READY (same credentials) |
+| AI Hashtag Generator | `ai-hashtag-generator` | Cloudflare Workers AI (llama-3.1-8b) | ✅ READY (same credentials) |
+| AI Caption Generator | `ai-caption-generator` | Cloudflare Workers AI (llama-3.1-8b) | ✅ READY (same credentials) |
+
+**Free tier:** 10,000 neurons/day shared across all Cloudflare AI tools. Each text generation uses ~10–50 neurons (~200–1000 generations/day free). Paid tier: $0.011/1,000 neurons above the free allocation.
 
 ---
 
@@ -137,7 +143,8 @@
 | Instagram Photo Downloader | `instagram-photo-downloader` | gallery-dl | ⚠️ READY AFTER VPS DEPLOYMENT |
 | Instagram Story Downloader | `instagram-story-downloader` | gallery-dl | ⚠️ READY AFTER VPS DEPLOYMENT |
 | Instagram Profile Picture | `instagram-profile-picture-downloader` | gallery-dl | ⚠️ READY AFTER VPS DEPLOYMENT |
-| Pinterest Image Downloader | `pinterest-image-downloader` | gallery-dl | ⚠️ READY AFTER VPS DEPLOYMENT |
+
+**Removed from this list:** `pinterest-image-downloader` — yt-dlp's Pinterest extractor handles image pins natively. Moved to Vercel-native (section A).
 
 **Behavior without gallery-dl:** Routes check `isBinaryAvailable()` before processing and return a clear error. No credits are charged.
 
@@ -149,15 +156,11 @@ These are in `catalog.ts` but NOT in `functionalTools.ts`, so `isToolAvailable()
 
 | Tool | Slug | Notes |
 |------|------|-------|
-| Background Remover | `background-remover` | Needs AI provider or rembg |
-| Image Upscaler | `image-upscaler` | Needs AI upscaling model |
-| AI Thumbnail Generator | `ai-thumbnail-generator` | Needs AI provider |
-| AI Background Remover | `ai-background-remover` | Duplicate of Background Remover |
-| AI Image Enhancer | `ai-image-enhancer` | Needs AI provider |
-| AI YouTube Title Generator | `ai-youtube-title-generator` | Could use local templates |
-| AI Description Generator | `ai-description-generator` | Could use local templates |
-| AI Hashtag Generator | `ai-hashtag-generator` | Could use local templates |
-| AI Caption Generator | `ai-caption-generator` | Could use local templates |
+| Background Remover | `background-remover` | No free serverless option with reliable quality; needs rembg/ONNX on VPS |
+| Image Upscaler | `image-upscaler` | No free serverless upscaling model at adequate quality |
+| AI Thumbnail Generator | `ai-thumbnail-generator` | Requires image generation — use AI Image Generator instead |
+| AI Background Remover | `ai-background-remover` | Duplicate of Background Remover — no free option |
+| AI Image Enhancer | `ai-image-enhancer` | No free serverless enhancement model |
 
 ---
 
@@ -230,16 +233,23 @@ When deploying the processing VPS:
 
 | Category | Tools | Ready | Worker Required | Not Implemented |
 |----------|-------|-------|-----------------|-----------------|
-| Downloaders (yt-dlp) | 15 | 15 | 0 | 0 |
-| Downloaders (gallery-dl) | 5 | 0 | 5 | 0 |
+| Downloaders (yt-dlp) | 16 | 16 | 0 | 0 |
+| Downloaders (gallery-dl) | 4 | 0 | 4 | 0 |
 | Image Tools | 10 | 8 | 0 | 2 (bg-remover, upscaler) |
 | Video Tools | 5 | 5 | 0 | 0 |
 | PDF Tools | 7 | 5 | 2 (pdf↔word) | 0 |
-| AI Tools | 8 | 1 (ai-image-gen) | 0 | 7 |
+| AI Tools | 8 | 5 (image-gen + 4 text) | 0 | 3 |
 | SEO Tools | 5 | 5 | 0 | 0 |
 | Utility Tools | 4 | 4 | 0 | 0 |
-| **Total** | **59** | **43** | **7** | **9** |
+| **Total** | **59** | **48** | **6** | **5** |
 
-> 43 tools are ready to launch on Vercel without any additional infrastructure.
-> 7 more become available when the processing VPS is deployed (LibreOffice + gallery-dl).
-> 9 are correctly shown as "Coming Soon" and require future implementation.
+> 48 tools are ready to launch on Vercel without any additional infrastructure.
+> 6 more become available when the processing VPS is deployed (LibreOffice + gallery-dl).
+> 5 are correctly shown as "Coming Soon" and require future AI infrastructure.
+
+### Changes from initial audit (43 → 48 active)
+- `pinterest-image-downloader`: moved from gallery-dl → yt-dlp (no VPS needed)
+- `ai-youtube-title-generator`: activated via Cloudflare Workers AI text models
+- `ai-description-generator`: activated via Cloudflare Workers AI text models
+- `ai-hashtag-generator`: activated via Cloudflare Workers AI text models
+- `ai-caption-generator`: activated via Cloudflare Workers AI text models

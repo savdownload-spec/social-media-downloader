@@ -21,12 +21,14 @@ const BodySchema = z.object({
 /**
  * Tools that use gallery-dl (image galleries, carousels, profile pics).
  * All others default to yt-dlp.
+ *
+ * NOTE: pinterest-image-downloader was moved to yt-dlp — yt-dlp's Pinterest
+ * extractor handles single image pins without needing gallery-dl.
  */
 const GALLERY_DL_TOOLS = new Set([
   'instagram-photo-downloader',
   'instagram-story-downloader',
   'instagram-profile-picture-downloader',
-  'pinterest-image-downloader',
   'tiktok-photo-downloader',
 ]);
 
