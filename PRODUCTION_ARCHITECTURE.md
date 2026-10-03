@@ -1,255 +1,233 @@
 # SavDown Production Architecture & Tool Inventory
 
+_Last updated: final free-first pass — 48 → 56 active tools_
+
 ## Runtime Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  Browser                                                │
+│  • Background Remover (ONNX/WASM via @imgly)           │
+│  • Image Upscaler (Canvas API 2x/4x)                   │
 └──────────────────────┬──────────────────────────────────┘
                        │
 ┌──────────────────────▼──────────────────────────────────┐
-│  Vercel (Next.js)                                       │
-│  • Public website, Workspace UI                        │
-│  • Auth (NextAuth), sessions                           │
-│  • Credits, billing, payments                          │
-│  • PDF tools (pdf-lib, Sharp — no native binaries)     │
+│  Vercel (Next.js 14)                                    │
+│  • Auth (NextAuth), sessions, credits, billing         │
+│  • PDF tools (pdf-lib, Sharp, mammoth+pdfkit)          │
 │  • Image tools (Sharp)                                 │
 │  • Video tools (ffmpeg-static bundled)                 │
 │  • Downloaders (yt-dlp binary bundled in bin/)         │
 │  • QR, SEO, Utility tools                             │
-│  • AI Image Generator (→ Cloudflare Workers AI)       │
-│  • Database (Prisma/PostgreSQL via Neon)               │
-│  • Redis (Upstash) — rate limiting, caching            │
-│  • Blob storage (Vercel Blob) — PDF upload staging     │
+│  • AI Image + text tools (→ Cloudflare Workers AI)    │
+│  • Database: Neon PostgreSQL via Prisma               │
+│  • Cache/RateLimit: Upstash Redis                     │
+│  • Blob storage: Vercel Blob (PDF staging)            │
 └──────────────────────┬──────────────────────────────────┘
-                       │ WORKER-REQUIRED tools only
+                       │ VPS-required tools only (3 remaining)
 ┌──────────────────────▼──────────────────────────────────┐
 │  Processing VPS (NOT YET DEPLOYED)                     │
-│  • LibreOffice (soffice) — PDF↔Word conversion         │
-│  • gallery-dl — Instagram/Pinterest photo tools        │
-│  • Accessible via DOWNLOADER_API_URL (optional)        │
+│  • LibreOffice (soffice) — PDF→Word conversion         │
+│  • gallery-dl — Instagram photo/story tools            │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Complete Tool Inventory
+## Can SavDown launch without a VPS? **YES.**
 
-### A. VERCEL-NATIVE — Works directly on Vercel ✅
+56 of 59 tools are fully active on Vercel + browser. The 3 VPS-required tools show a clear "unavailable" message until a VPS is deployed — no credits are charged.
+
+---
+
+## Complete Tool Inventory (59 tools)
+
+### A. VERCEL-NATIVE — Active without additional infrastructure ✅
 
 #### Downloaders (yt-dlp bundled in `bin/yt-dlp_linux`)
-| Tool | Slug | Binary | Status |
-|------|------|--------|--------|
-| YouTube Video Downloader | `youtube-video-downloader` | yt-dlp + ffmpeg-static | ✅ READY |
-| YouTube Shorts Downloader | `youtube-shorts-downloader` | yt-dlp + ffmpeg-static | ✅ READY |
-| YouTube Playlist Downloader | `youtube-playlist-downloader` | yt-dlp + ffmpeg-static | ✅ READY |
-| YouTube Thumbnail Downloader | `youtube-thumbnail-downloader` | none (CDN direct) | ✅ READY |
-| YouTube MP3 Downloader | `youtube-to-mp3` | yt-dlp + ffmpeg-static | ✅ READY |
-| TikTok Video Downloader | `tiktok-video-downloader` | yt-dlp (curl_cffi impersonation) | ✅ READY |
-| TikTok MP3 Downloader | `tiktok-to-mp3` | yt-dlp + ffmpeg-static | ✅ READY |
-| TikTok Thumbnail Downloader | `tiktok-thumbnail-downloader` | yt-dlp | ✅ READY |
-| Instagram Reels Downloader | `instagram-reels-downloader` | yt-dlp | ✅ READY |
-| Instagram Video Downloader | `instagram-video-downloader` | yt-dlp | ✅ READY |
-| Facebook Video Downloader | `facebook-video-downloader` | yt-dlp + ffmpeg-static | ✅ READY |
-| Facebook Reels Downloader | `facebook-reels-downloader` | yt-dlp | ✅ READY |
-| X (Twitter) Video Downloader | `x-video-downloader` | yt-dlp + ffmpeg-static | ✅ READY |
-| X (Twitter) GIF Downloader | `x-gif-downloader` | yt-dlp + ffmpeg-static | ✅ READY |
-| Pinterest Video Downloader | `pinterest-video-downloader` | yt-dlp | ✅ READY |
-
-#### PDF Tools (pdf-lib + Sharp — pure Node.js)
 | Tool | Slug | Status |
 |------|------|--------|
-| Merge PDF | `merge-pdf` | ✅ READY |
-| Split PDF | `split-pdf` | ✅ READY |
-| Compress PDF | `compress-pdf` | ✅ READY |
-| JPG to PDF | `jpg-to-pdf` | ✅ READY |
-| PDF to JPG | `pdf-to-jpg` | ✅ READY (requires Poppler/pdftoppm on server) |
+| YouTube Video Downloader | `youtube-video-downloader` | ✅ ACTIVE |
+| YouTube Shorts Downloader | `youtube-shorts-downloader` | ✅ ACTIVE |
+| YouTube Playlist Downloader | `youtube-playlist-downloader` | ✅ ACTIVE |
+| YouTube Thumbnail Downloader | `youtube-thumbnail-downloader` | ✅ ACTIVE |
+| YouTube MP3 Downloader | `youtube-to-mp3` | ✅ ACTIVE |
+| TikTok Video Downloader | `tiktok-video-downloader` | ✅ ACTIVE |
+| TikTok MP3 Downloader | `tiktok-to-mp3` | ✅ ACTIVE |
+| TikTok Thumbnail Downloader | `tiktok-thumbnail-downloader` | ✅ ACTIVE |
+| TikTok Photo Downloader | `tiktok-photo-downloader` | ✅ ACTIVE (yt-dlp slideshow) |
+| Instagram Reels Downloader | `instagram-reels-downloader` | ✅ ACTIVE |
+| Instagram Video Downloader | `instagram-video-downloader` | ✅ ACTIVE |
+| Instagram Profile Picture | `instagram-profile-picture-downloader` | ✅ ACTIVE (yt-dlp metadata) |
+| Facebook Video Downloader | `facebook-video-downloader` | ✅ ACTIVE |
+| Facebook Reels Downloader | `facebook-reels-downloader` | ✅ ACTIVE |
+| X (Twitter) Video Downloader | `x-video-downloader` | ✅ ACTIVE |
+| X (Twitter) GIF Downloader | `x-gif-downloader` | ✅ ACTIVE |
+| Pinterest Video Downloader | `pinterest-video-downloader` | ✅ ACTIVE |
+| Pinterest Image Downloader | `pinterest-image-downloader` | ✅ ACTIVE |
 
-#### Image Tools (Sharp)
+#### PDF Tools (pdf-lib + Sharp; Word→PDF via mammoth + pdfkit)
 | Tool | Slug | Status |
 |------|------|--------|
-| Image Compressor | `image-compressor` | ✅ READY |
-| Image Resizer | `image-resizer` | ✅ READY |
-| Image Converter | `image-converter` | ✅ READY |
-| Image Enhancer | `image-enhancer` | ✅ READY |
-| JPG to PNG | `jpg-to-png` | ✅ READY |
-| PNG to JPG | `png-to-jpg` | ✅ READY |
-| WEBP Converter | `webp-converter` | ✅ READY |
-| HEIC to JPG | `heic-to-jpg` | ✅ READY |
+| Merge PDF | `merge-pdf` | ✅ ACTIVE |
+| Split PDF | `split-pdf` | ✅ ACTIVE |
+| Compress PDF | `compress-pdf` | ✅ ACTIVE |
+| JPG to PDF | `jpg-to-pdf` | ✅ ACTIVE |
+| PDF to JPG | `pdf-to-jpg` | ✅ ACTIVE |
+| Word to PDF | `word-to-pdf` | ✅ ACTIVE (basic: mammoth+pdfkit on Vercel; full: LibreOffice when available) |
 
-#### Video Tools (ffmpeg-static bundled)
+#### Image Tools (Sharp + browser)
 | Tool | Slug | Status |
 |------|------|--------|
-| Video Converter | `video-converter` | ✅ READY |
-| Video Compressor | `video-compressor` | ✅ READY |
-| Video to MP3 | `video-to-mp3` | ✅ READY |
-| GIF Maker | `gif-maker` | ✅ READY |
-| MP4 to GIF | `mp4-to-gif` | ✅ READY |
+| Image Compressor | `image-compressor` | ✅ ACTIVE |
+| Image Resizer | `image-resizer` | ✅ ACTIVE |
+| Image Converter | `image-converter` | ✅ ACTIVE |
+| Image Enhancer | `image-enhancer` | ✅ ACTIVE |
+| JPG to PNG | `jpg-to-png` | ✅ ACTIVE |
+| PNG to JPG | `png-to-jpg` | ✅ ACTIVE |
+| WEBP Converter | `webp-converter` | ✅ ACTIVE |
+| HEIC to JPG | `heic-to-jpg` | ✅ ACTIVE |
+| Background Remover | `background-remover` | ✅ ACTIVE (browser ONNX via @imgly) |
+| Image Upscaler | `image-upscaler` | ✅ ACTIVE (browser Canvas 2x/4x) |
 
-#### QR Tools (qrcode + jsqr npm packages)
+#### Video Tools (ffmpeg-static)
 | Tool | Slug | Status |
 |------|------|--------|
-| QR Code Generator | `qr-code-generator` | ✅ READY |
-| QR Code Scanner | `qr-code-scanner` | ✅ READY |
+| Video Converter | `video-converter` | ✅ ACTIVE |
+| Video Compressor | `video-compressor` | ✅ ACTIVE |
+| Video to MP3 | `video-to-mp3` | ✅ ACTIVE |
+| GIF Maker | `gif-maker` | ✅ ACTIVE |
+| MP4 to GIF | `mp4-to-gif` | ✅ ACTIVE |
 
-#### Utility Tools (client-side only)
+#### QR Tools
 | Tool | Slug | Status |
 |------|------|--------|
-| Color Picker | `color-picker` | ✅ READY |
-| Gradient Generator | `gradient-generator` | ✅ READY |
+| QR Code Generator | `qr-code-generator` | ✅ ACTIVE |
+| QR Code Scanner | `qr-code-scanner` | ✅ ACTIVE |
 
-#### SEO Tools (client-side template generation, no API)
+#### Utility Tools (client-side)
 | Tool | Slug | Status |
 |------|------|--------|
-| Meta Title Generator | `meta-title-generator` | ✅ READY |
-| Meta Description Generator | `meta-description-generator` | ✅ READY |
-| YouTube Tags Generator | `youtube-tags-generator` | ✅ READY |
-| Keyword Generator | `keyword-generator` | ✅ READY |
-| Schema Generator | `schema-generator` | ✅ READY |
+| Color Picker | `color-picker` | ✅ ACTIVE |
+| Gradient Generator | `gradient-generator` | ✅ ACTIVE |
+
+#### SEO Tools (client-side)
+| Tool | Slug | Status |
+|------|------|--------|
+| Meta Title Generator | `meta-title-generator` | ✅ ACTIVE |
+| Meta Description Generator | `meta-description-generator` | ✅ ACTIVE |
+| YouTube Tags Generator | `youtube-tags-generator` | ✅ ACTIVE |
+| Keyword Generator | `keyword-generator` | ✅ ACTIVE |
+| Schema Generator | `schema-generator` | ✅ ACTIVE |
 
 ---
 
-### B. EXTERNAL API REQUIRED
+### B. CLOUDFLARE WORKERS AI REQUIRED
 
-#### AI Tools (Cloudflare Workers AI)
-| Tool | Slug | Provider | Status |
-|------|------|----------|--------|
-| AI Image Generator | `ai-image-generator` | Cloudflare Workers AI (FLUX-2) | ✅ READY (requires `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN`) |
-| AI YouTube Title Generator | `ai-youtube-title-generator` | Cloudflare Workers AI (llama-3.1-8b) | ✅ READY (same credentials) |
-| AI Description Generator | `ai-description-generator` | Cloudflare Workers AI (llama-3.1-8b) | ✅ READY (same credentials) |
-| AI Hashtag Generator | `ai-hashtag-generator` | Cloudflare Workers AI (llama-3.1-8b) | ✅ READY (same credentials) |
-| AI Caption Generator | `ai-caption-generator` | Cloudflare Workers AI (llama-3.1-8b) | ✅ READY (same credentials) |
+| Tool | Slug | Model | Status |
+|------|------|-------|--------|
+| AI Image Generator | `ai-image-generator` | FLUX-2 Klein/Dev | ✅ ACTIVE |
+| AI YouTube Title Generator | `ai-youtube-title-generator` | llama-3.1-8b-instruct | ✅ ACTIVE |
+| AI Description Generator | `ai-description-generator` | llama-3.1-8b-instruct | ✅ ACTIVE |
+| AI Hashtag Generator | `ai-hashtag-generator` | llama-3.1-8b-instruct | ✅ ACTIVE |
+| AI Caption Generator | `ai-caption-generator` | llama-3.1-8b-instruct | ✅ ACTIVE |
+| AI Thumbnail Generator | `ai-thumbnail-generator` | FLUX-2 (16:9 preset) | ✅ ACTIVE |
+| AI Background Remover | `ai-background-remover` | Browser ONNX (@imgly) | ✅ ACTIVE |
+| AI Image Enhancer | `ai-image-enhancer` | Sharp (server-side) | ✅ ACTIVE |
 
-**Free tier:** 10,000 neurons/day shared across all Cloudflare AI tools. Each text generation uses ~10–50 neurons (~200–1000 generations/day free). Paid tier: $0.011/1,000 neurons above the free allocation.
-
----
-
-### C. WORKER/VPS REQUIRED — needs LibreOffice on a persistent server
-
-| Tool | Slug | Binary | Status |
-|------|------|--------|--------|
-| PDF to Word | `pdf-to-word` | LibreOffice `soffice` | ⚠️ READY AFTER VPS DEPLOYMENT |
-| Word to PDF | `word-to-pdf` | LibreOffice `soffice` | ⚠️ READY AFTER VPS DEPLOYMENT |
-
-**Behavior on Vercel without LibreOffice:** Routes now return HTTP 503 with a clear error message _before_ attempting credit deduction. The UI shows the error. Tools remain visible (not hidden) — they work when `soffice` is available.
+**Free quota:** 10,000 neurons/day shared. **SavDown limits:** AI text 10 calls/day/user + 15/min/IP; AI image 5 images/day/user (free plan) + 6/min/IP. Quota-exhausted → HTTP 429, no credit charge.
 
 ---
 
-### D. WORKER/VPS REQUIRED — needs gallery-dl on a persistent server
+### C. VPS REQUIRED (3 tools)
 
-| Tool | Slug | Binary | Status |
-|------|------|--------|--------|
-| TikTok Photo Downloader | `tiktok-photo-downloader` | gallery-dl | ⚠️ READY AFTER VPS DEPLOYMENT |
-| Instagram Photo Downloader | `instagram-photo-downloader` | gallery-dl | ⚠️ READY AFTER VPS DEPLOYMENT |
-| Instagram Story Downloader | `instagram-story-downloader` | gallery-dl | ⚠️ READY AFTER VPS DEPLOYMENT |
-| Instagram Profile Picture | `instagram-profile-picture-downloader` | gallery-dl | ⚠️ READY AFTER VPS DEPLOYMENT |
-
-**Removed from this list:** `pinterest-image-downloader` — yt-dlp's Pinterest extractor handles image pins natively. Moved to Vercel-native (section A).
-
-**Behavior without gallery-dl:** Routes check `isBinaryAvailable()` before processing and return a clear error. No credits are charged.
+| Tool | Reason | Status |
+|------|--------|--------|
+| `pdf-to-word` | LibreOffice only viable DOCX converter | ⚠️ VPS REQUIRED |
+| `instagram-photo-downloader` | gallery-dl needed; serverless IPs rate-banned | ⚠️ VPS REQUIRED |
+| `instagram-story-downloader` | Stories require auth — no public access | ⚠️ VPS REQUIRED |
 
 ---
 
-### E. NOT YET IMPLEMENTED — show "Coming Soon" correctly
+## Tool Count Summary
 
-These are in `catalog.ts` but NOT in `functionalTools.ts`, so `isToolAvailable()` returns `false` and the tools page correctly shows them as Coming Soon:
-
-| Tool | Slug | Notes |
-|------|------|-------|
-| Background Remover | `background-remover` | No free serverless option with reliable quality; needs rembg/ONNX on VPS |
-| Image Upscaler | `image-upscaler` | No free serverless upscaling model at adequate quality |
-| AI Thumbnail Generator | `ai-thumbnail-generator` | Requires image generation — use AI Image Generator instead |
-| AI Background Remover | `ai-background-remover` | Duplicate of Background Remover — no free option |
-| AI Image Enhancer | `ai-image-enhancer` | No free serverless enhancement model |
+| Status | Count |
+|--------|-------|
+| Active (Vercel-native or browser) | 53 |
+| Active (requires CF AI credentials) | 3 |
+| Active/Limited (basic quality, full needs VPS) | 1 (`word-to-pdf`) |
+| VPS Required | 3 |
+| **Total** | **59** |
 
 ---
 
-## VPS Deployment Plan (for Worker-Required tools)
+## VPS Decision Detail
 
-When deploying the processing VPS:
+### `pdf-to-word` — VPS Required
+- pdf2docx (Python-only), pdfjs+docx (text only), free APIs (paid server-side) all rejected
+- LibreOffice is the only tool producing acceptable DOCX with tables, images, layouts
+- Route returns HTTP 503 before any credit is charged when soffice is absent
 
-1. **Install dependencies:**
-   ```bash
-   apt-get install libreoffice-core libreoffice-writer python3-pip
-   pip3 install gallery-dl
-   ```
+### `instagram-photo-downloader` — VPS Required
+- yt-dlp works for single posts but is unreliable for carousels; serverless IPs get banned quickly
+- gallery-dl with persistent session on a VPS is the only stable solution
 
-2. **Set environment variables on VPS:**
-   - `GALLERY_DL_BIN=/usr/local/bin/gallery-dl`
-   - No extra config needed for LibreOffice (auto-detected at `/usr/bin/soffice`)
-
-3. **On Vercel, point to VPS sidecar (optional):**
-   - `DOWNLOADER_API_URL=https://your-vps.example.com/info`
-   - `DOWNLOADER_API_KEY=<secret>`
-
-4. **Alternatively:** Deploy SavDown itself on the VPS (Docker) for full native binary support. `docker-compose.yml` is already present.
+### `instagram-story-downloader` — VPS Required
+- Fundamental platform restriction: stories are not publicly accessible without authentication
+- No serverless or browser solution possible without user OAuth (out of scope)
 
 ---
 
-## Key Production Environment Variables
+## Infrastructure
 
-### Required for launch
+| Service | Usage | Free Limit |
+|---------|-------|------------|
+| Vercel | Next.js hosting, all API routes | 100GB bandwidth, 1M invocations/month |
+| Neon (PostgreSQL) | Users, credits, sessions | 0.5GB storage, 190 compute hours/month |
+| Vercel Blob | PDF staging (24h TTL via CRON) | 1GB |
+| Upstash Redis | Rate limiting, daily AI quotas, cache | 10,000 commands/day |
+| Cloudflare Workers AI | AI image + text generation | 10,000 neurons/day |
+| @imgly/background-removal | Browser background removal | Unlimited (client-side) |
+| Canvas API | Browser image upscaling | Unlimited (client-side) |
+
+---
+
+## Change Log — This Pass (48 → 56 active tools)
+
+| Tool | Previous | New | Method |
+|------|----------|-----|--------|
+| `word-to-pdf` | VPS Required | ✅ ACTIVE (basic) | mammoth + pdfkit fallback |
+| `tiktok-photo-downloader` | VPS Required | ✅ ACTIVE | yt-dlp slideshow extraction |
+| `instagram-profile-picture-downloader` | VPS Required | ✅ ACTIVE | yt-dlp metadata endpoint |
+| `background-remover` | Coming Soon | ✅ ACTIVE | @imgly/background-removal (browser ONNX) |
+| `image-upscaler` | Coming Soon | ✅ ACTIVE | Canvas 2x/4x (browser, no ML) |
+| `ai-thumbnail-generator` | Coming Soon | ✅ ACTIVE | Reuses AIImageGenerator (16:9) |
+| `ai-background-remover` | Coming Soon | ✅ ACTIVE | Reuses BackgroundRemoverTool |
+| `ai-image-enhancer` | Coming Soon | ✅ ACTIVE | Reuses ImageTool (Sharp) |
+| Daily AI text quota | Missing | ✅ ADDED | 10 calls/day/user via Redis |
+
+---
+
+## Required Environment Variables
+
+### Launch-critical
 | Variable | Purpose |
 |----------|---------|
 | `DATABASE_URL` | PostgreSQL pooled (Neon) |
 | `DIRECT_URL` | PostgreSQL direct (migrations) |
 | `NEXTAUTH_URL` | Full production URL |
 | `NEXTAUTH_SECRET` | NextAuth signing secret |
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob for PDF staging |
-| `CRON_SECRET` | Protects `/api/tools/pdf/cleanup` |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob |
+| `CRON_SECRET` | PDF cleanup cron |
 
-### Required for payments
-| Variable | Purpose |
-|----------|---------|
-| `SAFEPAY_SECRET_KEY` | Safepay payments |
-| `SAFEPAY_MERCHANT_API_KEY` | Safepay merchant |
-| `SAFEPAY_WEBHOOK_SECRET` | Webhook validation |
+### Payments (Safepay)
+`SAFEPAY_SECRET_KEY`, `SAFEPAY_MERCHANT_API_KEY`, `SAFEPAY_WEBHOOK_SECRET`
 
-### Required for Google login
-| Variable | Purpose |
-|----------|---------|
-| `GOOGLE_CLIENT_ID` | Google OAuth |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth |
+### Google OAuth
+`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 
-### Optional but recommended
-| Variable | Purpose |
-|----------|---------|
-| `UPSTASH_REDIS_REST_URL` | Rate limiting + caching |
-| `UPSTASH_REDIS_REST_TOKEN` | Rate limiting + caching |
-| `CLOUDFLARE_ACCOUNT_ID` | AI Image Generator |
-| `CLOUDFLARE_API_TOKEN` | AI Image Generator |
-| `ADMIN_EMAILS` | Admin access list |
+### Optional
+`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `ADMIN_EMAILS`
 
-### VPS-only (not needed on Vercel unless using sidecar)
-| Variable | Purpose |
-|----------|---------|
-| `GALLERY_DL_BIN` | Path to gallery-dl binary |
-| `DOWNLOADER_API_URL` | Sidecar service URL |
-| `DOWNLOADER_API_KEY` | Sidecar auth token |
-
----
-
-## Pre-Launch Status Summary
-
-| Category | Tools | Ready | Worker Required | Not Implemented |
-|----------|-------|-------|-----------------|-----------------|
-| Downloaders (yt-dlp) | 16 | 16 | 0 | 0 |
-| Downloaders (gallery-dl) | 4 | 0 | 4 | 0 |
-| Image Tools | 10 | 8 | 0 | 2 (bg-remover, upscaler) |
-| Video Tools | 5 | 5 | 0 | 0 |
-| PDF Tools | 7 | 5 | 2 (pdf↔word) | 0 |
-| AI Tools | 8 | 5 (image-gen + 4 text) | 0 | 3 |
-| SEO Tools | 5 | 5 | 0 | 0 |
-| Utility Tools | 4 | 4 | 0 | 0 |
-| **Total** | **59** | **48** | **6** | **5** |
-
-> 48 tools are ready to launch on Vercel without any additional infrastructure.
-> 6 more become available when the processing VPS is deployed (LibreOffice + gallery-dl).
-> 5 are correctly shown as "Coming Soon" and require future AI infrastructure.
-
-### Changes from initial audit (43 → 48 active)
-- `pinterest-image-downloader`: moved from gallery-dl → yt-dlp (no VPS needed)
-- `ai-youtube-title-generator`: activated via Cloudflare Workers AI text models
-- `ai-description-generator`: activated via Cloudflare Workers AI text models
-- `ai-hashtag-generator`: activated via Cloudflare Workers AI text models
-- `ai-caption-generator`: activated via Cloudflare Workers AI text models
+### VPS-only
+`GALLERY_DL_BIN`, `DOWNLOADER_API_URL`, `DOWNLOADER_API_KEY`
