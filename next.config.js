@@ -92,6 +92,7 @@ const nextConfig = {
       '@imgly/background-removal',
       'onnxruntime-web',
       'onnxruntime-node',
+      'undici',
     ],
     // Only the 5 routes that invoke yt-dlp or ffmpeg receive those binaries.
     // The previous wildcard '/api/**/*' forced ~117 MB into every route
