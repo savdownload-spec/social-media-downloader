@@ -62,15 +62,46 @@ const nextConfig = {
     // computed path (data/Helvetica.afm etc.) — webpack bundling the
     // package breaks that resolution, so it must run un-bundled from
     // node_modules like it would under plain Node.
-    serverComponentsExternalPackages: ['pdfkit'],
+    // ffmpeg-static uses a dynamic require() with platform/arch detection —
+    // webpack bundling can break the binary path resolution at runtime.
+    serverComponentsExternalPackages: ['pdfkit', 'ffmpeg-static'],
     // The bundled yt-dlp Linux binary (bin/) and ffmpeg-static's downloaded
     // binary aren't detected by Next.js's default file tracing (they're
     // read via a runtime-computed path, not a static import), so Vercel's
     // build would silently omit them from the serverless function bundle
     // without this — every downloader/video route would fail in
     // production despite working locally.
+    //
+    // IMPORTANT: Only the 5 routes that actually invoke yt-dlp or ffmpeg
+    // receive those binaries in their function bundle. The previous wildcard
+    // '/api/**/*' forced ~117 MB of binaries into every one of the 78 API
+    // routes, consuming ~9.96 GB of Function Storage. Scoping to the 5
+    // routes that genuinely need these binaries reduces that to ~585 MB.
+    //
+    // Route → binary dependency source:
+    //   /api/download              → ytdlp.ts + gallerydl.ts → binaryPaths.getYtdlpBin()
+    //   /api/download/merge        → binaryPaths.getYtdlpBin() + getFfmpegBin()
+    //   /api/tools/tiktok/stream   → binaryPaths.getYtdlpBin() + getFfmpegBin()
+    //   /api/tools/video           → videoService.ts → binaryPaths.getFfmpegBin()
+    //   /api/tools/video/url-to-gif→ videoService.ts → binaryPaths.getFfmpegBin()
     outputFileTracingIncludes: {
-      '/api/**/*': ['./bin/**/*', './node_modules/ffmpeg-static/**/*'],
+      '/api/download': [
+        './bin/**/*',                         // yt-dlp binary
+      ],
+      '/api/download/merge': [
+        './bin/**/*',                         // yt-dlp binary
+        './node_modules/ffmpeg-static/**/*',  // ffmpeg binary
+      ],
+      '/api/tools/tiktok/stream': [
+        './bin/**/*',                         // yt-dlp binary
+        './node_modules/ffmpeg-static/**/*',  // ffmpeg binary
+      ],
+      '/api/tools/video': [
+        './node_modules/ffmpeg-static/**/*',  // ffmpeg binary (no yt-dlp needed)
+      ],
+      '/api/tools/video/url-to-gif': [
+        './node_modules/ffmpeg-static/**/*',  // ffmpeg binary (no yt-dlp needed)
+      ],
     },
   },
 };
