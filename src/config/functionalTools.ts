@@ -25,6 +25,8 @@ import { QrScannerTool } from '@/components/tools/QrScannerTool';
 import { SeoTool } from '@/components/tools/SeoTool';
 import { AIImageGenerator } from '@/components/tools/AIImageGenerator';
 import { AiTextTool } from '@/components/tools/AiTextTool';
+import { BackgroundRemoverTool } from '@/components/tools/BackgroundRemoverTool';
+import { ImageUpscalerTool } from '@/components/tools/ImageUpscalerTool';
 
 /** Props every functional-tool component accepts. */
 export type FunctionalToolProps = {
@@ -91,6 +93,15 @@ const functionalTools: Record<string, FunctionalToolEntry> = {
   'ai-description-generator':   { Component: AiTextTool },
   'ai-hashtag-generator':        { Component: AiTextTool },
   'ai-caption-generator':        { Component: AiTextTool },
+
+  /* ── AI/Browser tools (client-side processing) ───────────────── */
+  'background-remover':     { Component: BackgroundRemoverTool },
+  'image-upscaler':         { Component: ImageUpscalerTool },
+
+  /* ── AI category tools ───────────────────────────────────────── */
+  'ai-thumbnail-generator': { Component: AIImageGenerator },
+  'ai-background-remover':  { Component: BackgroundRemoverTool },
+  'ai-image-enhancer':      { Component: ImageTool },
 };
 
 /** Returns the live tool entry for a slug, or undefined if it isn't built yet. */
