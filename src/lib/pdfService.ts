@@ -1,5 +1,7 @@
 import { PDFDocument, PageSizes } from 'pdf-lib';
 import sharp from 'sharp';
+import mammoth from 'mammoth';
+import PDFKit from 'pdfkit';
 import { execFile } from 'node:child_process';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -268,5 +270,99 @@ export async function convertOfficeDocument(input: Buffer, sourceName: string, c
     return { ok: false, error: 'The document could not be converted. Verify that it is a valid, non-password-protected file.' };
   } finally {
     await rm(workDir, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Basic Word-to-PDF conversion using mammoth (DOCX text extraction) + pdfkit.
+ * Preserves: paragraphs, headings (h1-h6), bold, italic, lists, line breaks.
+ * Does NOT preserve: images, complex tables, columns, precise fonts, page layout.
+ * Labelled "Basic conversion" — not equivalent to LibreOffice.
+ */
+export async function convertWordToPdfBasic(input: Buffer, sourceName: string): Promise<PdfResult> {
+  if (!input.length) return { ok: false, error: 'The uploaded document is empty.' };
+  if (input.length > 20 * 1024 * 1024) return { ok: false, error: 'Document exceeds the 20 MB limit for basic conversion.' };
+
+  try {
+    // Extract structured HTML from DOCX via mammoth
+    const result = await mammoth.convertToHtml({ buffer: input });
+    const html = result.value;
+
+    // Render HTML → PDF via pdfkit
+    const buffers: Buffer[] = [];
+    await new Promise<void>((resolve, reject) => {
+      const doc = new PDFKit({ margin: 50, size: 'A4' });
+      doc.on('data', (chunk: Buffer) => buffers.push(chunk));
+      doc.on('end', resolve);
+      doc.on('error', reject);
+
+      // Parse HTML into simple runs
+      const lines = html
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n\n')
+        .replace(/<\/h[1-6]>/gi, '\n\n')
+        .replace(/<\/li>/gi, '\n')
+        .replace(/<li>/gi, '  • ')
+        .replace(/<h1[^>]*>/gi, '__H1__')
+        .replace(/<h2[^>]*>/gi, '__H2__')
+        .replace(/<h3[^>]*>/gi, '__H3__')
+        .replace(/<h[4-6][^>]*>/gi, '__H4__')
+        .replace(/<strong[^>]*>(.*?)<\/strong>/gis, '**$1**')
+        .replace(/<b[^>]*>(.*?)<\/b>/gis, '**$1**')
+        .replace(/<em[^>]*>(.*?)<\/em>/gis, '_$1_')
+        .replace(/<i[^>]*>(.*?)<\/i>/gis, '_$1_')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ');
+
+      const paragraphs = lines.split('\n');
+      for (const para of paragraphs) {
+        const trimmed = para.trim();
+        if (!trimmed) { doc.moveDown(0.5); continue; }
+        if (trimmed.startsWith('__H1__')) {
+          doc.fontSize(20).font('Helvetica-Bold').text(trimmed.slice(6).trim()).moveDown(0.3);
+          doc.fontSize(12).font('Helvetica');
+        } else if (trimmed.startsWith('__H2__')) {
+          doc.fontSize(16).font('Helvetica-Bold').text(trimmed.slice(6).trim()).moveDown(0.3);
+          doc.fontSize(12).font('Helvetica');
+        } else if (trimmed.startsWith('__H3__')) {
+          doc.fontSize(14).font('Helvetica-Bold').text(trimmed.slice(6).trim()).moveDown(0.3);
+          doc.fontSize(12).font('Helvetica');
+        } else if (trimmed.startsWith('__H4__')) {
+          doc.fontSize(13).font('Helvetica-Bold').text(trimmed.slice(6).trim()).moveDown(0.3);
+          doc.fontSize(12).font('Helvetica');
+        } else {
+          // Handle inline bold/italic markers
+          const parts = trimmed.split(/(\*\*.*?\*\*|_.*?_)/g);
+          doc.fontSize(12);
+          let lineStarted = false;
+          for (const part of parts) {
+            if (part.startsWith('**') && part.endsWith('**')) {
+              doc.font('Helvetica-Bold').text(part.slice(2, -2), { continued: true });
+              lineStarted = true;
+            } else if (part.startsWith('_') && part.endsWith('_') && part.length > 2) {
+              doc.font('Helvetica-Oblique').text(part.slice(1, -1), { continued: true });
+              lineStarted = true;
+            } else if (part) {
+              doc.font('Helvetica').text(part, { continued: true });
+              lineStarted = true;
+            }
+          }
+          if (lineStarted) doc.text(''); // flush continued text
+        }
+      }
+
+      doc.end();
+    });
+
+    const pdfBuffer = Buffer.concat(buffers);
+    const outName = `${sanitizeFilename(sourceName)}.pdf`;
+    return { ok: true, buffers: [{ name: outName, buffer: pdfBuffer }] };
+  } catch (error) {
+    return { ok: false, error: friendlyError(error, 'Could not convert this Word document to PDF.') };
   }
 }

@@ -387,6 +387,49 @@ export async function resolveWithYtdlp(
       // dedicated tool (youtube-to-mp3, tiktok-to-mp3, etc.).
     }
 
+    // TikTok photo slideshow support: if no video formats found and URL is TikTok,
+    // attempt to extract individual slide images. Recent yt-dlp versions (2024+)
+    // support TikTok photo slideshows by returning image-format entries.
+    // This is a best-effort attempt — degrades gracefully if not supported.
+    if (formats.length === 0 && needsImpersonation(url)) {
+      try {
+        const imgArgs = [
+          '--no-warnings', '--no-call-home',
+          '--socket-timeout', '20', '--retries', '1',
+          '--impersonate', 'chrome',
+          '--print', '%(url)s\n---FIELD---\n%(ext)s\n---FIELD---\n%(width|0)s\n---FIELD---\n%(height|0)s',
+          '--no-playlist',
+          '--', url,
+        ];
+        const { stdout: imgStdout } = await execFileAsync(YTDLP_BIN, imgArgs, {
+          timeout: YTDLP_TIMEOUT,
+          maxBuffer: 512 * 1024,
+        });
+        const entries = imgStdout.trim().split('\n\n').filter(Boolean);
+        for (let idx = 0; idx < entries.length; idx++) {
+          const parts = entries[idx]!.split('\n---FIELD---\n');
+          const imgUrl = parts[0]?.trim() || '';
+          const ext = parts[1]?.trim() || 'jpg';
+          const w = parseInt(parts[2]?.trim() || '0', 10);
+          const h = parseInt(parts[3]?.trim() || '0', 10);
+          if (!imgUrl || imgUrl === 'NA') continue;
+          const isImage = /^(jpg|jpeg|png|webp|gif)$/i.test(ext);
+          if (!isImage) continue;
+          const sizeLabel = w && h ? `${w}×${h}` : 'original';
+          formats.push({
+            label: `Photo ${idx + 1} (${ext.toUpperCase()})`,
+            quality: sizeLabel,
+            extension: ext,
+            url: proxyUrl(imgUrl, `${sanitize(title)}-${idx + 1}.${ext}`),
+            hasAudio: false,
+            hasVideo: false,
+          });
+        }
+      } catch {
+        // Slideshow extraction not supported by this yt-dlp version — continue
+      }
+    }
+
     if (!formats.length) {
       return { ok: false, error: 'No downloadable formats found for this URL.' };
     }

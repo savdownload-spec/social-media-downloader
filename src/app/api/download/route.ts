@@ -28,8 +28,6 @@ const BodySchema = z.object({
 const GALLERY_DL_TOOLS = new Set([
   'instagram-photo-downloader',
   'instagram-story-downloader',
-  'instagram-profile-picture-downloader',
-  'tiktok-photo-downloader',
 ]);
 
 /**
@@ -45,6 +43,7 @@ const THUMBNAIL_TOOLS = new Set([
  */
 const METADATA_THUMBNAIL_TOOLS = new Set([
   'tiktok-thumbnail-downloader',
+  'instagram-profile-picture-downloader',
 ]);
 
 /**
