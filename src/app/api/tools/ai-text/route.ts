@@ -19,6 +19,8 @@
 
 import { z } from 'zod';
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, JOB_COST } from '@/lib/credits';
 
@@ -161,6 +163,22 @@ export async function POST(req: Request) {
 
   if (!TOOL_SLUGS.has(slug)) {
     return NextResponse.json({ ok: false, error: 'Unknown tool.' }, { status: 400 });
+  }
+
+  // Per-user daily quota: max 10 AI text calls per day
+  const session = await getServerSession(authOptions);
+  if (session?.user?.id) {
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const dailyRl = await ratelimit(`ai-text:user:${session.user.id}:${today}`, {
+      limit: 10,
+      windowSeconds: 86400, // 24 hours
+    });
+    if (!dailyRl.success) {
+      return NextResponse.json(
+        { ok: false, error: 'Daily AI generation limit reached. Please try again tomorrow.' },
+        { status: 429 },
+      );
+    }
   }
 
   const gate = await requireCredits({ cost: JOB_COST.qrTool }); // 1 credit per generation
