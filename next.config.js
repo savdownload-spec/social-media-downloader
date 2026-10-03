@@ -7,20 +7,13 @@ const nextConfig = {
   poweredByHeader: false,
   compress: true,
   images: {
-    // Restrict to known safe hosts for Next.js image optimization.
-    // A wildcard hostname lets any URL be proxied through /api/image/,
-    // which is an SSRF vector and can be abused to exhaust bandwidth.
-    // Add new hostnames here when legitimate sources are added.
     remotePatterns: [
-      // Vercel Blob (PDF uploads, user assets)
       { protocol: 'https', hostname: '*.public.blob.vercel-storage.com' },
       { protocol: 'https', hostname: '*.vercel-storage.com' },
-      // NextAuth / OAuth provider avatars
-      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },       // Google
-      { protocol: 'https', hostname: 'avatars.githubusercontent.com' },   // GitHub
-      { protocol: 'https', hostname: 'platform-lookaside.fbsbx.com' },    // Facebook
-      { protocol: 'https', hostname: 'pbs.twimg.com' },                   // Twitter/X
-      // SavDown CDN / static
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
+      { protocol: 'https', hostname: 'platform-lookaside.fbsbx.com' },
+      { protocol: 'https', hostname: 'pbs.twimg.com' },
       { protocol: 'https', hostname: 'savdown.com' },
       { protocol: 'https', hostname: '*.savdown.com' },
     ],
@@ -38,9 +31,6 @@ const nextConfig = {
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
         ],
       },
-      // Public read-only API: safe to cache at the CDN edge for 60 s,
-      // serve stale for up to 5 min while revalidating in background.
-      // These endpoints have no user-specific data and change infrequently.
       {
         source: '/api/reviews',
         headers: [
@@ -56,51 +46,73 @@ const nextConfig = {
       },
     ];
   },
+  webpack(config, { isServer }) {
+    // @imgly/background-removal ships onnxruntime-web .mjs files containing
+    // native ESM `import.meta`. Next.js 14 webpack defaults to treating .mjs
+    // as CommonJS, causing Terser to fail on import.meta during minification.
+    // Marking these files as javascript/esm fixes the build.
+    config.module.rules.push({
+      test: /ort[-.].*\.m?js$/,
+      resolve: { fullySpecified: false },
+      type: 'javascript/esm',
+    });
+    // Server-side: exclude browser-only @imgly/onnxruntime packages so
+    // webpack never pulls their WASM binaries into the SSR bundle.
+    if (isServer) {
+      const orig = Array.isArray(config.externals)
+        ? config.externals
+        : config.externals ? [config.externals] : [];
+      config.externals = [
+        ...orig,
+        ({ request }, callback) => {
+          if (
+            request &&
+            (request.startsWith('@imgly/background-removal') ||
+              request.startsWith('onnxruntime-web'))
+          ) {
+            return callback(null, `commonjs ${request}`);
+          }
+          callback();
+        },
+      ];
+    }
+    return config;
+  },
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
-    // pdfkit reads its bundled AFM font metrics off disk at runtime via a
-    // computed path (data/Helvetica.afm etc.) — webpack bundling the
-    // package breaks that resolution, so it must run un-bundled from
-    // node_modules like it would under plain Node.
-    // ffmpeg-static uses a dynamic require() with platform/arch detection —
-    // webpack bundling can break the binary path resolution at runtime.
-    serverComponentsExternalPackages: ['pdfkit', 'ffmpeg-static'],
-    // The bundled yt-dlp Linux binary (bin/) and ffmpeg-static's downloaded
-    // binary aren't detected by Next.js's default file tracing (they're
-    // read via a runtime-computed path, not a static import), so Vercel's
-    // build would silently omit them from the serverless function bundle
-    // without this — every downloader/video route would fail in
-    // production despite working locally.
-    //
-    // IMPORTANT: Only the 5 routes that actually invoke yt-dlp or ffmpeg
-    // receive those binaries in their function bundle. The previous wildcard
-    // '/api/**/*' forced ~117 MB of binaries into every one of the 78 API
-    // routes, consuming ~9.96 GB of Function Storage. Scoping to the 5
-    // routes that genuinely need these binaries reduces that to ~585 MB.
-    //
-    // Route → binary dependency source:
-    //   /api/download              → ytdlp.ts + gallerydl.ts → binaryPaths.getYtdlpBin()
-    //   /api/download/merge        → binaryPaths.getYtdlpBin() + getFfmpegBin()
-    //   /api/tools/tiktok/stream   → binaryPaths.getYtdlpBin() + getFfmpegBin()
-    //   /api/tools/video           → videoService.ts → binaryPaths.getFfmpegBin()
-    //   /api/tools/video/url-to-gif→ videoService.ts → binaryPaths.getFfmpegBin()
+    // Packages that must run un-bundled from node_modules at runtime:
+    // - pdfkit: reads AFM font files via computed path; bundling breaks it
+    // - ffmpeg-static: dynamic platform/arch detection; bundling breaks path
+    // - mammoth: dynamic file-system paths for .docx parsing
+    // - @imgly/background-removal + onnxruntime-web: browser-only ESM packages
+    serverComponentsExternalPackages: [
+      'pdfkit',
+      'ffmpeg-static',
+      'mammoth',
+      '@imgly/background-removal',
+      'onnxruntime-web',
+      'onnxruntime-node',
+    ],
+    // Only the 5 routes that invoke yt-dlp or ffmpeg receive those binaries.
+    // The previous wildcard '/api/**/*' forced ~117 MB into every route
+    // (~9.96 GB Function Storage). Scoped to 5 routes: ~585 MB.
     outputFileTracingIncludes: {
       '/api/download': [
-        './bin/**/*',                         // yt-dlp binary
+        './bin/**/*',
       ],
       '/api/download/merge': [
-        './bin/**/*',                         // yt-dlp binary
-        './node_modules/ffmpeg-static/**/*',  // ffmpeg binary
+        './bin/**/*',
+        './node_modules/ffmpeg-static/**/*',
       ],
       '/api/tools/tiktok/stream': [
-        './bin/**/*',                         // yt-dlp binary
-        './node_modules/ffmpeg-static/**/*',  // ffmpeg binary
+        './bin/**/*',
+        './node_modules/ffmpeg-static/**/*',
       ],
       '/api/tools/video': [
-        './node_modules/ffmpeg-static/**/*',  // ffmpeg binary (no yt-dlp needed)
+        './node_modules/ffmpeg-static/**/*',
       ],
       '/api/tools/video/url-to-gif': [
-        './node_modules/ffmpeg-static/**/*',  // ffmpeg binary (no yt-dlp needed)
+        './node_modules/ffmpeg-static/**/*',
       ],
     },
   },
