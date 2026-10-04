@@ -368,19 +368,19 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function StatsBar({ stats }: { stats: EditorStats }) {
-  const items = [
-    ['Words', stats.wordCount],
-    ['Characters', stats.charCount],
-    ['Reading time', `${stats.readingTimeMinutes} min`],
-    ['Headings', stats.headingCount],
-    ['Images', stats.imageCount],
-    ['Links', stats.linkCount],
-  ] as const;
   return (
-    <div className="flex flex-wrap gap-4 px-1 text-[11px] text-text-subtle">
-      {items.map(([label, value]) => (
-        <span key={label}><strong className="text-text-muted font-semibold">{value}</strong> {label}</span>
-      ))}
+    <div className="flex flex-wrap gap-x-4 gap-y-1 px-1 text-[11.5px] text-text-subtle" aria-live="polite">
+      <span><strong className="text-text-muted font-semibold">{stats.wordCount.toLocaleString()}</strong> words</span>
+      <span aria-hidden="true">·</span>
+      <span><strong className="text-text-muted font-semibold">{stats.charCount.toLocaleString()}</strong> characters</span>
+      <span aria-hidden="true">·</span>
+      <span>~<strong className="text-text-muted font-semibold">{stats.readingTimeMinutes}</strong> min read</span>
+      <span aria-hidden="true">·</span>
+      <span><strong className="text-text-muted font-semibold">{stats.headingCount}</strong> headings</span>
+      <span aria-hidden="true">·</span>
+      <span><strong className="text-text-muted font-semibold">{stats.imageCount}</strong> images</span>
+      <span aria-hidden="true">·</span>
+      <span><strong className="text-text-muted font-semibold">{stats.linkCount}</strong> links</span>
     </div>
   );
 }

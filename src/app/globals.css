@@ -144,6 +144,9 @@
   .prose-elegant h1 { @apply text-4xl md:text-5xl font-semibold tracking-tight mt-12 mb-6; letter-spacing: -0.02em; }
   .prose-elegant h2 { @apply text-2xl md:text-3xl font-semibold tracking-tight mt-12 mb-4; letter-spacing: -0.02em; }
   .prose-elegant h3 { @apply text-xl font-semibold tracking-tight mt-8 mb-3; }
+  .prose-elegant h4 { @apply text-lg font-semibold mt-6 mb-3; }
+  .prose-elegant h5 { @apply text-base font-semibold mt-5 mb-2; }
+  .prose-elegant h6 { @apply text-sm font-semibold uppercase tracking-wide mt-5 mb-2 text-text-muted; }
   .prose-elegant p { @apply text-base leading-7 text-text-muted mb-4; }
   .prose-elegant a { @apply text-primary underline underline-offset-4; }
   .prose-elegant strong { @apply text-text font-semibold; }
@@ -153,10 +156,50 @@
   .prose-elegant pre { @apply bg-surface border border-border-light rounded-xl p-4 mb-4 overflow-x-auto; }
   .prose-elegant pre code { @apply bg-transparent p-0; }
   .prose-elegant blockquote { @apply border-l-4 border-primary/30 bg-surface/60 pl-5 py-2 my-6 text-text-muted italic; }
+  .prose-elegant hr { @apply my-8 border-border; }
+  .prose-elegant sup, .prose-elegant sub { font-size: 0.72em; }
   .prose-elegant img { @apply rounded-2xl border border-border-light my-6; }
+  .prose-elegant .tableWrapper { @apply overflow-x-auto mb-6; }
   .prose-elegant table { @apply w-full border-collapse text-sm mb-6; }
   .prose-elegant th { @apply border border-border-light bg-surface px-3 py-2 text-left font-semibold text-text; }
   .prose-elegant td { @apply border border-border-light px-3 py-2 text-text-muted; }
+  .prose-elegant iframe[src*="youtube"] { @apply w-full max-w-full rounded-xl my-6; aspect-ratio: 16 / 9; height: auto; }
+
+  /* Captioned figure images (editor + public). Alignment moves the image
+     inside the block figure; caption always stays centered. */
+  .prose-elegant figure[data-figure-image] { @apply my-6; }
+  .prose-elegant figure[data-figure-image] img { @apply my-0; }
+  .prose-elegant figure[data-figure-image] figcaption { @apply text-center text-[13px] text-text-subtle mt-2; }
+  .prose-elegant figure[data-figure-image][data-align="center"] img { @apply mx-auto; }
+  .prose-elegant figure[data-figure-image][data-align="left"] img { @apply mr-auto; }
+  .prose-elegant figure[data-figure-image][data-align="right"] img { @apply ml-auto; }
+
+  /* Callout blocks (editor + public) */
+  .prose-elegant [data-callout] { @apply rounded-xl border p-4 my-6 text-[15px] leading-7; }
+  .prose-elegant [data-callout] p { margin-bottom: 0; }
+  .prose-elegant [data-callout][data-variant="info"] { @apply border-blue-200 bg-blue-50/70 text-blue-950; }
+  .prose-elegant [data-callout][data-variant="tip"] { @apply border-violet-200 bg-violet-50/70 text-violet-950; }
+  .prose-elegant [data-callout][data-variant="warning"] { @apply border-amber-200 bg-amber-50/70 text-amber-950; }
+  .prose-elegant [data-callout][data-variant="success"] { @apply border-emerald-200 bg-emerald-50/70 text-emerald-950; }
+
+  /* ── Content Studio editor chrome (ProseMirror internals) ── */
+  .ProseMirror p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    @apply text-text-subtle float-left h-0 pointer-events-none;
+  }
+  .ProseMirror .search-match { background: rgba(124, 58, 237, 0.14); border-radius: 2px; }
+  .ProseMirror .search-match-current { background: rgba(124, 58, 237, 0.42); border-radius: 2px; }
+  .ProseMirror-selectednode { outline: 2px solid rgba(124, 58, 237, 0.45); border-radius: 10px; }
+  .ProseMirror.resize-cursor { cursor: ew-resize; }
+  .ProseMirror .column-resize-handle {
+    position: absolute; right: -2px; top: 0; bottom: -2px; width: 4px;
+    background: rgba(124, 58, 237, 0.4); pointer-events: none;
+  }
+  .ProseMirror td, .ProseMirror th { position: relative; }
+  .ProseMirror .selectedCell::after {
+    content: ""; position: absolute; inset: 0;
+    background: rgba(124, 58, 237, 0.07); pointer-events: none;
+  }
 
   /* Gradient text, the brand's signature */
   .text-gradient {

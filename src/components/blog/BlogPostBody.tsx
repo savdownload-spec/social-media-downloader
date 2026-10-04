@@ -4,7 +4,7 @@ import { BlogAdSlot } from '@/components/blog/BlogAdSlot';
 import { renderContentJsonToHtml } from '@/lib/content-studio/render';
 import { analyzeContentJson, type TiptapNode } from '@/lib/content-studio/contentText';
 
-export type BlogHeading = { title: string; id: string; level: 2 | 3 | 4 };
+export type BlogHeading = { title: string; id: string; level: 2 | 3 | 4 | 5 | 6 };
 
 /**
  * Posts saved with the new Content Studio editor carry contentJson (a Tiptap
@@ -18,7 +18,7 @@ export function getHeadingsForPost(post: BlogPost): BlogHeading[] {
     const analysis = analyzeContentJson(post.contentJson as TiptapNode);
     return analysis.headings
       .filter((h) => h.level >= 2)
-      .map((h) => ({ title: h.text, id: h.id, level: h.level as 2 | 3 | 4 }));
+      .map((h) => ({ title: h.text, id: h.id, level: h.level as 2 | 3 | 4 | 5 | 6 }));
   }
   return getBlogHeadings(post.content);
 }

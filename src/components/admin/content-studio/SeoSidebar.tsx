@@ -11,6 +11,7 @@ import { catalog } from '@/config/catalog';
 import { analyzeContentJson } from '@/lib/content-studio/contentText';
 import { analyzeSeo, type SeoCheck } from '@/lib/content-studio/seoAnalysis';
 import { analyzeReadability } from '@/lib/content-studio/readability';
+import { useDebouncedValue } from './hooks/useDebouncedValue';
 import { cn } from '@/lib/utils';
 import { useConfirm } from '@/components/ui/ConfirmProvider';
 import type { StudioForm, FaqBlock, HowToBlock } from './types';
@@ -104,7 +105,8 @@ export function SeoSidebar({
   editorHandle: React.RefObject<TiptapEditorHandle | null>;
   onUploadFeaturedImage: (file: File) => Promise<void>;
 }) {
-  const content = useMemo(() => analyzeContentJson(form.contentJson), [form.contentJson]);
+  const debouncedContentJson = useDebouncedValue(form.contentJson, 250);
+  const content = useMemo(() => analyzeContentJson(debouncedContentJson), [debouncedContentJson]);
 
   const seo = useMemo(() => analyzeSeo({
     title: form.title,
@@ -242,7 +244,7 @@ export function SeoSidebar({
         ) : (
           <div className="space-y-1">
             {content.headings.map((h) => (
-              <p key={h.id} className="text-[12px] text-text-muted truncate" style={{ paddingLeft: (h.level - 2) * 12 }}>
+              <p key={h.id} className="text-[12px] text-text-muted truncate" style={{ paddingLeft: (Math.min(h.level, 6) - 2) * 12 }}>
                 {h.text}
               </p>
             ))}
@@ -430,7 +432,7 @@ function InternalLinking({ editorHandle }: { editorHandle: React.RefObject<Tipta
   }
 
   function insert(url: string, text: string) {
-    editorHandle.current?.appendLink(url, text);
+    editorHandle.current?.insertLinkAtCursor(url, text);
   }
 
   return (
@@ -461,7 +463,7 @@ function LinkRow({ label, url, onCopy, onInsert }: { label: string; url: string;
   return (
     <div className="flex items-center gap-1.5 p-1.5 rounded-lg hover:bg-surface/60">
       <span className="flex-1 min-w-0 text-[12px] text-text truncate">{label}</span>
-      <button type="button" title="Insert link at end" onClick={onInsert} className="p-1 rounded text-text-muted hover:text-primary"><Plus className="w-3.5 h-3.5" /></button>
+      <button type="button" title="Insert link at cursor" onClick={onInsert} className="p-1 rounded text-text-muted hover:text-primary"><Plus className="w-3.5 h-3.5" /></button>
       <button type="button" title="Copy URL" onClick={onCopy} className="p-1 rounded text-text-muted hover:text-primary"><Copy className="w-3.5 h-3.5" /></button>
     </div>
   );
