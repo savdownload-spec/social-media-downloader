@@ -8,11 +8,23 @@
  * straight to the network.
  */
 
-const SHELL_CACHE = 'savdown-shell-v1';
-const RUNTIME_CACHE = 'savdown-runtime-v1';
+// Cache names are versioned so a code change can drop poisoned entries:
+// the previous version cached non-OK responses (see okToCache below), and a
+// chunk URL 404'd during a deploy window was served from cache forever,
+// breaking every later page load that referenced it.
+const SHELL_CACHE = 'savdown-shell-v2';
+const RUNTIME_CACHE = 'savdown-runtime-v2';
 const CURRENT_CACHES = [SHELL_CACHE, RUNTIME_CACHE];
 
 const OFFLINE_URL = '/offline.html';
+
+// Only 2xx same-origin responses may enter a cache. Caching 404/500/error
+// pages silently poisons every future request for that URL — this is exactly
+// what hung the admin after a deploy: a build chunk 404'd during the deploy
+// window got cached, and every later page load referencing it failed to boot.
+function okToCache(response) {
+  return response && response.ok && response.type === 'basic';
+}
 
 const SHELL_ASSETS = [
   OFFLINE_URL,
@@ -64,8 +76,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy));
+          if (okToCache(response)) {
+            const copy = response.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy));
+          }
           return response;
         })
         .catch(() => caches.match(request).then((cached) => cached || caches.match(OFFLINE_URL))),
@@ -80,8 +94,10 @@ self.addEventListener('fetch', (event) => {
       caches.match(request).then(
         (cached) => cached
           || fetch(request).then((response) => {
-            const copy = response.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy));
+            if (okToCache(response)) {
+              const copy = response.clone();
+              caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy));
+            }
             return response;
           }),
       ),
