@@ -26,6 +26,7 @@ import {
   ChevronLeft,
   ExternalLink,
 } from 'lucide-react';
+import { Logo } from '@/components/ui/Logo';
 
 interface NavItem {
   label: string;
@@ -137,13 +138,12 @@ export function AdminSidebar({ onClose, collapsed, onToggleCollapse, badges }: P
         collapsed ? 'justify-center px-2' : 'justify-between px-5',
       )}>
         <Link href="/admin" className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
-            <ShieldCheck className="w-4.5 h-4.5 text-white" />
-          </div>
-          {!collapsed && (
-            <span className="font-bold text-text tracking-tight whitespace-nowrap">
-              SavDown <span className="text-primary">Admin</span>
-            </span>
+          {collapsed ? (
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4.5 h-4.5 text-white" />
+            </div>
+          ) : (
+            <Logo variant="dark" height={28} linked={false} />
           )}
         </Link>
         {onClose && !collapsed && (
