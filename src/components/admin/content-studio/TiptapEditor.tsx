@@ -2,6 +2,7 @@
 
 import { useEditor, EditorContent } from '@tiptap/react';
 import { getMarkRange } from '@tiptap/core';
+import type { EditorView } from '@tiptap/pm/view';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { Markdown } from 'tiptap-markdown';
@@ -343,37 +344,50 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
     ContentSearch,
   ], []);
 
+  // Memoize editorProps so its object reference is stable across re-renders.
+  // Tiptap v3's useEditor calls editor.setOptions() whenever compareOptions()
+  // detects a change. editorProps is compared by reference (it is NOT in the
+  // callback-exclusion list), so a new literal on every render would trigger
+  // setOptions → view.setProps → view.updateState → ProseMirror transaction →
+  // onUpdate → onChange/onStats → React state update → re-render → new
+  // editorProps → infinite loop that freezes the browser.
+  // openLinkDialogRef is a React ref so its identity is always stable.
+  const editorProps = useMemo(() => ({
+    attributes: { class: 'prose-elegant max-w-none focus:outline-none min-h-[420px] px-5 py-4' },
+    // Strips Word/Google Docs cruft (mso- styles, <o:p>, class noise) on
+    // paste. Everything else is already filtered by the schema: only tags
+    // and marks the editor knows survive parsing, so pasted fonts, colors
+    // and tracking markup never reach the article.
+    transformPastedHTML(html: string) {
+      return html
+        .replace(/<o:p[^>]*>[\s\S]*?<\/o:p>/gi, '')
+        .replace(/<xml>[\s\S]*?<\/xml>/gi, '')
+        .replace(/<!--[\s\S]*?-->/g, '')
+        .replace(/<\/?(meta|link)[^>]*>/gi, '')
+        .replace(/class="?Mso[^"]*"?/gi, '')
+        .replace(/style="([^"]*)"/gi, (_match, styles: string) => {
+          const kept = styles.split(';').map((s) => s.trim()).filter((s) => /^\s*text-align\s*:/i.test(s));
+          return kept.length ? `style="${kept.join(';')}"` : '';
+        });
+    },
+    handleKeyDown(_view: EditorView, event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        openLinkDialogRef.current();
+        return true;
+      }
+      return false;
+    },
+  // openLinkDialogRef.current is mutated in-place; the ref object itself
+  // never changes, so this memo has no deps and never rebuilds.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), []);
+
   const editor = useEditor({
     extensions,
     content: initialContentJson ?? initialMarkdown ?? '',
     immediatelyRender: false,
-    editorProps: {
-      attributes: { class: 'prose-elegant max-w-none focus:outline-none min-h-[420px] px-5 py-4' },
-      // Strips Word/Google Docs cruft (mso- styles, <o:p>, class noise) on
-      // paste. Everything else is already filtered by the schema: only tags
-      // and marks the editor knows survive parsing, so pasted fonts, colors
-      // and tracking markup never reach the article.
-      transformPastedHTML(html: string) {
-        return html
-          .replace(/<o:p[^>]*>[\s\S]*?<\/o:p>/gi, '')
-          .replace(/<xml>[\s\S]*?<\/xml>/gi, '')
-          .replace(/<!--[\s\S]*?-->/g, '')
-          .replace(/<\/?(meta|link)[^>]*>/gi, '')
-          .replace(/class="?Mso[^"]*"?/gi, '')
-          .replace(/style="([^"]*)"/gi, (_match, styles: string) => {
-            const kept = styles.split(';').map((s) => s.trim()).filter((s) => /^\s*text-align\s*:/i.test(s));
-            return kept.length ? `style="${kept.join(';')}"` : '';
-          });
-      },
-      handleKeyDown(_view, event) {
-        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-          event.preventDefault();
-          openLinkDialogRef.current();
-          return true;
-        }
-        return false;
-      },
-    },
+    editorProps,
     onUpdate({ editor }) {
       const json = editor.getJSON() as TiptapNode;
       onChange(json);

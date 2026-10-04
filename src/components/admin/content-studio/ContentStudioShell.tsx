@@ -77,6 +77,16 @@ export function ContentStudioShell({
     setForm((prev) => ({ ...prev, [key]: value }));
   }, []);
 
+  // Stable callback refs for TiptapEditor. Tiptap v3's useEditor re-calls
+  // editor.setOptions() whenever it receives a changed option reference,
+  // which can cause a setOptions → view.setProps → transaction → onUpdate →
+  // state-update → re-render → new prop reference → infinite loop.
+  // Passing stable references via useCallback/setStats (already stable)
+  // eliminates that trigger on the parent side.
+  const onEditorChange = useCallback((json: TiptapNode) => {
+    setField('contentJson', json);
+  }, [setField]);
+
   const buildPayload = useCallback((f: StudioForm, publishOverride?: boolean) => ({
     title: f.title,
     slug: f.slug,
@@ -262,7 +272,7 @@ export function ContentStudioShell({
               ref={editorHandle}
               initialContentJson={form.contentJson}
               initialMarkdown={!form.contentJson ? form.content : undefined}
-              onChange={(json) => setField('contentJson', json)}
+              onChange={onEditorChange}
               onStats={setStats}
             />
 
