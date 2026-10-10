@@ -9,8 +9,14 @@ import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { LanguageSelector } from '@/components/ui/LanguageSelector';
 import { WorkspaceContainer } from '@/components/workspace/WorkspaceContainer';
 import { WorkspacePageHeader } from '@/components/workspace/WorkspacePageHeader';
+import { buildMetadata } from '@/lib/seo';
 
-export const metadata = { title: 'Profile & Settings — SavDown Workspace' };
+export const metadata = buildMetadata({
+  title: 'Settings',
+  description: '',
+  path: '/workspace/settings',
+  noIndex: true,
+});
 export const dynamic = 'force-dynamic';
 
 export default async function WorkspaceSettingsPage() {

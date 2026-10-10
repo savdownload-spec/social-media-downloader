@@ -19,6 +19,7 @@ import { getPricingConfig } from '@/lib/pricing-server';
 import { SupportChat } from '@/components/support/SupportChat';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { THEME_INIT_SCRIPT } from '@/lib/theme/theme-init-script';
+import { jsonLd, organizationSchema, websiteSchema } from '@/lib/seo';
 import { Analytics } from '@vercel/analytics/next';
 
 const jakarta = Plus_Jakarta_Sans({
@@ -109,6 +110,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" className={jakarta.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={jsonLd({
+            '@graph': [organizationSchema(), websiteSchema()],
+          })}
+        />
       </head>
       <body className="font-sans bg-surface text-text antialiased">
         <Providers>

@@ -15,8 +15,16 @@ import { WorkspaceContainer } from '@/components/workspace/WorkspaceContainer';
 import { GROUP_META } from '@/components/workspace/groupMeta';
 import { catalog, toolGroups } from '@/config/catalog';
 import { DownloadCloud, History, FolderOpen, Layers, ListChecks } from 'lucide-react';
+import { buildMetadata } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata = buildMetadata({
+  title: 'Dashboard',
+  description: '',
+  path: '/workspace',
+  noIndex: true,
+});
 
 /** First entries of the master catalog — its declared order is already the curated
  *  "most worth seeing first" list (see the doc comment on `catalog` in config/catalog.ts). */

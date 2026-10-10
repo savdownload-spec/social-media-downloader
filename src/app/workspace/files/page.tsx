@@ -2,8 +2,14 @@ import { FolderOpen } from 'lucide-react';
 import { WorkspaceContainer } from '@/components/workspace/WorkspaceContainer';
 import { WorkspacePageHeader } from '@/components/workspace/WorkspacePageHeader';
 import { WorkspaceEmptyState } from '@/components/workspace/WorkspaceEmptyState';
+import { buildMetadata } from '@/lib/seo';
 
-export const metadata = { title: 'My Files — SavDown Workspace' };
+export const metadata = buildMetadata({
+  title: 'Files',
+  description: '',
+  path: '/workspace/files',
+  noIndex: true,
+});
 
 export default function WorkspaceFilesPage() {
   return (

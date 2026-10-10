@@ -20,6 +20,7 @@ export type CatalogTool = {
   description: string;
   icon: ComponentType<{ className?: string }>;
   tile: string;
+  keywords?: string[];
 };
 
 /** Soft-tinted icon tile classes. Kept as literals so Tailwind includes them. */
@@ -43,16 +44,16 @@ const TILE = {
 };
 
 const downloaders: CatalogTool[] = [
-  { slug: 'youtube-video-downloader', name: 'YouTube Video Downloader', group: 'Downloaders', description: 'Save YouTube videos in up to 4K, watermark-free.', icon: MonitorPlay, tile: TILE.red },
+  { slug: 'youtube-video-downloader', name: 'YouTube Video Downloader', group: 'Downloaders', description: 'Save YouTube videos in up to 4K, watermark-free.', icon: MonitorPlay, tile: TILE.red, keywords: ['video downloader', 'youtube video downloader', 'mp4 downloader', 'online video downloader'] },
   { slug: 'youtube-shorts-downloader', name: 'YouTube Shorts Downloader', group: 'Downloaders', description: 'Grab vertical YouTube Shorts in original quality.', icon: Film, tile: TILE.orange },
   { slug: 'youtube-playlist-downloader', name: 'YouTube Playlist Downloader', group: 'Downloaders', description: 'Download an entire YouTube playlist in one go.', icon: ListVideo, tile: TILE.red },
   { slug: 'youtube-thumbnail-downloader', name: 'YouTube Thumbnail Downloader', group: 'Downloaders', description: 'Grab any YouTube thumbnail in full resolution.', icon: Image, tile: TILE.amber },
   { slug: 'youtube-to-mp3', name: 'YouTube MP3 Downloader', group: 'Downloaders', description: 'Convert YouTube videos into high-quality MP3 audio.', icon: Music, tile: TILE.lime },
-  { slug: 'tiktok-video-downloader', name: 'TikTok Video Downloader', group: 'Downloaders', description: 'Save TikToks in HD without the watermark.', icon: Video, tile: TILE.slate },
+  { slug: 'tiktok-video-downloader', name: 'TikTok Video Downloader', group: 'Downloaders', description: 'Save TikToks in HD without the watermark.', icon: Video, tile: TILE.slate, keywords: ['tiktok video downloader', 'tiktok downloader', 'save tiktok video'] },
   { slug: 'tiktok-to-mp3', name: 'TikTok MP3 Downloader', group: 'Downloaders', description: 'Extract the sound from any TikTok as MP3.', icon: Music2, tile: TILE.cyan },
   { slug: 'tiktok-thumbnail-downloader', name: 'TikTok Thumbnail Downloader', group: 'Downloaders', description: 'Download the cover thumbnail of any TikTok.', icon: Image, tile: TILE.teal },
   { slug: 'tiktok-photo-downloader', name: 'TikTok Photo Downloader', group: 'Downloaders', description: 'Save TikTok photo slideshows in full resolution.', icon: Images, tile: TILE.teal },
-  { slug: 'instagram-reels-downloader', name: 'Instagram Reels Downloader', group: 'Downloaders', description: 'Save Instagram Reels in crisp HD.', icon: Clapperboard, tile: TILE.fuchsia },
+  { slug: 'instagram-reels-downloader', name: 'Instagram Reels Downloader', group: 'Downloaders', description: 'Save Instagram Reels in crisp HD.', icon: Clapperboard, tile: TILE.fuchsia, keywords: ['instagram reels downloader', 'download instagram reels', 'save reels'] },
   { slug: 'instagram-video-downloader', name: 'Instagram Video Downloader', group: 'Downloaders', description: 'Download any public Instagram video post.', icon: Video, tile: TILE.pink },
   { slug: 'instagram-photo-downloader', name: 'Instagram Photo Downloader', group: 'Downloaders', description: 'Save Instagram photos and carousels in full resolution.', icon: Image, tile: TILE.rose },
   { slug: 'instagram-story-downloader', name: 'Instagram Story Downloader', group: 'Downloaders', description: 'Download public Instagram Stories before they disappear.', icon: Camera, tile: TILE.purple },
@@ -66,13 +67,13 @@ const downloaders: CatalogTool[] = [
 ];
 
 const imageTools: CatalogTool[] = [
-  { slug: 'background-remover', name: 'Background Remover', group: 'Image', description: 'Remove the background from any image in one click.', icon: Eraser, tile: TILE.violet },
+  { slug: 'background-remover', name: 'Background Remover', group: 'Image', description: 'Remove the background from any image in one click.', icon: Eraser, tile: TILE.violet, keywords: ['background remover', 'remove background from image', 'bg remover free'] },
   { slug: 'image-upscaler', name: 'Image Upscaler', group: 'Image', description: 'Upscale images to higher resolution without losing detail.', icon: Maximize2, tile: TILE.sky },
   { slug: 'image-enhancer', name: 'Image Enhancer', group: 'Image', description: 'Sharpen, brighten, and enhance photos automatically.', icon: Wand2, tile: TILE.fuchsia },
-  { slug: 'image-compressor', name: 'Image Compressor', group: 'Image', description: 'Shrink image file size while keeping quality.', icon: Minimize2, tile: TILE.emerald },
-  { slug: 'image-resizer', name: 'Image Resizer', group: 'Image', description: 'Resize images to any dimension in seconds.', icon: Scaling, tile: TILE.blue },
+  { slug: 'image-compressor', name: 'Image Compressor', group: 'Image', description: 'Shrink image file size while keeping quality.', icon: Minimize2, tile: TILE.emerald, keywords: ['image compressor', 'compress image online', 'reduce image size'] },
+  { slug: 'image-resizer', name: 'Image Resizer', group: 'Image', description: 'Resize images to any dimension in seconds.', icon: Scaling, tile: TILE.blue, keywords: ['image resizer', 'resize image online', 'change image dimensions'] },
   { slug: 'image-converter', name: 'Image Converter', group: 'Image', description: 'Convert images between formats effortlessly.', icon: RefreshCw, tile: TILE.amber },
-  { slug: 'jpg-to-png', name: 'JPG to PNG', group: 'Image', description: 'Convert JPG images to lossless PNG.', icon: FileImage, tile: TILE.indigo },
+  { slug: 'jpg-to-png', name: 'JPG to PNG', group: 'Image', description: 'Convert JPG images to lossless PNG.', icon: FileImage, tile: TILE.indigo, keywords: ['jpg to png converter', 'convert jpg to png', 'jpeg to png free'] },
   { slug: 'png-to-jpg', name: 'PNG to JPG', group: 'Image', description: 'Convert PNG images to lightweight JPG.', icon: FileImage, tile: TILE.orange },
   { slug: 'webp-converter', name: 'WEBP Converter', group: 'Image', description: 'Convert images to and from modern WEBP.', icon: FileImage, tile: TILE.teal },
   { slug: 'heic-to-jpg', name: 'HEIC to JPG', group: 'Image', description: 'Turn iPhone HEIC photos into universal JPG.', icon: FileImage, tile: TILE.rose },
@@ -87,23 +88,23 @@ const videoTools: CatalogTool[] = [
 ];
 
 const pdfTools: CatalogTool[] = [
-  { slug: 'merge-pdf', name: 'Merge PDF', group: 'PDF', description: 'Combine multiple PDFs into a single file.', icon: Files, tile: TILE.red },
-  { slug: 'split-pdf', name: 'Split PDF', group: 'PDF', description: 'Split a PDF into separate pages or files.', icon: Scissors, tile: TILE.orange },
-  { slug: 'compress-pdf', name: 'Compress PDF', group: 'PDF', description: 'Reduce PDF file size while keeping quality.', icon: FileArchive, tile: TILE.emerald },
-  { slug: 'pdf-to-word', name: 'PDF to Word', group: 'PDF', description: 'Convert PDF documents into editable Word files.', icon: FileText, tile: TILE.blue },
-  { slug: 'word-to-pdf', name: 'Word to PDF', group: 'PDF', description: 'Turn Word documents into polished PDFs.', icon: FileType, tile: TILE.indigo },
+  { slug: 'merge-pdf', name: 'Merge PDF', group: 'PDF', description: 'Combine multiple PDFs into a single file.', icon: Files, tile: TILE.red, keywords: ['merge pdf online', 'combine pdf', 'pdf merger free'] },
+  { slug: 'split-pdf', name: 'Split PDF', group: 'PDF', description: 'Split a PDF into separate pages or files.', icon: Scissors, tile: TILE.orange, keywords: ['split pdf', 'pdf splitter', 'separate pdf pages'] },
+  { slug: 'compress-pdf', name: 'Compress PDF', group: 'PDF', description: 'Reduce PDF file size while keeping quality.', icon: FileArchive, tile: TILE.emerald, keywords: ['compress pdf', 'reduce pdf size', 'pdf compressor', 'pdf converter free'] },
+  { slug: 'pdf-to-word', name: 'PDF to Word', group: 'PDF', description: 'Convert PDF documents into editable Word files.', icon: FileText, tile: TILE.blue, keywords: ['pdf to word', 'convert pdf to word', 'pdf converter free'] },
+  { slug: 'word-to-pdf', name: 'Word to PDF', group: 'PDF', description: 'Turn Word documents into polished PDFs.', icon: FileType, tile: TILE.indigo, keywords: ['word to pdf', 'convert word to pdf', 'doc to pdf free'] },
   { slug: 'jpg-to-pdf', name: 'JPG to PDF', group: 'PDF', description: 'Combine images into a single PDF.', icon: FileImage, tile: TILE.amber },
   { slug: 'pdf-to-jpg', name: 'PDF to JPG', group: 'PDF', description: 'Convert each PDF page into a JPG image.', icon: FileImage, tile: TILE.rose },
 ];
 
 const aiTools: CatalogTool[] = [
-  { slug: 'ai-thumbnail-generator', name: 'AI Thumbnail Generator', group: 'AI', description: 'Generate scroll-stopping thumbnails with AI.', icon: Sparkles, tile: TILE.fuchsia },
+  { slug: 'ai-thumbnail-generator', name: 'AI Thumbnail Generator', group: 'AI', description: 'Generate scroll-stopping thumbnails with AI.', icon: Sparkles, tile: TILE.fuchsia, keywords: ['ai thumbnail generator', 'youtube thumbnail maker', 'thumbnail creator free'] },
   { slug: 'ai-background-remover', name: 'AI Background Remover', group: 'AI', description: 'Cut out backgrounds instantly with AI precision.', icon: Wand2, tile: TILE.violet },
   { slug: 'ai-image-enhancer', name: 'AI Image Enhancer', group: 'AI', description: 'Enhance and restore images with AI.', icon: Sparkles, tile: TILE.sky },
   { slug: 'ai-youtube-title-generator', name: 'AI YouTube Title Generator', group: 'AI', description: 'Generate catchy, clickable YouTube titles.', icon: Type, tile: TILE.red },
   { slug: 'ai-description-generator', name: 'AI Description Generator', group: 'AI', description: 'Write compelling descriptions in seconds.', icon: FileText, tile: TILE.blue },
-  { slug: 'ai-hashtag-generator', name: 'AI Hashtag Generator', group: 'AI', description: 'Get relevant, trending hashtags with AI.', icon: Hash, tile: TILE.purple },
-  { slug: 'ai-caption-generator', name: 'AI Caption Generator', group: 'AI', description: 'Generate captions for any post with AI.', icon: MessageSquareText, tile: TILE.teal },
+  { slug: 'ai-hashtag-generator', name: 'AI Hashtag Generator', group: 'AI', description: 'Get relevant, trending hashtags with AI.', icon: Hash, tile: TILE.purple, keywords: ['ai hashtag generator', 'hashtag maker', 'instagram hashtag tool'] },
+  { slug: 'ai-caption-generator', name: 'AI Caption Generator', group: 'AI', description: 'Generate captions for any post with AI.', icon: MessageSquareText, tile: TILE.teal, keywords: ['ai caption generator', 'social media caption generator', 'instagram caption maker'] },
   { slug: 'ai-image-generator', name: 'AI Image Generator', group: 'AI', description: 'Turn a text prompt into an original image.', icon: Wand2, tile: TILE.purple },
 ];
 

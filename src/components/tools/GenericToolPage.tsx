@@ -5,7 +5,7 @@ import { Section, SectionHeading } from '@/components/layout/Section';
 import { Reveal } from '@/components/ui/Reveal';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { catalog, type CatalogTool } from '@/config/catalog';
-import { jsonLd, breadcrumbSchema } from '@/lib/seo';
+import { jsonLd, breadcrumbSchema, softwareAppSchema } from '@/lib/seo';
 import { siteConfig } from '@/config/site';
 
 /**
@@ -22,6 +22,13 @@ export function GenericToolPage({ tool }: { tool: CatalogTool }) {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLd({
+          ...softwareAppSchema({ name: tool.name, description: tool.description, url }),
+          availability: 'https://schema.org/PreOrder',
+        })}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLd(

@@ -99,6 +99,47 @@ export function faqSchema(items: ReadonlyArray<{ question: string; answer: strin
   };
 }
 
+export function organizationSchema() {
+  return {
+    '@type': 'Organization',
+    name: siteConfig.name,
+    url: siteConfig.url,
+    logo: `${siteConfig.url}/icon-512.png`,
+    description: siteConfig.description,
+    sameAs: siteConfig.social.map((s) => s.href),
+  };
+}
+
+export function websiteSchema() {
+  return {
+    '@type': 'WebSite',
+    name: siteConfig.name,
+    url: siteConfig.url,
+    description: siteConfig.description,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${siteConfig.url}/search?q={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  };
+}
+
+export function howToSchema(name: string, steps: ReadonlyArray<{ title: string; body: string }>) {
+  return {
+    '@type': 'HowTo',
+    name,
+    step: steps.map((s, i) => ({
+      '@type': 'HowToStep',
+      position: i + 1,
+      name: s.title,
+      text: s.body,
+    })),
+  };
+}
+
 export function breadcrumbSchema(crumbs: ReadonlyArray<{ name: string; url: string }>) {
   const items = [];
   for (let i = 0; i < (crumbs || []).length; i++) {

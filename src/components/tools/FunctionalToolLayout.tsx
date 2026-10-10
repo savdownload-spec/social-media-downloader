@@ -6,7 +6,7 @@ import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { ShareButton } from '@/components/ui/ShareButton';
 import { getCatalogTool, fallbackIcon, catalog } from '@/config/catalog';
 import type { CatalogTool } from '@/config/catalog';
-import { jsonLd, softwareAppSchema, breadcrumbSchema, faqSchema } from '@/lib/seo';
+import { jsonLd, softwareAppSchema, breadcrumbSchema, faqSchema, howToSchema } from '@/lib/seo';
 import { siteConfig } from '@/config/site';
 import { functionalToolContent } from '@/config/functionalToolContent';
 import Link from 'next/link';
@@ -46,6 +46,12 @@ export function FunctionalToolLayout({ tool, children }: Props) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={jsonLd(faqSchema(content.faq))}
+        />
+      )}
+      {content && content.howTo && content.howTo.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={jsonLd(howToSchema(`How to use ${tool.name}`, content.howTo))}
         />
       )}
       <script

@@ -11,7 +11,7 @@ import { ToolLongContentSection } from './ToolLongContent';
 import { downloaderPerks as perks } from './toolPerks';
 import { getCatalogTool, fallbackIcon, catalog } from '@/config/catalog';
 import type { Tool } from '@/config/tools';
-import { jsonLd, faqSchema, softwareAppSchema, breadcrumbSchema } from '@/lib/seo';
+import { jsonLd, faqSchema, softwareAppSchema, breadcrumbSchema, howToSchema } from '@/lib/seo';
 import { siteConfig } from '@/config/site';
 
 export function ToolPageView({ tool }: { tool: Tool }) {
@@ -34,6 +34,10 @@ export function ToolPageView({ tool }: { tool: Tool }) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLd(faqSchema(tool.faq))}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLd(howToSchema(`How to use ${tool.name}`, tool.howTo))}
       />
       <script
         type="application/ld+json"

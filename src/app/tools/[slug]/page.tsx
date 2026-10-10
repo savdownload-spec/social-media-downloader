@@ -38,6 +38,7 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
       title,
       description: entry.description,
       path: `/tools/${entry.slug}`,
+      keywords: entry.keywords,
     });
   }
   return {};

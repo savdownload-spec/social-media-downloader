@@ -1,8 +1,14 @@
 import { PricingTabs } from '@/components/pricing/PricingTabs';
 import { Container } from '@/components/layout/Container';
 import { WorkspacePageHeader } from '@/components/workspace/WorkspacePageHeader';
+import { buildMetadata } from '@/lib/seo';
 
-export const metadata = { title: 'Pricing — SavDown Workspace' };
+export const metadata = buildMetadata({
+  title: 'Upgrade',
+  description: '',
+  path: '/workspace/pricing',
+  noIndex: true,
+});
 
 export default function WorkspacePricingPage() {
   return (

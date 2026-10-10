@@ -22,6 +22,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/terms`, lastModified: now, changeFrequency: 'yearly', priority: 0.4 },
     { url: `${base}/cookies`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${base}/dmca`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${base}/reviews`, lastModified: now, changeFrequency: 'weekly', priority: 0.6 },
+    { url: `${base}/affiliates`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
   ];
 
   const toolSlugs = new Set<string>(catalog.map((tool) => tool.slug));

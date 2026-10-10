@@ -2,8 +2,14 @@ import { ListChecks } from 'lucide-react';
 import { WorkspaceContainer } from '@/components/workspace/WorkspaceContainer';
 import { WorkspacePageHeader } from '@/components/workspace/WorkspacePageHeader';
 import { WorkspaceEmptyState } from '@/components/workspace/WorkspaceEmptyState';
+import { buildMetadata } from '@/lib/seo';
 
-export const metadata = { title: 'Batch — SavDown Workspace' };
+export const metadata = buildMetadata({
+  title: 'Batch Download',
+  description: '',
+  path: '/workspace/batch',
+  noIndex: true,
+});
 
 export default function WorkspaceBatchPage() {
   return (

@@ -5,7 +5,14 @@ import { getUserActivity } from '@/lib/workspace/activity';
 import { DownloadsTable } from '@/components/workspace/DownloadsTable';
 import { WorkspaceContainer } from '@/components/workspace/WorkspaceContainer';
 import { WorkspacePageHeader } from '@/components/workspace/WorkspacePageHeader';
+import { buildMetadata } from '@/lib/seo';
 
+export const metadata = buildMetadata({
+  title: 'Downloads',
+  description: '',
+  path: '/workspace/downloads',
+  noIndex: true,
+});
 export const dynamic = 'force-dynamic';
 
 export default async function WorkspaceDownloadsPage() {

@@ -10,8 +10,14 @@ import { DataSection } from '@/components/workspace/DataSection';
 import { SectionHeader } from '@/components/workspace/SectionHeader';
 import { WorkspaceContainer } from '@/components/workspace/WorkspaceContainer';
 import { WorkspacePageHeader } from '@/components/workspace/WorkspacePageHeader';
+import { buildMetadata } from '@/lib/seo';
 
-export const metadata = { title: 'Credits & Billing — SavDown Workspace' };
+export const metadata = buildMetadata({
+  title: 'Billing',
+  description: '',
+  path: '/workspace/billing',
+  noIndex: true,
+});
 export const dynamic = 'force-dynamic';
 
 const PLAN_LABEL: Record<string, string> = {
