@@ -128,8 +128,19 @@ function AiBotMessage({ text }: { text: string }) {
   }
 
   function renderInline(s: string): React.ReactNode {
-    const parts = s.split(/\*\*(.+?)\*\*/g);
-    return parts.map((p, i) => i % 2 === 1 ? <strong key={i} className="font-semibold">{p}</strong> : p);
+    const parts = s.split(/(\*\*.+?\*\*|\[[^\]]+\]\([^\s)]+\))/g);
+    return parts.map((part, i) => {
+      if (!part) return null;
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>;
+      }
+      const link = part.match(/^\[([^\]]+)\]\(([^\s)]+)\)$/);
+      if (link) {
+        const href = link[2].startsWith('/') || /^https?:\/\//i.test(link[2]) ? link[2] : '#';
+        return <a key={i} href={href} target={href.startsWith('http') ? '_blank' : undefined} rel={href.startsWith('http') ? 'noreferrer' : undefined} className="font-semibold text-primary underline underline-offset-2">{link[1]}</a>;
+      }
+      return part;
+    });
   }
 
   for (const line of lines) {
@@ -567,6 +578,10 @@ export function SupportChat() {
   const [aiLoading, setAiLoading] = useState(false);
   const [showHumanSupport, setShowHumanSupport] = useState(false);
   const [aiPendingFile, setAiPendingFile] = useState<File | null>(null);
+  // Keep the latest AI attachment available when the user escalates. The AI
+  // endpoint receives only a safe file description; the ticket form owns the
+  // actual upload and persists it with the support conversation.
+  const [aiEscalationFile, setAiEscalationFile] = useState<File | null>(null);
   // Track the last detected entity slug so follow-up messages carry context
   const [lastEntitySlug, setLastEntitySlug] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null); const fileRef = useRef<HTMLInputElement>(null); const composerRef = useRef<HTMLTextAreaElement>(null); const retryRef = useRef<(() => void | Promise<void>) | null>(null);
@@ -612,6 +627,7 @@ export function SupportChat() {
     setAiLoading(false);
     setShowHumanSupport(false);
     setAiPendingFile(null);
+    setAiEscalationFile(null);
     setLastEntitySlug(null);
   }
 
@@ -657,6 +673,7 @@ export function SupportChat() {
     setAiMessages(newMessages);
     setAiInput('');
     setAiPendingFile(null);
+    if (file) setAiEscalationFile(file);
     setAiLoading(true);
     playSend();
     try {
@@ -666,6 +683,7 @@ export function SupportChat() {
         body: JSON.stringify({
           message: (text || '(attached file)') + fileContextNote,
           history: history.map(m => ({ role: m.role, content: m.content })),
+          language: language.code,
           // Pass last known entity so follow-up questions like "how many can I merge?"
           // resolve correctly without repeating the tool name
           ...(lastEntitySlug ? { entityHint: lastEntitySlug } : {}),
@@ -682,8 +700,10 @@ export function SupportChat() {
         sources: data.data!.sources,
         toolCta: data.data!.toolCta ?? null,
       }]);
-      // If the AI signalled it can't answer, show the human support CTA
-      if (!data.data.canAnswer) setShowHumanSupport(true);
+      // Keep escalation available after every answer, including a grounded
+      // answer. Users should not have to ask the same question again just to
+      // reach a human.
+      setShowHumanSupport(true);
     } catch {
       setAiMessages(prev => [...prev, {
         role: 'assistant',
@@ -894,6 +914,8 @@ export function SupportChat() {
         if (aiPendingFile) {
           setFiles([aiPendingFile]);
           setAiPendingFile(null);
+        } else if (aiEscalationFile) {
+          setFiles([aiEscalationFile]);
         }
       };
       return (
