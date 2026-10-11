@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { buildMetadata } from '@/lib/seo';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import { resolveAdminDateRange } from '@/lib/admin-analytics';
 
 export const metadata = buildMetadata({
   title: 'Admin Dashboard',
@@ -17,9 +18,8 @@ export default async function AdminPage() {
   const session = await getServerSession(authOptions);
 
   const now = new Date();
-  const today    = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const week     = new Date(today); week.setDate(week.getDate() - 7);
-  const month    = new Date(today); month.setDate(month.getDate() - 30);
+  const today = resolveAdminDateRange('1', now).start;
+  const month = resolveAdminDateRange('30', now).start;
 
   const [
     totalUsers,
@@ -60,10 +60,10 @@ export default async function AdminPage() {
     // last 7 days of downloads for bar chart
     Promise.all(
       Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(today); d.setDate(d.getDate() - (6 - i));
-        const next = new Date(d); next.setDate(next.getDate() + 1);
+        const d = new Date(today); d.setUTCDate(d.getUTCDate() - (6 - i));
+        const next = new Date(d); next.setUTCDate(next.getUTCDate() + 1);
         return prisma.download.count({ where: { createdAt: { gte: d, lt: next } } })
-          .then((c) => ({ label: d.toLocaleDateString('en', { weekday: 'short' }), value: c }));
+          .then((c) => ({ label: d.toLocaleDateString('en', { weekday: 'short', timeZone: 'UTC' }), value: c }));
       })
     ),
     prisma.user.groupBy({ by: ['plan'], _count: { plan: true } }),

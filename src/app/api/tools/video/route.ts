@@ -15,7 +15,7 @@
  */
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
-import { requireCredits, JOB_COST } from '@/lib/credits';
+import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 import { processVideo, type VideoOperation } from '@/lib/videoService';
 
 export const runtime = 'nodejs';
@@ -23,6 +23,9 @@ export const dynamic = 'force-dynamic';
 
 const VALID_OPS = new Set(['convert', 'compress', 'to-mp3', 'to-gif']);
 const VALID_FORMATS = new Set(['mp4', 'webm', 'mov', 'avi', 'mkv']);
+const TOOL_BY_OP: Record<string, string> = {
+  convert: 'video-converter', compress: 'video-compressor', 'to-mp3': 'video-to-mp3', 'to-gif': 'gif-maker',
+};
 
 export async function POST(req: Request) {
   /* ── rate limit (video processing is heavier, tighter limit) ── */
@@ -71,6 +74,12 @@ export async function POST(req: Request) {
   const origName    = inputFile.name.replace(/[/\\?%*:|"<>]/g, '-') || 'video';
   const baseName    = origName.replace(/\.[^.]+$/, '');
   const inputExt    = origName.split('.').pop()?.toLowerCase() || 'mp4';
+  const trackingOperation = {
+    tool: TOOL_BY_OP[op] ?? 'video-tool',
+    platform: 'video',
+    sourceUrl: `upload://${origName}`,
+    idempotencyKey: requestIdempotencyKey(req),
+  };
 
   /* ── build operation ── */
   let operation: VideoOperation;
@@ -91,12 +100,13 @@ export async function POST(req: Request) {
   /* ── process ── */
   const result = await processVideo(inputBuf, inputExt, operation);
   if (!result.ok) {
+    await gate.fail({ ...trackingOperation, failureReason: result.error });
     return NextResponse.json({ error: result.error }, { status: 422 });
   }
 
   const filename = `${baseName}.${result.extension}`;
 
-  if (!(await gate.spend('Video tool'))) {
+  if (!(await gate.spend({ ...trackingOperation, description: `${trackingOperation.tool}: ${origName}` }))) {
     return NextResponse.json(
       { error: 'Your balance changed before this could be charged. Please retry.' },
       { status: 402 },

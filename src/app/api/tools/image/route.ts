@@ -17,7 +17,7 @@
  */
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
-import { requireCredits, JOB_COST } from '@/lib/credits';
+import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 import { processImage, type ImageOperation, type OutputFormat } from '@/lib/imageService';
 
 export const runtime = 'nodejs';
@@ -27,6 +27,11 @@ const VALID_OPS = new Set([
   'compress', 'resize', 'convert', 'enhance',
   'jpg-to-png', 'png-to-jpg', 'to-webp', 'heic-to-jpg',
 ]);
+
+const TOOL_BY_OP: Record<string, string> = {
+  compress: 'image-compressor', resize: 'image-resizer', convert: 'image-converter', enhance: 'image-enhancer',
+  'jpg-to-png': 'jpg-to-png', 'png-to-jpg': 'png-to-jpg', 'to-webp': 'webp-converter', 'heic-to-jpg': 'heic-to-jpg',
+};
 
 export async function POST(req: Request) {
   /* ── rate limit ── */
@@ -75,6 +80,12 @@ export async function POST(req: Request) {
   const inputBuf    = Buffer.from(arrayBuffer);
   const origName    = (file as File).name.replace(/[/\\?%*:|"<>]/g, '-') || 'image';
   const baseName    = origName.replace(/\.[^.]+$/, '');
+  const trackingOperation = {
+    tool: TOOL_BY_OP[op] ?? 'image-tool',
+    platform: 'image',
+    sourceUrl: `upload://${origName}`,
+    idempotencyKey: requestIdempotencyKey(req),
+  };
 
   /* ── build operation ── */
   let operation: ImageOperation;
@@ -93,12 +104,13 @@ export async function POST(req: Request) {
   /* ── process ── */
   const result = await processImage(inputBuf, operation);
   if (!result.ok) {
+    await gate.fail({ ...trackingOperation, failureReason: result.error });
     return NextResponse.json({ error: result.error }, { status: 422 });
   }
 
   const filename = `${baseName}.${result.extension}`;
 
-  if (!(await gate.spend('Image tool'))) {
+  if (!(await gate.spend({ ...trackingOperation, description: `${trackingOperation.tool}: ${origName}` }))) {
     return NextResponse.json(
       { error: 'Your balance changed before this could be charged. Please retry.' },
       { status: 402 },

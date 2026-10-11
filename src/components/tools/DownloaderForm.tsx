@@ -25,9 +25,12 @@ function formatBytes(bytes: number): string {
 async function downloadWithProgress(
   url: string,
   fallbackFilename: string,
+  idempotencySuffix: string,
   onProgress: (pct: number | null, receivedBytes: number) => void,
 ): Promise<void> {
-  const res = await fetch(url);
+  const operationId = new URL(url, window.location.origin).searchParams.get('operationId') ?? crypto.randomUUID();
+  const safeSuffix = idempotencySuffix.replace(/[^A-Za-z0-9._:-]/g, '-').slice(0, 48);
+  const res = await fetch(url, { headers: { 'Idempotency-Key': `download:${operationId}:${safeSuffix}` } });
   if (!res.ok) {
     const body = await res.json().catch(() => null);
     throw new Error(body?.error || 'Download failed.');
@@ -104,7 +107,7 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
     setDownloadPct(0);
     setDownloadedBytes(0);
     try {
-      await downloadWithProgress(f.url, `${tool.name}.${f.extension}`, (pct, bytes) => {
+      await downloadWithProgress(f.url, `${tool.name}.${f.extension}`, key, (pct, bytes) => {
         setDownloadPct(pct);
         setDownloadedBytes(bytes);
       });
@@ -147,7 +150,7 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
     try {
       const res = await fetch('/api/download', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', 'Idempotency-Key': `resolve:${crypto.randomUUID()}` },
         body: JSON.stringify({ url: target, tool: tool.slug }),
       });
 

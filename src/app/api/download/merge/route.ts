@@ -21,7 +21,7 @@ import { tmpdir } from 'os';
 import path from 'path';
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
-import { requireCredits, costForHeight } from '@/lib/credits';
+import { requireCredits, costForHeight, requestIdempotencyKey } from '@/lib/credits';
 import { getYtdlpBin, getFfmpegBin } from '@/lib/binaryPaths';
 
 export const runtime = 'nodejs';
@@ -47,6 +47,9 @@ export async function GET(req: Request) {
   const pageUrl   = searchParams.get('url');
   const heightRaw = searchParams.get('height');
   const filename  = (searchParams.get('filename') || 'video').replace(/[/\\?%*:|"<>]/g, '-').slice(0, 200);
+  const operationId = searchParams.get('operationId') ?? undefined;
+  const tool = searchParams.get('tool') || 'media-downloader';
+  const platform = searchParams.get('platform') || 'download';
 
   if (!pageUrl || !/^https?:\/\//i.test(pageUrl)) {
     return NextResponse.json({ error: 'Invalid or missing source URL.' }, { status: 400 });
@@ -61,6 +64,10 @@ export async function GET(req: Request) {
   const cost = costForHeight(height);
   const gate = await requireCredits({ cost });
   if (!gate.ok) return gate.response;
+  const operation = {
+    tool, platform, operationId, sourceUrl: pageUrl,
+    idempotencyKey: requestIdempotencyKey(req),
+  };
 
   const dir     = await mkdtemp(path.join(tmpdir(), 'savdown-merge-'));
   const outPath = path.join(dir, `v-${randomUUID()}.mp4`);
@@ -90,11 +97,15 @@ export async function GET(req: Request) {
         : msg.includes('Private video') || msg.includes('private')
         ? 'This video is private and cannot be downloaded.'
         : 'Could not download this video.';
+      await gate.fail({ ...operation, failureReason: friendly });
       return NextResponse.json({ error: friendly }, { status: 502 });
     }
 
     const buffer = await readFile(outPath);
-    if (!(await gate.spend(`${height}p download`))) {
+    if (!(await gate.spend({
+      ...operation,
+      description: `${height}p download`,
+    }))) {
       return NextResponse.json(
         { error: 'Your balance changed before this could be charged. Please retry.' },
         { status: 402 },

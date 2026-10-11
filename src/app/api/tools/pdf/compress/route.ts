@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
-import { requireCredits, JOB_COST } from '@/lib/credits';
+import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 import { compressPdf, type CompressionOptions } from '@/lib/pdfService';
 import { PDF_MAX_BATCH_BYTES } from '@/lib/pdfConfig';
 import { cleanupPdfUploadRefs, readPdfUploadRefs, type PdfUploadRef } from '@/lib/pdfUpload';
@@ -37,8 +37,9 @@ export async function POST(req: Request) {
     const results = [];
     for (let index = 0; index < input.buffers.length; index += 1) {
       const result = await compressPdf(input.buffers[index]!, options, input.names[index]);
-      if (!result.ok) { results.push({ sourceName: input.names[index], status: 'failed', error: result.error }); continue; }
-      if (!(await gate.spend(`PDF compress: ${input.names[index]}`))) { results.push({ sourceName: input.names[index], status: 'failed', error: 'Credit balance changed before this file could be charged. Please retry.' }); continue; }
+      const operation = { tool: 'compress-pdf', platform: 'pdf', sourceUrl: `upload://${input.names[index]}`, idempotencyKey: requestIdempotencyKey(req, String(index)), batchId: requestIdempotencyKey(req), cost: JOB_COST.pdfTool };
+      if (!result.ok) { await gate.fail({ ...operation, failureReason: result.error }); results.push({ sourceName: input.names[index], status: 'failed', error: result.error }); continue; }
+      if (!(await gate.spend({ ...operation, description: `PDF compress: ${input.names[index]}` }))) { results.push({ sourceName: input.names[index], status: 'failed', error: 'Credit balance changed before this file could be charged. Please retry.' }); continue; }
       const output = result.buffers[0]!;
       results.push({ name: output.name, sourceName: input.names[index], status: 'completed', originalSize: input.buffers[index]!.length, size: output.buffer.length, pageCount: output.pageCount, base64: Buffer.from(output.buffer).toString('base64') });
     }

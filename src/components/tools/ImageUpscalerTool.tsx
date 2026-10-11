@@ -49,9 +49,10 @@ export function ImageUpscalerTool({ slug }: { slug: string }) {
 
     setState('authorizing');
     setError(null);
+    const operationKey = `upscale:${crypto.randomUUID()}`;
 
     try {
-      const res = await fetch('/api/tools/image/image-upscaler', { method: 'POST' });
+      const res = await fetch('/api/tools/image/image-upscaler', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': operationKey }, body: JSON.stringify({ action: 'authorize' }) });
       if (!res.ok) {
         const data = await res.json() as { error?: string };
         setError(data.error || 'Could not authorize. Please try again.');
@@ -95,10 +96,14 @@ export function ImageUpscalerTool({ slug }: { slug: string }) {
         canvas.toBlob((b) => b ? resolve(b) : reject(new Error('Canvas export failed')), 'image/png');
       });
 
+      const charge = await fetch('/api/tools/image/image-upscaler', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': operationKey }, body: JSON.stringify({ action: 'complete' }) });
+      if (!charge.ok) throw new Error((await charge.json().catch(() => ({})) as { error?: string }).error || 'Could not charge the completed operation.');
+
       setResultUrl(URL.createObjectURL(blob));
       setResultSize(`${outW}×${outH}`);
       setState('done');
     } catch (err) {
+      void fetch('/api/tools/image/image-upscaler', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': operationKey }, body: JSON.stringify({ action: 'failed' }) }).catch(() => undefined);
       setError(err instanceof Error ? err.message : 'Upscaling failed. Please try again.');
       setState('error');
     }

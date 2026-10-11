@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { authOptions } from '@/lib/auth';
-import { requireCredits } from '@/lib/credits';
+import { requireCredits, requestIdempotencyKey } from '@/lib/credits';
 import { getBillingSummary } from '@/lib/billing';
 import { prisma } from '@/lib/prisma';
 import { getImageProvider, ImageProviderError } from '@/lib/ai-image/provider';
@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
   }
 
   const inputSchema = z.object({
+    tool: z.enum(['ai-image-generator', 'ai-thumbnail-generator']).default('ai-image-generator'),
     prompt: z.string().trim().min(3).max(config.maxPromptLength),
     aspectRatio: aspectRatioSchema.default('1:1'),
     quality: qualitySchema.default('standard'),
@@ -161,18 +162,29 @@ export async function POST(request: NextRequest) {
   let reservation: AiCreditReservation | null = null;
   const model = input.quality === 'high' ? config.highModel : config.standardModel;
   try {
-    reservation = totalCost > 0 ? await reserveAiCredits(userId, totalCost) : { amount: 0, planCredits: 0, purchasedCredits: 0 };
+    reservation = totalCost > 0 ? await reserveAiCredits(userId, totalCost, {
+      tool: input.tool,
+      platform: 'ai',
+      sourceUrl: `ai://${generationId}`,
+      description: 'AI image generation reservation',
+      idempotencyKey: requestIdempotencyKey(request),
+    }) : null;
     if (!reservation) return NextResponse.json({ ok: false, error: 'Your credit balance changed before generation started. Please try again.' }, { status: 402 });
+    if (reservation.duplicate) return NextResponse.json({ ok: false, error: 'This generation request was already processed.' }, { status: 409 });
 
     const provider = getImageProvider();
     const generated = await provider.generate(input);
     if (!generated.length) throw new ImageProviderError('failed');
 
-    await Promise.all([
-      ...generated.map((image) => prisma.download.create({ data: { platform: 'ai', tool: 'ai-image-generator', sourceUrl: `ai://${generationId}/${image.url.startsWith('data:') ? 'stored-by-provider' : image.url}`, status: 'success', userId } }).catch(() => null)),
+    await prisma.$transaction([
+      prisma.download.update({
+        where: { id: reservation.operationId },
+        data: { status: 'success', completedAt: new Date(), failureReason: null },
+      }),
       prisma.aiImageGeneration.create({
         data: {
           userId,
+          operationId: reservation.operationId,
           prompt: input.prompt,
           aspectRatio: input.aspectRatio,
           quality: input.quality,
@@ -181,7 +193,7 @@ export async function POST(request: NextRequest) {
           creditsUsed: totalCost,
           status: 'success',
         },
-      }).catch(() => null),
+      }),
     ]);
 
     const updatedSummary = await getBillingSummary(userId);
@@ -192,6 +204,7 @@ export async function POST(request: NextRequest) {
     await prisma.aiImageGeneration.create({
       data: {
         userId,
+        operationId: reservation?.operationId,
         prompt: input.prompt,
         aspectRatio: input.aspectRatio,
         quality: input.quality,

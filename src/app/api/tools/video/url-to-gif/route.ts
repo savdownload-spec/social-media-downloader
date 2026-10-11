@@ -8,7 +8,7 @@
  */
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
-import { requireCredits, JOB_COST } from '@/lib/credits';
+import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 import { urlToGif } from '@/lib/videoService';
 
 export const runtime = 'nodejs';
@@ -32,15 +32,22 @@ export async function GET(req: Request) {
   if (!sourceUrl || !/^https?:\/\//i.test(sourceUrl)) {
     return NextResponse.json({ error: 'Invalid or missing source URL.' }, { status: 400 });
   }
+  const operation = {
+    tool: 'mp4-to-gif', platform: 'video', sourceUrl,
+    idempotencyKey: requestIdempotencyKey(req),
+  };
 
   const result = await urlToGif(sourceUrl, { fps: 12, width: 480 });
   if (!result.ok) {
+    await gate.fail({ ...operation, failureReason: result.error });
     return NextResponse.json({ error: result.error }, { status: 422 });
   }
 
   const base = filename.replace(/\.[^.]+$/, '');
   const buffer = Buffer.from(result.buffer);
-  if (!(await gate.spend('URL to GIF'))) {
+  if (!(await gate.spend({
+    ...operation, description: 'URL to GIF',
+  }))) {
     return NextResponse.json(
       { error: 'Your balance changed before this could be charged. Please retry.' },
       { status: 402 },

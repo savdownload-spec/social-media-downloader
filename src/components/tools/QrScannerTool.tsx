@@ -66,7 +66,7 @@ export function QrScannerTool(_props: FunctionalToolProps) {
       const fd = new FormData();
       fd.append('file', file);
 
-      const res = await fetch('/api/tools/qr/scan', { method: 'POST', body: fd });
+      const res = await fetch('/api/tools/qr/scan', { method: 'POST', headers: { 'Idempotency-Key': `qr-scan:${crypto.randomUUID()}` }, body: fd });
       const result = await res.json().catch(() => ({})) as { ok?: boolean; data?: string; type?: string; error?: string };
 
       if (!res.ok || !result.ok) {

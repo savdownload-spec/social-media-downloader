@@ -16,10 +16,14 @@ export function AdminUsageClient() {
     byTool: { tool: string; count: number }[];
     byStatus: { status: string; count: number }[];
     byDay: { label: string; value: number }[];
+    filters: { tools: string[]; platforms: string[]; statuses: string[] };
   } | null>(null);
   const [days, setDays]       = useState('30');
   const [page, setPage]       = useState(1);
   const [search, setSearch]   = useState('');
+  const [tool, setTool]       = useState('');
+  const [platform, setPlatform] = useState('');
+  const [status, setStatus]   = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(false);
 
@@ -28,15 +32,18 @@ export function AdminUsageClient() {
     setError(false);
     const p = new URLSearchParams({ days, page: String(page), pageSize: '25' });
     if (search) p.set('search', search);
-    fetch(`/api/admin/usage?${p}`)
+    if (tool) p.set('tool', tool);
+    if (platform) p.set('platform', platform);
+    if (status) p.set('status', status);
+    fetch(`/api/admin/usage?${p}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((d) => { if (d.ok) setData(d.data); else setError(true); })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [days, page, search]);
+  }, [days, page, search, tool, platform, status]);
 
   useEffect(() => { load(); }, [load]);
-  useEffect(() => { setPage(1); }, [days, search]);
+  useEffect(() => { setPage(1); }, [days, search, tool, platform, status]);
 
   const successCount = data?.byStatus.find((s) => s.status === 'success')?.count ?? 0;
   const failedCount  = data?.byStatus.reduce((sum, s) => s.status !== 'success' ? sum + s.count : sum, 0) ?? 0;
@@ -58,7 +65,7 @@ export function AdminUsageClient() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-        <BarChart data={data?.byDay ?? []} title="Daily Jobs" subtitle={`Last ${days} days`} />
+        <BarChart data={data?.byDay ?? []} title="Daily Jobs" subtitle={`Last ${days} UTC day${days === '1' ? '' : 's'}`} />
         <SectionCard title="Top Tools">
           {!data?.byTool.length ? <EmptyState message="No tool usage data." /> : (
             <div className="divide-y divide-border-light">
@@ -74,7 +81,11 @@ export function AdminUsageClient() {
         </SectionCard>
       </div>
 
-      <FilterBar search={search} onSearch={setSearch} placeholder="Search tool or platform..." />
+      <FilterBar search={search} onSearch={setSearch} placeholder="Search tool or platform...">
+        <select value={tool} onChange={(event) => setTool(event.target.value)} className="rounded-lg border border-border bg-white px-3 py-2 text-xs text-text dark:bg-card" aria-label="Filter by tool"><option value="">All tools</option>{data?.filters.tools.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+        <select value={platform} onChange={(event) => setPlatform(event.target.value)} className="rounded-lg border border-border bg-white px-3 py-2 text-xs text-text dark:bg-card" aria-label="Filter by platform"><option value="">All platforms</option>{data?.filters.platforms.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+        <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-lg border border-border bg-white px-3 py-2 text-xs text-text dark:bg-card" aria-label="Filter by status"><option value="">All statuses</option>{data?.filters.statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+      </FilterBar>
 
       <TableCard>
         <Table>
@@ -93,7 +104,7 @@ export function AdminUsageClient() {
                 <Td className="font-medium">{d.tool}</Td>
                 <Td className="text-text-muted">{d.platform}</Td>
                 <Td><StatusBadge status={d.status} dot /></Td>
-                <Td className="text-right text-[12px] text-text-muted whitespace-nowrap tabular-nums">{new Date(d.createdAt).toLocaleString()}</Td>
+                <Td className="text-right text-[12px] text-text-muted whitespace-nowrap tabular-nums">{new Date(d.createdAt).toLocaleString('en', { timeZone: 'UTC' })} UTC</Td>
               </tr>
             ))}
           </tbody>

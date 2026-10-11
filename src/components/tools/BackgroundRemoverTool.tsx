@@ -49,10 +49,11 @@ export function BackgroundRemoverTool({ slug }: { slug: string }) {
     setState('authorizing');
     setError(null);
     setProgress('');
+    const operationKey = `background:${crypto.randomUUID()}`;
 
     // Deduct credit server-side before processing
     try {
-      const res = await fetch('/api/tools/image/background-remover', { method: 'POST' });
+      const res = await fetch('/api/tools/image/background-remover', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': operationKey }, body: JSON.stringify({ action: 'authorize' }) });
       if (!res.ok) {
         const data = await res.json() as { error?: string };
         setError(data.error || 'Could not authorize. Please try again.');
@@ -86,11 +87,15 @@ export function BackgroundRemoverTool({ slug }: { slug: string }) {
         },
       });
 
+      const charge = await fetch('/api/tools/image/background-remover', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': operationKey }, body: JSON.stringify({ action: 'complete' }) });
+      if (!charge.ok) throw new Error((await charge.json().catch(() => ({})) as { error?: string }).error || 'Could not charge the completed operation.');
+
       const url = URL.createObjectURL(resultBlob);
       setResultUrl(url);
       setState('done');
       setProgress('');
     } catch (err) {
+      void fetch('/api/tools/image/background-remover', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': operationKey }, body: JSON.stringify({ action: 'failed' }) }).catch(() => undefined);
       const msg = err instanceof Error ? err.message : 'Background removal failed.';
       setError(`Processing failed: ${msg}. Please try a different image.`);
       setState('error');

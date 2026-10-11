@@ -9,7 +9,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
   // Runtime queries go through Neon's pooled endpoint (host contains
   // "-pooler"), which is what serverless functions need — each invocation
   // opens its own connection and the direct endpoint runs out.
@@ -26,26 +26,26 @@ datasource db {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  role          String    @default("USER")
-  password      String?
-  jobTitle      String?
-  company       String?
-  bio           String?
+  id                String    @id @default(cuid())
+  name              String?
+  email             String?   @unique
+  emailVerified     DateTime?
+  image             String?
+  role              String    @default("USER")
+  password          String?
+  jobTitle          String?
+  company           String?
+  bio               String?
   /// Cross-device sync of the user's manual theme choice ('light' | 'dark' |
   /// 'auto'). localStorage is the source of truth per-device; this column
   /// only seeds a fresh device that has no local value yet.
-  themePreference String?
+  themePreference   String?
   /// Stamped whenever the user's password changes. JWT tokens issued before
   /// this timestamp are treated as expired, forcing re-login after a password
   /// reset or change. NULL means no change has occurred — all tokens valid.
   passwordChangedAt DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   // ── Billing ────────────────────────────────────────────────────────────────
   // `plan` is the entitlement the user currently has; it is derived from Stripe
@@ -61,19 +61,19 @@ model User {
   /// Credits bought outright in a pack. These never expire and never reset.
   purchasedCredits   Int       @default(0)
 
-  accounts      Account[]
-  sessions      Session[]
-  downloads     Download[]
-  aiImageGenerations AiImageGeneration[]
-  reviews       Review[]
-  blogComments  BlogComment[] @relation("BlogCommentAuthor")
-  moderatedBlogComments BlogComment[] @relation("BlogCommentModerator")
-  subscriptions Subscription[]
-  creditLedger  CreditTransaction[]
-  payments      Payment[]
-  supportConversations SupportConversation[] @relation("SupportCustomer")
+  accounts                     Account[]
+  sessions                     Session[]
+  downloads                    Download[]
+  aiImageGenerations           AiImageGeneration[]
+  reviews                      Review[]
+  blogComments                 BlogComment[]         @relation("BlogCommentAuthor")
+  moderatedBlogComments        BlogComment[]         @relation("BlogCommentModerator")
+  subscriptions                Subscription[]
+  creditLedger                 CreditTransaction[]
+  payments                     Payment[]
+  supportConversations         SupportConversation[] @relation("SupportCustomer")
   assignedSupportConversations SupportConversation[] @relation("SupportAssignee")
-  supportMessages SupportMessage[] @relation("SupportSender")
+  supportMessages              SupportMessage[]      @relation("SupportSender")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -83,20 +83,20 @@ model User {
 /// Mirror of the Stripe subscription, kept in sync by the webhook so the app
 /// never has to call Stripe on a page render.
 model Subscription {
-  id                   String    @id @default(cuid())
-  userId               String
-  provider             String    @default("STRIPE") // STRIPE | SAFEPAY
-  stripeSubscriptionId String    @unique
-  safepaySubscriptionId String?  @unique
-  stripePriceId        String
+  id                    String    @id @default(cuid())
+  userId                String
+  provider              String    @default("STRIPE") // STRIPE | SAFEPAY
+  stripeSubscriptionId  String    @unique
+  safepaySubscriptionId String?   @unique
+  stripePriceId         String
   /// active | trialing | past_due | canceled | unpaid | incomplete
-  status               String
-  plan                 String // PRO | MAX
-  interval             String // month | year
-  currentPeriodEnd     DateTime?
-  cancelAtPeriodEnd    Boolean   @default(false)
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  status                String
+  plan                  String // PRO | MAX
+  interval              String // month | year
+  currentPeriodEnd      DateTime?
+  cancelAtPeriodEnd     Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -108,22 +108,41 @@ model Subscription {
 /// Append-only audit trail of every credit movement, so a balance can always be
 /// explained and a webhook replay can be detected.
 model CreditTransaction {
-  id          String   @id @default(cuid())
-  userId      String
+  id                    String   @id @default(cuid())
+  userId                String
   /// Positive to grant, negative to spend.
-  amount      Int
+  amount                Int
   /// purchase | plan_refill | plan_grant | spend | refund | adjustment
-  kind        String
+  kind                  String
   /// Which bucket moved: plan | purchased
-  bucket      String   @default("purchased")
-  description String?
+  bucket                String   @default("purchased")
+  description           String?
   /// Stripe event / session / invoice id. Unique so replays cannot double-grant.
-  externalId  String?  @unique
-  createdAt   DateTime @default(now())
+  externalId            String?  @unique
+  /// Stable request/event key used for retry deduplication.
+  idempotencyKey        String?  @unique
+  /// Structured links replace description parsing in analytics. They remain
+  /// nullable because legacy rows cannot always be linked safely.
+  operationId           String?
+  paymentId             String?
+  /// Exact movement in each balance bucket. `amount` is their sum.
+  planDelta             Int      @default(0)
+  purchasedDelta        Int      @default(0)
+  /// Balance snapshot immediately after the movement.
+  balanceAfter          Int?
+  planBalanceAfter      Int?
+  purchasedBalanceAfter Int?
+  createdAt             DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  operation Download? @relation(fields: [operationId], references: [id], onDelete: SetNull)
+  payment   Payment?  @relation(fields: [paymentId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
+  @@index([kind, createdAt])
+  @@index([operationId, createdAt])
+  @@index([paymentId])
+  @@index([createdAt])
 }
 
 /// Idempotency guard for the Stripe webhook: Stripe retries deliveries, and an
@@ -153,7 +172,8 @@ model Payment {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user               User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  creditTransactions CreditTransaction[]
 
   @@unique([provider, providerPaymentId])
   @@index([userId, createdAt])
@@ -210,21 +230,33 @@ model VerificationToken {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Download {
-  id        String   @id @default(cuid())
-  platform  String
-  tool      String
-  sourceUrl String
-  status    String   @default("success")
-  userId    String?
-  ipHash    String?
-  userAgent String?
-  createdAt DateTime @default(now())
+  id             String    @id @default(cuid())
+  platform       String
+  tool           String
+  sourceUrl      String
+  status         String    @default("success")
+  /// Client request keys are scoped to the authenticated user by the server.
+  idempotencyKey String?   @unique
+  batchId        String?
+  failureReason  String?
+  creditCost     Int       @default(0)
+  userId         String?
+  ipHash         String?
+  userAgent      String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
+  completedAt    DateTime?
 
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user               User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  creditTransactions CreditTransaction[]
+  aiImageGeneration  AiImageGeneration?
 
   @@index([tool, createdAt])
   @@index([platform, createdAt])
-  @@index([userId])
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+  @@index([batchId])
+  @@index([createdAt])
 }
 
 /// Dedicated history for AI image generations. `Download` above is an
@@ -235,6 +267,7 @@ model Download {
 model AiImageGeneration {
   id             String   @id @default(cuid())
   userId         String
+  operationId    String?  @unique
   prompt         String   @db.Text
   aspectRatio    String
   quality        String
@@ -245,7 +278,8 @@ model AiImageGeneration {
   failureReason  String?
   createdAt      DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  operation Download? @relation(fields: [operationId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
 }
@@ -269,53 +303,53 @@ model AnalyticsEvent {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Post {
-  id          String    @id @default(cuid())
-  slug        String    @unique
-  title       String
-  excerpt     String?
-  content     String
-  coverImage          String?
-  author              String    @default("Editorial Team")
-  tagsJson            String    @default("[]")
-  category            String    @default("Guides")
-  coverAlt            String?
-  ogImage             String?
-  primaryKeyword      String?
-  secondaryKeywordsJson String  @default("[]")
-  canonicalUrl        String?
-  toolSlug            String?
-  readingTimeMinutes  Int?
-  published           Boolean   @default(false)
-  publishedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id                    String    @id @default(cuid())
+  slug                  String    @unique
+  title                 String
+  excerpt               String?
+  content               String
+  coverImage            String?
+  author                String    @default("Editorial Team")
+  tagsJson              String    @default("[]")
+  category              String    @default("Guides")
+  coverAlt              String?
+  ogImage               String?
+  primaryKeyword        String?
+  secondaryKeywordsJson String    @default("[]")
+  canonicalUrl          String?
+  toolSlug              String?
+  readingTimeMinutes    Int?
+  published             Boolean   @default(false)
+  publishedAt           DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   // ── Content Studio: Tiptap source of truth ──────────────────────────────
   // `content` (above) stays in sync as a markdown export on every save from
   // the new editor, so the legacy renderer and search/excerpts keep working.
   // Posts never opened in the new editor keep contentJson null.
-  contentJson         Json?
+  contentJson Json?
 
   // ── Content Studio: SEO fields ───────────────────────────────────────────
   // Explicit override columns. Null falls back to the same title/excerpt
   // chain normalizeDbPost() already used, so unedited posts render unchanged.
-  seoTitle            String?
-  metaDescription     String?
-  focusKeyphrase      String?
-  synonymsJson        String    @default("[]")
-  noIndex             Boolean   @default(false)
-  noFollow            Boolean   @default(false)
-  metaRobotsAdvanced  String?
-  breadcrumbTitle     String?
-  schemaType          String?
-  faqJson             String    @default("[]")
-  howToJson           String    @default("[]")
-  ogTitle             String?
-  ogDescription       String?
-  scheduledAt         DateTime?
-  seoScore            Int?
-  readabilityScore    Int?
-  wordCount           Int?
+  seoTitle           String?
+  metaDescription    String?
+  focusKeyphrase     String?
+  synonymsJson       String    @default("[]")
+  noIndex            Boolean   @default(false)
+  noFollow           Boolean   @default(false)
+  metaRobotsAdvanced String?
+  breadcrumbTitle    String?
+  schemaType         String?
+  faqJson            String    @default("[]")
+  howToJson          String    @default("[]")
+  ogTitle            String?
+  ogDescription      String?
+  scheduledAt        DateTime?
+  seoScore           Int?
+  readabilityScore   Int?
+  wordCount          Int?
 
   revisions PostRevision[]
 
@@ -354,27 +388,27 @@ model ContactMessage {
 // Human support. Guest conversations are protected by a hashed, random browser
 // token; authenticated conversations always belong to the existing User record.
 model SupportConversation {
-  id                 String   @id @default(cuid())
-  userId             String?
-  guestName          String?
-  guestEmail         String?
-  guestTokenHash     String?
-  category           String
-  status             String   @default("OPEN") // OPEN | WAITING_FOR_REPLY | IN_PROGRESS | RESOLVED | CLOSED
-  priority           String   @default("NORMAL") // LOW | NORMAL | HIGH | URGENT
-  assignedAdminId    String?
-  lastMessagePreview String   @default("")
-  lastMessageAt      DateTime @default(now())
-  customerUnreadCount Int     @default(0)
-  adminUnreadCount    Int     @default(0)
-  customerLastReadAt DateTime?
-  adminLastReadAt    DateTime?
-  resolvedAt         DateTime?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                  String    @id @default(cuid())
+  userId              String?
+  guestName           String?
+  guestEmail          String?
+  guestTokenHash      String?
+  category            String
+  status              String    @default("OPEN") // OPEN | WAITING_FOR_REPLY | IN_PROGRESS | RESOLVED | CLOSED
+  priority            String    @default("NORMAL") // LOW | NORMAL | HIGH | URGENT
+  assignedAdminId     String?
+  lastMessagePreview  String    @default("")
+  lastMessageAt       DateTime  @default(now())
+  customerUnreadCount Int       @default(0)
+  adminUnreadCount    Int       @default(0)
+  customerLastReadAt  DateTime?
+  adminLastReadAt     DateTime?
+  resolvedAt          DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
-  user          User?             @relation("SupportCustomer", fields: [userId], references: [id], onDelete: SetNull)
-  assignedAdmin User?             @relation("SupportAssignee", fields: [assignedAdminId], references: [id], onDelete: SetNull)
+  user          User?            @relation("SupportCustomer", fields: [userId], references: [id], onDelete: SetNull)
+  assignedAdmin User?            @relation("SupportAssignee", fields: [assignedAdminId], references: [id], onDelete: SetNull)
   messages      SupportMessage[]
 
   @@index([userId, lastMessageAt])
@@ -385,17 +419,17 @@ model SupportConversation {
 }
 
 model SupportMessage {
-  id             String   @id @default(cuid())
-  conversationId String
-  senderType     String   // CUSTOMER | ADMIN | SYSTEM
-  senderId       String?
-  body               String
-  originalMessage    String?
-  detectedLanguage   String?
-  translatedMessage  String?
-  translationStatus  String?  // PENDING | TRANSLATED | NOT_NEEDED | FAILED
-  internal           Boolean  @default(false)
-  createdAt          DateTime @default(now())
+  id                String   @id @default(cuid())
+  conversationId    String
+  senderType        String // CUSTOMER | ADMIN | SYSTEM
+  senderId          String?
+  body              String
+  originalMessage   String?
+  detectedLanguage  String?
+  translatedMessage String?
+  translationStatus String? // PENDING | TRANSLATED | NOT_NEEDED | FAILED
+  internal          Boolean  @default(false)
+  createdAt         DateTime @default(now())
 
   conversation SupportConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender       User?               @relation("SupportSender", fields: [senderId], references: [id], onDelete: SetNull)
@@ -454,15 +488,15 @@ model Review {
 
 /// Append-only record of every significant admin action.
 model AuditLog {
-  id          String   @id @default(cuid())
-  adminId     String
-  adminEmail  String
-  action      String   // e.g. "user.suspend", "credit.add", "review.approve"
-  targetType  String?  // "User" | "Review" | "Subscription" | ...
-  targetId    String?
-  detail      Json?    // arbitrary extra context (old/new values, reason)
-  ip          String?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  adminId    String
+  adminEmail String
+  action     String // e.g. "user.suspend", "credit.add", "review.approve"
+  targetType String? // "User" | "Review" | "Subscription" | ...
+  targetId   String?
+  detail     Json? // arbitrary extra context (old/new values, reason)
+  ip         String?
+  createdAt  DateTime @default(now())
 
   @@index([adminId, createdAt])
   @@index([targetType, targetId])
@@ -471,13 +505,13 @@ model AuditLog {
 
 /// Admin-managed per-tool configuration (status, free limit, credit cost, batch limits).
 model ToolConfig {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  name        String
-  category    String
-  status      String   @default("LIVE") // LIVE | COMING_SOON | MAINTENANCE | DISABLED
-  creditCost  Int      @default(0)
-  freeLimit   Int      @default(0)       // 0 = unlimited (legacy, kept for display)
+  id         String @id @default(cuid())
+  slug       String @unique
+  name       String
+  category   String
+  status     String @default("LIVE") // LIVE | COMING_SOON | MAINTENANCE | DISABLED
+  creditCost Int    @default(0)
+  freeLimit  Int    @default(0) // 0 = unlimited (legacy, kept for display)
 
   /// Per-plan batch file limits. NULL means "use the code default from batchLimits.ts".
   batchLimitFree     Int?
@@ -485,8 +519,8 @@ model ToolConfig {
   batchLimitMax      Int?
   batchLimitLifetime Int?
 
-  updatedAt   DateTime @updatedAt
-  createdAt   DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 }
 
 /// Key-value store for admin-configurable settings.
@@ -501,7 +535,7 @@ model Affiliate {
   id               String   @id @default(cuid())
   userId           String   @unique
   code             String   @unique
-  commissionRate   Float    @default(0.2)  // 20 %
+  commissionRate   Float    @default(0.2) // 20 %
   status           String   @default("PENDING") // PENDING | ACTIVE | SUSPENDED
   totalClicks      Int      @default(0)
   totalSignups     Int      @default(0)
@@ -516,21 +550,21 @@ model Affiliate {
 }
 
 model BlogComment {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   postSlug      String
   userId        String
   body          String
-  status        String   @default("PENDING") // PENDING | APPROVED | HIDDEN | REJECTED
+  status        String    @default("PENDING") // PENDING | APPROVED | HIDDEN | REJECTED
   reportReason  String?
   reportedAt    DateTime?
   approvedAt    DateTime?
   moderatedAt   DateTime?
   moderatedById String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  user          User     @relation("BlogCommentAuthor", fields: [userId], references: [id], onDelete: Cascade)
-  moderator     User?    @relation("BlogCommentModerator", fields: [moderatedById], references: [id], onDelete: SetNull)
+  user      User  @relation("BlogCommentAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  moderator User? @relation("BlogCommentModerator", fields: [moderatedById], references: [id], onDelete: SetNull)
 
   @@index([postSlug, status, createdAt])
   @@index([status, reportedAt])
@@ -541,25 +575,25 @@ model BlogComment {
 /// generation status and the resulting file(s) so the admin UI can show an
 /// export history with real progress instead of a fire-and-forget download.
 model UserExportJob {
-  id            String    @id @default(cuid())
-  adminId       String
-  adminEmail    String
-  status        String    @default("PROCESSING") // PROCESSING | COMPLETED | FAILED | EXPIRED
-  scope         String    // all | filtered | selected
-  userCount     Int       @default(0)
-  dateField     String?   // createdAt | updatedAt
-  dateFrom      DateTime?
-  dateTo        DateTime?
-  fieldsJson    Json      // string[] of exported field ids
-  formatsJson   Json      // string[] of requested formats (csv|xlsx|json|pdf|zip)
-  fileName      String?   // primary file name shown in history (zip name if zip was requested, else the first format)
-  fileUrl       String?   // primary download URL (Vercel Blob, or local path in dev)
-  fileSize      Int?      // primary file size in bytes
-  filesJson     Json?     // every generated file: { format, name, url, size }[] — lets multi-format exports (without zip) each stay downloadable
-  error         String?
-  createdAt     DateTime  @default(now())
-  completedAt   DateTime?
-  expiresAt     DateTime
+  id          String    @id @default(cuid())
+  adminId     String
+  adminEmail  String
+  status      String    @default("PROCESSING") // PROCESSING | COMPLETED | FAILED | EXPIRED
+  scope       String // all | filtered | selected
+  userCount   Int       @default(0)
+  dateField   String? // createdAt | updatedAt
+  dateFrom    DateTime?
+  dateTo      DateTime?
+  fieldsJson  Json // string[] of exported field ids
+  formatsJson Json // string[] of requested formats (csv|xlsx|json|pdf|zip)
+  fileName    String? // primary file name shown in history (zip name if zip was requested, else the first format)
+  fileUrl     String? // primary download URL (Vercel Blob, or local path in dev)
+  fileSize    Int? // primary file size in bytes
+  filesJson   Json? // every generated file: { format, name, url, size }[] — lets multi-format exports (without zip) each stay downloadable
+  error       String?
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+  expiresAt   DateTime
 
   @@index([adminId, createdAt])
   @@index([status, expiresAt])

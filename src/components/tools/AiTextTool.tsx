@@ -117,7 +117,7 @@ export function AiTextTool({ slug }: FunctionalToolProps) {
     try {
       const res = await fetch('/api/tools/ai-text', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', 'Idempotency-Key': `ai-text:${crypto.randomUUID()}` },
         body: JSON.stringify({ slug, topic: topic.trim(), context: context.trim(), tone }),
       });
       const data = await res.json() as { ok: boolean; results?: string[]; error?: string };

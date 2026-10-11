@@ -131,7 +131,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     } else if (newPlan === 'FREE') {
       // Clearing the reset date makes the next read due for the daily
       // self-refill in getBillingSummary, the same as losing a subscription.
-      await prisma.user.update({ where: { id: params.id }, data: { plan: 'FREE', planCredits: 0, planCreditsResetAt: null } });
+      await grantCredits({
+        userId: params.id,
+        amount: 0,
+        kind: 'adjustment',
+        bucket: 'plan',
+        description: 'Admin plan change to FREE',
+        resetPlanCredits: true,
+        planCreditsResetAt: null,
+        tier: 'FREE',
+      });
     } else {
       const allowance = TIER_ALLOWANCE[newPlan];
       await grantCredits({
@@ -152,10 +161,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   if (action === 'addCredits') {
     const { amount, reason } = parsed.data;
-    await prisma.$transaction([
-      prisma.user.update({ where: { id: params.id }, data: { purchasedCredits: { increment: amount } } }),
-      prisma.creditTransaction.create({ data: { userId: params.id, amount, kind: 'adjustment', bucket: 'purchased', description: reason } }),
-    ]);
+    await grantCredits({ userId: params.id, amount, kind: 'adjustment', bucket: 'purchased', description: reason });
     await writeAuditLog({ adminId: adminUser.id!, adminEmail: adminUser.email!, action: 'credit.add', targetType: 'User', targetId: params.id, detail: { amount, reason }, ip });
     return NextResponse.json({ ok: true, data: { message: `Added ${amount} credits` } });
   }
@@ -164,10 +170,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const { amount, reason } = parsed.data;
     const user = await prisma.user.findUnique({ where: { id: params.id }, select: { purchasedCredits: true } });
     const toRemove = Math.min(amount, user?.purchasedCredits ?? 0);
-    await prisma.$transaction([
-      prisma.user.update({ where: { id: params.id }, data: { purchasedCredits: { decrement: toRemove } } }),
-      prisma.creditTransaction.create({ data: { userId: params.id, amount: -toRemove, kind: 'adjustment', bucket: 'purchased', description: reason } }),
-    ]);
+    await grantCredits({ userId: params.id, amount: -toRemove, kind: 'adjustment', bucket: 'purchased', description: reason });
     await writeAuditLog({ adminId: adminUser.id!, adminEmail: adminUser.email!, action: 'credit.remove', targetType: 'User', targetId: params.id, detail: { amount: toRemove, reason }, ip });
     return NextResponse.json({ ok: true, data: { message: `Removed ${toRemove} credits` } });
   }

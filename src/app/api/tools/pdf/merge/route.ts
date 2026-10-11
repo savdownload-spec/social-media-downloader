@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
-import { requireCredits, JOB_COST } from '@/lib/credits';
+import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 import { mergePdfs } from '@/lib/pdfService';
 import { PDF_MAX_BATCH_BYTES } from '@/lib/pdfConfig';
 import { cleanupPdfUploadRefs, readPdfUploadRefs, type PdfUploadRef } from '@/lib/pdfUpload';
@@ -29,8 +29,9 @@ export async function POST(req: Request) {
     if (!gate.ok) return gate.response;
     const input = await readPdfUploadRefs(files); urls = input.urls;
     const result = await mergePdfs(input.buffers, input.names);
-    if (!result.ok) return NextResponse.json({ error: result.error }, { status: 422 });
-    if (!(await gate.spend('PDF merge'))) return NextResponse.json({ error: 'Your balance changed before this could be charged. Please retry.' }, { status: 402 });
+    const operation = { tool: 'merge-pdf', platform: 'pdf', sourceUrl: `batch://${input.names.join(',')}`, idempotencyKey: requestIdempotencyKey(req), batchId: requestIdempotencyKey(req) };
+    if (!result.ok) { await gate.fail({ ...operation, failureReason: result.error }); return NextResponse.json({ error: result.error }, { status: 422 }); }
+    if (!(await gate.spend({ ...operation, description: 'PDF merge' }))) return NextResponse.json({ error: 'Your balance changed before this could be charged. Please retry.' }, { status: 402 });
     const output = result.buffers[0]!;
     return new NextResponse(Buffer.from(output.buffer), { headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="${output.name}"`, 'X-Original-Size': String(result.inputSize || 0), 'X-Output-Size': String(output.buffer.length), 'X-Page-Count': String(output.pageCount || result.pageCount || 0), 'Cache-Control': 'no-store' } });
   } catch { return NextResponse.json({ error: 'The PDF files could not be read. Check for encrypted or damaged files.' }, { status: 422 }); }

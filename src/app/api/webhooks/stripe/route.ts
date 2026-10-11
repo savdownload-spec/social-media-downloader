@@ -169,14 +169,20 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
   // A lifetime purchase outranks any subscription state, so never downgrade it.
   if (user?.plan === 'LIFETIME') return;
 
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      plan: entitled ? tier : 'FREE',
-      // Losing entitlement clears the allowance; purchased credits are untouched.
-      ...(entitled ? { planCreditsResetAt: periodEnd } : { planCredits: 0, planCreditsResetAt: null }),
-    },
-  });
+  if (entitled) {
+    await prisma.user.update({ where: { id: userId }, data: { plan: tier, planCreditsResetAt: periodEnd } });
+  } else {
+    await grantCredits({
+      userId,
+      amount: 0,
+      kind: 'adjustment',
+      bucket: 'plan',
+      description: `Subscription ${subscription.status}; plan allowance expired`,
+      resetPlanCredits: true,
+      planCreditsResetAt: null,
+      tier: 'FREE',
+    });
+  }
 }
 
 /** Each paid invoice refills the plan allowance for the new period. */

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Download, Flag, BarChart3 } from 'lucide-react';
 import {
   AdminPage, PageHeader, TableCard, Table, Th, Td,
-  EmptyState, ErrorState, TimeFilter, FilterTab, Skeleton, ActionButton,
+  EmptyState, ErrorState, TimeFilter, FilterTab, Skeleton, ActionButton, Pagination, FilterBar,
 } from './AdminUI';
 
 const REPORT_TYPES = [
@@ -19,23 +19,31 @@ export function AdminReportsClient() {
   const [days, setDays]       = useState('30');
   const [rows, setRows]       = useState<Record<string, unknown>[]>([]);
   const [total, setTotal]     = useState(0);
+  const [page, setPage]       = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [search, setSearch]   = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
     setError(false);
-    fetch(`/api/admin/reports?type=${type}&days=${days}`)
+    const params = new URLSearchParams({ type, days, page: String(page), pageSize: '50' });
+    if (search) params.set('search', search);
+    fetch(`/api/admin/reports?${params}`, { cache: 'no-store' })
       .then((r) => r.json())
-      .then((d) => { if (d.ok) { setRows(d.data.rows); setTotal(d.data.total); } else setError(true); })
+      .then((d) => { if (d.ok) { setRows(d.data.rows); setTotal(d.data.total); setTotalPages(d.data.totalPages); } else setError(true); })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [type, days]);
+  }, [type, days, page, search]);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { setPage(1); }, [type, days, search]);
 
   function exportCSV() {
-    window.open(`/api/admin/reports?type=${type}&days=${days}&format=csv`, '_blank');
+    const params = new URLSearchParams({ type, days, format: 'csv' });
+    if (search) params.set('search', search);
+    window.open(`/api/admin/reports?${params}`, '_blank');
   }
 
   const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
@@ -62,6 +70,8 @@ export function AdminReportsClient() {
         <div className="sm:ml-auto"><TimeFilter value={days} onChange={setDays} /></div>
       </div>
 
+      <FilterBar search={search} onSearch={setSearch} placeholder={`Search ${currentReport?.label.toLowerCase() ?? 'report'}...`} />
+
       <p className="text-[12px] text-text-muted mb-4">{total.toLocaleString()} records in the last {days} days</p>
 
       {error ? (
@@ -85,7 +95,7 @@ export function AdminReportsClient() {
                   <tr>{columns.map((c) => <Th key={c}>{c.replace(/_/g, ' ')}</Th>)}</tr>
                 </thead>
                 <tbody>
-                  {rows.slice(0, 100).map((row, i) => (
+                  {rows.map((row, i) => (
                     <tr key={i} className="hover:bg-surface/40 transition-colors">
                       {columns.map((c) => (
                         <Td key={c} className="text-[12px] font-mono max-w-[200px] truncate text-text-muted">
@@ -96,13 +106,7 @@ export function AdminReportsClient() {
                   ))}
                 </tbody>
               </Table>
-              {rows.length > 100 && (
-                <div className="px-4 py-3 border-t border-border-light">
-                  <p className="text-[11px] text-text-muted text-center">
-                    Showing first 100 rows. Export CSV for all {total.toLocaleString()} records.
-                  </p>
-                </div>
-              )}
+              <Pagination page={page} totalPages={totalPages} total={total} onPage={setPage} />
             </>
           )}
         </TableCard>

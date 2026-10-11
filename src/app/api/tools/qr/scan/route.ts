@@ -15,7 +15,7 @@ import { NextResponse } from 'next/server';
 import sharp from 'sharp';
 import jsQR from 'jsqr';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
-import { requireCredits, JOB_COST } from '@/lib/credits';
+import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -54,13 +54,20 @@ export async function POST(req: Request) {
     const code   = jsQR(pixels, info.width, info.height);
 
     if (!code) {
+      await gate.fail({
+        tool: 'qr-code-scanner', platform: 'utility', sourceUrl: `upload://${file.name}`,
+        idempotencyKey: requestIdempotencyKey(req), failureReason: 'No QR code detected',
+      });
       return NextResponse.json(
         { ok: false, error: 'No QR code detected in the image. Make sure the QR code is clearly visible and not blurry.' },
         { status: 422 },
       );
     }
 
-    if (!(await gate.spend('QR scan'))) {
+    if (!(await gate.spend({
+      tool: 'qr-code-scanner', platform: 'utility', sourceUrl: `upload://${file.name}`,
+      description: `QR scan: ${file.name}`, idempotencyKey: requestIdempotencyKey(req),
+    }))) {
       return NextResponse.json(
         { error: 'Your balance changed before this could be charged. Please retry.' },
         { status: 402 },
@@ -74,6 +81,10 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    await gate.fail({
+      tool: 'qr-code-scanner', platform: 'utility', sourceUrl: `upload://${file.name}`,
+      idempotencyKey: requestIdempotencyKey(req), failureReason: msg.slice(0, 500),
+    });
     if (msg.includes('Input buffer contains unsupported image format')) {
       return NextResponse.json(
         { ok: false, error: 'Unsupported image format. Please upload a JPG, PNG, WEBP, or GIF.' },

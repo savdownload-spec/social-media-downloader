@@ -1,17 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { PRIVATE_NO_STORE_HEADERS, requireAdminApi } from '@/lib/admin-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  const role = (session?.user as { role?: string } | undefined)?.role;
-  if (role !== 'ADMIN') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+export async function GET(request: Request) {
+  const auth = await requireAdminApi(request);
+  if (!auth.ok) return auth.response;
 
   const [totalDownloads, totalUsers, totalSubs, byTool] = await Promise.all([
     prisma.download.count(),
@@ -30,5 +26,5 @@ export async function GET() {
     totalUsers,
     totalSubs,
     byTool: byTool.map((r) => ({ tool: r.tool, count: r._count.tool })),
-  });
+  }, { headers: PRIVATE_NO_STORE_HEADERS });
 }

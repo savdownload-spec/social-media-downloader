@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
-import { requireCredits, JOB_COST } from '@/lib/credits';
+import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 import { convertOfficeDocument, convertWordToPdfBasic } from '@/lib/pdfService';
 import { PDF_MAX_BATCH_BYTES } from '@/lib/pdfConfig';
 import { cleanupPdfUploadRefs, readPdfUploadRefs, type PdfUploadRef } from '@/lib/pdfUpload';
@@ -49,8 +49,9 @@ export async function POST(req: Request) {
       } else {
         result = await convertWordToPdfBasic(input.buffers[index]!, input.names[index]!);
       }
-      if (!result.ok) { results.push({ sourceName: input.names[index], status: 'failed', error: result.error }); continue; }
-      if (!(await gate.spend(`Word to PDF: ${input.names[index]}`))) { results.push({ sourceName: input.names[index], status: 'failed', error: 'Credit balance changed before this file could be charged. Please retry.' }); continue; }
+      const operation = { tool: 'word-to-pdf', platform: 'pdf', sourceUrl: `upload://${input.names[index]}`, idempotencyKey: requestIdempotencyKey(req, String(index)), batchId: requestIdempotencyKey(req), cost: JOB_COST.pdfTool };
+      if (!result.ok) { await gate.fail({ ...operation, failureReason: result.error }); results.push({ sourceName: input.names[index], status: 'failed', error: result.error }); continue; }
+      if (!(await gate.spend({ ...operation, description: `Word to PDF: ${input.names[index]}` }))) { results.push({ sourceName: input.names[index], status: 'failed', error: 'Credit balance changed before this file could be charged. Please retry.' }); continue; }
       results.push({ sourceName: input.names[index], status: 'completed', conversionQuality, outputs: result.buffers.map((output) => ({ name: output.name, size: output.buffer.length, base64: Buffer.from(output.buffer).toString('base64') })) });
     }
     return NextResponse.json({ ok: true, completed: results.filter((result) => result.status === 'completed').length, total: results.length, conversionQuality, files: results });

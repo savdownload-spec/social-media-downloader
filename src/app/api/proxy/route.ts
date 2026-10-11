@@ -13,7 +13,7 @@
  */
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
-import { requireCredits, JOB_COST } from '@/lib/credits';
+import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -62,6 +62,9 @@ export async function GET(req: Request) {
   // the resolver captured them, replay them here instead of generic headers.
   const referer   = searchParams.get('ref');
   const cookie    = searchParams.get('cookie');
+  const operationId = searchParams.get('operationId') ?? undefined;
+  const tool = searchParams.get('tool') || 'media-downloader';
+  const platform = searchParams.get('platform') || 'download';
 
   if (!targetUrl) {
     return new NextResponse('Missing url parameter.', { status: 400 });
@@ -75,6 +78,10 @@ export async function GET(req: Request) {
   // Errors stay plain text to match the rest of this route's responses.
   const gate = await requireCredits({ cost: JOB_COST.proxyDownload, plainText: true });
   if (!gate.ok) return gate.response;
+  const operation = {
+    tool, platform, operationId, sourceUrl: targetUrl,
+    idempotencyKey: requestIdempotencyKey(req),
+  };
 
   try {
     const upstream = await fetch(targetUrl, {
@@ -89,11 +96,13 @@ export async function GET(req: Request) {
     });
 
     if (!upstream.ok) {
+      await gate.fail({ ...operation, failureReason: `Upstream responded ${upstream.status}` });
       return new NextResponse(`Upstream responded ${upstream.status}.`, { status: 502 });
     }
 
     const contentLength = parseInt(upstream.headers.get('content-length') || '0', 10);
     if (contentLength > MAX_BYTES) {
+      await gate.fail({ ...operation, failureReason: 'File too large to proxy' });
       return new NextResponse('File too large to proxy.', { status: 413 });
     }
 
@@ -103,7 +112,10 @@ export async function GET(req: Request) {
     const safeFilename = filename.replace(/[/\\?%*:|"<>]/g, '-').slice(0, 200);
 
     // Charged once the upstream has accepted and the body is on its way.
-    if (!(await gate.spend(`Download — ${safeFilename}`))) {
+    if (!(await gate.spend({
+      ...operation,
+      description: `Download — ${safeFilename}`,
+    }))) {
       return new NextResponse('Your balance changed before this could be charged. Please retry.', {
         status: 402,
       });
@@ -121,7 +133,11 @@ export async function GET(req: Request) {
           : {}),
       },
     });
-  } catch {
+  } catch (err) {
+    await gate.fail({
+      ...operation,
+      failureReason: err instanceof Error ? err.message : 'Could not fetch this file',
+    });
     return new NextResponse('Could not fetch this file. Please try again.', { status: 502 });
   }
 }

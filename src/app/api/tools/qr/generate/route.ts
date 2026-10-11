@@ -19,7 +19,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import QRCode from 'qrcode';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
-import { requireCredits, JOB_COST } from '@/lib/credits';
+import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
         type: 'svg',
       } as QRCode.QRCodeToStringOptions);
 
-      if (!(await gate.spend('QR code (SVG)'))) {
+      if (!(await gate.spend({ tool: 'qr-code-generator', platform: 'utility', sourceUrl: 'qr://generated', description: 'QR code (SVG)', idempotencyKey: requestIdempotencyKey(req) }))) {
         return NextResponse.json(
           { error: 'Your balance changed before this could be charged. Please retry.' },
           { status: 402 },
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
         type: 'image/png',
       } as QRCode.QRCodeToDataURLOptions);
 
-      if (!(await gate.spend('QR code (base64)'))) {
+      if (!(await gate.spend({ tool: 'qr-code-generator', platform: 'utility', sourceUrl: 'qr://generated', description: 'QR code (base64)', idempotencyKey: requestIdempotencyKey(req) }))) {
         return NextResponse.json(
           { error: 'Your balance changed before this could be charged. Please retry.' },
           { status: 402 },
@@ -109,7 +109,7 @@ export async function POST(req: Request) {
       type: 'png',
     } as QRCode.QRCodeToBufferOptions);
 
-    if (!(await gate.spend('QR code (PNG)'))) {
+    if (!(await gate.spend({ tool: 'qr-code-generator', platform: 'utility', sourceUrl: 'qr://generated', description: 'QR code (PNG)', idempotencyKey: requestIdempotencyKey(req) }))) {
       return NextResponse.json(
         { error: 'Your balance changed before this could be charged. Please retry.' },
         { status: 402 },
@@ -125,6 +125,10 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'QR generation failed.';
+    await gate.fail({
+      tool: 'qr-code-generator', platform: 'utility', sourceUrl: 'qr://generated',
+      idempotencyKey: requestIdempotencyKey(req), failureReason: msg,
+    });
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

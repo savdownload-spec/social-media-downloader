@@ -120,7 +120,7 @@ export function PdfTool({ slug }: FunctionalToolProps) {
     const uploadedUrls: string[] = [];
     try {
       let requestBody: BodyInit;
-      let requestHeaders: HeadersInit = { 'Content-Type': 'application/json' };
+      let requestHeaders: HeadersInit = { 'Content-Type': 'application/json', 'Idempotency-Key': `pdf:${crypto.randomUUID()}` };
       const uploaded: { url: string; name: string; size: number }[] = [];
       for (const [index, file] of filesToProcess.entries()) {
         setUploadStatus(`Uploading ${index + 1}/${filesToProcess.length}: ${file.name}`);

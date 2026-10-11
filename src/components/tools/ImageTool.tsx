@@ -119,7 +119,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
       }
       if (showFormat) fd.append('format', format);
 
-      const res = await fetch('/api/tools/image', { method: 'POST', body: fd });
+      const res = await fetch('/api/tools/image', { method: 'POST', headers: { 'Idempotency-Key': `image:${crypto.randomUUID()}` }, body: fd });
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));

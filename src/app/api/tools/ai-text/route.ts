@@ -22,7 +22,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
-import { requireCredits, JOB_COST } from '@/lib/credits';
+import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -188,13 +188,26 @@ export async function POST(req: Request) {
     const { system, user } = buildPrompt(slug, topic, context, tone);
     const results = await callCloudflareText(system, user);
 
-    if (!(await gate.spend(`AI text: ${slug}`))) {
+    if (!(await gate.spend({
+      tool: slug,
+      platform: 'ai',
+      sourceUrl: `prompt://${slug}`,
+      description: `AI text: ${slug}`,
+      idempotencyKey: requestIdempotencyKey(req),
+    }))) {
       return NextResponse.json({ ok: false, error: 'Balance changed before charge. Please retry.' }, { status: 402 });
     }
 
     return NextResponse.json({ ok: true, results });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Generation failed. Please try again.';
+    await gate.fail({
+      tool: slug,
+      platform: 'ai',
+      sourceUrl: `prompt://${slug}`,
+      idempotencyKey: requestIdempotencyKey(req),
+      failureReason: message,
+    }).catch(() => null);
     // Do not charge if generation failed — gate.spend was never called
     return NextResponse.json({ ok: false, error: message }, { status: 503 });
   }

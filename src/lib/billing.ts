@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { getPricingConfig } from '@/lib/pricing-server';
 import type { PlanTier } from '@/types/plans';
 
@@ -173,6 +174,7 @@ export async function grantCredits(opts: {
   bucket: 'plan' | 'purchased';
   description?: string;
   externalId?: string;
+  paymentId?: string;
   /** Replace the plan allowance rather than adding to it (allowances don't stack). */
   resetPlanCredits?: boolean;
   planCreditsResetAt?: Date | null;
@@ -185,38 +187,77 @@ export async function grantCredits(opts: {
     bucket,
     description,
     externalId,
+    paymentId,
     resetPlanCredits,
     planCreditsResetAt,
     tier,
   } = opts;
 
   try {
-    await prisma.$transaction(async (tx) => {
-      if (externalId) {
-        // Throws on replay thanks to the unique index — caught below.
+    const granted = await prisma.$transaction(async (tx) => {
+      if (externalId && await tx.creditTransaction.findUnique({ where: { externalId } })) return false;
+
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: { planCredits: true, purchasedCredits: true },
+      });
+      if (!user) throw new Error('Credit recipient not found');
+
+      let planCredits = user.planCredits;
+      let purchasedCredits = user.purchasedCredits;
+      if (bucket === 'plan' && resetPlanCredits && planCredits > 0) {
+        const expired = planCredits;
+        planCredits = 0;
         await tx.creditTransaction.create({
-          data: { userId, amount, kind, bucket, description, externalId },
-        });
-      } else {
-        await tx.creditTransaction.create({
-          data: { userId, amount, kind, bucket, description },
+          data: {
+            userId,
+            amount: -expired,
+            kind: 'expiration',
+            bucket: 'plan',
+            description: 'Unused plan credits expired at allowance reset',
+            idempotencyKey: externalId ? `${externalId}:expiration` : undefined,
+            planDelta: -expired,
+            planBalanceAfter: 0,
+            purchasedBalanceAfter: purchasedCredits,
+            balanceAfter: purchasedCredits,
+          },
         });
       }
 
-      const data: Record<string, unknown> = {};
-      if (bucket === 'purchased') {
-        data.purchasedCredits = { increment: amount };
-      } else if (resetPlanCredits) {
-        data.planCredits = amount;
-      } else {
-        data.planCredits = { increment: amount };
-      }
-      if (planCreditsResetAt !== undefined) data.planCreditsResetAt = planCreditsResetAt;
-      if (tier) data.plan = tier;
+      // Negative revocations are clamped so they cannot create an impossible balance.
+      const available = bucket === 'plan' ? planCredits : purchasedCredits;
+      const appliedAmount = amount < 0 ? -Math.min(Math.abs(amount), available) : amount;
+      if (bucket === 'plan') planCredits = resetPlanCredits ? Math.max(0, appliedAmount) : planCredits + appliedAmount;
+      else purchasedCredits += appliedAmount;
 
-      await tx.user.update({ where: { id: userId }, data });
-    });
-    return { granted: true };
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          planCredits,
+          purchasedCredits,
+          ...(planCreditsResetAt !== undefined ? { planCreditsResetAt } : {}),
+          ...(tier ? { plan: tier } : {}),
+        },
+      });
+      await tx.creditTransaction.create({
+        data: {
+          userId,
+          amount: appliedAmount,
+          kind,
+          bucket,
+          description,
+          externalId,
+          paymentId,
+          planDelta: bucket === 'plan' ? appliedAmount : 0,
+          purchasedDelta: bucket === 'purchased' ? appliedAmount : 0,
+          planBalanceAfter: planCredits,
+          purchasedBalanceAfter: purchasedCredits,
+          balanceAfter: planCredits + purchasedCredits,
+        },
+      });
+      return true;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    return { granted };
   } catch (error) {
     // A duplicate externalId means Stripe redelivered an event we already
     // applied. That is expected and must not be treated as a failure.
@@ -287,22 +328,69 @@ export async function getBillingSummary(userId: string): Promise<BillingSummary 
 
   if (due && selfRenewing) {
     const allowance = TIER_ALLOWANCE[tier];
-    const resetAt =
-      allowance.period === 'day' ? addDays(new Date(), 1) : addMonths(new Date(), 1);
+    const now = new Date();
+    const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const resetAt = new Date(periodStart); resetAt.setUTCDate(resetAt.getUTCDate() + 1);
+    const refillKey = `free-refill:${userId}:${periodStart.toISOString().slice(0, 10)}`;
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: { planCredits: allowance.credits, planCreditsResetAt: resetAt },
-    });
+    return prisma.$transaction(async (tx) => {
+      const current = await tx.user.findUnique({
+        where: { id: userId },
+        select: { plan: true, planCredits: true, purchasedCredits: true, planCreditsResetAt: true, role: true },
+      });
+      if (!current) return null;
+      const stillDue = !current.planCreditsResetAt || current.planCreditsResetAt.getTime() <= Date.now();
+      if (!stillDue || current.plan !== 'FREE') {
+        return {
+          plan: current.plan as PlanTier,
+          planCredits: current.planCredits,
+          purchasedCredits: current.purchasedCredits,
+          totalCredits: current.planCredits + current.purchasedCredits,
+          planCreditsResetAt: current.planCreditsResetAt,
+          role: current.role,
+        };
+      }
 
-    return {
-      plan: tier,
-      planCredits: allowance.credits,
-      purchasedCredits: user.purchasedCredits,
-      totalCredits: allowance.credits + user.purchasedCredits,
-      planCreditsResetAt: resetAt,
-      role: user.role,
-    };
+      if (current.planCredits > 0) {
+        await tx.creditTransaction.create({
+          data: {
+            userId,
+            amount: -current.planCredits,
+            kind: 'expiration',
+            bucket: 'plan',
+            description: 'Unused free daily credits expired',
+            idempotencyKey: `${refillKey}:expiration`,
+            planDelta: -current.planCredits,
+            planBalanceAfter: 0,
+            purchasedBalanceAfter: current.purchasedCredits,
+            balanceAfter: current.purchasedCredits,
+          },
+        });
+      }
+      await tx.user.update({ where: { id: userId }, data: { planCredits: allowance.credits, planCreditsResetAt: resetAt } });
+      await tx.creditTransaction.create({
+        data: {
+          userId,
+          amount: allowance.credits,
+          kind: 'plan_refill',
+          bucket: 'plan',
+          description: 'Free daily credit refill',
+          idempotencyKey: refillKey,
+          planDelta: allowance.credits,
+          planBalanceAfter: allowance.credits,
+          purchasedBalanceAfter: current.purchasedCredits,
+          balanceAfter: allowance.credits + current.purchasedCredits,
+        },
+      });
+      return {
+        plan: tier,
+        planCredits: allowance.credits,
+        purchasedCredits: current.purchasedCredits,
+        totalCredits: allowance.credits + current.purchasedCredits,
+        planCreditsResetAt: resetAt,
+        role: current.role,
+      };
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
   return {
@@ -313,12 +401,6 @@ export async function getBillingSummary(userId: string): Promise<BillingSummary 
     planCreditsResetAt: user.planCreditsResetAt,
     role: user.role,
   };
-}
-
-function addDays(date: Date, days: number): Date {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
 }
 
 export function addMonths(date: Date, months: number): Date {

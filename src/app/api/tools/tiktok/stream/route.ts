@@ -27,7 +27,7 @@ import { tmpdir } from 'os';
 import path from 'path';
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
-import { requireCredits, JOB_COST } from '@/lib/credits';
+import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 import { needsImpersonation, KNOWN_SELECTORS } from '@/lib/ytdlp';
 import { getYtdlpBin, getFfmpegBin } from '@/lib/binaryPaths';
 
@@ -56,6 +56,8 @@ export async function GET(req: Request) {
   const pageUrl      = searchParams.get('url');
   const selector     = searchParams.get('selector');
   const extractAudio = searchParams.get('audio') === '1';
+  const operationId = searchParams.get('operationId') ?? undefined;
+  const tool = searchParams.get('tool') || (extractAudio ? 'tiktok-to-mp3' : 'tiktok-video-downloader');
   const filename      = (searchParams.get('filename') || 'tiktok-download').replace(/[/\\?%*:|"<>]/g, '-').slice(0, 200);
 
   if (!pageUrl || !needsImpersonation(pageUrl)) {
@@ -64,6 +66,10 @@ export async function GET(req: Request) {
   if (!selector || !KNOWN_SELECTORS.has(selector)) {
     return NextResponse.json({ error: 'Invalid format selector.' }, { status: 400 });
   }
+  const operation = {
+    tool, platform: 'tiktok', operationId, sourceUrl: pageUrl,
+    idempotencyKey: requestIdempotencyKey(req),
+  };
 
   const dir = await mkdtemp(path.join(tmpdir(), 'savdown-tiktok-'));
   const videoPath = path.join(dir, `v-${randomUUID()}.mp4`);
@@ -86,12 +92,13 @@ export async function GET(req: Request) {
         : msg.includes('Unable to extract') || msg.includes('rehydration')
         ? 'TikTok temporarily blocked this request. Please try again in a moment.'
         : 'Could not download this video.';
+      await gate.fail({ ...operation, failureReason: friendly });
       return NextResponse.json({ error: friendly }, { status: 502 });
     }
 
     if (!extractAudio) {
       const buffer = await readFile(videoPath);
-      if (!(await gate.spend('TikTok video download'))) {
+      if (!(await gate.spend({ ...operation, description: 'TikTok video download' }))) {
         return NextResponse.json(
           { error: 'Your balance changed before this could be charged. Please retry.' },
           { status: 402 },
@@ -114,12 +121,16 @@ export async function GET(req: Request) {
         '-vn', '-c:a', 'libmp3lame', '-b:a', '192k',
         mp3Path,
       ], { timeout: 30_000, maxBuffer: 10 * 1024 * 1024 });
-    } catch {
+    } catch (err) {
+      await gate.fail({
+        ...operation,
+        failureReason: err instanceof Error ? err.message : 'Could not extract audio',
+      });
       return NextResponse.json({ error: 'Could not extract audio from this video.' }, { status: 502 });
     }
 
     const buffer = await readFile(mp3Path);
-    if (!(await gate.spend('TikTok audio download'))) {
+    if (!(await gate.spend({ ...operation, description: 'TikTok audio download' }))) {
       return NextResponse.json(
         { error: 'Your balance changed before this could be charged. Please retry.' },
         { status: 402 },

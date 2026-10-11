@@ -9,20 +9,24 @@ import {
   StatCard, Skeleton,
 } from './AdminUI';
 
-const KINDS = ['ALL', 'purchase', 'plan_refill', 'plan_grant', 'spend', 'refund', 'adjustment'];
+const KINDS = ['ALL', 'purchase', 'plan_refill', 'plan_grant', 'spend', 'refund', 'adjustment', 'expiration'];
 
 type Tx = {
   id: string; amount: number; kind: string; bucket: string;
   description: string | null; createdAt: string; externalId: string | null;
   user: { id: string; name: string | null; email: string | null } | null;
+  operation: { id: string; tool: string; platform: string; status: string } | null;
+  payment: { id: string; provider: string; providerPaymentId: string } | null;
 };
+
+type Summary = { totalIssued: number; totalSpent: number; totalRefunded: number; purchaseRevoked: number; adjustments: number; expired: number; ledgerNet: number; currentBalance: number; transactionCount: number; historicalReconciliationDelta: number };
 
 export function AdminCreditsClient() {
   const [txs, setTxs]         = useState<Tx[]>([]);
   const [total, setTotal]     = useState(0);
   const [page, setPage]       = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [summary, setSummary] = useState({ totalIssued: 0, totalSpent: 0 });
+  const [summary, setSummary] = useState<Summary>({ totalIssued: 0, totalSpent: 0, totalRefunded: 0, purchaseRevoked: 0, adjustments: 0, expired: 0, ledgerNet: 0, currentBalance: 0, transactionCount: 0, historicalReconciliationDelta: 0 });
   const [search, setSearch]   = useState('');
   const [kind, setKind]       = useState('ALL');
   const [loading, setLoading] = useState(true);
@@ -34,7 +38,7 @@ export function AdminCreditsClient() {
     const p = new URLSearchParams({ page: String(page), pageSize: '25' });
     if (search)       p.set('search', search);
     if (kind !== 'ALL') p.set('kind', kind);
-    fetch(`/api/admin/credits?${p}`)
+    fetch(`/api/admin/credits?${p}`, { cache: 'no-store' })
       .then((r) => r.json())
       .then((d) => {
         if (d.ok) {
@@ -51,8 +55,6 @@ export function AdminCreditsClient() {
 
   if (error) return <AdminPage><PageHeader title="Credits" /><ErrorState message="Failed to load credit data." onRetry={load} /></AdminPage>;
 
-  const netRemaining = summary.totalIssued - summary.totalSpent;
-
   return (
     <AdminPage>
       <PageHeader title="Credits" description="Credit ledger and transaction history" />
@@ -60,8 +62,8 @@ export function AdminCreditsClient() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <StatCard label="Total Issued" value={summary.totalIssued.toLocaleString()} icon={TrendingUp} accent="green" />
         <StatCard label="Total Spent" value={summary.totalSpent.toLocaleString()} icon={TrendingDown} accent="rose" />
-        <StatCard label="Net Remaining" value={netRemaining.toLocaleString()} icon={Coins} accent="purple" />
-        <StatCard label="Transactions" value={total.toLocaleString()} icon={Hash} accent="blue" />
+        <StatCard label="Net Remaining" value={summary.currentBalance.toLocaleString()} icon={Coins} accent="purple" />
+        <StatCard label="Transactions" value={summary.transactionCount.toLocaleString()} icon={Hash} accent="blue" />
       </div>
 
       <FilterBar search={search} onSearch={setSearch} placeholder="Search user or description...">
@@ -84,16 +86,17 @@ export function AdminCreditsClient() {
               <Th>Bucket</Th>
               <Th className="text-right">Amount</Th>
               <Th>Description</Th>
+              <Th>Related</Th>
               <Th className="text-right">Date</Th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               Array.from({ length: 8 }).map((_, i) => (
-                <tr key={i}><td colSpan={6} className="px-4 py-3"><Skeleton className="h-5 w-full" /></td></tr>
+                <tr key={i}><td colSpan={7} className="px-4 py-3"><Skeleton className="h-5 w-full" /></td></tr>
               ))
             ) : txs.length === 0 ? (
-              <tr><td colSpan={6}>
+              <tr><td colSpan={7}>
                 <EmptyState
                   icon={Coins}
                   title="No transactions"
@@ -118,7 +121,8 @@ export function AdminCreditsClient() {
                   </span>
                 </Td>
                 <Td className="text-text-muted max-w-[200px] truncate text-[12px]">{t.description ?? '—'}</Td>
-                <Td className="text-right text-[12px] text-text-muted whitespace-nowrap tabular-nums">{new Date(t.createdAt).toLocaleDateString()}</Td>
+                <Td className="text-[11px] text-text-muted max-w-[180px] truncate">{t.operation ? `${t.operation.tool} · ${t.operation.status}` : t.payment ? `${t.payment.provider} · ${t.payment.providerPaymentId}` : '—'}</Td>
+                <Td className="text-right text-[12px] text-text-muted whitespace-nowrap tabular-nums">{new Date(t.createdAt).toLocaleString('en', { timeZone: 'UTC' })} UTC</Td>
               </tr>
             ))}
           </tbody>

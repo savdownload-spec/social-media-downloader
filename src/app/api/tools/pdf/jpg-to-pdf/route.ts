@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
-import { requireCredits, JOB_COST } from '@/lib/credits';
+import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 import { imagesToPdf } from '@/lib/pdfService';
 import { PDF_MAX_BATCH_BYTES } from '@/lib/pdfConfig';
 import { cleanupPdfUploadRefs, readPdfUploadRefs, type PdfUploadRef } from '@/lib/pdfUpload';
@@ -34,9 +34,10 @@ export async function POST(req: Request) {
     urls = input.urls;
 
     const result = await imagesToPdf(input.buffers, input.names);
-    if (!result.ok) return NextResponse.json({ error: result.error }, { status: 422 });
+    const operation = { tool: 'jpg-to-pdf', platform: 'pdf', sourceUrl: `batch://${input.names.join(',')}`, idempotencyKey: requestIdempotencyKey(req), batchId: requestIdempotencyKey(req) };
+    if (!result.ok) { await gate.fail({ ...operation, failureReason: result.error }); return NextResponse.json({ error: result.error }, { status: 422 }); }
 
-    if (!(await gate.spend('JPG to PDF'))) {
+    if (!(await gate.spend({ ...operation, description: 'JPG to PDF' }))) {
       return NextResponse.json({ error: 'Your balance changed before this could be charged. Please retry.' }, { status: 402 });
     }
 

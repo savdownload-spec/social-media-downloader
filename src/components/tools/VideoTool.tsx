@@ -109,7 +109,7 @@ export function VideoTool({ slug }: FunctionalToolProps) {
       if (showBitrate) fd.append('bitrate', bitrate);
       if (showGifOpts) fd.append('fps', String(fps));
 
-      const res = await fetch('/api/tools/video', { method: 'POST', body: fd });
+      const res = await fetch('/api/tools/video', { method: 'POST', headers: { 'Idempotency-Key': `video:${crypto.randomUUID()}` }, body: fd });
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));

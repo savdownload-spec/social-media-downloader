@@ -48,7 +48,7 @@ export function QrGeneratorTool(_props: FunctionalToolProps) {
     try {
       const res = await fetch('/api/tools/qr/generate', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', 'Idempotency-Key': `qr:${crypto.randomUUID()}` },
         body: JSON.stringify({
           text, format: 'base64', size, margin, color, bgColor, ecLevel: ec,
         }),
@@ -90,7 +90,7 @@ export function QrGeneratorTool(_props: FunctionalToolProps) {
     try {
       const res = await fetch('/api/tools/qr/generate', {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', 'Idempotency-Key': `qr:${crypto.randomUUID()}` },
         body: JSON.stringify({ text, format, size, margin, color, bgColor, ecLevel: ec }),
       });
 

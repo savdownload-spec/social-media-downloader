@@ -56,7 +56,7 @@ async function handleEvent(eventId: string, type: string, payload: Record<string
         : normalized.includes('cancel') ? 'cancelled' : 'pending';
 
   const jsonMetadata = payload as Prisma.InputJsonValue;
-  await prisma.payment.upsert({
+  const payment = await prisma.payment.upsert({
     where: { provider_providerPaymentId: { provider: 'SAFEPAY', providerPaymentId: paymentId } },
     create: { provider: 'SAFEPAY', providerPaymentId: paymentId, userId, itemId, amount, currency, status, reference: stringValue(data.reference ?? data.transaction_id), subscriptionId, metadata: jsonMetadata, paidAt: status === 'succeeded' ? new Date() : null, refundedAt: status === 'refunded' ? new Date() : null },
     update: { userId, itemId, amount, currency, status, reference: stringValue(data.reference ?? data.transaction_id), subscriptionId, metadata: jsonMetadata, ...(status === 'succeeded' ? { paidAt: new Date() } : {}), ...(status === 'refunded' ? { refundedAt: new Date() } : {}) },
@@ -69,14 +69,14 @@ async function handleEvent(eventId: string, type: string, payload: Record<string
       await prisma.subscription.update({ where: { id: subscription.id }, data: { status: inactive ? 'canceled' : 'active', ...(normalized.includes('cancel') ? { cancelAtPeriodEnd: true } : {}) } });
       if (inactive) {
         const existing = await prisma.user.findUnique({ where: { id: subscription.userId }, select: { plan: true } });
-        if (existing?.plan !== 'LIFETIME') await prisma.user.update({ where: { id: subscription.userId }, data: { plan: 'FREE', planCredits: 0, planCreditsResetAt: null } });
+        if (existing?.plan !== 'LIFETIME') await grantCredits({ userId: subscription.userId, amount: 0, kind: 'adjustment', bucket: 'plan', description: 'Safepay subscription ended; plan allowance expired', resetPlanCredits: true, planCreditsResetAt: null, tier: 'FREE' });
       }
     }
   }
 
   if (status === 'refunded' && userId && itemId) {
     const refundedItem = findPurchasable(itemId);
-    if (refundedItem) await grantCredits({ userId, amount: -refundedItem.credits, kind: 'refund', bucket: 'purchased', description: `Refund — ${refundedItem.label}`, externalId: eventId });
+    if (refundedItem) await grantCredits({ userId, amount: -refundedItem.credits, kind: 'refund', bucket: 'purchased', description: `Refund — ${refundedItem.label}`, externalId: eventId, paymentId: payment.id });
     return;
   }
   if (status !== 'succeeded' || !userId || !itemId) return;
@@ -90,11 +90,11 @@ async function handleEvent(eventId: string, type: string, payload: Record<string
       create: { provider: 'SAFEPAY', safepaySubscriptionId: subscriptionId ?? `pending-${paymentId}`, stripeSubscriptionId: `safepay-${subscriptionId ?? paymentId}`, stripePriceId: `safepay:${item.id}`, status: 'active', plan: item.tier ?? 'PRO', interval: item.interval ?? 'month', currentPeriodEnd: periodEnd, user: { connect: { id: userId } } },
       update: { provider: 'SAFEPAY', status: 'active', plan: item.tier ?? 'PRO', interval: item.interval ?? 'month', currentPeriodEnd: periodEnd },
     });
-    await grantCredits({ userId, amount: item.credits, kind: 'plan_refill', bucket: 'plan', description: `${item.label} — credits for this period`, externalId: eventId, resetPlanCredits: true, planCreditsResetAt: periodEnd, tier: (item.tier ?? 'PRO') as PlanTier });
+    await grantCredits({ userId, amount: item.credits, kind: 'plan_refill', bucket: 'plan', description: `${item.label} — credits for this period`, externalId: eventId, paymentId: payment.id, resetPlanCredits: true, planCreditsResetAt: periodEnd, tier: (item.tier ?? 'PRO') as PlanTier });
     return;
   }
 
-  await grantCredits({ userId, amount: item.credits, kind: item.kind === 'lifetime' ? 'plan_grant' : 'purchase', bucket: item.kind === 'lifetime' ? 'purchased' : 'purchased', description: item.label, externalId: eventId, tier: item.kind === 'lifetime' ? 'LIFETIME' : undefined });
+  await grantCredits({ userId, amount: item.credits, kind: item.kind === 'lifetime' ? 'plan_grant' : 'purchase', bucket: 'purchased', description: item.label, externalId: eventId, paymentId: payment.id, tier: item.kind === 'lifetime' ? 'LIFETIME' : undefined });
 }
 
 function stringValue(value: unknown): string | undefined { return typeof value === 'string' && value ? value : undefined; }

@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { toolsBySlug } from '@/config/tools';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
-import { requireCredits } from '@/lib/credits';
+import { recordToolOperation, requestIdempotencyKey, requireCredits } from '@/lib/credits';
 import { cacheJson } from '@/lib/redis';
-import { prisma } from '@/lib/prisma';
 import { sha256 } from '@/lib/utils';
 import { resolveWithYtdlp } from '@/lib/ytdlp';
 import { resolveWithGalleryDl } from '@/lib/gallerydl';
@@ -111,27 +110,43 @@ export async function POST(req: Request) {
     dispatch(tool.slug, body.url),
   );
 
-  /* ── 6. Log download (non-blocking) ── */
-  void prisma.download
-    .create({
-      data: {
-        platform:  tool.platform,
-        tool:      tool.slug,
-        sourceUrl: body.url,
-        status:    result.ok ? 'success' : 'failed',
-        userId:    gate.userId,
-        ipHash:    await sha256(ip),
-        userAgent: req.headers.get('user-agent') ?? null,
-      },
-    })
-    .catch(() => { /* ignore DB errors */ });
+  /* ── 6. Persist one canonical metadata/tool operation ── */
+  const operationId = await recordToolOperation(gate.userId, {
+    platform: tool.platform,
+    tool: tool.slug,
+    sourceUrl: body.url,
+    status: result.ok ? 'success' : 'failed',
+    failureReason: result.ok ? null : result.error,
+    idempotencyKey: requestIdempotencyKey(req),
+    ipHash: await sha256(ip),
+    userAgent: req.headers.get('user-agent'),
+  });
+  const response = result.ok && operationId ? withOperationContext(result, operationId, tool.slug, tool.platform) : result;
 
-  return NextResponse.json(result, {
+  return NextResponse.json(response, {
     headers: {
       'x-ratelimit-limit':      String(rl.limit),
       'x-ratelimit-remaining':  String(rl.remaining),
     },
   });
+}
+
+function withOperationContext(result: Extract<DownloadResult, { ok: true }>, operationId: string, tool: string, platform: string): DownloadResult {
+  return {
+    ...result,
+    formats: result.formats.map((format) => {
+      try {
+        const parsed = new URL(format.url, 'https://savdown.local');
+        if (parsed.origin !== 'https://savdown.local') return format;
+        parsed.searchParams.set('operationId', operationId);
+        parsed.searchParams.set('tool', tool);
+        parsed.searchParams.set('platform', platform);
+        return { ...format, url: `${parsed.pathname}${parsed.search}${parsed.hash}` };
+      } catch {
+        return format;
+      }
+    }),
+  };
 }
 
 /**

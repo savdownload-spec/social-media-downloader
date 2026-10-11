@@ -1,24 +1,22 @@
-import { prisma } from '@/lib/prisma';
-import { spendCredits } from '@/lib/credits';
+import {
+  refundCreditSpend,
+  spendCreditsDetailed,
+  type CreditSpend,
+  type ToolOperationInput,
+} from '@/lib/credits';
 
-export type AiCreditReservation = {
-  amount: number;
-  planCredits: number;
-  purchasedCredits: number;
-};
+export type AiCreditReservation = CreditSpend;
 
-export async function reserveAiCredits(userId: string, amount: number): Promise<AiCreditReservation | null> {
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { planCredits: true, purchasedCredits: true } });
-  if (!user) return null;
-  const planCredits = Math.min(user.planCredits, amount);
-  const purchasedCredits = amount - planCredits;
-  const reserved = await spendCredits(userId, amount, 'AI image generation reservation');
-  return reserved ? { amount, planCredits, purchasedCredits } : null;
+/** Reserve and link credits to one canonical generation operation. */
+export function reserveAiCredits(
+  userId: string,
+  amount: number,
+  operation: ToolOperationInput,
+): Promise<AiCreditReservation | null> {
+  return spendCreditsDetailed(userId, amount, operation, 'pending');
 }
 
-export async function releaseAiCredits(userId: string, reservation: AiCreditReservation, reason: string) {
-  await prisma.$transaction([
-    prisma.user.update({ where: { id: userId }, data: { planCredits: { increment: reservation.planCredits }, purchasedCredits: { increment: reservation.purchasedCredits } } }),
-    prisma.creditTransaction.create({ data: { userId, amount: reservation.amount, kind: 'refund', bucket: reservation.planCredits > 0 ? 'plan' : 'purchased', description: reason } }),
-  ]);
+/** Exactly one refund can be created for a reservation, even on retries. */
+export function releaseAiCredits(userId: string, reservation: AiCreditReservation, reason: string) {
+  return refundCreditSpend(userId, reservation.transactionId, reason, true);
 }

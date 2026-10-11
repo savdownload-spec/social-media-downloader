@@ -34,7 +34,7 @@ function statusCopy(status: GenerationStatus) {
   }
 }
 
-export function AIImageGenerator() {
+export function AIImageGenerator({ slug = 'ai-image-generator' }: { slug?: string }) {
   const { requireAuth, SignInModal } = useSignInGuard();
   const [prompt, setPrompt] = useState('');
   const [ratio, setRatio] = useState('1:1');
@@ -71,7 +71,7 @@ export function AIImageGenerator() {
     await new Promise((resolve) => setTimeout(resolve, 180));
     setStatus('generating');
     try {
-      const response = await fetch('/api/tools/ai-image-generator', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: prompt.trim(), aspectRatio: ratio, quality, numberOfImages: count }) });
+      const response = await fetch('/api/tools/ai-image-generator', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': `ai-image:${crypto.randomUUID()}` }, body: JSON.stringify({ tool: slug, prompt: prompt.trim(), aspectRatio: ratio, quality, numberOfImages: count }) });
       const data = await response.json();
       if (!response.ok) {
         if (response.status === 402) setStatus('insufficient_credits');
