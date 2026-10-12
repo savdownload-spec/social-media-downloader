@@ -65,8 +65,8 @@ export default function AIImageGeneratorPage() {
               <span className="inline-flex items-center gap-1.5 rounded-full bg-accent-light px-3 py-1 text-xs font-semibold text-accent-hover"><Zap className="h-3.5 w-3.5" /> Free tool</span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white/70 px-3 py-1 text-xs font-semibold text-text-muted dark:bg-card"><ShieldCheck className="h-3.5 w-3.5" /> Secure generation</span>
             </div>
-            <h1 className="mt-6 text-4xl font-bold tracking-[-0.04em] text-text md:text-6xl">AI Image Generator</h1>
-            <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-text-muted">Create images from your ideas. Turn a clear text prompt into an original visual, then keep the result inside SavDown.</p>
+            <h1 className="mt-6 type-page-title text-text">AI Image Generator</h1>
+            <p className="mx-auto mt-5 max-w-2xl type-body-large text-text-muted">Create images from your ideas. Turn a clear text prompt into an original visual, then keep the result inside SavDown.</p>
           </div>
           <div className="mx-auto mt-10 max-w-4xl"><AIImageGenerator /></div>
         </Container>

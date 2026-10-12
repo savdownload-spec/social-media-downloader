@@ -79,10 +79,10 @@ export function ToolPageView({ tool }: { tool: Tool }) {
               </span>
               <ShareButton url={url} />
             </div>
-            <h1 className="mt-5 text-4xl md:text-5xl lg:text-6xl font-bold tracking-[-0.03em] text-text leading-[1.05]">
+            <h1 className="mt-5 type-page-title text-text">
               {tool.headline}
             </h1>
-            <p className="mt-5 text-lg text-text-muted leading-relaxed">
+            <p className="mt-5 type-body-large text-text-muted">
               {tool.subheadline}
             </p>
           </div>

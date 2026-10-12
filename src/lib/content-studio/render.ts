@@ -38,6 +38,10 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedIframeHostnames: ['www.youtube.com', 'www.youtube-nocookie.com'],
   allowedSchemes: ['http', 'https', 'mailto'],
   transformTags: {
+    // Legacy editor documents may contain h1 nodes. The article page already
+    // renders its title as h1, so preserve the text while normalizing the
+    // nested content to the next valid level.
+    h1: (tagName, attribs) => ({ tagName: 'h2', attribs }),
     a: (tagName, attribs) => {
       // Links opening in a new tab must never expose window.opener; keep any
       // stored rel tokens (nofollow etc.) rather than overwriting them.

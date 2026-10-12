@@ -102,7 +102,9 @@ function renderContent(content: string, headings: BlogHeading[]): ReactNode[] {
       else blocks.push(<h2 id={heading?.id} key={key++}>{line.slice(3)}</h2>);
       continue;
     }
-    if (line.startsWith('# ')) { flushParagraph(); flushLists(); blocks.push(<h1 key={key++}>{line.slice(2)}</h1>); continue; }
+    // The route shell owns the article-title h1. Treat a legacy Markdown h1
+    // as an article section instead of emitting a second page-level heading.
+    if (line.startsWith('# ')) { flushParagraph(); flushLists(); blocks.push(<h2 key={key++}>{line.slice(2)}</h2>); continue; }
     if (line.startsWith('> ')) { flushParagraph(); flushLists(); blocks.push(<blockquote key={key++} dangerouslySetInnerHTML={{ __html: inline(line.slice(2)) }} />); continue; }
     if (/^\d+\.\s+/.test(line)) { flushParagraph(); list = []; orderedList.push(line.replace(/^\d+\.\s+/, '')); continue; }
     if (line.startsWith('- ')) { flushParagraph(); orderedList = []; list.push(line.slice(2)); continue; }

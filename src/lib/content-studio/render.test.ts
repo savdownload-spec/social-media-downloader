@@ -9,11 +9,13 @@ const p = (text: string, attrs?: Record<string, unknown>, marks?: TiptapNode['ma
 });
 
 describe('renderContentJsonToHtml', () => {
-  it('renders all six heading levels semantically with ids', () => {
+  it('normalizes a legacy h1 and preserves article heading levels with ids', () => {
     const html = renderContentJsonToHtml(doc(
       [1, 2, 3, 4, 5, 6].map((level) => ({ type: 'heading', attrs: { level }, content: [{ type: 'text', text: `Title ${level}` }] })),
     ));
-    for (const level of [1, 2, 3, 4, 5, 6]) {
+    expect(html).not.toContain('<h1');
+    expect(html).toContain('<h2 id="title-1">Title 1</h2>');
+    for (const level of [2, 3, 4, 5, 6]) {
       expect(html).toContain(`<h${level} id="title-${level}">Title ${level}</h${level}>`);
     }
   });

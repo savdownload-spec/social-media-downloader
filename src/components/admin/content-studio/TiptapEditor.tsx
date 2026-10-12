@@ -11,7 +11,6 @@ import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough, Code, Quote,
   List, ListOrdered, Link as LinkIcon, Unlink, ImageIcon, Table as TableIcon,
   Undo2, Redo2, Minus, Youtube as YoutubeIcon, Type,
-  Heading1, Heading2, Heading3, Heading4, Heading5, Heading6,
   Info, AlertTriangle, CheckCircle2, Lightbulb, Loader2,
   AlignLeft, AlignCenter, AlignRight, AlignJustify, Eraser,
   Search, X, ChevronDown, SquareCode, Pencil,
@@ -640,12 +639,12 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
             trigger={<span className="inline-flex items-center gap-1.5 text-[12px] font-medium min-w-[7.5rem]"><Type className="w-3.5 h-3.5 opacity-70" />{blockLabel}</span>}
             items={[
               { key: 'p', label: 'Paragraph', active: !blockLevel, icon: <Type className="w-3.5 h-3.5" />, onClick: () => editor.chain().focus().setParagraph().run() },
-              ...[1, 2, 3, 4, 5, 6].map((level) => ({
+              ...[2, 3, 4, 5, 6].map((level) => ({
                 key: `h${level}`,
                 label: `Heading ${level}`,
                 active: blockLevel === level,
                 icon: <span className="w-3.5 h-3.5 inline-flex items-center justify-center text-[9px] font-bold">H{level}</span>,
-                onClick: () => editor.chain().focus().toggleHeading({ level: level as 1 | 2 | 3 | 4 | 5 | 6 }).run(),
+                onClick: () => editor.chain().focus().toggleHeading({ level: level as 2 | 3 | 4 | 5 | 6 }).run(),
               })),
             ]}
           />

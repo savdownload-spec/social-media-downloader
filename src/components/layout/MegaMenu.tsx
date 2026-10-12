@@ -227,7 +227,7 @@ function PricingPanel({ close }: { close: () => void }) {
       <div className="flex items-end justify-between mb-6">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{t('nav.pricing')}</p>
-          <h3 className="text-xl font-bold text-text">{t('megaMenu.pricingTitle') || 'Simple, transparent pricing'}</h3>
+          <p className="text-xl font-bold text-text">{t('megaMenu.pricingTitle') || 'Simple, transparent pricing'}</p>
           <p className="text-sm text-text-muted mt-1">{t('megaMenu.pricingSubtitle') || 'Start free. Upgrade when you need more.'}</p>
         </div>
         <Link href="/pricing" onClick={close} className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline shrink-0 mb-1">
@@ -309,7 +309,7 @@ function BlogPanel({ close }: { close: () => void }) {
       <div className="flex items-end justify-between mb-5">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{t('nav.blog')}</p>
-          <h3 className="text-xl font-bold text-text">{t('megaMenu.latestArticlesTitle')}</h3>
+          <p className="text-xl font-bold text-text">{t('megaMenu.latestArticlesTitle')}</p>
         </div>
         <Link href="/blog" onClick={close} className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline shrink-0 mb-1">
           {t('megaMenu.allArticles')} <ArrowRight className="w-3.5 h-3.5" />
@@ -388,7 +388,7 @@ function ResourcesPanel({ close }: { close: () => void }) {
     <div className="p-7">
       <div className="mb-6">
         <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{t('megaMenu.resourcesEyebrow')}</p>
-        <h3 className="text-xl font-bold text-text">{t('megaMenu.resourcesTitle')}</h3>
+        <p className="text-xl font-bold text-text">{t('megaMenu.resourcesTitle')}</p>
         <p className="text-sm text-text-muted mt-1">{t('megaMenu.resourcesSubtitle')}</p>
       </div>
       <div className="grid grid-cols-3 gap-3">
@@ -451,7 +451,7 @@ function AboutPanel({ close }: { close: () => void }) {
     <div className="p-7">
       <div className="mb-6">
         <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{t('megaMenu.aboutEyebrow')}</p>
-        <h3 className="text-xl font-bold text-text">{t('megaMenu.aboutTitle')}</h3>
+        <p className="text-xl font-bold text-text">{t('megaMenu.aboutTitle')}</p>
         <p className="text-sm text-text-muted mt-1">{t('megaMenu.aboutSubtitle')}</p>
       </div>
       <div className="grid grid-cols-3 gap-3">

@@ -43,10 +43,10 @@ export function InfoPageHero({
           <p className="text-sm font-semibold uppercase tracking-wider text-gradient inline-block mb-3">
             {eyebrow}
           </p>
-          <h1 className="text-4xl md:text-6xl font-bold tracking-[-0.03em] text-text leading-[1.05]">
+          <h1 className="type-page-title text-text">
             {title}
           </h1>
-          <p className="mt-5 text-lg text-text-muted leading-relaxed">
+          <p className="mt-5 type-body-large text-text-muted">
             {description}
           </p>
           {meta && <div className="mt-4 text-sm text-text-subtle">{meta}</div>}

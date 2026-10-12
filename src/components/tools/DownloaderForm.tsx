@@ -246,9 +246,9 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-text leading-snug line-clamp-2">
+                <p className="font-semibold text-text leading-snug line-clamp-2">
                   {result.title}
-                </h3>
+                </p>
                 {result.author && (
                   <p className="mt-1 text-sm text-text-muted">by {result.author}</p>
                 )}

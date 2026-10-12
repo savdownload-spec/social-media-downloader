@@ -74,11 +74,11 @@ export function Hero() {
             {t('hero.trusted')}
           </span>
 
-          <h1 className="mt-6 text-4xl md:text-6xl lg:text-7xl font-bold tracking-[-0.03em] text-text leading-[1.03]">
+          <h1 className="mt-6 type-display text-text">
             {t('hero.title')}
           </h1>
 
-          <p className="mt-6 text-lg text-text-muted max-w-xl mx-auto leading-relaxed">
+          <p className="mt-6 type-body-large text-text-muted max-w-xl mx-auto">
             {t('hero.subtitle')}
           </p>
 

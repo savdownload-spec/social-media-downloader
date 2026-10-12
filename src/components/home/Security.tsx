@@ -36,7 +36,7 @@ export function Security() {
                 <span className="h-px w-8 bg-primary/60" />
                 {t('security.eyebrow')}
               </div>
-              <h2 className="max-w-xl text-4xl font-bold leading-[1.05] tracking-[-0.03em] text-text md:text-6xl">
+              <h2 className="max-w-xl type-section-title text-text">
                 Your Content <span className="text-gradient">Stays Yours.</span>
               </h2>
               <p className="mt-7 max-w-lg text-base leading-7 text-text-muted">
@@ -93,7 +93,7 @@ export function Security() {
                   </div>
                   <div>
                     <p className="text-xs text-ink-subtle">Privacy status</p>
-                    <h3 className="mt-1 text-2xl font-bold tracking-tight">Protected</h3>
+                    <p className="mt-1 text-2xl font-bold tracking-tight">Protected</p>
                   </div>
                 </div>
                 <div className="relative mt-7 flex items-center gap-4 border-y border-white/10 py-4">

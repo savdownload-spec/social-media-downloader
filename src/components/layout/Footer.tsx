@@ -147,9 +147,9 @@ export function Footer() {
               }
               return (
                 <div key={heading}>
-                  <h3 className="text-[11px] font-bold uppercase tracking-wider text-white">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-white">
                     {translatedHeading}
-                  </h3>
+                  </p>
                   <ul className="mt-4 space-y-2.5">
                     {links.map((link) => {
                       const translatedLabel = link.label;

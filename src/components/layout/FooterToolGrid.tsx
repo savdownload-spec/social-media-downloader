@@ -60,9 +60,9 @@ export function FooterToolGrid() {
           <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-1">
             The complete toolkit
           </p>
-          <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">
+          <p className="text-xl md:text-2xl font-bold text-white tracking-tight">
             Browse the full toolkit
-          </h2>
+          </p>
         </div>
         <Link
           href="/tools"
@@ -81,14 +81,14 @@ export function FooterToolGrid() {
           const panelId = `footer-cat-${group.toLowerCase()}`;
           return (
             <div key={group} className="min-w-0">
-              <h3 className="text-[11px] font-bold uppercase tracking-wider text-white">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-white">
                 <Link
                   href={`/tools#${group.toLowerCase()}`}
                   className="hover:text-gradient-light transition-colors"
                 >
                   {label}
                 </Link>
-              </h3>
+              </p>
               <ul className="mt-4 space-y-2.5">
                 {visibleTools.map((tool) => (
                   <li key={tool.slug}>

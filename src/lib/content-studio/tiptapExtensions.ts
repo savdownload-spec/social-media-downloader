@@ -28,6 +28,9 @@ import { FigureImageNode } from './nodes/figureImageNode';
 export function getBaseExtensions(): AnyExtension[] {
   return [
     StarterKit.configure({
+      // Keep H1 in the shared schema so legacy documents remain readable.
+      // The editor UI exposes H2-H6 only, and the public renderer normalizes
+      // any stored legacy H1 to H2 beneath the article-title H1.
       heading: { levels: [1, 2, 3, 4, 5, 6] },
       horizontalRule: {},
       link: {

@@ -89,7 +89,7 @@ export function SectionHeading({
       )}
       <h2
         className={cn(
-          'text-3xl md:text-4xl font-bold tracking-tight',
+          'type-section-title',
           dark ? 'text-white' : 'text-text',
         )}
       >
@@ -98,7 +98,7 @@ export function SectionHeading({
       {description && (
         <p
           className={cn(
-            'mt-4 text-base md:text-lg leading-relaxed',
+            'mt-4 type-body-large',
             align === 'center' ? 'mx-auto max-w-xl' : '',
             dark ? 'text-ink-muted' : 'text-text-muted',
           )}

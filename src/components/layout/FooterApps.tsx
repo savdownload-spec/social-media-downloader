@@ -45,7 +45,7 @@ export function FooterApps() {
 
   return (
     <div>
-      <h3 className="text-[11px] font-bold uppercase tracking-wider text-white">Our Apps</h3>
+      <p className="text-[11px] font-bold uppercase tracking-wider text-white">Our Apps</p>
       <div className="mt-4 flex flex-col items-start gap-2">
         {apps.map((app) => {
           const Icon = app.icon;
