@@ -17,6 +17,7 @@
 import type { ComponentType } from 'react';
 import { ColorPickerTool } from '@/components/tools/ColorPickerTool';
 import { GradientGeneratorTool } from '@/components/tools/GradientGeneratorTool';
+import { ImageCompressorTool } from '@/components/tools/ImageCompressorTool';
 import { ImageTool } from '@/components/tools/ImageTool';
 import { VideoTool } from '@/components/tools/VideoTool';
 import { PdfTool } from '@/components/tools/PdfTool';
@@ -45,7 +46,7 @@ export type FunctionalToolEntry = {
  */
 const functionalTools: Record<string, FunctionalToolEntry> = {
   /* ── Image tools (Sharp) ─────────────────────────────────────── */
-  'image-compressor':  { Component: ImageTool },
+  'image-compressor':  { Component: ImageCompressorTool },
   'image-resizer':     { Component: ImageTool },
   'image-converter':   { Component: ImageTool },
   'image-enhancer':    { Component: ImageTool },

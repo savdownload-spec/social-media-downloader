@@ -22,6 +22,7 @@
     "src/app/api/tools/pdf/upload/route.ts":     { "maxDuration": 30 },
     "src/app/api/tools/pdf/cleanup/route.ts":    { "maxDuration": 60 },
     "src/app/api/tools/image/route.ts":          { "maxDuration": 30 },
+    "src/app/api/tools/image/compress-batch/route.ts": { "maxDuration": 60 },
     "src/app/api/tools/video/route.ts":          { "maxDuration": 120 },
     "src/app/api/tools/ai-image-generator/route.ts": { "maxDuration": 120 },
     "src/app/api/tools/ai-text/route.ts":            { "maxDuration": 30 },

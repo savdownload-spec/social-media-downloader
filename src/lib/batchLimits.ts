@@ -56,6 +56,16 @@ export type ToolBatchLimits = {
  * own entry so they can diverge independently in the future or via Admin.
  */
 const DEFAULTS: Record<string, ToolBatchLimits> = {
+  /* ── Image tools ────────────────────────────────────────────────────────── */
+  'image-compressor': {
+    free: 5,
+    pro: 20,
+    max: 50,
+    lifetime: 50,
+    maxFileBytes: 25 * 1024 * 1024,   // 25 MB per image
+    maxBatchBytes: 100 * 1024 * 1024, // 100 MB total
+  },
+
   /* ── PDF tools ─────────────────────────────────────────────────────────── */
   // Merge: needs ≥2 to be useful; Free can do small booklets, Pro handles
   // larger document collections.
