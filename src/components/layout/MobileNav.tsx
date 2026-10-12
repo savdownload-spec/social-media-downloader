@@ -10,14 +10,16 @@ import {
 import { toolGroups, GROUP_META_MOBILE } from './MobileNavMeta';
 import { catalog } from '@/config/catalog';
 import { blogPostsByDate } from '@/config/blog';
-import { useTranslation } from '@/i18n';
 import { usePricing } from '@/components/pricing/PricingProvider';
 import { derivePlan, deriveLifetime } from '@/config/pricing';
 
 type SectionId = 'tools' | 'pricing' | 'blog' | 'resources' | 'about';
 const SECTION_IDS: SectionId[] = ['tools', 'pricing', 'blog', 'resources', 'about'];
+const SECTION_LABELS: Record<SectionId, string> = {
+  tools: 'Tools', pricing: 'Pricing', blog: 'Blog', resources: 'Resources', about: 'About',
+};
 
-/* static icon/color config, labels come from i18n */
+/* Static mobile navigation configuration. */
 const RESOURCE_CONFIG = [
   { key: 'faq',     icon: HelpCircle, href: '/faq',     color: 'text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-500/15'   },
   { key: 'blog',    icon: BookOpen,   href: '/blog',    color: 'text-sky-600 bg-sky-50 dark:text-sky-400 dark:bg-sky-500/15'         },
@@ -43,9 +45,7 @@ const PRICING_TILE_STYLE: Record<string, { icon: typeof Zap; color: string }> = 
   lifetime: { icon: Coins,    color: 'text-amber-600 bg-amber-50 dark:text-warning dark:bg-amber-500/15' },
 };
 
-export function MobileNav({ close }: { close: () => void }) {
-  const t = useTranslation();
-  const config = usePricing();
+export function MobileNav({ close }: { close: () => void }) {  const config = usePricing();
   const [openSection, setOpenSection] = useState<SectionId | null>(null);
   const latest3 = blogPostsByDate.slice(0, 3);
 
@@ -75,7 +75,7 @@ export function MobileNav({ close }: { close: () => void }) {
     <div className="flex flex-col gap-0.5 py-2">
       {SECTION_IDS.map((id) => {
         const isOpen = openSection === id;
-        const label = t(`mobileNav.sections.${id}`) as string;
+        const label = SECTION_LABELS[id];
 
         return (
           <div key={id}>
@@ -106,7 +106,7 @@ export function MobileNav({ close }: { close: () => void }) {
                         const tools = catalog.filter((tool) => tool.group === group).slice(0, 4);
                         const meta = GROUP_META_MOBILE[group];
                         const GIcon = meta.icon;
-                        const groupLabel = (t(`megaMenu.groupMeta.${group}`) as unknown as { label: string })?.label ?? meta.label;
+                        const groupLabel = meta.label;
                         return (
                           <div key={group}>
                             <div className="flex items-center gap-2 px-2 mb-1.5">
@@ -118,7 +118,6 @@ export function MobileNav({ close }: { close: () => void }) {
                             <div className="grid grid-cols-2 gap-1">
                               {tools.map((tool) => {
                                 const TIcon = tool.icon;
-                                const toolT = t(`catalog.tools.${tool.slug}`) as unknown as { name: string } | undefined;
                                 return (
                                   <Link
                                     key={tool.slug}
@@ -130,7 +129,7 @@ export function MobileNav({ close }: { close: () => void }) {
                                       <TIcon className="w-3 h-3" />
                                     </span>
                                     <span className="truncate text-xs font-medium">
-                                      {(toolT?.name ?? tool.name).replace(/Downloader|Converter|Generator/g, '').trim()}
+                                      {tool.name.replace(/Downloader|Converter|Generator/g, '').trim()}
                                     </span>
                                   </Link>
                                 );
@@ -144,7 +143,7 @@ export function MobileNav({ close }: { close: () => void }) {
                         onClick={close}
                         className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-primary-light text-primary text-sm font-semibold hover:bg-primary-light transition-all active:scale-[0.98]"
                       >
-                        <ArrowRight className="w-4 h-4" /> {t('mobileNav.viewAllTools')}
+                        <ArrowRight className="w-4 h-4" /> {"View All Tools"}
                       </Link>
                     </div>
                   )}
@@ -179,7 +178,7 @@ export function MobileNav({ close }: { close: () => void }) {
                         );
                       })}
                       <Link href="/pricing" onClick={close} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-primary-light text-primary text-sm font-semibold hover:bg-primary-light transition-all active:scale-[0.98]">
-                        <ArrowRight className="w-4 h-4" /> {t('mobileNav.fullPricingDetails') || 'Full pricing details'}
+                        <ArrowRight className="w-4 h-4" /> {"Full Pricing Details"}
                       </Link>
                     </div>
                   )}
@@ -204,7 +203,7 @@ export function MobileNav({ close }: { close: () => void }) {
                         </Link>
                       ))}
                       <Link href="/blog" onClick={close} className="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl bg-primary-light text-primary text-sm font-semibold hover:bg-primary-light transition-all active:scale-[0.98]">
-                        <ArrowRight className="w-4 h-4" /> {t('mobileNav.viewAllArticles')}
+                        <ArrowRight className="w-4 h-4" /> {"View All Articles"}
                       </Link>
                     </div>
                   )}
@@ -217,7 +216,7 @@ export function MobileNav({ close }: { close: () => void }) {
                           <span className={`w-7 h-7 rounded-lg shrink-0 flex items-center justify-center ${color}`}>
                             <RIcon className="w-3.5 h-3.5" />
                           </span>
-                          <span className="text-sm font-medium text-text">{t(`mobileNav.resourceLinks.${key}`)}</span>
+                          <span className="text-sm font-medium text-text">{({ faq: 'FAQ', blog: 'Blog & Guides', search: 'Search Tools', privacy: 'Privacy Policy', terms: 'Terms', cookies: 'Cookies' } as const)[key]}</span>
                         </Link>
                       ))}
                     </div>
@@ -231,7 +230,7 @@ export function MobileNav({ close }: { close: () => void }) {
                           <span className={`w-7 h-7 rounded-lg shrink-0 flex items-center justify-center ${color}`}>
                             <AIcon className="w-3.5 h-3.5" />
                           </span>
-                          <span className="text-sm font-medium text-text">{t(`mobileNav.aboutLinks.${key}`)}</span>
+                          <span className="text-sm font-medium text-text">{({ about: 'About Us', contact: 'Contact', pricing: 'Pricing', careers: 'Careers', affiliates: 'Affiliates' } as const)[key]}</span>
                         </Link>
                       ))}
                     </div>
@@ -250,7 +249,7 @@ export function MobileNav({ close }: { close: () => void }) {
           onClick={close}
           className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-gradient-brand bg-[length:200%_200%] text-white text-sm font-semibold shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
         >
-          <Zap className="w-4 h-4" /> {t('mobileNav.getStartedFree')}
+          <Zap className="w-4 h-4" /> {"Get Started, It's Free"}
         </Link>
       </div>
     </div>

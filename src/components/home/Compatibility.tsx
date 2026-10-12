@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { Section, SectionHeading } from '@/components/layout/Section';
 import { Reveal } from '@/components/ui/Reveal';
-import { useTranslation } from '@/i18n';
 
 /**
  * Card structure is fixed; only the heading of each card is translated. The
@@ -32,41 +31,30 @@ const compatibilityCards = [
 
 const browserIcons = [Chrome, Compass, Globe2, Globe2, Globe2, Globe2];
 
-const benefitsFallback = [
-  'No software required',
-  'Works in modern browsers',
-  'Mobile friendly',
-  'Desktop friendly',
-  'Fast browser-based experience',
-];
-
 export function Compatibility() {
-  const t = useTranslation();
-
-  const benefits = (t('compatibility.benefits') as string[] | undefined) ?? benefitsFallback;
+  const benefits = ['No software required', 'Works in modern browsers', 'Mobile friendly', 'Desktop friendly', 'Fast browser-based experience'];
 
   return (
     <Section variant="default" id="compatibility">
       <SectionHeading
-        eyebrow={t('compatibility.eyebrow') || 'Works Everywhere'}
+        eyebrow={"Works Everywhere"}
         title={
           <>
-            {t('compatibility.title') || 'One Tool. Every Device.'}{' '}
+            {"One Tool. Every Device."}{' '}
             <span className="text-gradient">
-              {t('compatibility.titleAccent') || 'Every Browser.'}
+              {"Every Browser."}
             </span>
           </>
         }
         description={
-          t('compatibility.description') ||
-          'Use SavDown wherever you are. No special software required, just open your browser and download.'
+          "Use SavDown wherever you are. No special software required, just open your browser and download."
         }
       />
 
       <div className="mt-14 grid grid-cols-1 gap-5 md:grid-cols-3">
         {compatibilityCards.map((card, index) => {
           const Icon = card.icon;
-          const title = t(`compatibility.cardTitles.${card.id}`) || card.fallback;
+          const title = card.fallback;
           return (
             <Reveal key={card.id} delay={index * 0.08}>
               <article className="group h-full rounded-2xl border border-border bg-white dark:bg-card p-6 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg">
@@ -75,7 +63,7 @@ export function Compatibility() {
                     <Icon className="h-6 w-6" strokeWidth={1.8} />
                   </div>
                   <span className="rounded-full border border-primary/15 bg-primary-light px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
-                    {t('compatibility.ready') || 'Ready'}
+                    {"Ready"}
                   </span>
                 </div>
                 <h3 className="mt-6 text-lg font-bold text-text">{title}</h3>
@@ -107,16 +95,15 @@ export function Compatibility() {
               </div>
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
-                  {t('compatibility.statusEyebrow') || 'Compatibility Status'}
+                  {"Compatibility Status"}
                 </p>
                 <p className="mt-1 text-sm font-semibold text-text">
-                  {t('compatibility.statusTitle') || 'Browser-Based By Design'}
+                  {"Browser-Based By Design"}
                 </p>
               </div>
             </div>
             <p className="mt-5 max-w-xl text-sm leading-6 text-text-muted">
-              {t('compatibility.statusBody') ||
-                'Nothing to install. Nothing complicated. Just open SavDown and get started.'}
+              {"Nothing to install. Nothing complicated. Just open SavDown and get started."}
             </p>
           </div>
           <ul className="grid gap-3 sm:grid-cols-2">
@@ -142,7 +129,7 @@ export function Compatibility() {
         className="mt-6 flex items-center justify-center gap-2 text-xs font-medium text-text-subtle"
       >
         <Zap className="h-3.5 w-3.5 text-primary" />
-        {t('compatibility.footnote') || 'No downloads. No setup. Just a fast, simple experience.'}
+        {"No downloads. No setup. Just a fast, simple experience."}
       </Reveal>
     </Section>
   );

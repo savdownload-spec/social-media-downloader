@@ -9,7 +9,6 @@ import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { Container } from './Container';
 import { FooterToolGrid } from './FooterToolGrid';
 import { FooterApps } from './FooterApps';
-import { useTranslation } from '@/i18n';
 
 function PinterestIcon({ className }: SVGProps<SVGSVGElement>) {
   return (
@@ -37,8 +36,6 @@ const socialIcons = {
 } as const;
 
 export function Footer() {
-  const t = useTranslation();
-
   return (
     <footer className="relative bg-ink text-white overflow-hidden">
       {/* subtle brand glow + grid for depth */}
@@ -53,13 +50,13 @@ export function Footer() {
           <div className="lg:col-span-5">
             <Logo variant="light" height={32} />
             <p className="mt-4 text-sm text-ink-muted leading-relaxed max-w-sm">
-              {t('footer.description')}
+              {"SavDown is the fast, private way to save videos, reels, and thumbnails from the platforms you use every day. No watermarks, no signup, no clutter."}
             </p>
 
             {/* Social media row */}
             <div className="mt-6">
               <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
-                {t('common.followUs')}
+                {"Follow us"}
               </p>
               <div className="flex flex-wrap items-center gap-2.5">
                 {siteConfig.social.map((s) => {
@@ -85,22 +82,22 @@ export function Footer() {
           {/* Contact + language */}
           <div className="lg:col-span-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-4">
-              {t('footer.stayInLoop') || 'Stay In The Loop'}
+              {"Stay In The Loop"}
             </p>
             <p className="text-sm text-ink-muted leading-relaxed mb-5">
-              {t('footer.stayInLoopDesc') || 'We read every message. Reach us anytime for support, partnerships, or just to say hi.'}
+              {"Get notified about new tools and updates."}
             </p>
             <Link
               href="/contact"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
             >
               <Mail className="w-4 h-4" />
-              {t('nav.contact')}
+              {"Contact"}
             </Link>
             <div className="mt-6 flex flex-wrap gap-x-10 gap-y-6">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
-                  {t('common.language')}
+                  {"Language"}
                 </p>
                 <LanguageSelector variant="footer" />
               </div>
@@ -116,10 +113,10 @@ export function Footer() {
           {/* Brand statement */}
           <div className="lg:col-span-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-4">
-              {t('footer.whySavDown') || 'Why SavDown?'}
+              {"Why SavDown?"}
             </p>
             <ul className="space-y-3">
-              {[t('footer.featureUnlimited'), t('footer.featureNoSignup'), t('footer.featureSecure')].map((item) => (
+              {["Unlimited Downloads", "No Signup Required", "Completely Secure"].map((item) => (
                 <li key={item} className="flex items-center gap-2.5 text-sm text-ink-muted">
                   <span className="flex-shrink-0 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center">
                     <Check className="w-3 h-3 text-white" />
@@ -139,16 +136,10 @@ export function Footer() {
           {Object.entries(siteConfig.footerLinks)
             .filter(([heading]) => !['All Tools', 'Social Media Downloaders', 'Video Downloaders', 'Audio Downloaders', 'Image Downloaders'].includes(heading))
             .map(([heading, links]) => {
-              let translatedHeading = heading;
-              try {
-                translatedHeading = t(`footer.${heading.toLowerCase()}`) || heading;
-              } catch {
-                translatedHeading = heading;
-              }
               return (
                 <div key={heading}>
                   <p className="text-[11px] font-bold uppercase tracking-wider text-white">
-                    {translatedHeading}
+                    {heading}
                   </p>
                   <ul className="mt-4 space-y-2.5">
                     {links.map((link) => {
@@ -174,18 +165,17 @@ export function Footer() {
         {/* ---- Bottom bar ---- */}
         <div className="mt-14 pt-8 border-t border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <p className="text-xs text-ink-subtle">
-            &copy; {new Date().getFullYear()} {siteConfig.name}. {t('footer.copyright')}
+            &copy; {new Date().getFullYear()} {siteConfig.name}. {"All Rights Reserved."}
           </p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
             {siteConfig.legalLinks.map((link) => {
-              const translatedLabel = t(`footer.${link.label.toLowerCase().replace(' ', '')}`) || link.label;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
                   className="text-ink-subtle hover:text-white transition-colors"
                 >
-                  {translatedLabel}
+                  {link.label}
                 </Link>
               );
             })}

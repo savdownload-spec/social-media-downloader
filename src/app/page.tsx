@@ -11,19 +11,17 @@ import { LatestArticles } from '@/components/home/LatestArticles';
 import { FAQ } from '@/components/home/FAQ';
 import { Newsletter } from '@/components/home/Newsletter';
 import { jsonLd, faqSchema } from '@/lib/seo';
-import { getTranslations } from 'next-intl/server';
 import { getPublicBlogPosts } from '@/lib/blog';
+import { homeFaqs } from '@/config/faqs';
 
 export const revalidate = 300;
 
 export default async function HomePage() {
-  const t = await getTranslations('faqs');
-  const faqs = (t.raw as any)('items') ?? [];
   const posts = await getPublicBlogPosts();
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(faqSchema(faqs))} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd(faqSchema([...homeFaqs]))} />
       <Hero />
       <AllToolsGrid />
       <HowItWorks />

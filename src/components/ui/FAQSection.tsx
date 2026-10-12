@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { Section } from '@/components/layout/Section';
 import { Accordion, type AccordionItem } from '@/components/ui/Accordion';
-import { useTranslation } from '@/i18n';
 
 type FAQSectionProps = {
   items: AccordionItem[];
@@ -32,8 +31,6 @@ export function FAQSection({
   showHeading = true,
   showFooter = true,
 }: FAQSectionProps) {
-  const t = useTranslation();
-
   if (!items?.length) return null;
 
   return (
@@ -41,10 +38,10 @@ export function FAQSection({
       {showHeading && (
         <div className="text-center mb-14">
           <p className="text-sm font-semibold uppercase tracking-wider text-gradient inline-block mb-3">
-            {t('common.faq') || 'FAQ'}
+            {"FAQ"}
           </p>
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-text">
-            {t('faqs.title') || 'Frequently Asked Questions'}
+            {"Frequently Asked Questions"}
           </h2>
         </div>
       )}
@@ -53,19 +50,19 @@ export function FAQSection({
 
       {showFooter && (
         <p className="mt-10 text-center text-sm text-text-muted">
-          {t('faqs.stillCurious') || 'Still have questions?'}{' '}
+          {"Still have questions?"}{' '}
           <Link
             href="/faq"
             className="font-medium text-primary hover:text-primary-hover underline underline-offset-4"
           >
-            {t('faqs.fullFaq') || 'View the full FAQ'}
+            {"View the full FAQ"}
           </Link>{' '}
-          {t('common.or') || 'or'}{' '}
+          {"or"}{' '}
           <Link
             href="/contact"
             className="font-medium text-primary hover:text-primary-hover underline underline-offset-4"
           >
-            {t('nav.contact') || 'get in touch'}
+            {"Contact"}
           </Link>
           .
         </p>

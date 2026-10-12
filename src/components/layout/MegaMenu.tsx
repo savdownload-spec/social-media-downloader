@@ -5,7 +5,6 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTranslation } from '@/i18n';
 import {
   ChevronDown, ArrowRight, Zap, Lock, Sparkles, Star,
   MonitorPlay, Film, Search, BookOpen, HelpCircle,
@@ -25,7 +24,7 @@ const panelVariants = {
   exit:    { opacity: 0, y: 6,  scale: 0.98, x: '-50%', transition: { duration: 0.14 } },
 };
 
-/* ─── group meta (icons + colors stay static; labels/descs come from i18n) ── */
+/* ─── group metadata ─────────────────────────────────────────── */
 const GROUP_META_ICONS: Record<ToolGroup, {
   icon: React.ComponentType<{ className?: string }>;
   color: string;
@@ -39,6 +38,16 @@ const GROUP_META_ICONS: Record<ToolGroup, {
   Utility:     { icon: Layers,      color: 'text-slate-600 bg-slate-100 dark:text-slate-300 dark:bg-slate-500/15'        },
 };
 
+const GROUP_LABELS: Record<ToolGroup, { label: string; desc: string }> = {
+  Downloaders: { label: 'Downloaders', desc: 'Save videos, audio & images' },
+  Image: { label: 'Image Tools', desc: 'Edit, convert & enhance' },
+  Video: { label: 'Video Tools', desc: 'Convert, compress & more' },
+  PDF: { label: 'PDF Tools', desc: 'Merge, split & convert PDFs' },
+  AI: { label: 'AI Tools', desc: 'AI-powered creator tools' },
+  SEO: { label: 'SEO Tools', desc: 'Rank higher & get found' },
+  Utility: { label: 'Utility', desc: 'QR codes, colors & more' },
+};
+
 const FEATURED_SLUGS = [
   'youtube-video-downloader',
   'tiktok-video-downloader',
@@ -49,9 +58,7 @@ const FEATURED_SLUGS = [
 /* ═══════════════════════════════════════════════════════════
    TOOLS PANEL , clean 3-zone layout
 ═══════════════════════════════════════════════════════════ */
-function ToolsPanel({ close }: { close: () => void }) {
-  const t = useTranslation();
-  const [activeGroup, setActiveGroup] = useState<ToolGroup>('Downloaders');
+function ToolsPanel({ close }: { close: () => void }) {  const [activeGroup, setActiveGroup] = useState<ToolGroup>('Downloaders');
   const groupTools = catalog.filter((tool) => tool.group === activeGroup);
   const featured = FEATURED_SLUGS
     .map((s) => catalog.find((tool) => tool.slug === s))
@@ -62,10 +69,10 @@ function ToolsPanel({ close }: { close: () => void }) {
 
       {/* ── Zone 1: Category sidebar ── */}
       <nav className="w-56 shrink-0 border-r border-border-light bg-[#fafafa] dark:bg-surface p-3 flex flex-col gap-0.5 overflow-y-auto">
-        <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-widest text-text-subtle">{t('megaMenu.categories')}</p>
+        <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-widest text-text-subtle">{"Categories"}</p>
         {toolGroups.map((g) => {
           const { icon: GIcon, color } = GROUP_META_ICONS[g];
-          const groupMeta = t(`megaMenu.groupMeta.${g}`) as unknown as { label: string; desc: string };
+          const groupMeta = GROUP_LABELS[g];
           const active = g === activeGroup;
           return (
             <button
@@ -95,7 +102,7 @@ function ToolsPanel({ close }: { close: () => void }) {
             onClick={close}
             className="flex items-center justify-center gap-2 w-full px-3 py-2.5 rounded-xl bg-gradient-brand text-white text-sm font-semibold shadow-glow hover:opacity-90 transition-opacity"
           >
-            {t('megaMenu.viewAllTools')} <ArrowRight className="w-4 h-4" />
+            {"View All Tools"} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </nav>
@@ -105,7 +112,7 @@ function ToolsPanel({ close }: { close: () => void }) {
         <div className="flex items-center gap-2 mb-4">
           {(() => {
             const { icon: GIcon, color } = GROUP_META_ICONS[activeGroup];
-            const groupMeta = t(`megaMenu.groupMeta.${activeGroup}`) as unknown as { label: string };
+            const groupMeta = GROUP_LABELS[activeGroup];
             return (
               <>
                 <span className={`w-7 h-7 rounded-lg flex items-center justify-center ${color}`}>
@@ -120,7 +127,6 @@ function ToolsPanel({ close }: { close: () => void }) {
           {groupTools.map((tool) => {
             const TIcon = tool.icon;
             const live = isToolAvailable(tool.slug);
-            const toolT = t(`catalog.tools.${tool.slug}`) as unknown as { name: string; description: string } | undefined;
             return (
               <Link
                 key={tool.slug}
@@ -132,8 +138,8 @@ function ToolsPanel({ close }: { close: () => void }) {
                   <TIcon className="w-4 h-4" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-text group-hover:text-primary transition-colors leading-snug truncate">{toolT?.name ?? tool.name}</p>
-                  <p className="text-[11px] text-text-subtle leading-snug mt-0.5 line-clamp-1">{toolT?.description ?? tool.description}</p>
+                  <p className="text-sm font-medium text-text group-hover:text-primary transition-colors leading-snug truncate">{tool.name}</p>
+                  <p className="text-[11px] text-text-subtle leading-snug mt-0.5 line-clamp-1">{tool.description}</p>
                 </div>
               </Link>
             );
@@ -143,10 +149,9 @@ function ToolsPanel({ close }: { close: () => void }) {
 
       {/* ── Zone 3: Spotlight ── */}
       <div className="w-56 shrink-0 border-l border-border-light p-4 flex flex-col gap-2 bg-[#fafafa] dark:bg-surface">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{t('megaMenu.popular')}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{"Popular"}</p>
         {featured.map((tool) => {
           const TIcon = tool.icon;
-          const toolT = t(`catalog.tools.${tool.slug}`) as unknown as { name: string } | undefined;
           return (
             <Link
               key={tool.slug}
@@ -158,9 +163,9 @@ function ToolsPanel({ close }: { close: () => void }) {
                 <TIcon className="w-4 h-4" />
               </span>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-text group-hover:text-primary transition-colors leading-snug truncate">{toolT?.name ?? tool.name}</p>
+                <p className="text-sm font-semibold text-text group-hover:text-primary transition-colors leading-snug truncate">{tool.name}</p>
                 <span className="inline-flex items-center gap-1 text-[11px] text-accent font-medium">
-                  <Zap className="w-3 h-3" /> {t('megaMenu.freeForever')}
+                  <Zap className="w-3 h-3" /> {"Free Forever"}
                 </span>
               </div>
             </Link>
@@ -172,14 +177,14 @@ function ToolsPanel({ close }: { close: () => void }) {
           <div className="w-8 h-8 rounded-xl bg-gradient-brand flex items-center justify-center shadow-glow mb-3">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
-          <p className="text-sm font-bold text-text">{t('megaMenu.aiToolsComing')}</p>
-          <p className="text-[11px] text-text-muted mt-1 leading-relaxed">{t('megaMenu.aiToolsComingDesc')}</p>
+          <p className="text-sm font-bold text-text">{"AI Tools Coming"}</p>
+          <p className="text-[11px] text-text-muted mt-1 leading-relaxed">{"Next-gen AI tools for creators. Join the waitlist for early access."}</p>
           <Link
             href="/pricing"
             onClick={close}
             className="mt-3 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
           >
-            {t('megaMenu.seePricing')} <ArrowRight className="w-3 h-3" />
+            {"See Pricing"} <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
       </div>
@@ -204,7 +209,6 @@ const PRICING_TILE_STYLES: Record<string, { icon: typeof Zap; iconColor: string;
  * pricing page.
  */
 function PricingPanel({ close }: { close: () => void }) {
-  const t = useTranslation();
   const config = usePricing();
 
   const free = config.plans.find((p) => p.id === 'free');
@@ -226,12 +230,12 @@ function PricingPanel({ close }: { close: () => void }) {
       {/* header */}
       <div className="flex items-end justify-between mb-6">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{t('nav.pricing')}</p>
-          <p className="text-xl font-bold text-text">{t('megaMenu.pricingTitle') || 'Simple, transparent pricing'}</p>
-          <p className="text-sm text-text-muted mt-1">{t('megaMenu.pricingSubtitle') || 'Start free. Upgrade when you need more.'}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{"Pricing"}</p>
+          <p className="text-xl font-bold text-text">{"Simple, Transparent Pricing."}</p>
+          <p className="text-sm text-text-muted mt-1">{"Start free, upgrade when you're ready."}</p>
         </div>
         <Link href="/pricing" onClick={close} className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline shrink-0 mb-1">
-          {t('megaMenu.fullDetails') || 'Full details'} <ArrowRight className="w-3.5 h-3.5" />
+          {"Full Details"} <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
 
@@ -249,7 +253,7 @@ function PricingPanel({ close }: { close: () => void }) {
               {tile.highlight && (
                 <div className="absolute -top-3 inset-x-0 flex justify-center">
                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-brand text-white text-[11px] font-bold shadow-glow">
-                    <Star className="w-3 h-3" /> {t('megaMenu.mostPopular') || 'Most Popular'}
+                    <Star className="w-3 h-3" /> {"Most Popular"}
                   </span>
                 </div>
               )}
@@ -278,9 +282,9 @@ function PricingPanel({ close }: { close: () => void }) {
 
       {/* trust row */}
       <div className="mt-5 pt-5 border-t border-border-light flex items-center gap-8 text-xs text-text-muted">
-        <span className="flex items-center gap-2"><Lock className="w-4 h-4 text-accent" /> {t('megaMenu.noCreditCard') || 'No credit card to start'}</span>
-        <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-accent" /> {t('megaMenu.freeTierForever') || 'Free tier forever'}</span>
-        <span className="flex items-center gap-2"><Shield className="w-4 h-4 text-accent" /> {t('megaMenu.cancelAnytime') || 'Cancel anytime'}</span>
+        <span className="flex items-center gap-2"><Lock className="w-4 h-4 text-accent" /> {"No Credit Card Required"}</span>
+        <span className="flex items-center gap-2"><Zap className="w-4 h-4 text-accent" /> {"Free Tier Forever"}</span>
+        <span className="flex items-center gap-2"><Shield className="w-4 h-4 text-accent" /> {"Cancel Any Time"}</span>
       </div>
     </div>
   );
@@ -298,7 +302,6 @@ const POST_GRADIENTS = [
 const BLOG_TAGS = ['All', 'YouTube', 'TikTok', 'Instagram', 'Guides', 'Creators'];
 
 function BlogPanel({ close }: { close: () => void }) {
-  const t = useTranslation();
   const [tag, setTag] = useState('All');
   const all = blogPostsByDate.slice(0, 6);
   const posts = tag === 'All' ? all : all.filter((p) => p.tags.includes(tag));
@@ -308,11 +311,11 @@ function BlogPanel({ close }: { close: () => void }) {
       {/* header */}
       <div className="flex items-end justify-between mb-5">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{t('nav.blog')}</p>
-          <p className="text-xl font-bold text-text">{t('megaMenu.latestArticlesTitle')}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{"Blog"}</p>
+          <p className="text-xl font-bold text-text">{"Latest Articles & Guides."}</p>
         </div>
         <Link href="/blog" onClick={close} className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline shrink-0 mb-1">
-          {t('megaMenu.allArticles')} <ArrowRight className="w-3.5 h-3.5" />
+          {"All Articles"} <ArrowRight className="w-3.5 h-3.5" />
         </Link>
       </div>
 
@@ -323,7 +326,7 @@ function BlogPanel({ close }: { close: () => void }) {
             className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
               tag === tagLabel ? 'bg-primary text-white shadow-glow' : 'bg-surface text-text-muted hover:bg-primary-light hover:text-primary'
             }`}>
-            {tagLabel === 'All' ? t('common.all') : tagLabel}
+            {tagLabel === 'All' ? "All" : tagLabel}
           </button>
         ))}
       </div>
@@ -383,18 +386,17 @@ const RESOURCE_LINK_CONFIG = [
 ] as const;
 
 function ResourcesPanel({ close }: { close: () => void }) {
-  const t = useTranslation();
   return (
     <div className="p-7">
       <div className="mb-6">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{t('megaMenu.resourcesEyebrow')}</p>
-        <p className="text-xl font-bold text-text">{t('megaMenu.resourcesTitle')}</p>
-        <p className="text-sm text-text-muted mt-1">{t('megaMenu.resourcesSubtitle')}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{"Resources"}</p>
+        <p className="text-xl font-bold text-text">{"Everything You Need To Know."}</p>
+        <p className="text-sm text-text-muted mt-1">{"Documentation, support, and legal, all in one place."}</p>
       </div>
       <div className="grid grid-cols-3 gap-3">
         {RESOURCE_LINK_CONFIG.map((r) => {
           const RIcon = r.icon;
-          const link = t(`megaMenu.resourceLinks.${r.key}`) as unknown as { label: string; desc: string };
+          const link = ({"faq":["FAQ","Quick answers to common questions."],"blog":["Blog & Guides","How-to articles and platform tips."],"search":["Search Tools","Find exactly the tool you need fast."],"contact":["Contact Us","Reach the team, we reply quickly."],"privacy":["Privacy Policy","How we handle your data."],"terms":["Terms of Service","Platform guidelines and usage rules."]} as Record<string, [string, string]>)[r.key];
           return (
             <Link key={r.href} href={r.href} onClick={close}
               className="group flex flex-col gap-3 p-4 rounded-2xl border border-border bg-white dark:bg-card hover:border-primary/20 hover:shadow-soft transition-all">
@@ -402,8 +404,8 @@ function ResourcesPanel({ close }: { close: () => void }) {
                 <RIcon className="w-5 h-5" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-text group-hover:text-primary transition-colors">{link?.label ?? r.key}</p>
-                <p className="text-xs text-text-muted mt-0.5 leading-snug">{link?.desc ?? ''}</p>
+                <p className="text-sm font-semibold text-text group-hover:text-primary transition-colors">{link?.[0] ?? r.key}</p>
+                <p className="text-xs text-text-muted mt-0.5 leading-snug">{link?.[1] ?? ''}</p>
               </div>
             </Link>
           );
@@ -416,7 +418,7 @@ function ResourcesPanel({ close }: { close: () => void }) {
           { key: 'dmca',    href: '/dmca' },
         ].map((l) => (
           <Link key={l.href} href={l.href} onClick={close} className="text-xs text-text-muted hover:text-primary transition-colors">
-            {t(`megaMenu.footerLinks.${l.key}`)}
+            {({ sitemap: 'Sitemap', cookies: 'Cookie Policy', dmca: 'DMCA' } as const)[l.key]}
           </Link>
         ))}
       </div>
@@ -446,18 +448,17 @@ const SOCIAL_LINKS = [
 ];
 
 function AboutPanel({ close }: { close: () => void }) {
-  const t = useTranslation();
   return (
     <div className="p-7">
       <div className="mb-6">
-        <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{t('megaMenu.aboutEyebrow')}</p>
-        <p className="text-xl font-bold text-text">{t('megaMenu.aboutTitle')}</p>
-        <p className="text-sm text-text-muted mt-1">{t('megaMenu.aboutSubtitle')}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-text-subtle mb-1">{"Company"}</p>
+        <p className="text-xl font-bold text-text">{"The Team Building SavDown."}</p>
+        <p className="text-sm text-text-muted mt-1">{"Fast, private, free, that's our promise."}</p>
       </div>
       <div className="grid grid-cols-3 gap-3">
         {ABOUT_LINK_CONFIG.map((a) => {
           const AIcon = a.icon;
-          const link = t(`megaMenu.aboutLinks.${a.key}`) as unknown as { label: string; desc: string };
+          const link = ({"about":["About Us","Our story, mission, and values."],"contact":["Contact","Support, partnerships, and press."],"pricing":["Pricing","Free tier, Pro plan, and credit packs."],"privacy":["Privacy Policy","We never sell your data."],"terms":["Terms","Usage rules and platform guidelines."],"careers":["Careers","We're hiring, come build the future."],"affiliates":["Affiliates","Earn by sharing SavDown."]} as Record<string, [string, string]>)[a.key];
           return (
             <Link key={a.key} href={a.href} onClick={close}
               className="group flex flex-col gap-3 p-4 rounded-2xl border border-border bg-white dark:bg-card hover:border-primary/20 hover:shadow-soft transition-all">
@@ -465,15 +466,15 @@ function AboutPanel({ close }: { close: () => void }) {
                 <AIcon className="w-5 h-5" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-text group-hover:text-primary transition-colors">{link?.label ?? a.key}</p>
-                <p className="text-xs text-text-muted mt-0.5 leading-snug">{link?.desc ?? ''}</p>
+                <p className="text-sm font-semibold text-text group-hover:text-primary transition-colors">{link?.[0] ?? a.key}</p>
+                <p className="text-xs text-text-muted mt-0.5 leading-snug">{link?.[1] ?? ''}</p>
               </div>
             </Link>
           );
         })}
       </div>
       <div className="mt-5 pt-4 border-t border-border-light flex items-center gap-3">
-        <span className="text-xs text-text-subtle">{t('megaMenu.followUs')}</span>
+        <span className="text-xs text-text-subtle">{"Follow us:"}</span>
         {SOCIAL_LINKS.map((s) => (
           <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
             className="text-xs text-text-muted hover:text-primary transition-colors">{s.label}</a>
@@ -515,7 +516,6 @@ const PANEL_HEIGHT: Record<NavId, string> = {
 };
 
 export function MegaMenu() {
-  const t = useTranslation();
   const [active, setActive] = useState<NavId | null>(null);
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
@@ -625,7 +625,7 @@ export function MegaMenu() {
       <div ref={navRef} className="flex items-center gap-0.5">
         {NAV_IDS.map((id) => {
           const isActive = active === id;
-          const label = t(`mobileNav.sections.${id}`) as string;
+          const label = id[0].toUpperCase() + id.slice(1);
           return (
             <Link
               key={id}

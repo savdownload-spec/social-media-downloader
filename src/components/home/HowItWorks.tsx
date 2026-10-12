@@ -2,23 +2,20 @@
 import { LayoutGrid, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { Section, SectionHeading } from '@/components/layout/Section';
 import { Reveal } from '@/components/ui/Reveal';
-import { useTranslation } from '@/i18n';
 
 export function HowItWorks() {
-  const t = useTranslation();
-  
   const steps = [
-    { icon: LayoutGrid, title: t('howItWorks.steps.0.title'), body: t('howItWorks.steps.0.body') },
-    { icon: SlidersHorizontal, title: t('howItWorks.steps.1.title'), body: t('howItWorks.steps.1.body') },
-    { icon: Sparkles, title: t('howItWorks.steps.2.title'), body: t('howItWorks.steps.2.body') },
+    { icon: LayoutGrid, title: "Pick Your Tool", body: "Open the tool that fits the job, from video and audio to photos and thumbnails, all in one place." },
+    { icon: SlidersHorizontal, title: "Choose Your Options", body: "Set the format, quality, or output you want. Everything is detected and set up for you automatically." },
+    { icon: Sparkles, title: "Get It Instantly", body: "Your result is ready in seconds and saved straight to your device. No watermark, no waiting room." },
   ];
 
   return (
     <Section variant="white" id="how-it-works">
       <SectionHeading
-        eyebrow={t('howItWorks.eyebrow')}
-        title={t('howItWorks.title')}
-        description={t('howItWorks.description')}
+        eyebrow={"How It Works"}
+        title={"Get What You Need In Three Simple Steps."}
+        description={"No apps to install and no accounts to create. Every tool in the kit follows the same quick, friendly flow."}
       />
 
       <div className="mt-16 relative">

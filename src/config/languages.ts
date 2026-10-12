@@ -6,8 +6,7 @@ export type Language = {
 
 /**
  * Supported languages for the site-wide language selector.
- * Using Google Translate ?hl= param so the page auto-translates
- * without requiring full i18n message files.
+ * Google Translate uses these codes to translate the rendered English page.
  */
 export const languages: Language[] = [
   { code: 'en', label: 'English', flag: '🇺🇸' },

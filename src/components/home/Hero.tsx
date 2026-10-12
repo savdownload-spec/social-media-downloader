@@ -5,22 +5,19 @@ import { ArrowRight, Check, Database, ShieldCheck, Star, Sparkles, Users } from 
 import { Container } from '@/components/layout/Container';
 import { HeroToolkit } from '@/components/home/HeroToolkit';
 import { UniversalUrlInput } from '@/components/home/UniversalUrlInput';
-import { useTranslation } from '@/i18n';
 
 export function Hero() {
-  const t = useTranslation();
-  
   const trustBadges = [
-    t('features.unlimited'),
-    t('features.noAds'),
-    t('hero.badges.privacyFirst'),
-    t('hero.badges.everyPlatform'),
+    "Unlimited Downloads",
+    "No Ads",
+    "Privacy-First",
+    "Every Platform",
   ];
 
   const heroStats = [
     {
       value: '2M+',
-      label: t('hero.trusted'),
+      label: "Trusted By 2M+ Creators",
       detail: 'Creators choose SavDown',
       icon: Users,
       iconClass: 'text-violet-600 dark:text-violet-400',
@@ -28,7 +25,7 @@ export function Hero() {
     },
     {
       value: '100%',
-      label: t('hero.stats.free'),
+      label: "Free",
       detail: 'No paywall, no catch',
       icon: ShieldCheck,
       iconClass: 'text-emerald-600 dark:text-emerald-400',
@@ -36,7 +33,7 @@ export function Hero() {
     },
     {
       value: '0',
-      label: t('hero.stats.dataStored'),
+      label: "Data stored",
       detail: 'Your files stay yours',
       icon: Database,
       iconClass: 'text-sky-600 dark:text-sky-400',
@@ -44,7 +41,7 @@ export function Hero() {
     },
     {
       value: '4.9',
-      label: t('hero.stats.rating'),
+      label: "Rating",
       detail: 'Loved by the community',
       icon: Star,
       iconClass: 'text-amber-600 dark:text-warning',
@@ -71,15 +68,15 @@ export function Hero() {
                 <Star key={i} className="w-3 h-3 fill-current" />
               ))}
             </span>
-            {t('hero.trusted')}
+            {"Trusted By 2M+ Creators"}
           </span>
 
           <h1 className="mt-6 type-display text-text">
-            {t('hero.title')}
+            {"Download Videos, Images & More"}
           </h1>
 
           <p className="mt-6 type-body-large text-text-muted max-w-xl mx-auto">
-            {t('hero.subtitle')}
+            {"Fast, free, and easy-to-use tools for downloading content from social media platforms"}
           </p>
 
           <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -87,13 +84,13 @@ export function Hero() {
               href="/#tools"
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
             >
-              <Sparkles className="w-5 h-5" /> {t('common.getStarted')}
+              <Sparkles className="w-5 h-5" /> {"Get Started"}
             </Link>
             <Link
               href="/#how-it-works"
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-text bg-white dark:bg-card border border-border hover:border-primary/40 hover:bg-primary-light transition-all active:scale-[0.98]"
             >
-              {t('hero.howItWorks')} <ArrowRight className="w-4 h-4" />
+              {"See How It Works"} <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
 

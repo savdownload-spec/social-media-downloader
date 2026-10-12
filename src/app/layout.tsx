@@ -9,8 +9,6 @@ import { ToastProvider } from '@/components/ui/Toast';
 import { ConfirmProvider } from '@/components/ui/ConfirmProvider';
 import { InstallProvider } from '@/components/pwa/InstallProvider';
 import { ServiceWorkerRegister } from '@/components/pwa/ServiceWorkerRegister';
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, getTranslations } from 'next-intl/server';
 import { siteConfig } from '@/config/site';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { Providers } from '@/components/providers';
@@ -29,11 +27,9 @@ const jakarta = Plus_Jakarta_Sans({
   weight: ['400', '500', '600', '700', '800'],
 });
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations('hero');
-
-  const title = `${t('title')} | ${siteConfig.name}`;
-  const description = t('subtitle') || siteConfig.description;
+export function generateMetadata(): Metadata {
+  const title = `Download Videos, Images & More | ${siteConfig.name}`;
+  const description = 'Fast, free, and easy-to-use tools for downloading content from social media platforms';
 
   return {
     metadataBase: new URL(siteConfig.url),
@@ -99,7 +95,7 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [messages, pricing] = await Promise.all([getMessages(), getPricingConfig()]);
+  const pricing = await getPricingConfig();
 
   return (
     // suppressHydrationWarning: the blocking script below mutates this
@@ -119,8 +115,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="font-sans bg-surface text-text antialiased">
         <Providers>
-          <NextIntlClientProvider messages={messages}>
-            <PricingProvider value={pricing}>
+          <PricingProvider value={pricing}>
             <LanguageProvider>
               <ThemeProvider>
               <ToastProvider>
@@ -141,8 +136,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </ToastProvider>
               </ThemeProvider>
             </LanguageProvider>
-            </PricingProvider>
-          </NextIntlClientProvider>
+          </PricingProvider>
         </Providers>
         <Analytics />
       </body>

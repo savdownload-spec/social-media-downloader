@@ -5,7 +5,7 @@ import { resolveDayNight } from '@/lib/theme/resolve-auto-theme';
 import { REFERRAL_COOKIE, REFERRAL_COOKIE_MAX_AGE } from '@/lib/affiliates-constants';
 
 // The site used to serve locale-prefixed URLs (/de/tools/..., /es/blog/...)
-// via next-intl routing. Real translation is now handled entirely
+// through the retired locale-routing system. Real translation is now handled entirely
 // client-side by the Google Translate widget (src/lib/translation-manager.ts),
 // so those prefixes no longer correspond to real routes — but old indexed
 // or bookmarked links to them still exist, so redirect rather than 404.

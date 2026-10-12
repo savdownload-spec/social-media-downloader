@@ -3,28 +3,25 @@
 import { Scissors, GraduationCap, Megaphone, Archive } from 'lucide-react';
 import { Section, SectionHeading } from '@/components/layout/Section';
 import { Reveal } from '@/components/ui/Reveal';
-import { useTranslation } from '@/i18n';
 
 const ICONS = [Scissors, Megaphone, GraduationCap, Archive];
 
-export function UseCases() {
-  const t = useTranslation();
-  const items = t('useCases.items') as unknown as { title: string; body: string }[];
+export function UseCases() {  const items = [{"title":"Creators & Editors","body":"Pull clean source clips for edits, remixes, and short-form cuts without a watermark in the way."},{"title":"Marketers","body":"Save reference ads and trending posts to study hooks, pacing, and what is working right now."},{"title":"Students & Educators","body":"Keep lectures, tutorials, and reference videos for offline study when the connection drops."},{"title":"Personal Archivists","body":"Back up your own uploads and the moments you never want to lose to an algorithm or a takedown."}] as unknown as { title: string; body: string }[];
 
   return (
     <Section variant="white" id="use-cases">
       <SectionHeading
-        eyebrow={t('useCases.eyebrow')}
+        eyebrow={"Use Cases"}
         title={
           <>
-            {t('useCases.title').split('Lot Of Reasons')[0]}
-            <span className="text-gradient">{t('useCases.titleHighlight') || 'Lot Of Reasons'}</span>
-            {t('useCases.title').includes('Lot Of Reasons')
-              ? t('useCases.title').split('Lot Of Reasons')[1]
+            {"One Tool, A Lot Of Reasons To Keep It Bookmarked.".split('Lot Of Reasons')[0]}
+            <span className="text-gradient">{"Lot Of Reasons"}</span>
+            {"One Tool, A Lot Of Reasons To Keep It Bookmarked.".includes('Lot Of Reasons')
+              ? "One Tool, A Lot Of Reasons To Keep It Bookmarked.".split('Lot Of Reasons')[1]
               : ''}
           </>
         }
-        description={t('useCases.description')}
+        description={"However you work with video, SavDown fits into the moment you need a clean, reliable copy."}
       />
 
       <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

@@ -4,24 +4,16 @@ import Link from 'next/link';
 import { ArrowUpRight, EyeOff, Lock, ServerOff, ShieldCheck } from 'lucide-react';
 import { Section } from '@/components/layout/Section';
 import { Reveal } from '@/components/ui/Reveal';
-import { useTranslation } from '@/i18n';
 
 export function Security() {
-  const t = useTranslation();
-
   const points = [
-    { icon: ServerOff, title: t('security.points.0.title'), body: t('security.points.0.body') },
-    { icon: EyeOff, title: t('security.points.1.title'), body: t('security.points.1.body') },
-    { icon: Lock, title: t('security.points.2.title'), body: t('security.points.2.body') },
+    { icon: ServerOff, title: "Nothing Is Stored", body: "Files stream straight through to you. We never keep a copy on our servers." },
+    { icon: EyeOff, title: "No Tracking History", body: "We do not build a profile of what you download or tie activity back to you." },
+    { icon: Lock, title: "Encrypted Connections", body: "Every request runs over HTTPS, so your links stay private in transit." },
   ];
 
   const statValues = ['0', 'None', 'None', 'HTTPS'];
-  const statLabelKeys = [
-    'security.zeroRetention.stat0',
-    'security.zeroRetention.stat1',
-    'security.zeroRetention.stat2',
-    'security.zeroRetention.stat3',
-  ];
+  const statLabels = ['Files stored', 'Accounts needed', 'Trackers on page', 'Connection'];
 
   return (
     <Section variant="white" id="security">
@@ -34,19 +26,19 @@ export function Security() {
             <div className="max-w-2xl">
               <div className="mb-7 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
                 <span className="h-px w-8 bg-primary/60" />
-                {t('security.eyebrow')}
+                {"Security And Privacy"}
               </div>
               <h2 className="max-w-xl type-section-title text-text">
                 Your Content <span className="text-gradient">Stays Yours.</span>
               </h2>
               <p className="mt-7 max-w-lg text-base leading-7 text-text-muted">
-                {t('security.description')}{' '}
+                {"Privacy is not a setting you have to find. SavDown is built to forget you the moment your download finishes."}{' '}
                 <Link href="/privacy" className="font-medium text-primary underline decoration-primary/30 underline-offset-4 transition-colors hover:text-primary-hover">
-                  {t('legal.privacy.title') || 'Privacy Policy'}
+                  {"Privacy Policy"}
                 </Link>{' '}
-                {t('common.and') || 'and'}{' '}
+                {"and"}{' '}
                 <Link href="/terms" className="font-medium text-primary underline decoration-primary/30 underline-offset-4 transition-colors hover:text-primary-hover">
-                  {t('legal.terms.title') || 'Terms'}
+                  {"Terms & Conditions"}
                 </Link>
                 .
               </p>
@@ -101,15 +93,15 @@ export function Security() {
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10"><div className="h-full w-[86%] rounded-full bg-gradient-brand" /></div>
                 </div>
                 <div className="relative divide-y divide-white/[0.08]">
-                  {statLabelKeys.map((key, index) => (
-                    <div key={key} className="flex items-center justify-between py-3 text-xs">
-                      <span className="text-ink-subtle">{t(key)}</span>
+                  {statLabels.map((label, index) => (
+                    <div key={label} className="flex items-center justify-between py-3 text-xs">
+                      <span className="text-ink-subtle">{label}</span>
                       <span className="font-semibold">{statValues[index]} <em className="ml-1 text-[9px] font-normal not-italic text-emerald-300">clear</em></span>
                     </div>
                   ))}
                 </div>
                 <Link href="/privacy" className="relative mt-6 flex items-center justify-between text-xs font-medium text-white/80 transition-colors hover:text-white">
-                  <span>{t('security.zeroRetention.cta')}</span><ArrowUpRight className="h-4 w-4 text-primary-light" />
+                  <span>{"How we protect your data"}</span><ArrowUpRight className="h-4 w-4 text-primary-light" />
                 </Link>
               </div>
             </div>

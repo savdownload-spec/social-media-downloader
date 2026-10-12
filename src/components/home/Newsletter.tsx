@@ -5,18 +5,15 @@ import { Section } from '@/components/layout/Section';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
-import { useTranslation } from '@/i18n';
 
-export function Newsletter() {
-  const t = useTranslation();
-  const [email, setEmail] = useState('');
+export function Newsletter() {  const [email, setEmail] = useState('');
   const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'err'>('idle');
   const [error, setError] = useState('');
   const { success, error: errorToast, warning } = useToast();
 
   const submit = async () => {
     if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      setError(t('contact.validation.email') || 'Please enter a valid email.');
+      setError("Please enter a valid email address.");
       return;
     }
     setState('loading');
@@ -31,21 +28,21 @@ export function Newsletter() {
 
       if (!res.ok || !data?.ok) {
         if (res.status === 429) {
-          warning(t('contact.toasts.slowDown') || 'Slow down', t('contact.toasts.tooManyRequests') || 'Too many requests');
+          warning("Slow down!", "Too many requests, please wait a moment.");
         } else {
-          errorToast(t('newsletter.errorTitle') || 'Subscription failed', data?.error ?? (t('newsletter.error') || 'Please try again.'));
+          errorToast("Oops!", data?.error ?? ("Something went wrong. Please try again."));
         }
         setState('err');
-        setError(data?.error ?? (t('newsletter.error') || 'Subscription failed'));
+        setError(data?.error ?? ("Something went wrong. Please try again."));
         return;
       }
       setState('ok');
       setEmail('');
-      success(t('contact.toasts.success') || 'Success', t('newsletter.success') || "You're subscribed!");
+      success("Message sent!", "Check your inbox to confirm!");
     } catch {
-      errorToast(t('contact.toasts.networkError') || 'Network error', t('contact.toasts.networkErrorDesc') || 'Could not reach server.');
+      errorToast("Network error", "Could not reach the server. Check your connection and try again.");
       setState('err');
-      setError(t('newsletter.error') || 'Network error');
+      setError("Something went wrong. Please try again.");
     }
   };
 
@@ -56,17 +53,17 @@ export function Newsletter() {
           <div className="absolute -bottom-20 -left-10 w-72 h-72 bg-fuchsia-brand/30 rounded-full blur-3xl pointer-events-none" />
           <div className="relative max-w-2xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              {t('newsletter.title') || 'The Monthly Update'}
+              {"The Monthly Update"}
             </h2>
             <p className="mt-3 text-white/70 leading-relaxed">
-              {t('newsletter.description') || 'One calm email a month with new tools, platform updates, creative tips, and useful ideas. No spam, ever.'}
+              {"One calm email a month with new tools, platform updates, creative tips, and useful ideas. No spam, ever."}
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
               <input
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setError(''); }}
                 type="email"
-                placeholder={t('newsletter.placeholder') || 'you@example.com'}
+                placeholder={"your@email.com"}
                 className="flex h-11 w-full rounded-2xl border bg-white/10 border-white/20 px-5 py-3.5 text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none transition-all"
               />
               <Button
@@ -76,15 +73,15 @@ export function Newsletter() {
                 disabled={state === 'ok'}
               >
                 {state === 'ok' ? (
-                  <>{t('newsletter.subscribed') || 'Subscribed'} <Check className="w-4 h-4" /></>
+                  <>{"You're subscribed"} <Check className="w-4 h-4" /></>
                 ) : (
-                  <>{t('newsletter.button') || 'Subscribe'} <Send className="w-4 h-4" /></>
+                  <>{"Subscribe"} <Send className="w-4 h-4" /></>
                 )}
               </Button>
             </div>
             {error && <p className="mt-3 text-sm text-red-300">{error}</p>}
             {state === 'ok' && (
-              <p className="mt-3 text-sm text-accent">{t('newsletter.success') || "You're subscribed!"}</p>
+              <p className="mt-3 text-sm text-accent">{"Check your inbox to confirm!"}</p>
             )}
           </div>
         </div>
