@@ -30,6 +30,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import { LanguageSelector } from '@/components/ui/LanguageSelector';
+import { BackToTop } from '@/components/ui/BackToTop';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { playOpen, playClose, playTap, playTick, playSend, playSuccess, playReceive, playAttach, playRemove, playBack } from '@/lib/sounds';
 
@@ -771,30 +772,36 @@ export function SupportChat() {
 
   const unread = conversations.reduce((sum, c) => sum + c.customerUnreadCount, 0);
 
+  const floatingBottom = pathname.startsWith('/workspace')
+    ? 'calc(5rem + env(safe-area-inset-bottom, 0px))'
+    : 'calc(1.25rem + env(safe-area-inset-bottom, 0px))';
+
   return <>
     {/* ── Floating trigger ─────────────────────────────────────────────── */}
-    {!open && (
-      <button
-        type="button"
-        aria-label="Open support"
-        onClick={() => { setOpen(true); playOpen(); }}
-        className={`group fixed right-5 z-[90] inline-flex h-14 items-center gap-2.5 rounded-full bg-gradient-brand bg-[length:200%_200%] pl-2.5 pr-4 text-sm font-semibold text-white shadow-glow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-[position:100%_50%] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:pr-5 ${
-          // Workspace's own bottom tab bar occupies the same corner on mobile/tablet.
-          pathname.startsWith('/workspace') ? 'bottom-20 lg:bottom-5' : 'bottom-5'
-        }`}
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
-      >
-        <span className="grid h-9 w-9 place-items-center rounded-full bg-white/20 transition-transform duration-200 group-hover:scale-105">
-          <Headset className="h-5 w-5" />
-        </span>
-        <span className="hidden sm:inline">Support</span>
-        {unread > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white ring-2 ring-white">
-            {unread > 9 ? '9+' : unread}
+    <div
+      className="fixed right-5 z-[90] flex items-center gap-3"
+      style={{ bottom: floatingBottom }}
+    >
+      <BackToTop hidden={open} />
+      {!open && (
+        <button
+          type="button"
+          aria-label="Open support"
+          onClick={() => { setOpen(true); playOpen(); }}
+          className="group relative z-10 inline-flex h-14 items-center gap-2.5 rounded-full bg-gradient-brand bg-[length:200%_200%] pl-2.5 pr-4 text-sm font-semibold text-white shadow-glow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-[position:100%_50%] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:pr-5"
+        >
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-white/20 transition-transform duration-200 group-hover:scale-105">
+            <Headset className="h-5 w-5" />
           </span>
-        )}
-      </button>
-    )}
+          <span className="hidden sm:inline">Support</span>
+          {unread > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white ring-2 ring-white">
+              {unread > 9 ? '9+' : unread}
+            </span>
+          )}
+        </button>
+      )}
+    </div>
 
     {/* ── Panel: mobile bottom sheet · desktop floating card ───────────── */}
     <AnimatePresence>
