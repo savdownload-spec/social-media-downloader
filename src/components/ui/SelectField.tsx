@@ -183,6 +183,7 @@ export function SelectField({
       triggerRef.current?.focus();
     } else if (e.key === 'Tab') {
       setOpen(false);
+      triggerRef.current?.focus();
     }
   };
 
@@ -277,7 +278,7 @@ export function SelectField({
         role="combobox"
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-controls={open ? listboxId : undefined}
+        aria-controls={listboxId}
         aria-activedescendant={activeDescendantId}
         aria-invalid={!!error}
         onClick={handleOpen}
