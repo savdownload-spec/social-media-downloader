@@ -1,7 +1,7 @@
 'use client';
 
 import {
-  useCallback, useEffect, useId, useRef, type ReactNode,
+  useCallback, useEffect, useId, useRef, useState, type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
@@ -57,11 +57,14 @@ export function Modal({
   const descId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousActive = useRef<HTMLElement | null>(null);
+  const [mounted, setMounted] = useState(false);
   // Modals portal straight to document.body, escaping the .admin-panel
   // subtree that pins the admin UI to the light palette. Without this,
   // an admin modal picks up the public site's real (possibly dark) theme
   // instead -- re-apply the pin here based on route rather than DOM position.
   const isAdminRoute = usePathname()?.startsWith('/admin') ?? false;
+
+  useEffect(() => setMounted(true), []);
 
   // ESC closes; body scroll locks; focus moves into the dialog.
   useEffect(() => {
@@ -100,7 +103,9 @@ export function Modal({
     [onClose, disableBackdropClose],
   );
 
-  if (typeof window === 'undefined') return null;
+  // Portals render outside the React root. Keep the server and first client
+  // render identical, then mount the portal after hydration.
+  if (!mounted) return null;
 
   return createPortal(
     <div className={cn(isAdminRoute && 'admin-panel', 'contents')}>

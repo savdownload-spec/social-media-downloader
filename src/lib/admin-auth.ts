@@ -10,7 +10,10 @@ export async function requireAdminApi(request: Request) {
   if (!userId) return { ok: false as const, response: NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403 }) };
 
   // Re-read role for every API call; JWT role claims can be stale after demotion.
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, role: true } });
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, email: true, role: true },
+  });
   if (user?.role !== 'ADMIN') return { ok: false as const, response: NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403 }) };
 
   const limit = await ratelimit(`admin-analytics:${userId}:${getClientId(request)}`, { limit: 120, windowSeconds: 60 });

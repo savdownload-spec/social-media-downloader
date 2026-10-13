@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AdminPage, PageHeader, SectionCard, ErrorState, Skeleton } from './AdminUI';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
-import { Save, Settings, Coins, Star, Share2, Zap } from 'lucide-react';
+import { Save, Settings, Coins, Star, Share2, Zap, LoaderCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type Settings = Record<string, string>;
@@ -72,22 +72,80 @@ export function AdminSettingsClient() {
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState(false);
   const [saving, setSaving]     = useState(false);
+  const [maintenanceSaving, setMaintenanceSaving] = useState(false);
+  const maintenanceRequestRef = useRef(false);
   const [activeTab, setActiveTab] = useState('General');
   const { success, error: err } = useToast();
 
   useEffect(() => {
-    fetch('/api/admin/settings')
+    fetch('/api/admin/settings', { cache: 'no-store' })
       .then((r) => r.json())
       .then((d) => { if (d.ok) setSettings(d.data); else setError(true); })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    async function revalidateMaintenance() {
+      if (document.visibilityState !== 'visible' || maintenanceRequestRef.current) return;
+      try {
+        const response = await fetch('/api/admin/settings', { cache: 'no-store' });
+        const data = await response.json();
+        if (data.ok && typeof data.data?.maintenance_mode === 'string') {
+          setSettings((current) => ({
+            ...current,
+            maintenance_mode: data.data.maintenance_mode,
+          }));
+        }
+      } catch {
+        // Keep the last confirmed state. The next focus/visibility change can retry.
+      }
+    }
+
+    window.addEventListener('focus', revalidateMaintenance);
+    document.addEventListener('visibilitychange', revalidateMaintenance);
+    return () => {
+      window.removeEventListener('focus', revalidateMaintenance);
+      document.removeEventListener('visibilitychange', revalidateMaintenance);
+    };
+  }, []);
+
+  async function toggleMaintenance(enabled: boolean) {
+    if (maintenanceRequestRef.current) return;
+
+    maintenanceRequestRef.current = true;
+    const previous = settings.maintenance_mode ?? 'false';
+    const next = enabled ? 'true' : 'false';
+    setSettings((current) => ({ ...current, maintenance_mode: next }));
+    setMaintenanceSaving(true);
+
+    try {
+      const response = await fetch('/api/admin/settings', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ enabled }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok || !data?.ok) throw new Error(data?.error || 'Update failed');
+      setSettings((current) => ({ ...current, maintenance_mode: next }));
+      success(enabled ? 'Maintenance mode enabled' : 'Maintenance mode disabled');
+    } catch (cause) {
+      setSettings((current) => ({ ...current, maintenance_mode: previous }));
+      err('Maintenance mode was not changed', cause instanceof Error ? cause.message : undefined);
+    } finally {
+      maintenanceRequestRef.current = false;
+      setMaintenanceSaving(false);
+    }
+  }
+
   async function save() {
     setSaving(true);
+    const otherSettings = Object.fromEntries(
+      Object.entries(settings).filter(([key]) => key !== 'maintenance_mode'),
+    );
     const res = await fetch('/api/admin/settings', {
       method: 'PUT', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(settings),
+      body: JSON.stringify(otherSettings),
     });
     const d = await res.json().catch(() => null);
     if (d?.ok) success('Settings saved');
@@ -116,7 +174,7 @@ export function AdminSettingsClient() {
         title="Settings"
         description="Platform-wide configuration"
         actions={
-          <Button onClick={save} loading={saving} size="sm">
+          <Button onClick={save} loading={saving} disabled={maintenanceSaving} size="sm">
             <Save className="w-3.5 h-3.5 mr-1.5" /> Save Settings
           </Button>
         }
@@ -145,21 +203,45 @@ export function AdminSettingsClient() {
         {/* Content */}
         <SectionCard title={activeSection.title}>
           <div className="divide-y divide-border-light">
-            {activeSection.keys.map((key) => (
+            {activeSection.keys.map((key) => {
+              const isMaintenance = key === 'maintenance_mode';
+              const maintenanceEnabled = settings.maintenance_mode === 'true';
+              return (
               <div key={key} className="flex items-center justify-between px-5 py-4 gap-6">
                 <div className="min-w-0">
                   <p className="text-[13px] font-medium text-text">{LABELS[key] ?? key}</p>
                   <p className="text-[11px] text-text-muted mt-0.5">{DESCRIPTIONS[key] ?? ''}</p>
+                  {isMaintenance && (
+                    <p className={cn(
+                      'mt-1.5 flex items-center gap-1.5 text-[11px] font-medium',
+                      maintenanceSaving ? 'text-text-muted' : maintenanceEnabled ? 'text-amber-600' : 'text-emerald-600',
+                    )} aria-live="polite">
+                      {maintenanceSaving && <LoaderCircle className="h-3 w-3 animate-spin" aria-hidden="true" />}
+                      {maintenanceSaving
+                        ? 'Updating…'
+                        : maintenanceEnabled
+                          ? 'Public access is paused'
+                          : 'Public site is available'}
+                    </p>
+                  )}
                 </div>
                 {BOOL_KEYS.has(key) ? (
-                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                  <label className={cn(
+                    'relative inline-flex items-center shrink-0',
+                    isMaintenance && maintenanceSaving ? 'cursor-wait opacity-70' : 'cursor-pointer',
+                  )}>
                     <input
                       type="checkbox"
                       checked={settings[key] === 'true'}
-                      onChange={(e) => setSettings({ ...settings, [key]: e.target.checked ? 'true' : 'false' })}
+                      disabled={isMaintenance && maintenanceSaving}
+                      onChange={(e) => {
+                        if (isMaintenance) void toggleMaintenance(e.target.checked);
+                        else setSettings((current) => ({ ...current, [key]: e.target.checked ? 'true' : 'false' }));
+                      }}
                       className="sr-only peer"
+                      aria-label={LABELS[key] ?? key}
                     />
-                    <div className="w-10 h-5 bg-border-light rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:shadow-sm after:transition-all peer-checked:bg-primary transition-colors" />
+                    <div className="w-10 h-5 bg-border-light rounded-full peer peer-disabled:cursor-not-allowed peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:shadow-sm after:transition-all peer-checked:bg-primary transition-colors" />
                   </label>
                 ) : (
                   <input
@@ -169,7 +251,8 @@ export function AdminSettingsClient() {
                   />
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </SectionCard>
       </div>

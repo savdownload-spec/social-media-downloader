@@ -3,6 +3,8 @@ import type { NextRequest } from 'next/server';
 import { getVercelGeo } from '@/lib/geo/vercel-geo';
 import { resolveDayNight } from '@/lib/theme/resolve-auto-theme';
 import { REFERRAL_COOKIE, REFERRAL_COOKIE_MAX_AGE } from '@/lib/affiliates-constants';
+import { getToken } from 'next-auth/jwt';
+import { isMaintenanceBypassPath } from '@/lib/maintenance';
 
 // The site used to serve locale-prefixed URLs (/de/tools/..., /es/blog/...)
 // through the retired locale-routing system. Real translation is now handled entirely
@@ -17,7 +19,23 @@ const AUTO_THEME_COOKIE = 'sd_auto_theme';
 // a fresh value on its next navigation or reload.
 const AUTO_THEME_MAX_AGE = 60 * 60 * 12;
 
-export function middleware(request: NextRequest) {
+async function maintenanceEnabled(request: NextRequest) {
+  try {
+    const response = await fetch(new URL('/api/maintenance/status', request.url), {
+      cache: 'no-store',
+      headers: { 'x-savdown-maintenance-check': '1' },
+    });
+    if (!response.ok) return false;
+    const data = (await response.json()) as { enabled?: boolean };
+    return data.enabled === true;
+  } catch {
+    // Fail open when configuration cannot be read. An infrastructure issue
+    // should not accidentally put every public route into maintenance mode.
+    return false;
+  }
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const [, first, ...rest] = pathname.split('/');
 
@@ -27,7 +45,26 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 301);
   }
 
-  const response = NextResponse.next();
+  let response = NextResponse.next();
+
+  if (!isMaintenanceBypassPath(pathname)) {
+    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+    const isAdmin = token?.role === 'ADMIN';
+
+    if (!isAdmin && await maintenanceEnabled(request)) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/maintenance';
+      url.search = '';
+      response = NextResponse.rewrite(url, {
+        status: 503,
+        headers: {
+          'Retry-After': '3600',
+          'X-Robots-Tag': 'noindex, nofollow, noarchive',
+          'Cache-Control': 'private, no-store, max-age=0',
+        },
+      });
+    }
+  }
 
   // Affiliate referral attribution: first-touch — a visitor's first `?ref=`
   // wins and is kept for 30 days, so a later plain visit (no ref param)
