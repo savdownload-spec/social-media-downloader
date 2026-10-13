@@ -35,6 +35,7 @@ import type { FunctionalToolProps } from '@/config/functionalTools';
 import { useSignInGuard } from '@/hooks/useSignInGuard';
 import { useBatchLimit } from '@/hooks/useBatchLimit';
 import { BatchLimitHint, BatchLimitWarning } from '@/components/tools/BatchLimitGate';
+import { PLAN_LABEL } from '@/lib/batchLimits';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -168,15 +169,41 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
     plan, limit: batchLimit, allLimits, canUpgrade, loading: limitLoading,
     authenticated, totalCredits, imageToolCreditCost,
   } = useBatchLimit(slug);
+  // While plan is loading, suppress limit-dependent UI to avoid briefly showing
+  // wrong limits (e.g. FREE fallback for a PRO user).
+  const planReady = !limitLoading;
+
+  // Hard system maximum — absolute ceiling regardless of credits or plan.
+  // Derived from the highest tier in the limits object (max === lifetime === 50).
   const hardBatchLimit = Math.max(allLimits.free, allLimits.pro, allLimits.max, allLimits.lifetime);
-  const creditBatchLimit = authenticated && totalCredits !== null && imageToolCreditCost
-    ? Math.min(hardBatchLimit, Math.floor(totalCredits / imageToolCreditCost))
-    : 0;
-  const processingLimit = Math.max(batchLimit, creditBatchLimit);
-  const excessFiles = files.slice(processingLimit);
+
+  // How many files can actually be sent to the server (cannot exceed hardBatchLimit).
+  const processableCount = Math.min(files.length, hardBatchLimit);
+
+  // Files beyond the hard maximum: must be removed. Credits cannot bypass this.
+  const filesOverHardMax = files.slice(hardBatchLimit);
+  const isOverHardMax = files.length > hardBatchLimit;
+
+  // Files between the plan limit and hardBatchLimit: potentially credit-eligible.
+  const creditOverflowCount = Math.max(0, processableCount - batchLimit);
+  const isOverPlanLimit = processableCount > batchLimit;
+
+  // Credits needed only for the overflow portion above the plan allowance.
+  const confirmedCost =
+    imageToolCreditCost && creditOverflowCount > 0
+      ? creditOverflowCount * imageToolCreditCost
+      : 0;
+
+  // Whether the user has enough credits for the overflow portion.
+  const canAffordOverflow =
+    !isOverPlanLimit ||
+    (authenticated && totalCredits !== null && totalCredits >= confirmedCost);
+
+  // Processable with current credits/plan (what the compress button will actually send).
+  const processingLimit = canAffordOverflow ? processableCount : batchLimit;
+
+  // Unified "over limit" flag: any case where files cannot all be processed.
   const isOverLimit = files.length > processingLimit;
-  const usesCreditOverflow = files.length > batchLimit && !isOverLimit && authenticated;
-  const confirmedCost = imageToolCreditCost ? files.length * imageToolCreditCost : null;
 
   // Revoke object URLs on unmount to avoid memory leaks
   useEffect(() => {
@@ -436,9 +463,14 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
                   </h2>
                   <p className="text-xs text-text-subtle">
                     {formatBytes(files.reduce((s, f) => s + f.size, 0))} total
-                    {isOverLimit && (
+                    {isOverHardMax && (
+                      <span className="ml-1.5 font-medium text-red-600 dark:text-red-400">
+                        · {filesOverHardMax.length} beyond hard max
+                      </span>
+                    )}
+                    {!isOverHardMax && isOverLimit && (
                       <span className="ml-1.5 font-medium text-amber-600 dark:text-amber-400">
-                        · {excessFiles.length} over limit
+                        · {files.length - processingLimit} need credits
                       </span>
                     )}
                   </p>
@@ -454,14 +486,17 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
 
               <ul className="space-y-2" aria-label="Selected images">
                 {files.map((f, i) => {
-                  const isExcess = i >= processingLimit;
+                  const isBeyondHardMax = i >= hardBatchLimit;
+                  const isExcess = i >= processingLimit; // includes isBeyondHardMax
                   const thumbUrl = URL.createObjectURL(f);
                   return (
                     <li
                       key={`${f.name}-${f.lastModified}-${i}`}
                       className={cn(
                         'flex items-center gap-3 rounded-xl p-3',
-                        isExcess
+                        isBeyondHardMax
+                          ? 'bg-red-50 ring-1 ring-red-200 dark:bg-red-950/30 dark:ring-red-800/50'
+                          : isExcess
                           ? 'bg-amber-50 ring-1 ring-amber-200 dark:bg-amber-950/30 dark:ring-amber-800/50'
                           : 'bg-surface',
                       )}
@@ -479,8 +514,11 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
                         <p className="truncate text-sm font-medium text-text">{f.name}</p>
                         <p className="text-xs text-text-subtle">
                           {formatBytes(f.size)}
-                          {isExcess && (
-                            <span className="ml-1.5 text-amber-600 dark:text-amber-400">· over limit</span>
+                          {isBeyondHardMax && (
+                            <span className="ml-1.5 text-red-600 dark:text-red-400">· must remove</span>
+                          )}
+                          {!isBeyondHardMax && isExcess && (
+                            <span className="ml-1.5 text-amber-600 dark:text-amber-400">· needs credits</span>
                           )}
                         </p>
                       </div>
@@ -497,37 +535,60 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
                 })}
               </ul>
 
-              {usesCreditOverflow && confirmedCost !== null && totalCredits !== null && (
+              {/* Block C — Within hard max, over plan limit, credits sufficient */}
+              {!isOverHardMax && isOverPlanLimit && canAffordOverflow && authenticated && confirmedCost > 0 && totalCredits !== null && (
                 <div role="status" className="rounded-2xl border border-primary/20 bg-primary-light p-4 text-sm text-text">
-                  <p className="font-semibold">Your credits allow this larger batch</p>
+                  <p className="font-semibold">Your credits cover this larger batch</p>
                   <p className="mt-1 text-text-muted">
-                    You&apos;re processing {files.length} images. Your {plan === 'FREE' ? 'Free' : plan === 'LIFETIME' ? 'Lifetime' : plan.charAt(0) + plan.slice(1).toLowerCase()} batch limit includes up to {batchLimit}. Processing all {files.length} costs {confirmedCost} credit{confirmedCost === 1 ? '' : 's'} and will leave {totalCredits - confirmedCost}.
+                    Your {PLAN_LABEL[plan]} plan includes {batchLimit} image{batchLimit === 1 ? '' : 's'}. Processing all {processableCount} costs {confirmedCost} credit{confirmedCost === 1 ? '' : 's'} for the {creditOverflowCount} extra image{creditOverflowCount === 1 ? '' : 's'}. You have {totalCredits} — leaving {totalCredits - confirmedCost} after.
                   </p>
                 </div>
               )}
 
-              {/* Batch limit warning */}
-              {isOverLimit && authenticated && confirmedCost !== null && totalCredits !== null && (
+              {/* Block A — Hard max exceeded: must remove files */}
+              {isOverHardMax && (
                 <div role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200">
                   <p className="font-semibold">
-                    {files.length > hardBatchLimit
-                      ? `This batch exceeds the configured ${hardBatchLimit}-image maximum.`
-                      : `This batch needs ${confirmedCost} credits; you have ${totalCredits}.`}
+                    Hard maximum exceeded — remove {filesOverHardMax.length} image{filesOverHardMax.length === 1 ? '' : 's'}
                   </p>
                   <p className="mt-1 text-amber-800 dark:text-amber-300">
-                    Your plan includes up to {batchLimit} images per batch. Remove {files.length - processingLimit} image{files.length - processingLimit === 1 ? '' : 's'}, or upgrade/buy credits to process a larger eligible batch.
+                    This tool supports at most {hardBatchLimit} images per batch regardless of plan or credits. Remove the highlighted files to continue.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <button type="button" onClick={removeExcess} className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-200">
-                      Remove {files.length - processingLimit} excess image{files.length - processingLimit === 1 ? '' : 's'}
+                    <button
+                      type="button"
+                      onClick={() => setFiles((p) => p.slice(0, hardBatchLimit))}
+                      className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-200"
+                    >
+                      Remove {filesOverHardMax.length} image{filesOverHardMax.length === 1 ? '' : 's'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Block B — Within hard max, over plan limit, insufficient credits */}
+              {!isOverHardMax && isOverPlanLimit && !canAffordOverflow && authenticated && (
+                <div role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200">
+                  <p className="font-semibold">Not enough credits for this batch</p>
+                  <p className="mt-1 text-amber-800 dark:text-amber-300">
+                    Your {PLAN_LABEL[plan]} plan includes {batchLimit} image{batchLimit === 1 ? '' : 's'}. Processing {processableCount} image{processableCount === 1 ? '' : 's'} needs {confirmedCost} credit{confirmedCost === 1 ? '' : 's'} for the {creditOverflowCount} extra image{creditOverflowCount === 1 ? '' : 's'}, but you only have {totalCredits ?? 0}.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setFiles((p) => p.slice(0, batchLimit))}
+                      className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-200"
+                    >
+                      Remove {creditOverflowCount} image{creditOverflowCount === 1 ? '' : 's'}
                     </button>
                     <Link href="/pricing" className="rounded-lg bg-gradient-brand px-3 py-1.5 text-xs font-semibold text-white">
-                      View plans and credits
+                      Buy credits or upgrade
                     </Link>
                   </div>
                 </div>
               )}
 
+              {/* Block D — Unauthenticated over-limit */}
               {isOverLimit && !authenticated && (
                 <BatchLimitWarning
                   selectedCount={files.length}
@@ -535,7 +596,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
                   plan={plan}
                   allLimits={allLimits}
                   canUpgrade={canUpgrade}
-                  excessFileNames={excessFiles.map((f) => f.name)}
+                  excessFileNames={files.slice(processingLimit).map((f) => f.name)}
                   onRemoveExcess={removeExcess}
                 />
               )}
@@ -580,10 +641,13 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
               <Button
                 onClick={compress}
                 loading={loading}
+                disabled={!planReady || isOverHardMax}
                 className="w-full"
                 size="lg"
               >
-                {isOverLimit
+                {isOverHardMax
+                  ? 'Remove excess to compress'
+                  : isOverLimit
                   ? `Compress ${processingLimit} of ${files.length} images`
                   : `Compress ${files.length} image${files.length === 1 ? '' : 's'}`}
               </Button>
