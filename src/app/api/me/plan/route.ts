@@ -56,7 +56,7 @@ export async function GET() {
     ok: true,
     authenticated: true,
     plan,
-    totalCredits: summary?.totalCredits ?? 0,
+    totalCredits: summary?.totalCredits ?? null,
     imageToolCreditCost: JOB_COST.imageTool,
     limits: buildLimits(configs),
   });

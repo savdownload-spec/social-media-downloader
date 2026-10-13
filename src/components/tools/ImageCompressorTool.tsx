@@ -195,9 +195,11 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
       : 0;
 
   // Whether the user has enough credits for the overflow portion.
+  // imageToolCreditCost !== null guard makes the invariant explicit: if the cost
+  // is unknown (cache not yet populated), we must not treat the user as covered.
   const canAffordOverflow =
     !isOverPlanLimit ||
-    (authenticated && totalCredits !== null && totalCredits >= confirmedCost);
+    (authenticated && imageToolCreditCost !== null && totalCredits !== null && totalCredits >= confirmedCost);
 
   // Processable with current credits/plan (what the compress button will actually send).
   const processingLimit = canAffordOverflow ? processableCount : batchLimit;
@@ -566,8 +568,9 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
                 </div>
               )}
 
-              {/* Block B — Within hard max, over plan limit, insufficient credits */}
-              {!isOverHardMax && isOverPlanLimit && !canAffordOverflow && authenticated && (
+              {/* Block B — Within hard max, over plan limit, insufficient credits.
+                  Only shown when cost and balance are both known (not during load or billing error). */}
+              {!isOverHardMax && isOverPlanLimit && !canAffordOverflow && authenticated && totalCredits !== null && imageToolCreditCost !== null && (
                 <div role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200">
                   <p className="font-semibold">Not enough credits for this batch</p>
                   <p className="mt-1 text-amber-800 dark:text-amber-300">
