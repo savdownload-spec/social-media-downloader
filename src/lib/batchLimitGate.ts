@@ -54,15 +54,20 @@ export async function checkBatchLimit(
   slug: string,
   fileCount: number,
   _req?: Request,
+  creditOverflow?: { cost: number },
 ): Promise<BatchLimitViolation | null> {
   // Identify the calling user — gracefully treat unauthenticated as FREE.
   const session = await getServerSession(authOptions);
   const userId = (session?.user as { id?: string })?.id;
 
   let plan: PlanTier = 'FREE';
+  let totalCredits = 0;
   if (userId) {
     const summary = await getBillingSummary(userId);
-    if (summary) plan = summary.plan as PlanTier;
+    if (summary) {
+      plan = summary.plan as PlanTier;
+      totalCredits = summary.totalCredits;
+    }
   }
 
   // Read any admin DB overrides for this tool's batch limits.
@@ -81,18 +86,37 @@ export async function checkBatchLimit(
 
   if (fileCount <= allowedCount) return null; // within limit — proceed
 
+  // Credit-backed overflow is opt-in for tools whose existing pricing charges
+  // per file. The highest configured tier remains the hard anti-abuse ceiling.
+  const hardLimit = Math.max(limits.free, limits.pro, limits.max, limits.lifetime);
+  if (creditOverflow && userId && fileCount <= hardLimit && totalCredits >= creditOverflow.cost) {
+    return null;
+  }
+
   const upgradeEligible = canUpgradeBatchLimit(plan, limits);
   const planName = PLAN_LABEL[plan];
+  const error = creditOverflow && userId
+    ? fileCount > hardLimit
+      ? `This tool allows at most ${hardLimit} files per batch. You sent ${fileCount}.`
+      : `This batch needs ${creditOverflow.cost} credit${creditOverflow.cost === 1 ? '' : 's'} and you have ${totalCredits}. Buy credits or upgrade your plan at /pricing.`
+    : `${planName} plan allows up to ${allowedCount} file${allowedCount === 1 ? '' : 's'} per batch. You sent ${fileCount}.${upgradeEligible ? ' Upgrade your plan to increase this limit.' : ''}`;
+  const insufficientCredits = Boolean(creditOverflow && userId && fileCount <= hardLimit && totalCredits < creditOverflow.cost);
 
   return NextResponse.json(
     {
       ok: false,
-      error: `${planName} plan allows up to ${allowedCount} file${allowedCount === 1 ? '' : 's'} per batch. You sent ${fileCount}.${upgradeEligible ? ' Upgrade your plan to increase this limit.' : ''}`,
-      code: 'BATCH_LIMIT_EXCEEDED',
+      error,
+      code: insufficientCredits ? 'INSUFFICIENT_CREDITS' : 'BATCH_LIMIT_EXCEEDED',
       allowedCount,
       sentCount: fileCount,
       upgradeEligible,
+      ...(creditOverflow ? {
+        requiredCredits: creditOverflow.cost,
+        availableCredits: totalCredits,
+        hardLimit,
+        purchaseCreditsEligible: Boolean(userId) && totalCredits < creditOverflow.cost,
+      } : {}),
     },
-    { status: 403 },
+    { status: insufficientCredits ? 402 : 403 },
   );
 }

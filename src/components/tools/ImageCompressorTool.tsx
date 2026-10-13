@@ -164,10 +164,19 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
   const [zipping, setZipping] = useState(false);
 
   // Batch limit hook
-  const { plan, limit: batchLimit, allLimits, canUpgrade, loading: limitLoading } = useBatchLimit(slug);
-
-  const excessFiles = files.slice(batchLimit);
-  const isOverLimit = files.length > batchLimit;
+  const {
+    plan, limit: batchLimit, allLimits, canUpgrade, loading: limitLoading,
+    authenticated, totalCredits, imageToolCreditCost,
+  } = useBatchLimit(slug);
+  const hardBatchLimit = Math.max(allLimits.free, allLimits.pro, allLimits.max, allLimits.lifetime);
+  const creditBatchLimit = authenticated && totalCredits !== null && imageToolCreditCost
+    ? Math.min(hardBatchLimit, Math.floor(totalCredits / imageToolCreditCost))
+    : 0;
+  const processingLimit = Math.max(batchLimit, creditBatchLimit);
+  const excessFiles = files.slice(processingLimit);
+  const isOverLimit = files.length > processingLimit;
+  const usesCreditOverflow = files.length > batchLimit && !isOverLimit && authenticated;
+  const confirmedCost = imageToolCreditCost ? files.length * imageToolCreditCost : null;
 
   // Revoke object URLs on unmount to avoid memory leaks
   useEffect(() => {
@@ -203,8 +212,8 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
   }, []);
 
   const removeExcess = useCallback(() => {
-    setFiles((prev) => prev.slice(0, batchLimit));
-  }, [batchLimit]);
+    setFiles((prev) => prev.slice(0, processingLimit));
+  }, [processingLimit]);
 
   // ---------------------------------------------------------------------------
   // Compress action
@@ -215,7 +224,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
     if (processingRef.current) return;
     if (!files.length) { setError('Add at least one image first.'); return; }
 
-    const filesToProcess = files.slice(0, batchLimit);
+    const filesToProcess = files.slice(0, processingLimit);
     const idempotencyKey = crypto.randomUUID();
 
     processingRef.current = true;
@@ -276,7 +285,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
       processingRef.current = false;
       setLoading(false);
     }
-  }, [requireAuth, files, batchLimit, quality, errToast]);
+  }, [requireAuth, files, processingLimit, quality, errToast]);
 
   // ---------------------------------------------------------------------------
   // Retry failed files
@@ -445,7 +454,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
 
               <ul className="space-y-2" aria-label="Selected images">
                 {files.map((f, i) => {
-                  const isExcess = i >= batchLimit;
+                  const isExcess = i >= processingLimit;
                   const thumbUrl = URL.createObjectURL(f);
                   return (
                     <li
@@ -488,11 +497,41 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
                 })}
               </ul>
 
+              {usesCreditOverflow && confirmedCost !== null && totalCredits !== null && (
+                <div role="status" className="rounded-2xl border border-primary/20 bg-primary-light p-4 text-sm text-text">
+                  <p className="font-semibold">Your credits allow this larger batch</p>
+                  <p className="mt-1 text-text-muted">
+                    You&apos;re processing {files.length} images. Your {plan === 'FREE' ? 'Free' : plan === 'LIFETIME' ? 'Lifetime' : plan.charAt(0) + plan.slice(1).toLowerCase()} batch limit includes up to {batchLimit}. Processing all {files.length} costs {confirmedCost} credit{confirmedCost === 1 ? '' : 's'} and will leave {totalCredits - confirmedCost}.
+                  </p>
+                </div>
+              )}
+
               {/* Batch limit warning */}
-              {isOverLimit && (
+              {isOverLimit && authenticated && confirmedCost !== null && totalCredits !== null && (
+                <div role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200">
+                  <p className="font-semibold">
+                    {files.length > hardBatchLimit
+                      ? `This batch exceeds the configured ${hardBatchLimit}-image maximum.`
+                      : `This batch needs ${confirmedCost} credits; you have ${totalCredits}.`}
+                  </p>
+                  <p className="mt-1 text-amber-800 dark:text-amber-300">
+                    Your plan includes up to {batchLimit} images per batch. Remove {files.length - processingLimit} image{files.length - processingLimit === 1 ? '' : 's'}, or upgrade/buy credits to process a larger eligible batch.
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button type="button" onClick={removeExcess} className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-200">
+                      Remove {files.length - processingLimit} excess image{files.length - processingLimit === 1 ? '' : 's'}
+                    </button>
+                    <Link href="/pricing" className="rounded-lg bg-gradient-brand px-3 py-1.5 text-xs font-semibold text-white">
+                      View plans and credits
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {isOverLimit && !authenticated && (
                 <BatchLimitWarning
                   selectedCount={files.length}
-                  limit={batchLimit}
+                  limit={processingLimit}
                   plan={plan}
                   allLimits={allLimits}
                   canUpgrade={canUpgrade}
@@ -545,7 +584,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
                 size="lg"
               >
                 {isOverLimit
-                  ? `Compress ${batchLimit} of ${files.length} images`
+                  ? `Compress ${processingLimit} of ${files.length} images`
                   : `Compress ${files.length} image${files.length === 1 ? '' : 's'}`}
               </Button>
             </div>
@@ -572,7 +611,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
         >
           <Loader2 className="h-5 w-5 animate-spin text-primary" />
           <span>
-            Compressing {Math.min(files.length, batchLimit)} image{Math.min(files.length, batchLimit) === 1 ? '' : 's'}…
+            Compressing {Math.min(files.length, processingLimit)} image{Math.min(files.length, processingLimit) === 1 ? '' : 's'}…
             {processedCount > 0 && ` (${processedCount} of ${totalCount} done)`}
           </span>
         </div>

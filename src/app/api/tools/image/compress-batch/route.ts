@@ -92,10 +92,6 @@ export async function POST(req: Request) {
   const qualityRaw = parseInt((formData.get('quality') as string | null) ?? '80', 10);
   const quality = Number.isFinite(qualityRaw) ? Math.min(100, Math.max(10, qualityRaw)) : 80;
 
-  /* ── Batch count check (plan-tier gate) ── */
-  const batchLimitResponse = await checkBatchLimit('image-compressor', rawFiles.length, req);
-  if (batchLimitResponse) return batchLimitResponse;
-
   /* ── Per-file pre-validation (size + type) ── */
   const results: FileResult[] = [];
   const validFiles: { file: File; index: number }[] = [];
@@ -149,6 +145,14 @@ export async function POST(req: Request) {
   }
 
   const totalCost = validFiles.length * JOB_COST.imageTool;
+  const batchLimitResponse = await checkBatchLimit(
+    'image-compressor',
+    validFiles.length,
+    req,
+    { cost: totalCost },
+  );
+  if (batchLimitResponse) return batchLimitResponse;
+
   const gate = await requireCredits({ cost: totalCost });
   if (!gate.ok) return gate.response;
 

@@ -33,6 +33,9 @@ export type BatchLimitResult = {
   canUpgrade: boolean;
   loading: boolean;
   error: boolean;
+  authenticated: boolean;
+  totalCredits: number | null;
+  imageToolCreditCost: number | null;
 };
 
 // A tiny module-level cache so multiple tool components on the same page
@@ -40,11 +43,13 @@ export type BatchLimitResult = {
 let cachedPlan: PlanTier | null = null;
 let cachedLimitsMap: Record<string, ToolBatchLimits> | null = null;
 let fetchPromise: Promise<void> | null = null;
+let cachedAccount: Pick<BatchLimitResult, 'authenticated' | 'totalCredits' | 'imageToolCreditCost'> | null = null;
 
 function clearCache() {
   cachedPlan = null;
   cachedLimitsMap = null;
   fetchPromise = null;
+  cachedAccount = null;
 }
 
 // Exported for testing / sign-out scenarios.
@@ -57,9 +62,17 @@ async function loadPlanData(): Promise<void> {
     ok: boolean;
     plan: PlanTier;
     limits: Record<string, ToolBatchLimits>;
+    authenticated?: boolean;
+    totalCredits?: number | null;
+    imageToolCreditCost?: number;
   };
   cachedPlan = data.plan;
   cachedLimitsMap = data.limits;
+  cachedAccount = {
+    authenticated: data.authenticated === true,
+    totalCredits: typeof data.totalCredits === 'number' ? data.totalCredits : null,
+    imageToolCreditCost: typeof data.imageToolCreditCost === 'number' ? data.imageToolCreditCost : null,
+  };
 }
 
 export function useBatchLimit(slug: string): BatchLimitResult {
@@ -119,5 +132,8 @@ export function useBatchLimit(slug: string): BatchLimitResult {
     canUpgrade,
     loading: state.loading,
     error: state.error,
+    authenticated: cachedAccount?.authenticated ?? false,
+    totalCredits: cachedAccount?.totalCredits ?? null,
+    imageToolCreditCost: cachedAccount?.imageToolCreditCost ?? null,
   };
 }

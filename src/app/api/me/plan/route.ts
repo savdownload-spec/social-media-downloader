@@ -15,6 +15,7 @@ import { authOptions } from '@/lib/auth';
 import { getBillingSummary } from '@/lib/billing';
 import { prisma } from '@/lib/prisma';
 import { getToolBatchLimits, MULTI_FILE_TOOL_SLUGS } from '@/lib/batchLimits';
+import { JOB_COST } from '@/lib/credits';
 import type { PlanTier } from '@/types/plans';
 
 export const runtime = 'nodejs';
@@ -26,7 +27,14 @@ export async function GET() {
 
   // Unauthenticated → treat as FREE so the UI still renders correctly.
   if (!userId) {
-    return Response.json({ ok: true, plan: 'FREE' as PlanTier, limits: buildLimits(null) });
+    return Response.json({
+      ok: true,
+      authenticated: false,
+      plan: 'FREE' as PlanTier,
+      totalCredits: null,
+      imageToolCreditCost: JOB_COST.imageTool,
+      limits: buildLimits(null),
+    });
   }
 
   const summary = await getBillingSummary(userId);
@@ -44,7 +52,14 @@ export async function GET() {
     },
   });
 
-  return Response.json({ ok: true, plan, limits: buildLimits(configs) });
+  return Response.json({
+    ok: true,
+    authenticated: true,
+    plan,
+    totalCredits: summary?.totalCredits ?? 0,
+    imageToolCreditCost: JOB_COST.imageTool,
+    limits: buildLimits(configs),
+  });
 }
 
 type DbConfig = {
