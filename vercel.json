@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "buildCommand": "npx prisma migrate deploy && npm run build",
+  "buildCommand": "npm run db:deploy && npm run build",
   "installCommand": "npm install",
   "env": {
     "NEXT_PUBLIC_SITE_NAME": "SavDown"
