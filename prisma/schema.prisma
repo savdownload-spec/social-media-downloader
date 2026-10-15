@@ -372,8 +372,15 @@ model PostRevision {
 model NewsletterSubscriber {
   id        String   @id @default(cuid())
   email     String   @unique
-  active    Boolean  @default(true)
+  active    Boolean  @default(false)
   createdAt DateTime @default(now())
+  status    String   @default("pending")
+  source    String   @default("homepage-monthly-update")
+  provider  String?
+  providerSubscriberId String?
+  providerListId String?
+  subscribedAt DateTime?
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model ContactMessage {

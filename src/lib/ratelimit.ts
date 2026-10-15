@@ -5,22 +5,25 @@ export type RateLimitResult = {
   limit: number;
   remaining: number;
   resetSeconds: number;
+  unavailable?: boolean;
 };
 
 /**
  * Fixed-window rate limiter using Redis INCR + EXPIRE.
- * Falls back to always-allow if Redis isn't configured (dev convenience).
+ * Falls back to always-allow for legacy callers (dev convenience).
+ * Public subscription flows opt into failClosed to require working Redis.
  */
 export async function ratelimit(
   identifier: string,
-  { limit = 20, windowSeconds = 60 }: { limit?: number; windowSeconds?: number } = {},
+  { limit = 20, windowSeconds = 60, failClosed = false }: { limit?: number; windowSeconds?: number; failClosed?: boolean } = {},
 ): Promise<RateLimitResult> {
   const r = getRedis();
   const defaultResult: RateLimitResult = {
-    success: true,
+    success: !failClosed,
     limit,
     remaining: limit,
     resetSeconds: windowSeconds,
+    unavailable: true,
   };
 
   if (!r) return defaultResult;

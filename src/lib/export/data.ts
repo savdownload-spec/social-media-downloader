@@ -185,7 +185,11 @@ export async function fetchExportRows(
       paymentCount: purchase?.count ?? 0,
       creditsPurchased: purchase?.sum ?? 0,
       lastPaymentDate: purchase?.last ?? null,
-      newsletterStatus: newsletter ? (newsletter.active ? 'Subscribed' : 'Unsubscribed') : 'Not subscribed',
+      newsletterStatus: newsletter
+        ? (({ active: 'Subscribed', pending: 'Pending confirmation', legacy: 'Pending provider sync',
+          unsubscribed: 'Unsubscribed', bounced: 'Bounced', complained: 'Complained' } as Record<string, string>)[newsletter.status]
+          ?? (newsletter.active ? 'Subscribed' : 'Unsubscribed'))
+        : 'Not subscribed',
       affiliateStatus: affiliate?.status ?? null,
       affiliateCode: affiliate?.code ?? null,
       reviewCount: review?.count ?? 0,
