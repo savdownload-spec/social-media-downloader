@@ -52,7 +52,12 @@ function sanitize(title: string): string {
 // impersonation via curl_cffi (free, BSD-licensed) to look like a real
 // browser. Scoped to TikTok only, other extractors don't need it.
 export function needsImpersonation(url: string): boolean {
-  return /tiktok\.com/i.test(url);
+  try {
+    const host = new URL(url).hostname.toLowerCase().replace(/\.$/, '');
+    return host === 'tiktok.com' || host.endsWith('.tiktok.com');
+  } catch {
+    return false;
+  }
 }
 
 function proxyUrl(rawUrl: string, filename: string, extra?: { referer?: string; cookie?: string }): string {

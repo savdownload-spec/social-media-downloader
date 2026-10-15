@@ -11,7 +11,9 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
-  const rl = await ratelimit(`register:${getClientId(request)}`, { limit: 10, windowSeconds: 900 });
+  const rl = await ratelimit(`register:${getClientId(request)}`, {
+    limit: 10, windowSeconds: 900, failClosed: process.env.NODE_ENV === 'production',
+  });
   if (!rl.success) {
     return fail('Too many attempts. Please try again later.', 429);
   }

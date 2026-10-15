@@ -1,4 +1,5 @@
 import type { NextAuthOptions } from 'next-auth';
+import { createHash } from 'node:crypto';
 import { cookies } from 'next/headers';
 import GoogleProvider from 'next-auth/providers/google';
 import GitHubProvider from 'next-auth/providers/github';
@@ -7,6 +8,7 @@ import { prisma } from './prisma';
 import { verifyPassword } from './passwords';
 import { loginSchema } from './auth/validators';
 import { creditReferralSignup, REFERRAL_COOKIE } from './affiliates';
+import { ratelimit } from './ratelimit';
 
 // Admin emails are configured exclusively via the ADMIN_EMAILS environment
 // variable (comma-separated). Never hardcode privileged addresses in source.
@@ -44,9 +46,19 @@ providers.push(
       email: { label: 'Email', type: 'email' },
       password: { label: 'Password', type: 'password' },
     },
-    async authorize(credentials) {
+    async authorize(credentials, request) {
       const parsed = loginSchema.safeParse(credentials);
       if (!parsed.success) return null;
+
+      const forwarded = request.headers?.['x-forwarded-for'];
+      const clientId = forwarded?.split(',')[0]?.trim() || request.headers?.['x-real-ip'] || 'anon';
+      const accountKey = createHash('sha256').update(parsed.data.email).digest('hex');
+      const failClosed = process.env.NODE_ENV === 'production';
+      const [ipLimit, accountLimit] = await Promise.all([
+        ratelimit(`login:ip:${clientId}`, { limit: 10, windowSeconds: 900, failClosed }),
+        ratelimit(`login:account:${accountKey}`, { limit: 10, windowSeconds: 900, failClosed }),
+      ]);
+      if (!ipLimit.success || !accountLimit.success) return null;
 
       const user = await prisma.user.findUnique({
         where: { email: parsed.data.email },
@@ -113,22 +125,25 @@ export const authOptions: NextAuthOptions = {
       // If the user changed/reset their password after this token was issued,
       // return an empty token — NextAuth treats this as unauthenticated and the
       // session callback returns no user, forcing re-login.
-      // Wrapped in try-catch: a DB error (e.g. during a migration window where
-      // the passwordChangedAt column doesn't exist yet) must NEVER invalidate
-      // an otherwise valid session — fail open, not closed.
+      // Revalidate security-sensitive session state against the database.
       const issuedAt = (token as Record<string, unknown>).issuedAt as number | undefined;
-      if (issuedAt && token.id) {
+      if (token.id) {
         try {
           const dbUser = await prisma.user.findUnique({
             where: { id: token.id as string },
-            select: { passwordChangedAt: true },
+            select: { passwordChangedAt: true, role: true },
           });
-          if (dbUser?.passwordChangedAt && dbUser.passwordChangedAt.getTime() > issuedAt) {
+          if (!dbUser) return {};
+          // Refresh authorization state on every token check. A demoted admin
+          // must lose access immediately rather than retaining a stale JWT role.
+          (token as Record<string, unknown>).role = dbUser.role;
+          if (issuedAt && dbUser.passwordChangedAt && dbUser.passwordChangedAt.getTime() > issuedAt) {
             return {};
           }
         } catch {
-          // Column may not exist yet on this database instance (e.g. migration
-          // pending). Allow the session to continue rather than forcing logout.
+          // Preserve ordinary sessions during a transient DB failure, but fail
+          // closed for privileged access until the role can be verified again.
+          (token as Record<string, unknown>).role = 'USER';
         }
       }
 

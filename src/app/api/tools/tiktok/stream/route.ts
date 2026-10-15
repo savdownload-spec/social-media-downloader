@@ -30,6 +30,7 @@ import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 import { needsImpersonation, KNOWN_SELECTORS } from '@/lib/ytdlp';
 import { getYtdlpBin, getFfmpegBin } from '@/lib/binaryPaths';
+import { isSupportedPlatformUrl } from '@/lib/security/remote-url';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -60,7 +61,7 @@ export async function GET(req: Request) {
   const tool = searchParams.get('tool') || (extractAudio ? 'tiktok-to-mp3' : 'tiktok-video-downloader');
   const filename      = (searchParams.get('filename') || 'tiktok-download').replace(/[/\\?%*:|"<>]/g, '-').slice(0, 200);
 
-  if (!pageUrl || !needsImpersonation(pageUrl)) {
+  if (!pageUrl || !isSupportedPlatformUrl(pageUrl) || !needsImpersonation(pageUrl)) {
     return NextResponse.json({ error: 'Invalid or unsupported URL.' }, { status: 400 });
   }
   if (!selector || !KNOWN_SELECTORS.has(selector)) {

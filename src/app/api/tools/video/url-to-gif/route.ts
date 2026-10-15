@@ -10,6 +10,7 @@ import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 import { urlToGif } from '@/lib/videoService';
+import { isTrustedXMediaUrl } from '@/lib/security/remote-url';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,7 +30,7 @@ export async function GET(req: Request) {
   const sourceUrl = searchParams.get('url');
   const filename  = (searchParams.get('filename') || 'video').replace(/[/\\?%*:|"<>]/g, '-');
 
-  if (!sourceUrl || !/^https?:\/\//i.test(sourceUrl)) {
+  if (!sourceUrl || !isTrustedXMediaUrl(sourceUrl)) {
     return NextResponse.json({ error: 'Invalid or missing source URL.' }, { status: 400 });
   }
   const operation = {

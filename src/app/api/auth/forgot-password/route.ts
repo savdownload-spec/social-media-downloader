@@ -12,7 +12,9 @@ export const dynamic = 'force-dynamic';
 const RESET_TOKEN_TTL_HOURS = 1;
 
 export async function POST(request: Request) {
-  const rl = await ratelimit(`forgot:${getClientId(request)}`, { limit: 5, windowSeconds: 900 });
+  const rl = await ratelimit(`forgot:${getClientId(request)}`, {
+    limit: 5, windowSeconds: 900, failClosed: process.env.NODE_ENV === 'production',
+  });
   if (!rl.success) {
     return ok({});
   }

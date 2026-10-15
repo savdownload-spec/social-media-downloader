@@ -8,6 +8,7 @@ import { sha256 } from '@/lib/utils';
 import { resolveWithYtdlp } from '@/lib/ytdlp';
 import { resolveWithGalleryDl } from '@/lib/gallerydl';
 import type { DownloadResult } from '@/types';
+import { isSupportedPlatformUrl } from '@/lib/security/remote-url';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -99,6 +100,12 @@ export async function POST(req: Request) {
   if (!tool.urlPattern.test(body.url)) {
     return NextResponse.json<DownloadResult>(
       { ok: false, error: `That doesn't look like a valid ${tool.platform} link.` },
+      { status: 400 },
+    );
+  }
+  if (!isSupportedPlatformUrl(body.url)) {
+    return NextResponse.json<DownloadResult>(
+      { ok: false, error: 'Only HTTPS links from supported platforms are allowed.' },
       { status: 400 },
     );
   }

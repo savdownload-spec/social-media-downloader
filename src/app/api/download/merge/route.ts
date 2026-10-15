@@ -23,6 +23,7 @@ import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, costForHeight, requestIdempotencyKey } from '@/lib/credits';
 import { getYtdlpBin, getFfmpegBin } from '@/lib/binaryPaths';
+import { isSupportedPlatformUrl } from '@/lib/security/remote-url';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -51,7 +52,7 @@ export async function GET(req: Request) {
   const tool = searchParams.get('tool') || 'media-downloader';
   const platform = searchParams.get('platform') || 'download';
 
-  if (!pageUrl || !/^https?:\/\//i.test(pageUrl)) {
+  if (!pageUrl || !isSupportedPlatformUrl(pageUrl)) {
     return NextResponse.json({ error: 'Invalid or missing source URL.' }, { status: 400 });
   }
   const height = heightRaw ? parseInt(heightRaw, 10) : NaN;
