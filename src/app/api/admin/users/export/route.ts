@@ -41,6 +41,8 @@ function sse(obj: unknown) {
   return new TextEncoder().encode(JSON.stringify(obj) + '\n');
 }
 
+const EXPORT_FAILURE_MESSAGE = 'Export could not be completed. Please try again shortly.';
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   const admin = session?.user as { id?: string; role?: string; email?: string };
@@ -182,9 +184,12 @@ export async function POST(req: NextRequest) {
           },
         }));
       } catch (e) {
-        const message = e instanceof Error ? e.message : 'Export failed';
-        await prisma.userExportJob.update({ where: { id: job.id }, data: { status: 'FAILED', error: message } }).catch(() => {});
-        controller.enqueue(sse({ phase: 'error', message }));
+        console.error('Admin users export failed', { jobId: job.id, error: e });
+        await prisma.userExportJob.update({
+          where: { id: job.id },
+          data: { status: 'FAILED', error: EXPORT_FAILURE_MESSAGE },
+        }).catch((updateError) => console.error('Could not mark users export as failed', { jobId: job.id, error: updateError }));
+        controller.enqueue(sse({ phase: 'error', message: EXPORT_FAILURE_MESSAGE }));
       } finally {
         controller.close();
       }
@@ -248,7 +253,9 @@ export async function GET(req: NextRequest) {
         formats: j.formatsJson,
         createdAt: j.createdAt.toISOString(),
         expiresAt: j.expiresAt.toISOString(),
-        error: j.error,
+        // Historical jobs may contain exception text written by older builds.
+        // Never return stored database/provider details to the browser.
+        error: j.error ? EXPORT_FAILURE_MESSAGE : null,
         downloadUrl: j.status === 'COMPLETED' ? `/api/admin/users/export/${j.id}/download` : null,
         files: j.status === 'COMPLETED' && Array.isArray(j.filesJson)
           ? (j.filesJson as { format: string; name: string; size: number }[]).map((f) => ({

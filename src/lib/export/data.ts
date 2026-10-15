@@ -146,7 +146,10 @@ export async function fetchExportRows(
       by: ['userId'], where: { userId: { in: ids } }, _avg: { rating: true }, _count: { _all: true },
     }),
     prisma.affiliate.findMany({ where: { userId: { in: ids } } }),
-    emails.length > 0 ? prisma.newsletterSubscriber.findMany({ where: { email: { in: emails } } }) : Promise.resolve([]),
+    emails.length > 0 ? prisma.newsletterSubscriber.findMany({
+      where: { email: { in: emails } },
+      select: { email: true, active: true, status: true },
+    }) : Promise.resolve([]),
   ]);
 
   const spendByUser = new Map(spendAgg.map((r) => [r.userId, Math.abs(r._sum.amount ?? 0)]));
