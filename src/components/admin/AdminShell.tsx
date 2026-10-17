@@ -106,11 +106,11 @@ export function AdminShell({ children }: Props) {
           element on every admin page (edit toolbars, sticky headers, etc.)
           since its own scrollTop never moves.
         */}
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 p-6 lg:p-8">{children}</main>
 
         {/* Admin footer */}
-        <footer className="border-t border-border-light bg-white/60 px-6 py-3">
-          <div className="flex items-center justify-between text-[11px] text-text-subtle">
+        <footer className="border-t border-border-light bg-white/80 px-6 py-3.5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 text-[11px] text-text-subtle">
             <span>&copy; {new Date().getFullYear()} SavDown</span>
             <span>Admin Panel</span>
           </div>

@@ -141,7 +141,7 @@ export function Th({ children, className, onClick, sortable }: {
     <th
       onClick={onClick}
       className={cn(
-        'px-4 py-2.5 text-left text-[11px] font-semibold text-text-muted uppercase tracking-wider bg-surface/60 border-b border-border-light',
+        'px-5 py-2.5 text-left text-[11px] font-semibold text-text-muted uppercase tracking-wider bg-surface/60 border-b border-border-light',
         sortable && 'cursor-pointer hover:text-text select-none',
         className,
       )}
@@ -153,7 +153,7 @@ export function Th({ children, className, onClick, sortable }: {
 
 export function Td({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <td className={cn('px-4 py-3 text-[13px] text-text border-b border-border-light/60', className)}>
+    <td className={cn('px-5 py-3 text-[13px] text-text border-b border-border-light/60', className)}>
       {children}
     </td>
   );
@@ -239,12 +239,12 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon: Icon = Inbox, title, message = 'No data yet.', action }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-6">
+    <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
       <div className="w-12 h-12 rounded-xl bg-surface flex items-center justify-center mb-3">
         <Icon className="w-5 h-5 text-text-subtle" />
       </div>
       {title && <p className="text-sm font-semibold text-text mb-1">{title}</p>}
-      <p className="text-[13px] text-text-muted text-center max-w-xs">{message}</p>
+      <p className="text-[13px] text-text-muted text-center max-w-md">{message}</p>
       {action && <div className="mt-4">{action}</div>}
     </div>
   );
@@ -259,12 +259,12 @@ interface ErrorStateProps {
 
 export function ErrorState({ message = 'Something went wrong. Please try again.', onRetry }: ErrorStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-6">
+    <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
       <div className="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center mb-3">
         <AlertTriangle className="w-5 h-5 text-rose-500" />
       </div>
       <p className="text-sm font-medium text-text mb-1">Error</p>
-      <p className="text-[13px] text-text-muted text-center max-w-xs mb-4">{message}</p>
+      <p className="text-[13px] text-text-muted text-center max-w-md mb-4">{message}</p>
       {onRetry && (
         <button
           onClick={onRetry}
@@ -290,7 +290,7 @@ interface PaginationProps {
 export function Pagination({ page, totalPages, total, onPage }: PaginationProps) {
   if (totalPages <= 1) return null;
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-border-light">
+    <div className="flex items-center justify-between px-5 py-3 border-t border-border-light">
       <span className="text-[11px] text-text-muted">{total.toLocaleString()} total</span>
       <div className="flex items-center gap-1.5">
         <button
@@ -327,7 +327,7 @@ interface FilterBarProps {
 export function FilterBar({ search, onSearch, placeholder = 'Search...', children }: FilterBarProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-3 mb-5">
-      <div className="relative w-full sm:w-72">
+      <div className="relative w-full sm:w-80">
         <input
           value={search}
           onChange={(e) => onSearch(e.target.value)}
@@ -338,7 +338,7 @@ export function FilterBar({ search, onSearch, placeholder = 'Search...', childre
           <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
         </svg>
       </div>
-      {children && <div className="flex flex-wrap gap-2">{children}</div>}
+      {children && <div className="flex flex-wrap gap-2 items-center">{children}</div>}
     </div>
   );
 }
@@ -436,7 +436,7 @@ export function TimeFilter({ value, onChange }: { value: string; onChange: (v: s
 // ─── Section wrapper ─────────────────────────────────────────────────────────
 
 export function AdminPage({ children }: { children: React.ReactNode }) {
-  return <div className="p-5 lg:p-6 max-w-[1400px] mx-auto">{children}</div>;
+  return <div className="p-6 lg:p-8 max-w-[1400px] mx-auto">{children}</div>;
 }
 
 // ─── Action Button ───────────────────────────────────────────────────────────

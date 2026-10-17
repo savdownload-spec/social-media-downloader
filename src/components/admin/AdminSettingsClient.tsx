@@ -207,18 +207,18 @@ export function AdminSettingsClient() {
               const isMaintenance = key === 'maintenance_mode';
               const maintenanceEnabled = settings.maintenance_mode === 'true';
               return (
-              <div key={key} className="flex items-center justify-between px-5 py-4 gap-6">
-                <div className="min-w-0">
+              <div key={key} className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 px-5 py-4">
+                <div className="min-w-0 max-w-2xl">
                   <p className="text-[13px] font-medium text-text">{LABELS[key] ?? key}</p>
-                  <p className="text-[11px] text-text-muted mt-0.5">{DESCRIPTIONS[key] ?? ''}</p>
+                  <p className="text-[12px] text-text-muted mt-1">{DESCRIPTIONS[key] ?? ''}</p>
                   {isMaintenance && (
                     <p className={cn(
-                      'mt-1.5 flex items-center gap-1.5 text-[11px] font-medium',
+                      'mt-2 flex items-center gap-1.5 text-[12px] font-medium',
                       maintenanceSaving ? 'text-text-muted' : maintenanceEnabled ? 'text-amber-600' : 'text-emerald-600',
                     )} aria-live="polite">
-                      {maintenanceSaving && <LoaderCircle className="h-3 w-3 animate-spin" aria-hidden="true" />}
+                      {maintenanceSaving && <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
                       {maintenanceSaving
-                        ? 'Updating…'
+                        ? 'Updating...'
                         : maintenanceEnabled
                           ? 'Public access is paused'
                           : 'Public site is available'}
@@ -247,7 +247,7 @@ export function AdminSettingsClient() {
                   <input
                     value={settings[key] ?? ''}
                     onChange={(e) => setSettings({ ...settings, [key]: e.target.value })}
-                    className="w-48 h-9 rounded-lg border border-border-light px-3 text-[13px] text-text text-right bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all shrink-0"
+                    className="w-full sm:w-64 h-9 rounded-lg border border-border-light px-3 text-[13px] text-text bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
                   />
                 )}
               </div>
