@@ -56,9 +56,15 @@ export async function GET(request: Request) {
   for (const conversation of analyticsSample) {
     const firstCustomer = conversation.messages.find((m) => m.senderType === 'CUSTOMER');
     const firstReply = conversation.messages.find((m) => m.senderType === 'ADMIN' && !m.internal);
-    if (firstCustomer && firstReply) responseMinutes.push((firstReply.createdAt.getTime() - firstCustomer.createdAt.getTime()) / 60000);
-    if (conversation.resolvedAt) resolutionMinutes.push((conversation.resolvedAt.getTime() - conversation.createdAt.getTime()) / 60000);
+    if (firstCustomer && firstReply) {
+      const minutes = (firstReply.createdAt.getTime() - firstCustomer.createdAt.getTime()) / 60000;
+      if (minutes > 0) responseMinutes.push(minutes);
+    }
+    if (conversation.resolvedAt) {
+      const minutes = (conversation.resolvedAt.getTime() - conversation.createdAt.getTime()) / 60000;
+      if (minutes > 0) resolutionMinutes.push(minutes);
+    }
   }
-  const average = (values: number[]) => values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : 0;
+  const average = (values: number[]) => values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : null;
   return ok({ conversations, admins, metrics: { open, waiting, unassigned, urgent, resolvedToday, today: todayCount, week: weekCount, averageResponseMinutes: average(responseMinutes), averageResolutionMinutes: average(resolutionMinutes) } });
 }

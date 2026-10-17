@@ -56,7 +56,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
         }, select: messageSelect,
       });
       await tx.supportConversation.update({ where: { id: params.id }, data: {
-        status: access.conversation.status === 'RESOLVED' || access.conversation.status === 'CLOSED' ? 'OPEN' : 'OPEN',
+        status: 'WAITING_FOR_REPLY',
         resolvedAt: null, adminUnreadCount: { increment: 1 }, lastMessageAt: now, lastMessagePreview: supportPreview(body),
       } });
       return created;

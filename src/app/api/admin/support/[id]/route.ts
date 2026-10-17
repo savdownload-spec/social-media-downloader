@@ -58,7 +58,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       const originalMessage = body;
       const message = await prisma.$transaction(async (tx) => {
         const created = await tx.supportMessage.create({ data: { conversationId: params.id, senderType: 'ADMIN', senderId: actor.id, body, originalMessage, translationStatus: 'NOT_NEEDED', internal }, select: messageSelect });
-        await tx.supportConversation.update({ where: { id: params.id }, data: internal ? { lastMessageAt: now } : { status: 'WAITING_FOR_REPLY', customerUnreadCount: { increment: 1 }, lastMessageAt: now, lastMessagePreview: supportPreview(body) } });
+        await tx.supportConversation.update({ where: { id: params.id }, data: internal ? { lastMessageAt: now } : { status: conversation.status === 'IN_PROGRESS' ? 'IN_PROGRESS' : 'OPEN', customerUnreadCount: { increment: 1 }, lastMessageAt: now, lastMessagePreview: supportPreview(body) } });
         return created;
       });
       if (!internal) {
