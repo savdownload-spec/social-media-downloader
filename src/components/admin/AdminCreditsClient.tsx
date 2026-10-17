@@ -137,7 +137,7 @@ export function AdminCreditsClient() {
               <tr><td colSpan={7}>
                 <EmptyState
                   icon={Coins}
-                  title="No transactions"
+                  title="No Transactions"
                   message={kind !== 'ALL' ? 'No transactions of this type found.' : 'Credit transactions will appear here.'}
                 />
               </td></tr>

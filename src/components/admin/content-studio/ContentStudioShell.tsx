@@ -316,7 +316,7 @@ function AutosaveIndicator({ status, onRetry, enabled }: { status: string; onRet
   if (status === 'saved') return <span className="flex items-center gap-1 text-[11px] text-emerald-600"><Check className="w-3 h-3" /> Saved</span>;
   if (status === 'error') return (
     <button onClick={onRetry} className="flex items-center gap-1 text-[11px] text-rose-600 hover:underline">
-      <AlertCircle className="w-3 h-3" /> Retry
+      <AlertCircle className="w-3 h-3" /> Try Again
     </button>
   );
   return null;

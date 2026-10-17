@@ -192,7 +192,7 @@ export function AdminUsersClient() {
                 <tr><td colSpan={8}>
                   <EmptyState
                     icon={Users}
-                    title="No users found"
+                    title="No Users Found"
                     message={search ? 'Try adjusting your search or filters.' : 'Users will appear here once they register.'}
                   />
                 </td></tr>

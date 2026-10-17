@@ -86,7 +86,7 @@ export function AdminAuditClient() {
               <tr><td colSpan={6}>
                 <EmptyState
                   icon={ClipboardList}
-                  title="No audit events"
+                  title="No Audit Events"
                   message="Admin actions will be logged here automatically."
                 />
               </td></tr>

@@ -212,7 +212,7 @@ export function AdminContentClient() {
                 ))
               ) : posts.length === 0 ? (
                 <tr><td colSpan={12}>
-                  <EmptyState icon={FileText} title="No posts yet" message="Create your first article to get started." action={<ActionButton variant="primary" icon={Plus} onClick={openCreate}>New Article</ActionButton>} />
+                  <EmptyState icon={FileText} title="No Posts Yet" message="Create your first article to get started." action={<ActionButton variant="primary" icon={Plus} onClick={openCreate}>New Article</ActionButton>} />
                 </td></tr>
               ) : posts.map((post) => (
                 <tr key={post.id} className="hover:bg-surface/40 transition-colors">

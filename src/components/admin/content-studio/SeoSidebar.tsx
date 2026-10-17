@@ -264,14 +264,14 @@ export function SeoSidebar({
         <div>
           <label className={labelCls}>Allow search engines to show this post?</label>
           <select value={form.noIndex ? 'noindex' : 'index'} onChange={(e) => setField('noIndex', e.target.value === 'noindex')} className={fieldCls}>
-            <option value="index">Index (default)</option>
+            <option value="index">Index (Default)</option>
             <option value="noindex">Noindex</option>
           </select>
         </div>
         <div>
           <label className={labelCls}>Should search engines follow links on this post?</label>
           <select value={form.noFollow ? 'nofollow' : 'follow'} onChange={(e) => setField('noFollow', e.target.value === 'nofollow')} className={fieldCls}>
-            <option value="follow">Follow (default)</option>
+            <option value="follow">Follow (Default)</option>
             <option value="nofollow">Nofollow</option>
           </select>
         </div>
@@ -294,7 +294,7 @@ export function SeoSidebar({
         <div>
           <label className={labelCls}>Page Type</label>
           <select value={form.schemaType} onChange={(e) => setField('schemaType', e.target.value)} className={fieldCls}>
-            <option value="BlogPosting">Blog Posting (default)</option>
+            <option value="BlogPosting">Blog Posting (Default)</option>
             <option value="Article">Article</option>
           </select>
         </div>

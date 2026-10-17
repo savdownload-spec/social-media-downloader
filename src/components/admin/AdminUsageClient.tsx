@@ -96,9 +96,9 @@ export function AdminUsageClient() {
       </div>
 
       <FilterBar search={search} onSearch={setSearch} placeholder="Search tool or platform...">
-        <select value={tool} onChange={(event) => setTool(event.target.value)} className="rounded-lg border border-border bg-white px-3 py-2 text-xs text-text dark:bg-card" aria-label="Filter by tool"><option value="">All tools</option>{data?.filters.tools.map((value) => <option key={value} value={value}>{value}</option>)}</select>
-        <select value={platform} onChange={(event) => setPlatform(event.target.value)} className="rounded-lg border border-border bg-white px-3 py-2 text-xs text-text dark:bg-card" aria-label="Filter by platform"><option value="">All platforms</option>{data?.filters.platforms.map((value) => <option key={value} value={value}>{value}</option>)}</select>
-        <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-lg border border-border bg-white px-3 py-2 text-xs text-text dark:bg-card" aria-label="Filter by status"><option value="">All statuses</option>{data?.filters.statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+        <select value={tool} onChange={(event) => setTool(event.target.value)} className="rounded-lg border border-border bg-white px-3 py-2 text-xs text-text dark:bg-card" aria-label="Filter by tool"><option value="">All Tools</option>{data?.filters.tools.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+        <select value={platform} onChange={(event) => setPlatform(event.target.value)} className="rounded-lg border border-border bg-white px-3 py-2 text-xs text-text dark:bg-card" aria-label="Filter by platform"><option value="">All Platforms</option>{data?.filters.platforms.map((value) => <option key={value} value={value}>{value}</option>)}</select>
+        <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-lg border border-border bg-white px-3 py-2 text-xs text-text dark:bg-card" aria-label="Filter by status"><option value="">All Statuses</option>{data?.filters.statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select>
       </FilterBar>
 
       <TableCard>

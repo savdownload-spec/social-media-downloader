@@ -32,6 +32,10 @@ type Tool = {
 const STATUS_FILTERS = ['ALL', 'LIVE', 'COMING_SOON', 'MAINTENANCE', 'DISABLED'];
 const STATUSES = ['LIVE', 'COMING_SOON', 'MAINTENANCE', 'DISABLED'];
 
+function statusLabel(status: string): string {
+  return status.split('_').map((word) => word.charAt(0) + word.slice(1).toLowerCase()).join(' ');
+}
+
 /** Returns whether this tool has multi-file batch support (i.e. batch limits apply). */
 function isMultiFileTool(slug: string): boolean {
   return (MULTI_FILE_TOOL_SLUGS as readonly string[]).includes(slug);
@@ -226,7 +230,7 @@ export function AdminToolsClient() {
                 <tr><td colSpan={COL_COUNT}>
                   <EmptyState
                     icon={Wrench}
-                    title="No tools found"
+                    title="No Tools Found"
                     message={search ? 'Try adjusting your search.' : 'Tool configurations will appear here.'}
                   />
                 </td></tr>
@@ -260,7 +264,7 @@ export function AdminToolsClient() {
                           onChange={(e) => updateStatus(t.slug, e.target.value)}
                           className="text-[11px] font-medium border border-border-light rounded-lg px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 cursor-pointer transition-all dark:bg-card"
                         >
-                          {STATUSES.map((s) => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+                          {STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
                         </select>
                       </Td>
                       <Td className="text-right text-text-muted tabular-nums font-medium">{t.usageTotal.toLocaleString()}</Td>
@@ -375,7 +379,7 @@ export function AdminToolsClient() {
                                     'disabled:opacity-50 disabled:cursor-not-allowed',
                                   )}
                                 >
-                                  Reset To Defaults
+                                  Reset to Defaults
                                 </button>
                                 <button
                                   type="button"
@@ -394,7 +398,7 @@ export function AdminToolsClient() {
                             {/* Current effective values */}
                             <p className="text-[11px] text-text-subtle">
                               Currently effective: Free&nbsp;{displayFree} · Pro&nbsp;{displayPro} · Max&nbsp;{t.batchLimitMax ?? codeDefaults.max} · Lifetime&nbsp;{displayLifetime}
-                              {hasOverride && <span className="ml-2 text-primary font-medium">· custom overrides active</span>}
+                              {hasOverride && <span className="ml-2 text-primary font-medium">· Custom Overrides Active</span>}
                             </p>
                           </div>
                         </td>

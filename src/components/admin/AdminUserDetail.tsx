@@ -150,7 +150,7 @@ export function AdminUserDetail({ user }: { user: UserData }) {
               { label: 'Plan',          value: <StatusBadge status={user.plan} /> },
               { label: 'Credits Reset', value: user.planCreditsResetAt ? new Date(user.planCreditsResetAt).toLocaleString() : '—' },
               { label: 'Joined',        value: new Date(user.createdAt).toLocaleString() },
-              { label: 'Last updated',  value: new Date(user.updatedAt).toLocaleString() },
+              { label: 'Last Updated',  value: new Date(user.updatedAt).toLocaleString() },
             ].map(({ label, value }) => (
               <div key={label} className="flex items-center justify-between px-5 py-3">
                 <span className="text-[13px] text-text-muted">{label}</span>

@@ -85,7 +85,7 @@ export function AdminReportsClient() {
           ) : rows.length === 0 ? (
             <EmptyState
               icon={Flag}
-              title="No data"
+              title="No Data"
               message={`No ${currentReport?.label.toLowerCase() ?? 'report'} data for this period.`}
             />
           ) : (

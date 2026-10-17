@@ -913,7 +913,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
                   onChange={(e) => setImageDialog((d) => ({ ...d, align: e.target.value as FigureAlign }))}
                   className={inputCls}
                 >
-                  <option value="">Full width</option>
+                  <option value="">Full Width</option>
                   <option value="left">Left</option>
                   <option value="center">Centered</option>
                   <option value="right">Right</option>

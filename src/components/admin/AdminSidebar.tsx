@@ -241,10 +241,10 @@ export function AdminSidebar({ onClose, collapsed, onToggleCollapse, badges }: P
             'flex items-center gap-2 rounded-xl text-[13px] font-medium text-text-subtle hover:text-primary transition-colors',
             collapsed ? 'justify-center p-2.5' : 'px-3 py-2',
           )}
-          title={collapsed ? 'Back To Site' : undefined}
+          title={collapsed ? 'Back to Site' : undefined}
         >
           <ExternalLink className="w-[18px] h-[18px] shrink-0" />
-          {!collapsed && <span>Back To Site</span>}
+          {!collapsed && <span>Back to Site</span>}
         </Link>
       </div>
     </aside>

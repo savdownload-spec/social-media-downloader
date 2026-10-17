@@ -341,11 +341,11 @@ export function AdminHeader({ onMenuClick, collapsed, onToggleCollapse, badges }
             </div>
             <div className="max-h-72 overflow-y-auto py-2">
               {filteredResults.length === 0 ? (
-                <p className="px-4 py-6 text-sm text-text-muted text-center">No results found</p>
+                <p className="px-4 py-6 text-sm text-text-muted text-center">No Results Found</p>
               ) : (
                 <>
                   <p className="px-4 py-1 text-[10px] font-semibold text-text-subtle uppercase tracking-wider">
-                    {searchQuery ? 'Results' : 'Quick navigation'}
+                    {searchQuery ? 'Results' : 'Quick Navigation'}
                   </p>
                   {filteredResults.map((result) => {
                     const Icon = SEARCH_ICONS[result.type] || CreditCard;

@@ -271,7 +271,7 @@ export function ErrorState({ message = 'Something went wrong. Please try again.'
           className="inline-flex items-center gap-2 px-4 py-2 text-[13px] font-medium text-primary bg-primary/[0.08] rounded-lg hover:bg-primary/[0.12] transition-colors"
         >
           <RefreshCw className="w-3.5 h-3.5" />
-          Retry
+          Try Again
         </button>
       )}
     </div>

@@ -192,7 +192,7 @@ export function AdminReviewsTable() {
       ) : reviews.length === 0 ? (
         <EmptyState
           icon={MessageSquare}
-          title="No reviews found"
+          title="No Reviews Found"
           message={status !== 'ALL' ? `No ${status.toLowerCase()} reviews. Try a different filter.` : 'Customer reviews will appear here when submitted.'}
         />
       ) : (

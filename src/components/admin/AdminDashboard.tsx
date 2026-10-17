@@ -137,7 +137,7 @@ export function AdminDashboard({ stats, topTools, recentActivity, dailyDownloads
           title="Users by Plan"
           actions={
             <Link href="/admin/users" className="text-[11px] text-primary hover:underline font-medium">
-              View all
+              View All
             </Link>
           }
         >
@@ -162,7 +162,7 @@ export function AdminDashboard({ stats, topTools, recentActivity, dailyDownloads
           title="Top Tools"
           actions={
             <Link href="/admin/tools" className="text-[11px] text-primary hover:underline font-medium">
-              View all
+              View All
             </Link>
           }
         >
@@ -192,7 +192,7 @@ export function AdminDashboard({ stats, topTools, recentActivity, dailyDownloads
           title="Recent Activity"
           actions={
             <Link href="/admin/usage" className="text-[11px] text-primary hover:underline font-medium">
-              View all
+              View All
             </Link>
           }
         >

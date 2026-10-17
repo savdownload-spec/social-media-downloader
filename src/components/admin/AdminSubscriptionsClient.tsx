@@ -92,7 +92,7 @@ export function AdminSubscriptionsClient() {
               <tr><td colSpan={7}>
                 <EmptyState
                   icon={CreditCard}
-                  title="No subscriptions"
+                  title="No Subscriptions"
                   message={status !== 'ALL' ? 'No subscriptions with this status.' : 'Subscriptions will appear here after users subscribe.'}
                 />
               </td></tr>

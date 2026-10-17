@@ -94,7 +94,7 @@ export function AdminAffiliatesClient() {
               <tr><td colSpan={9}>
                 <EmptyState
                   icon={Share2}
-                  title="No affiliates"
+                  title="No Affiliates"
                   message="Affiliate partners will appear here when they join the program."
                 />
               </td></tr>
