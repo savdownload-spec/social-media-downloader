@@ -9,8 +9,9 @@ type LogoProps = {
    *  with the site theme — so this variant swaps the wordmark (black/white)
    *  via CSS to match, with no theme state needed from the caller.
    *  'light' forces the white wordmark regardless of site theme (e.g. the
-   *  footer, whose background is always dark). */
-  variant?: 'dark' | 'light';
+   *  footer, whose background is always dark). 'black' forces the black
+   *  wordmark on surfaces that stay light regardless of site theme. */
+  variant?: 'dark' | 'light' | 'black';
   height?: number;
   className?: string;
   /** Wrap in a link to home. Set false when the parent already provides one. */
@@ -22,9 +23,9 @@ export function Logo({ variant = 'dark', height = 32, className, linked = true }
   const style = { height, width: 'auto' } as const;
 
   const img =
-    variant === 'light' ? (
+    variant === 'light' || variant === 'black' ? (
       <Image
-        src="/logo-white.png"
+        src={variant === 'light' ? '/logo-white.png' : '/logo-black.png'}
         alt="SavDown"
         width={width}
         height={height}

@@ -143,7 +143,7 @@ export function AdminSidebar({ onClose, collapsed, onToggleCollapse, badges }: P
               <ShieldCheck className="w-4.5 h-4.5 text-white" />
             </div>
           ) : (
-            <Logo variant="dark" height={28} linked={false} />
+            <Logo variant="black" height={28} linked={false} />
           )}
         </Link>
         {onClose && !collapsed && (

@@ -15,7 +15,6 @@ export type AdminBadges = {
   total: number;
 };
 
-const COLLAPSE_KEY = 'savdown-admin-sidebar-collapsed';
 const POLL_INTERVAL_MS = 30_000; // 30 s — cheap enough, no websockets needed
 
 export function AdminShell({ children }: Props) {
@@ -23,13 +22,6 @@ export function AdminShell({ children }: Props) {
   const [collapsed, setCollapsed] = useState(false);
   const [badges, setBadges] = useState<AdminBadges>({ supportUnread: 0, pendingReviews: 0, total: 0 });
   const pathname = usePathname();
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(COLLAPSE_KEY);
-      if (saved === 'true') setCollapsed(true);
-    } catch {}
-  }, []);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -63,11 +55,10 @@ export function AdminShell({ children }: Props) {
   }, [pathname, fetchBadges]);
 
   function toggleCollapse() {
-    setCollapsed((prev) => {
-      const next = !prev;
-      try { localStorage.setItem(COLLAPSE_KEY, String(next)); } catch {}
-      return next;
-    });
+    // Keep the control useful during the current admin session, but always
+    // start expanded after a refresh. Restoring this from localStorage in an
+    // effect changed the full wordmark into the collapsed icon after hydration.
+    setCollapsed((prev) => !prev);
   }
 
   return (
