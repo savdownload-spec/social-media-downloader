@@ -117,14 +117,14 @@ export function ColorPickerTool() {
             onClick={pickFromScreen}
             className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-brand text-white text-sm font-semibold shadow-glow hover:opacity-90 transition-opacity"
           >
-            <Pipette className="w-4 h-4" /> Pick from Screen
+            <Pipette className="w-4 h-4" /> Pick From Screen
           </button>
         )}
         <button
           onClick={() => fileRef.current?.click()}
           className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl border border-border bg-white dark:bg-card text-sm font-semibold text-text hover:border-primary/40 transition-colors"
         >
-          <Upload className="w-4 h-4" /> Pick from Image
+          <Upload className="w-4 h-4" /> Pick From Image
         </button>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
       </div>

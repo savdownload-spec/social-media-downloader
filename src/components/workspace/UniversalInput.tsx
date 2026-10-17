@@ -100,7 +100,7 @@ export function UniversalInput() {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             className="h-11 px-3.5 rounded-2xl text-text-muted hover:text-text hover:bg-surface transition-colors inline-flex items-center gap-1.5 text-sm font-medium"
-            title="Upload a file"
+            title="Upload A File"
           >
             <Upload className="w-4 h-4" /> <span className="hidden sm:inline">Upload</span>
           </button>

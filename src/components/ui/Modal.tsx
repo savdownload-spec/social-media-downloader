@@ -155,7 +155,7 @@ export function Modal({
                     <button
                       type="button"
                       onClick={onClose}
-                      aria-label="Close dialog"
+                      aria-label="Close Dialog"
                       className="-mr-1 -mt-1 inline-flex h-9 w-9 items-center justify-center rounded-xl text-text-subtle hover:bg-surface hover:text-text transition-colors"
                     >
                       <X className="h-4 w-4" />

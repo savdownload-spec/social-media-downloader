@@ -49,7 +49,7 @@ export function SignInRequiredModal({ open, onClose }: Props) {
             Cancel
           </button>
           <Button type="button" onClick={handleSignIn} size="md">
-            Sign in
+            Sign In
           </Button>
         </>
       }

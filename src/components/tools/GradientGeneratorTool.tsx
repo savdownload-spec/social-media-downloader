@@ -156,7 +156,7 @@ export function GradientGeneratorTool() {
           <div className="flex items-center justify-between mb-2">
             <label className="text-xs font-semibold text-text-subtle uppercase tracking-wider">Colour Stops</label>
             <button onClick={addStop} className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
-              <Plus className="w-3.5 h-3.5" /> Add stop
+              <Plus className="w-3.5 h-3.5" /> Add Stop
             </button>
           </div>
           <div className="space-y-2">

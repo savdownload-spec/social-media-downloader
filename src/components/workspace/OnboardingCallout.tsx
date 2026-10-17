@@ -38,7 +38,7 @@ export function OnboardingCallout() {
     <div className="w-full rounded-2xl border border-border-light bg-white/60 dark:bg-card/60 p-4 relative">
       <button
         onClick={dismiss}
-        aria-label="Skip onboarding"
+        aria-label="Skip Onboarding"
         className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full hover:bg-surface flex items-center justify-center text-text-subtle transition-colors"
       >
         <X className="w-3.5 h-3.5" />

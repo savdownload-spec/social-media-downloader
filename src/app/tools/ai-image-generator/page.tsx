@@ -98,7 +98,7 @@ export default function AIImageGeneratorPage() {
       </Section>
 
       <Section variant="dark">
-        <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-7 text-center md:flex-row md:text-left"><div><p className="text-sm font-semibold uppercase tracking-wider text-purple-200">Keep creating</p><h2 className="mt-2 text-3xl font-bold text-white md:text-4xl">Make the next idea visible.</h2><p className="mt-3 max-w-xl text-ink-muted">Explore the rest of SavDown’s tools when you are ready to move from inspiration to a finished file.</p></div><Link href="/tools" className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-white px-5 py-3 font-semibold text-indigo-700 shadow-soft transition hover:-translate-y-0.5">Browse all tools <ArrowRight className="h-4 w-4" /></Link></div>
+        <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-7 text-center md:flex-row md:text-left"><div><p className="text-sm font-semibold uppercase tracking-wider text-purple-200">Keep creating</p><h2 className="mt-2 text-3xl font-bold text-white md:text-4xl">Make the next idea visible.</h2><p className="mt-3 max-w-xl text-ink-muted">Explore the rest of SavDown’s tools when you are ready to move from inspiration to a finished file.</p></div><Link href="/tools" className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-white px-5 py-3 font-semibold text-indigo-700 shadow-soft transition hover:-translate-y-0.5">Browse All Tools <ArrowRight className="h-4 w-4" /></Link></div>
       </Section>
     </>
   );

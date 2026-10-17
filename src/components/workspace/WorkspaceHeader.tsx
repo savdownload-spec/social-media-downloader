@@ -37,7 +37,7 @@ export function WorkspaceHeader({ user, credits, onOpenMobileMenu, onOpenCommand
       <button
         onClick={onOpenMobileMenu}
         className="lg:hidden w-9 h-9 rounded-lg hover:bg-surface flex items-center justify-center text-text-muted"
-        aria-label="Open menu"
+        aria-label="Open Menu"
       >
         <Menu className="w-5 h-5" />
       </button>
@@ -49,7 +49,7 @@ export function WorkspaceHeader({ user, credits, onOpenMobileMenu, onOpenCommand
           className="hidden sm:flex items-center gap-2.5 w-full max-w-md h-10 px-3.5 rounded-xl border border-border bg-surface/60 hover:bg-surface text-left transition-colors"
         >
           <Search className="w-4 h-4 text-text-subtle shrink-0" />
-          <span className="text-sm text-text-subtle flex-1">Search tools, downloads, settings…</span>
+          <span className="text-sm text-text-subtle flex-1">Search Tools, Downloads, Settings…</span>
           <kbd className="hidden md:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-white dark:bg-card border border-border-light text-[10px] font-semibold text-text-subtle">
             Ctrl K
           </kbd>
@@ -91,7 +91,7 @@ export function WorkspaceHeader({ user, credits, onOpenMobileMenu, onOpenCommand
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            aria-label="Account menu"
+            aria-label="Account Menu"
             aria-expanded={menuOpen}
             className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm hover:bg-primary/15 transition-colors overflow-hidden"
           >
@@ -131,7 +131,7 @@ export function WorkspaceHeader({ user, credits, onOpenMobileMenu, onOpenCommand
                 onClick={() => signOut({ callbackUrl: '/' })}
                 className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
               >
-                <LogOut className="w-4 h-4" /> Sign out
+                <LogOut className="w-4 h-4" /> Sign Out
               </button>
             </div>
           )}

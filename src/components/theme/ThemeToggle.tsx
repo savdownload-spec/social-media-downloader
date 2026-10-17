@@ -116,7 +116,7 @@ export function ThemeToggle({ variant = 'header' }: ThemeToggleProps) {
           ref={triggerRef}
           onClick={() => setOpen((v) => !v)}
           className="flex items-center gap-2 text-sm text-ink-muted hover:text-white transition-colors"
-          aria-label="Change theme"
+          aria-label="Change Theme"
           aria-expanded={open}
         >
           <ActiveIcon className="w-4 h-4" />
@@ -132,8 +132,8 @@ export function ThemeToggle({ variant = 'header' }: ThemeToggleProps) {
       <button
         ref={triggerRef}
         onClick={() => setOpen((v) => !v)}
-        aria-label="Change theme"
-        title="Change theme"
+        aria-label="Change Theme"
+        title="Change Theme"
         aria-expanded={open}
         className="w-10 h-10 rounded-full hover:bg-primary-light flex items-center justify-center transition-colors"
       >

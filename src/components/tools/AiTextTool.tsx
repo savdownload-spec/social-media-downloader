@@ -245,7 +245,7 @@ export function AiTextTool({ slug }: FunctionalToolProps) {
                   key={i}
                   type="button"
                   onClick={() => { void navigator.clipboard.writeText(`#${tag}`); }}
-                  title="Click to copy"
+                  title="Click To Copy"
                   className="rounded-xl bg-primary-light px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/15"
                 >
                   #{tag}

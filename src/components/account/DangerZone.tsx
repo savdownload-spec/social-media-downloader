@@ -18,7 +18,7 @@ export function DangerZone({ email, isOAuthUser = false }: { email: string; isOA
       title: 'Delete your account?',
       description:
         'This permanently deletes your profile and every review you have submitted. This cannot be undone.',
-      confirmLabel: 'Delete account',
+      confirmLabel: 'Delete Account',
       variant: 'danger',
     });
     if (!confirmed) return;

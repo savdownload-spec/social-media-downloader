@@ -482,7 +482,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
                   onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}
                   className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-hover"
                 >
-                  <Upload className="h-3.5 w-3.5" /> Add more
+                  <Upload className="h-3.5 w-3.5" /> Add More
                 </button>
               </div>
 
@@ -585,7 +585,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
                       Remove {creditOverflowCount} image{creditOverflowCount === 1 ? '' : 's'}
                     </button>
                     <Link href="/pricing" className="rounded-lg bg-gradient-brand px-3 py-1.5 text-xs font-semibold text-white">
-                      Buy credits or upgrade
+                      Buy Credits Or Upgrade
                     </Link>
                   </div>
                 </div>
@@ -649,7 +649,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
                 size="lg"
               >
                 {isOverHardMax
-                  ? 'Remove excess to compress'
+                  ? 'Remove Excess To Compress'
                   : isOverLimit
                   ? `Compress ${processingLimit} of ${files.length} images`
                   : `Compress ${files.length} image${files.length === 1 ? '' : 's'}`}
@@ -735,12 +735,12 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
             {/* Action buttons */}
             <div className="mt-5 flex flex-wrap gap-2">
               <Button variant="outline" onClick={reset}>
-                <RefreshCw className="h-4 w-4" /> Compress more images
+                <RefreshCw className="h-4 w-4" /> Compress More Images
               </Button>
 
               {failedInputs.length > 0 && (
                 <Button variant="outline" onClick={retryFailed}>
-                  <RefreshCw className="h-4 w-4" /> Retry {failedInputs.length} failed
+                  <RefreshCw className="h-4 w-4" /> Retry {failedInputs.length} Failed
                 </Button>
               )}
 
@@ -757,7 +757,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
                   ) : (
                     <Archive className="h-4 w-4" />
                   )}
-                  {zipping ? 'Building ZIP…' : 'Download All as ZIP'}
+                  {zipping ? 'Building ZIP…' : 'Download All As ZIP'}
                 </button>
               )}
             </div>

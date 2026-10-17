@@ -113,10 +113,10 @@ export function BatchLimitHint({
             'text-primary hover:text-primary-hover underline-offset-2 hover:underline',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded',
           )}
-          aria-label={`Upgrade to ${nextLabel} for up to ${nextLimit} files`}
+          aria-label={`Upgrade To ${nextLabel} For Up To ${nextLimit} Files`}
         >
           <Sparkles className="h-3 w-3" aria-hidden />
-          {nextLabel}: up to {nextLimit} files
+          {nextLabel}: Up To {nextLimit} Files
           <ArrowRight className="h-3 w-3" aria-hidden />
         </Link>
       )}
@@ -238,7 +238,7 @@ export function BatchLimitWarning({
                 )}
               >
                 <X className="h-3.5 w-3.5" aria-hidden />
-                Remove {overBy} excess file{overBy === 1 ? '' : 's'}
+                Remove {overBy} Excess File{overBy === 1 ? '' : 's'}
               </button>
             )}
 
@@ -253,10 +253,10 @@ export function BatchLimitWarning({
                   'hover:opacity-90 active:scale-[0.98] transition-all',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
                 )}
-                aria-label={`Upgrade plan to process up to ${nextLimit} files per batch`}
+                aria-label={`Upgrade Plan To Process Up To ${nextLimit} Files Per Batch`}
               >
                 <Sparkles className="h-3.5 w-3.5" aria-hidden />
-                Upgrade to {nextLabel} — up to {nextLimit} files
+                Upgrade To {nextLabel} — Up To {nextLimit} Files
                 <ArrowRight className="h-3.5 w-3.5" aria-hidden />
               </Link>
             )}

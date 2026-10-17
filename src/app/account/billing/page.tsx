@@ -118,7 +118,7 @@ export default async function BillingPage({
                     href="/pricing"
                     className="inline-flex items-center justify-center rounded-2xl bg-gradient-brand bg-[length:200%_200%] px-5 py-2.5 text-sm font-semibold text-white shadow-glow-lg transition-all hover:bg-[position:100%_50%]"
                   >
-                    {summary.plan === 'FREE' ? 'Upgrade' : 'Buy more credits'}
+                    {summary.plan === 'FREE' ? 'Upgrade' : 'Buy More Credits'}
                   </Link>
                 )}
               </div>

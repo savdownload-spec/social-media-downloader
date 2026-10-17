@@ -68,7 +68,7 @@ export function Newsletter() {
               <input id="newsletter-website" name="website" value={website} onChange={(e) => setWebsite(e.target.value)} tabIndex={-1} autoComplete="off" />
             </div>
             <Button type="submit" variant="secondary" disabled={state === 'loading' || state === 'ok'} className="h-11 sm:w-36 shrink-0 focus-visible:ring-white">
-              {state === 'loading' ? <><Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" /> Subscribing</> : state === 'ok' ? <>Thank you <Check aria-hidden="true" className="w-4 h-4" /></> : <>Subscribe <Send aria-hidden="true" className="w-4 h-4" /></>}
+              {state === 'loading' ? <><Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" /> Subscribing</> : state === 'ok' ? <>Thank You <Check aria-hidden="true" className="w-4 h-4" /></> : <>Subscribe <Send aria-hidden="true" className="w-4 h-4" /></>}
             </Button>
           </form>
           <p id="newsletter-feedback" role="status" aria-live="polite" aria-atomic="true" className="mt-3 min-h-20 text-sm text-white max-w-md mx-auto">

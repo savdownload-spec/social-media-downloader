@@ -151,7 +151,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
           type="button"
           onClick={handleAvatarClick}
           disabled={managedByOAuth || avatarUploading}
-          aria-label={managedByOAuth ? 'Profile picture managed by ' + providerLabel : 'Change profile picture'}
+          aria-label={managedByOAuth ? 'Profile Picture Managed By ' + providerLabel : 'Change Profile Picture'}
           className="group relative w-16 h-16 rounded-full shrink-0 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2 disabled:cursor-default"
         >
           {image ? (

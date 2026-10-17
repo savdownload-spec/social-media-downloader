@@ -33,7 +33,7 @@ export function CTASection() {
               href="/faq"
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-white/5 border border-white/15 hover:bg-white/10 transition-all active:scale-[0.98]"
             >
-              {"Read the FAQ"}
+              {"Read The FAQ"}
             </Link>
           </div>
         </div>

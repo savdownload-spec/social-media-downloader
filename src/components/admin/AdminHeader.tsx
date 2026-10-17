@@ -145,7 +145,7 @@ export function AdminHeader({ onMenuClick, collapsed, onToggleCollapse, badges }
         <button
           onClick={onToggleCollapse}
           className="hidden lg:flex p-2 rounded-lg hover:bg-surface text-text-muted transition-colors"
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
         >
           {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
         </button>
@@ -188,7 +188,7 @@ export function AdminHeader({ onMenuClick, collapsed, onToggleCollapse, badges }
           <button
             onClick={() => setBellOpen((v) => !v)}
             className="relative p-2 rounded-lg hover:bg-surface text-text-muted hover:text-text transition-colors"
-            aria-label={badges.total > 0 ? `${badges.total} unread notifications` : 'Notifications'}
+            aria-label={badges.total > 0 ? `${badges.total} Unread Notifications` : 'Notifications'}
           >
             <Bell className="w-4 h-4" />
             {badges.total > 0 && (
@@ -303,7 +303,7 @@ export function AdminHeader({ onMenuClick, collapsed, onToggleCollapse, badges }
                     onClick={() => signOut({ callbackUrl: '/' })}
                     className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-rose-600 hover:bg-rose-50 transition-colors"
                   >
-                    <LogOut className="w-3.5 h-3.5" /> Sign out
+                    <LogOut className="w-3.5 h-3.5" /> Sign Out
                   </button>
                 </div>
               </div>

@@ -91,7 +91,7 @@ export function WorkspaceMobileNav() {
             <button
               type="button"
               onClick={handleFabClick}
-              aria-label="Paste a link, upload a file, or search"
+              aria-label="Paste A Link, Upload A File, Or Search"
               className="w-12 h-12 -mt-6 rounded-2xl bg-gradient-brand shadow-glow-lg flex items-center justify-center text-white active:scale-95 transition-transform"
             >
               <Plus className="w-6 h-6" />
@@ -191,7 +191,7 @@ export function WorkspaceMobileNav() {
                   className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-text-subtle hover:bg-surface transition-colors"
                 >
                   <ExternalLink className="w-[18px] h-[18px]" />
-                  Back to site
+                  Back To Site
                 </Link>
               </div>
             </motion.div>

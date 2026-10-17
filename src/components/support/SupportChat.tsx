@@ -56,7 +56,7 @@ const CATEGORIES: CategoryMeta[] = [
   { key: 'SUBSCRIPTION_BILLING', label: 'Subscription & Billing', desc: 'Plans, payments, or invoices.', placeholder: 'Tell us about your billing or subscription question…', icon: CreditCard },
   { key: 'GENERAL_QUESTION', label: 'General Question', desc: 'A general question about SavDown.', placeholder: 'How can we help?', icon: CircleHelp },
   { key: 'REFUND_REQUEST', label: 'Refund Request', desc: 'Request a refund on a purchase.', placeholder: 'Tell us about your refund request…', icon: ReceiptText },
-  { key: 'REPORT_A_PROBLEM', label: 'Report a Problem', desc: 'Report a bug or something broken.', placeholder: 'Describe the problem you ran into…', icon: Flag },
+  { key: 'REPORT_A_PROBLEM', label: 'Report A Problem', desc: 'Report a bug or something broken.', placeholder: 'Describe the problem you ran into…', icon: Flag },
   { key: 'AFFILIATE_PARTNERSHIP', label: 'Affiliate / Partnership', desc: 'Work with us or partner up.', placeholder: 'Tell us about your partnership idea…', icon: Handshake },
   { key: 'OTHER', label: 'Other', desc: 'Something else entirely.', placeholder: 'Tell us what happened…', icon: MoreHorizontal },
 ];
@@ -189,16 +189,16 @@ function AiBotMessage({ text }: { text: string }) {
 // on the same day see the same 4 questions, and the list never reshuffles
 // during the session (even when parent state updates).
 const _ALL_SUGGESTIONS = [
-  'How do I compress a PDF?',
-  'What plans are available?',
-  'Why is my download failing?',
-  'How do I sign in with Google?',
-  'How do I download a YouTube video?',
-  'How do I merge multiple PDFs?',
-  'How many free credits do I get?',
-  'Can I remove an image background?',
-  'How do I convert JPG to PDF?',
-  'What is the Pro plan?',
+  'How Do I Compress A PDF?',
+  'What Plans Are Available?',
+  'Why Is My Download Failing?',
+  'How Do I Sign In With Google?',
+  'How Do I Download A YouTube Video?',
+  'How Do I Merge Multiple PDFs?',
+  'How Many Free Credits Do I Get?',
+  'Can I Remove An Image Background?',
+  'How Do I Convert JPG To PDF?',
+  'What Is The Pro Plan?',
 ];
 const _DAY_OFFSET = Math.floor(Date.now() / 86400000) % _ALL_SUGGESTIONS.length;
 const _DAILY_SUGGESTIONS = Array.from({ length: 4 }, (_, i) =>
@@ -301,7 +301,7 @@ function AiChatFlow({
             onClick={onNewChat}
             className="inline-flex items-center gap-1.5 rounded-xl border border-border-light px-3 py-1.5 text-xs font-semibold text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> New question
+            <ArrowLeft className="h-3.5 w-3.5" /> New Question
           </button>
           <div className="ml-auto flex items-center gap-1.5 text-[11px] text-text-muted">
             <LanguageSelector variant="header" />
@@ -339,7 +339,7 @@ function AiChatFlow({
                 onClick={onEscalate}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-[12px] font-semibold text-text transition-all hover:border-primary/40 hover:text-primary hover:shadow-soft"
               >
-                <Headset className="h-3.5 w-3.5" /> Submit a support request
+                <Headset className="h-3.5 w-3.5" /> Submit A Support Request
               </button>
             </div>
           </div>
@@ -440,7 +440,7 @@ function AiChatFlow({
               onClick={onEscalate}
               className="inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-semibold text-text transition-all hover:border-primary/40 hover:text-primary hover:shadow-soft"
             >
-              <Headset className="h-3.5 w-3.5" /> Submit a support request
+              <Headset className="h-3.5 w-3.5" /> Submit A Support Request
             </button>
           </div>
         )}
@@ -492,7 +492,7 @@ function AiChatFlow({
             <Paperclip className="h-3.5 w-3.5 shrink-0 text-primary" />
             <span className="truncate flex-1 font-medium text-text">{pendingFile.name}</span>
             <span className="shrink-0 text-[11px]">{(pendingFile.size / 1024).toFixed(0)} KB</span>
-            <button type="button" onClick={onRemoveFile} className="shrink-0 text-text-subtle hover:text-text" aria-label="Remove attachment">
+            <button type="button" onClick={onRemoveFile} className="shrink-0 text-text-subtle hover:text-text" aria-label="Remove Attachment">
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -503,7 +503,7 @@ function AiChatFlow({
             type="button"
             onClick={() => setShowEmoji(v => !v)}
             className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-text-subtle transition-colors hover:bg-surface hover:text-text-muted"
-            aria-label="Add emoji"
+            aria-label="Add Emoji"
           >
             <span className="text-base leading-none">😊</span>
           </button>
@@ -513,7 +513,7 @@ function AiChatFlow({
             type="button"
             onClick={() => aiFileRef.current?.click()}
             className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-text-subtle transition-colors hover:bg-surface hover:text-text-muted"
-            aria-label="Attach file"
+            aria-label="Attach File"
           >
             <Paperclip className="h-4 w-4" />
           </button>
@@ -533,7 +533,7 @@ function AiChatFlow({
 
           <textarea
             ref={aiInputRef}
-            aria-label="Ask a question"
+            aria-label="Ask A Question"
             value={aiInput}
             onChange={(e) => setAiInput(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -555,7 +555,7 @@ function AiChatFlow({
             onClick={() => onSend()}
             disabled={(!aiInput.trim() && !pendingFile) || aiLoading}
             className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-gradient-brand text-white shadow-soft transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label="Send message"
+            aria-label="Send Message"
           >
             {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
           </button>
@@ -786,7 +786,7 @@ export function SupportChat() {
       {!open && (
         <button
           type="button"
-          aria-label="Open support"
+          aria-label="Open Support"
           onClick={() => { setOpen(true); playOpen(); }}
           className="group relative z-10 inline-flex h-14 items-center gap-2.5 rounded-full bg-gradient-brand bg-[length:200%_200%] pl-2.5 pr-4 text-sm font-semibold text-white shadow-glow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-[position:100%_50%] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:pr-5"
         >
@@ -848,7 +848,7 @@ export function SupportChat() {
           <h2 className="text-sm font-bold leading-tight text-text">Support</h2>
           <p className="truncate text-xs text-text-muted">{subtitle ?? "We're here to help."}</p>
         </div>
-        <button onClick={() => { setOpen(false); playClose(); }} aria-label="Close support" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-text-subtle transition-colors hover:bg-surface hover:text-text">
+        <button onClick={() => { setOpen(false); playClose(); }} aria-label="Close Support" className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-text-subtle transition-colors hover:bg-surface hover:text-text">
           <X className="h-4.5 w-4.5" />
         </button>
       </header>
@@ -881,7 +881,7 @@ export function SupportChat() {
           <Header subtitle={<StatusLine />} />
           <div className="flex-1 overflow-y-auto px-4 py-4">
             <button onClick={() => { setStarting(true); resetComposer(); playTap(); }} className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-brand px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition-shadow hover:shadow-soft-md">
-              <Plus className="h-4 w-4" /> New conversation
+              <Plus className="h-4 w-4" /> New Conversation
             </button>
             <p className="mb-2 px-1 text-[11px] font-bold uppercase tracking-wider text-text-subtle">Your conversations</p>
             <div className="space-y-2">
@@ -989,7 +989,7 @@ export function SupportChat() {
                 </div>
                 {!showMore && (
                   <button onClick={() => { setShowMore(true); playTick(); }} className="mt-2 flex w-full items-center justify-center gap-1 rounded-xl border border-border-light py-2.5 text-xs font-semibold text-text-muted transition-colors hover:border-primary/30 hover:text-primary">
-                    More topics
+                    More Topics
                   </button>
                 )}
               </motion.div>
@@ -1028,9 +1028,9 @@ export function SupportChat() {
                       type="button"
                       onClick={() => fileRef.current?.click()}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-border-light px-2.5 py-1.5 text-[11px] font-semibold text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
-                      aria-label="Attach screenshot or file"
+                      aria-label="Attach Screenshot Or File"
                     >
-                      <Paperclip className="h-3.5 w-3.5" /> Attach file
+                      <Paperclip className="h-3.5 w-3.5" /> Attach File
                     </button>
                     {files.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
@@ -1058,7 +1058,7 @@ export function SupportChat() {
                 {inlineError && <div role="alert" className="flex items-center justify-between gap-3 rounded-xl border border-rose-200 dark:border-rose-500/25 bg-rose-50 dark:bg-rose-500/10 px-3 py-2 text-xs text-rose-700 dark:text-rose-400"><span>{inlineError}</span><button type="button" onClick={() => retryRef.current?.()} disabled={sending} className="shrink-0 font-semibold underline underline-offset-2 disabled:opacity-50">Retry</button></div>}
 
                 <button disabled={!canSend || sending} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-brand bg-[length:200%_200%] px-4 py-3 text-sm font-semibold text-white shadow-soft transition-all hover:bg-[position:100%_50%] disabled:cursor-not-allowed disabled:opacity-50">
-                  {sending ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</> : <><Send className="h-4 w-4" /> Send message</>}
+                  {sending ? <><Loader2 className="h-4 w-4 animate-spin" /> Sending…</> : <><Send className="h-4 w-4" /> Send Message</>}
                 </button>
 
                 {loggedIn && session?.user?.email && (
@@ -1116,7 +1116,7 @@ export function SupportChat() {
                       {m.translatedMessage && showTranslation[m.id] && <p className="mt-1 rounded-lg bg-black/10 p-2 text-[13px] leading-relaxed text-left">{m.translatedMessage}</p>}
                       <div className="mt-1.5 flex flex-wrap items-center gap-2">
                         {m.translatedMessage && <button type="button" onClick={() => setShowTranslation((current) => ({ ...current, [m.id]: !current[m.id] }))} className="text-[11px] font-semibold underline-offset-2 hover:underline">{showTranslation[m.id] ? 'Show Original' : 'Show Translation'}</button>}
-                        {!m.translatedMessage && <button type="button" onClick={() => translateMessage(m)} disabled={translatingId === m.id} className="text-[11px] font-semibold underline-offset-2 hover:underline">{translatingId === m.id ? 'Translating…' : 'Translate to English'}</button>}
+                        {!m.translatedMessage && <button type="button" onClick={() => translateMessage(m)} disabled={translatingId === m.id} className="text-[11px] font-semibold underline-offset-2 hover:underline">{translatingId === m.id ? 'Translating…' : 'Translate To English'}</button>}
                         {m.translatedMessage && <button type="button" onClick={() => copyTranslation(m)} className="text-[11px] font-semibold underline-offset-2 hover:underline">{copiedTranslationId === m.id ? 'Copied' : 'Copy Translation'}</button>}
                       </div>
                     </div>
@@ -1153,10 +1153,10 @@ export function SupportChat() {
             <textarea ref={composerRef} aria-label="Reply message" value={message} onChange={(e) => { setMessage(e.target.value); resizeTextarea(e.currentTarget); }} onKeyDown={onKeyDown} rows={3} maxLength={5000} placeholder={resolved ? 'Reply to reopen this conversation…' : 'Write a reply…'} dir={isRtl ? 'rtl' : 'ltr'} style={{ textAlign: isRtl ? 'right' : 'left', minHeight: 110 }} className="max-h-44 min-h-[110px] flex-1 resize-none bg-transparent p-2.5 text-sm leading-relaxed outline-none placeholder:text-text-subtle" />
             <div className="flex shrink-0 items-center gap-1.5 pb-1">
               <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf,text/plain" className="hidden" onChange={(e) => { const f = Array.from(e.target.files || []).slice(0, 4); setFiles(f); if (f.length) playAttach(); }} />
-              <button type="button" onClick={() => fileRef.current?.click()} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-text-subtle transition-colors hover:bg-surface hover:text-primary" title="Attach screenshot" aria-label="Attach screenshot">
+              <button type="button" onClick={() => fileRef.current?.click()} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-text-subtle transition-colors hover:bg-surface hover:text-primary" title="Attach Screenshot" aria-label="Attach Screenshot">
                 <Paperclip className="h-4 w-4" />
               </button>
-              <button type="button" onClick={sendMessage} disabled={!message.trim() || sending} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-brand text-white shadow-soft transition-opacity disabled:cursor-not-allowed disabled:opacity-40" aria-label="Send message">
+              <button type="button" onClick={sendMessage} disabled={!message.trim() || sending} className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-brand text-white shadow-soft transition-opacity disabled:cursor-not-allowed disabled:opacity-40" aria-label="Send Message">
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </button>
             </div>

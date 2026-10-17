@@ -98,20 +98,20 @@ export type DateRangePreset =
 export const DATE_RANGE_PRESETS: { id: DateRangePreset; label: string }[] = [
   { id: 'today',     label: 'Today' },
   { id: 'yesterday', label: 'Yesterday' },
-  { id: 'last7',     label: 'Last 7 days' },
-  { id: 'last30',    label: 'Last 30 days' },
-  { id: 'last90',    label: 'Last 90 days' },
-  { id: 'thisMonth', label: 'This month' },
-  { id: 'lastMonth', label: 'Last month' },
-  { id: 'thisYear',  label: 'This year' },
-  { id: 'custom',    label: 'Custom range' },
+  { id: 'last7',     label: 'Last 7 Days' },
+  { id: 'last30',    label: 'Last 30 Days' },
+  { id: 'last90',    label: 'Last 90 Days' },
+  { id: 'thisMonth', label: 'This Month' },
+  { id: 'lastMonth', label: 'Last Month' },
+  { id: 'thisYear',  label: 'This Year' },
+  { id: 'custom',    label: 'Custom Range' },
 ];
 
 export type ExportDateField = 'createdAt' | 'updatedAt';
 
 export const DATE_FIELD_OPTIONS: { id: ExportDateField; label: string }[] = [
-  { id: 'createdAt', label: 'Registered date' },
-  { id: 'updatedAt', label: 'Updated date' },
+  { id: 'createdAt', label: 'Registered Date' },
+  { id: 'updatedAt', label: 'Updated Date' },
 ];
 
 /** Resolves a preset (in the server's local time) to a concrete [from, to) range. */

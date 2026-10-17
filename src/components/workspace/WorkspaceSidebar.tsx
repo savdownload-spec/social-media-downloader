@@ -126,7 +126,7 @@ export function WorkspaceSidebar({ onClose, collapsed, onToggleCollapse }: Props
           <button
             onClick={onClose}
             className="lg:hidden p-1.5 rounded-lg hover:bg-surface text-text-muted transition-colors"
-            aria-label="Close menu"
+            aria-label="Close Menu"
           >
             <X className="w-4 h-4" />
           </button>
@@ -193,7 +193,7 @@ export function WorkspaceSidebar({ onClose, collapsed, onToggleCollapse }: Props
               'hidden lg:flex items-center gap-2 w-full rounded-xl text-[13px] font-medium text-text-muted hover:text-text hover:bg-surface/80 transition-all duration-150 mb-1',
               collapsed ? 'justify-center p-2.5' : 'px-3 py-2',
             )}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
           >
             <ChevronLeft
               className={cn(
@@ -225,10 +225,10 @@ export function WorkspaceSidebar({ onClose, collapsed, onToggleCollapse }: Props
             'flex items-center gap-2 rounded-xl text-[13px] font-medium text-text-subtle hover:text-primary transition-colors',
             collapsed ? 'justify-center p-2.5' : 'px-3 py-2',
           )}
-          title={collapsed ? 'Back to site' : undefined}
+          title={collapsed ? 'Back To Site' : undefined}
         >
           <ExternalLink className="w-[18px] h-[18px] shrink-0" />
-          {!collapsed && <span>Back to site</span>}
+          {!collapsed && <span>Back To Site</span>}
         </Link>
       </div>
     </aside>

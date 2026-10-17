@@ -23,7 +23,7 @@ export function BlogCard({ post, compact = false }: { post: BlogPost; compact?: 
           <span className="inline-flex items-center gap-1"><Clock3 className="h-3.5 w-3.5" aria-hidden="true" />{post.readingTime}</span>
         </div>
         <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-primary">
-          Read article <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
+          Read Article <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden="true" />
         </span>
       </div>
     </Link>

@@ -44,7 +44,7 @@ export function ManageBillingButton() {
           Opening…
         </>
       ) : (
-        'Manage billing'
+        'Manage Billing'
       )}
     </button>
   );

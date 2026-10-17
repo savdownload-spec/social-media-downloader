@@ -1161,7 +1161,7 @@ const AREA_DEFS: ReadonlyArray<{
     label: 'All SavDown tools',
     category: null,
     url: '/tools',
-    ctaLabel: 'Browse all tools',
+    ctaLabel: 'Browse All Tools',
     aliases: ['savdown tools', 'all tools', 'every tool', 'tool list', 'tool catalog', 'what tools', 'tools', 'browse tools', 'list of tools', 'tool discovery'],
   },
   {
@@ -1169,7 +1169,7 @@ const AREA_DEFS: ReadonlyArray<{
     label: 'Plans & Pricing',
     category: 'pricing',
     url: '/pricing',
-    ctaLabel: 'View pricing',
+    ctaLabel: 'View Pricing',
     aliases: ['pricing', 'price', 'prices', 'plans', 'plan', 'subscriptions', 'subscription', 'cost', 'upgrade', 'pro plan', 'free plan', 'lifetime plan', 'payment plans', 'how much does it cost', 'is savdown free'],
   },
   {
@@ -1177,7 +1177,7 @@ const AREA_DEFS: ReadonlyArray<{
     label: 'SavCredits',
     category: 'credits',
     url: '/pricing',
-    ctaLabel: 'View plans & credits',
+    ctaLabel: 'View Plans & Credits',
     aliases: ['savcredits', 'credits', 'credit', 'coins', 'credit balance', 'credit packs', 'credit pack', 'top up credits', 'daily credits', 'free credits', 'how do credits work', 'how many credits do i have'],
   },
   {
@@ -1185,7 +1185,7 @@ const AREA_DEFS: ReadonlyArray<{
     label: 'Billing & Payments',
     category: 'billing',
     url: '/account/billing',
-    ctaLabel: 'Open billing',
+    ctaLabel: 'Open Billing',
     aliases: ['billing', 'payment', 'payments', 'invoice', 'invoices', 'refund', 'refunds', 'charged', 'charge', 'card', 'checkout', 'payment failed', 'payment failure', 'failed payment'],
   },
   {
@@ -1193,7 +1193,7 @@ const AREA_DEFS: ReadonlyArray<{
     label: 'Sign in & accounts',
     category: 'account',
     url: '/login',
-    ctaLabel: 'Go to sign in',
+    ctaLabel: 'Go To Sign In',
     aliases: ['sign in', 'sign in with google', 'sign in with github', 'login', 'log in', 'sign up', 'create an account', 'create account', 'register', 'forgot password', 'reset password', 'google login', 'github login', 'password reset', 'authentication', 'sign in problem', 'login problem'],
   },
   {
@@ -1201,7 +1201,7 @@ const AREA_DEFS: ReadonlyArray<{
     label: 'Profile',
     category: 'account',
     url: '/workspace/settings',
-    ctaLabel: 'Open settings',
+    ctaLabel: 'Open Settings',
     aliases: ['profile', 'change name', 'change my name', 'avatar', 'profile picture', 'change email', 'update email', 'change my email'],
   },
   {
@@ -1209,7 +1209,7 @@ const AREA_DEFS: ReadonlyArray<{
     label: 'Settings',
     category: 'account',
     url: '/workspace/settings',
-    ctaLabel: 'Open settings',
+    ctaLabel: 'Open Settings',
     aliases: ['settings', 'preferences', 'theme', 'notifications', 'language settings', 'account settings', 'display settings'],
   },
   {
@@ -1217,7 +1217,7 @@ const AREA_DEFS: ReadonlyArray<{
     label: 'Downloads',
     category: 'workspace',
     url: '/workspace/downloads',
-    ctaLabel: 'Open downloads',
+    ctaLabel: 'Open Downloads',
     aliases: ['previous downloads', 'past downloads', 'download history', 'my downloads', 'downloads', 'downloaded files', 'previous files'],
   },
   {
@@ -1225,7 +1225,7 @@ const AREA_DEFS: ReadonlyArray<{
     label: 'Activity',
     category: 'workspace',
     url: '/workspace/activity',
-    ctaLabel: 'Open activity',
+    ctaLabel: 'Open Activity',
     aliases: ['activity', 'recent activity', 'activity history', 'full history', 'history'],
   },
   {
@@ -1241,7 +1241,7 @@ const AREA_DEFS: ReadonlyArray<{
     label: 'Collections',
     category: 'workspace',
     url: '/workspace/collections',
-    ctaLabel: 'Open collections',
+    ctaLabel: 'Open Collections',
     aliases: ['collections', 'collection', 'folders', 'organize downloads', 'organize files', 'create a collection', 'save to a collection', 'named collections'],
   },
   {
@@ -1249,7 +1249,7 @@ const AREA_DEFS: ReadonlyArray<{
     label: 'Batch processing',
     category: 'workspace',
     url: '/workspace/batch',
-    ctaLabel: 'Open batch',
+    ctaLabel: 'Open Batch',
     aliases: ['batch', 'batch processing', 'multiple files', 'bulk processing', 'bulk download', 'queue multiple', 'process multiple'],
   },
   {
@@ -1257,7 +1257,7 @@ const AREA_DEFS: ReadonlyArray<{
     label: 'Workspace',
     category: 'workspace',
     url: '/workspace',
-    ctaLabel: 'Open workspace',
+    ctaLabel: 'Open Workspace',
     aliases: ['workspace', 'dashboard', 'my account', 'account area', 'personal dashboard'],
   },
   {
@@ -1265,7 +1265,7 @@ const AREA_DEFS: ReadonlyArray<{
     label: 'Support',
     category: 'support',
     url: '/contact',
-    ctaLabel: 'Contact support',
+    ctaLabel: 'Contact Support',
     aliases: ['support', 'contact support', 'help', 'ticket', 'support request', 'human support', 'talk to a human', 'contact us', 'reach the team', 'report a problem'],
   },
   {
@@ -1281,7 +1281,7 @@ const AREA_DEFS: ReadonlyArray<{
     label: 'Service status',
     category: 'site',
     url: '/contact',
-    ctaLabel: 'Contact support',
+    ctaLabel: 'Contact Support',
     aliases: ['maintenance', 'outage', 'service status', 'downtime', 'temporarily unavailable'],
   },
   {
@@ -1289,7 +1289,7 @@ const AREA_DEFS: ReadonlyArray<{
     label: 'Policies',
     category: 'policy',
     url: '/privacy',
-    ctaLabel: 'Read the privacy policy',
+    ctaLabel: 'Read The Privacy Policy',
     aliases: ['privacy', 'privacy policy', 'terms', 'terms of service', 'cookies', 'cookie policy', 'dmca', 'copyright', 'legal', 'gdpr', 'data policy'],
   },
   {
@@ -1297,7 +1297,7 @@ const AREA_DEFS: ReadonlyArray<{
     label: 'Blog & guides',
     category: 'blog',
     url: '/blog',
-    ctaLabel: 'Read the blog',
+    ctaLabel: 'Read The Blog',
     aliases: ['blog', 'articles', 'guides', 'posts', 'tutorials', 'savdown blog'],
   },
 ];
@@ -1392,7 +1392,7 @@ function buildEntityIndex(): EntityDef[] {
       entityType: 'category',
       category: cat,
       url: `/tools#${cat}`,
-      ctaLabel: `Browse ${group} tools`,
+      ctaLabel: `Browse ${group} Tools`,
       available: true,
       aliases,
       tokens: [...tokens],

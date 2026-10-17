@@ -140,7 +140,7 @@ export default function DmcaPage() {
       <InfoCallout
         title="Need to file a notice?"
         body={<>Use our contact form with the subject &quot;DMCA Notice&quot; and we will route it to the designated agent immediately.</>}
-        cta={{ label: 'File a notice', href: '/contact' }}
+        cta={{ label: 'File A Notice', href: '/contact' }}
       />
     </>
   );

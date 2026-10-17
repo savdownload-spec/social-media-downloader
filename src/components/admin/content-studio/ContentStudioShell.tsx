@@ -143,7 +143,7 @@ export function ContentStudioShell({
     return confirm({
       title: 'Change the URL of a published post?',
       description: `This post is live at /blog/${initialPost.slug}. Changing the slug to /blog/${form.slug} will break that URL for anyone who has it bookmarked or linked — there is no automatic redirect. Continue?`,
-      confirmLabel: 'Change slug',
+      confirmLabel: 'Change Slug',
       variant: 'danger',
     });
   }
@@ -224,7 +224,7 @@ export function ContentStudioShell({
     const ok = await confirm({
       title: 'Discard unsaved changes?',
       description: 'Any edits since the last autosave will be lost. The article itself will not be deleted.',
-      confirmLabel: 'Discard changes',
+      confirmLabel: 'Discard Changes',
     });
     if (!ok) return;
     onClose();

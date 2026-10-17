@@ -198,8 +198,8 @@ function TableInsert({ onInsert, active }: { onInsert: (rows: number, cols: numb
     <div ref={rootRef} className="relative shrink-0">
       <button
         type="button"
-        title="Insert table"
-        aria-label="Insert table"
+        title="Insert Table"
+        aria-label="Insert Table"
         aria-haspopup="dialog"
         aria-expanded={open}
         onMouseDown={(e) => e.preventDefault()}
@@ -257,7 +257,7 @@ function TableInsert({ onInsert, active }: { onInsert: (rows: number, cols: numb
               setOpen(false);
             }}
           >
-            Insert table
+            Insert Table
           </Button>
         </div>
       )}
@@ -634,7 +634,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
           <ToolbarButton title="Redo (Ctrl+Shift+Z)" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}><Redo2 className="w-4 h-4" /></ToolbarButton>
           <Divider />
           <ToolbarDropdown
-            triggerLabel={`Block type: ${blockLabel}`}
+            triggerLabel={`Block Type: ${blockLabel}`}
             triggerActive={!!blockLevel}
             trigger={<span className="inline-flex items-center gap-1.5 text-[12px] font-medium min-w-[7.5rem]"><Type className="w-3.5 h-3.5 opacity-70" />{blockLabel}</span>}
             items={[
@@ -653,25 +653,25 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
           <ToolbarButton title="Italic (Ctrl+I)" active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic className="w-4 h-4" /></ToolbarButton>
           <ToolbarButton title="Underline (Ctrl+U)" active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}><UnderlineIcon className="w-4 h-4" /></ToolbarButton>
           <ToolbarButton title="Strikethrough" active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}><Strikethrough className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Inline code" active={editor.isActive('code')} onClick={() => editor.chain().focus().toggleCode().run()}><Code className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Inline Code" active={editor.isActive('code')} onClick={() => editor.chain().focus().toggleCode().run()}><Code className="w-4 h-4" /></ToolbarButton>
           <ToolbarButton title="Superscript" active={editor.isActive('superscript')} onClick={() => editor.chain().focus().toggleSuperscript().run()}><span className="text-[11px] font-bold leading-none">x²</span></ToolbarButton>
           <ToolbarButton title="Subscript" active={editor.isActive('subscript')} onClick={() => editor.chain().focus().toggleSubscript().run()}><span className="text-[11px] font-bold leading-none">x₂</span></ToolbarButton>
           <Divider />
-          <ToolbarButton title="Bullet list" active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}><List className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Numbered list" active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Bullet List" active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}><List className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Numbered List" active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered className="w-4 h-4" /></ToolbarButton>
           <ToolbarButton title="Blockquote" active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Code block" active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}><SquareCode className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Horizontal rule" onClick={() => editor.chain().focus().setHorizontalRule().run()}><Minus className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Code Block" active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}><SquareCode className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Horizontal Rule" onClick={() => editor.chain().focus().setHorizontalRule().run()}><Minus className="w-4 h-4" /></ToolbarButton>
           <Divider />
-          <ToolbarButton title="Align left" active={editor.isActive({ textAlign: 'left' })} onClick={() => editor.chain().focus().toggleTextAlign('left').run()}><AlignLeft className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Align center" active={editor.isActive({ textAlign: 'center' })} onClick={() => editor.chain().focus().toggleTextAlign('center').run()}><AlignCenter className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Align right" active={editor.isActive({ textAlign: 'right' })} onClick={() => editor.chain().focus().toggleTextAlign('right').run()}><AlignRight className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Align Left" active={editor.isActive({ textAlign: 'left' })} onClick={() => editor.chain().focus().toggleTextAlign('left').run()}><AlignLeft className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Align Center" active={editor.isActive({ textAlign: 'center' })} onClick={() => editor.chain().focus().toggleTextAlign('center').run()}><AlignCenter className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Align Right" active={editor.isActive({ textAlign: 'right' })} onClick={() => editor.chain().focus().toggleTextAlign('right').run()}><AlignRight className="w-4 h-4" /></ToolbarButton>
           <ToolbarButton title="Justify" active={editor.isActive({ textAlign: 'justify' })} onClick={() => editor.chain().focus().toggleTextAlign('justify').run()}><AlignJustify className="w-4 h-4" /></ToolbarButton>
           <Divider />
           <ToolbarButton title="Insert / Edit Link (Ctrl+K)" active={inLink} onClick={openLinkDialog}><LinkIcon className="w-4 h-4" /></ToolbarButton>
           <ToolbarButton title="Remove Link" active={false} disabled={!inLink} onClick={unlinkSelection}><Unlink className="w-4 h-4" /></ToolbarButton>
           <ToolbarButton
-            title={figureActive ? 'Edit image' : 'Insert image'}
+            title={figureActive ? 'Edit Image' : 'Insert Image'}
             active={figureActive}
             onClick={openImageDialog}
             disabled={uploading}
@@ -680,12 +680,12 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
           </ToolbarButton>
           <TableInsert active={inTable} onInsert={(r, c, h) => editor.chain().focus().insertTable({ rows: r, cols: c, withHeaderRow: h }).run()} />
           <ToolbarDropdown
-            triggerLabel="More formatting options"
+            triggerLabel="More Formatting Options"
             trigger={<span className="inline-flex items-center gap-1 text-[12px] font-medium">More</span>}
             align="right"
             items={[
-              { key: 'find', label: 'Find in article…', icon: <Search className="w-3.5 h-3.5" />, onClick: toggleFind },
-              { key: 'youtube', label: 'YouTube embed…', icon: <YoutubeIcon className="w-3.5 h-3.5" />, onClick: () => { setYoutubeUrl(''); setYoutubeOpen(true); } },
+              { key: 'find', label: 'Find In Article…', icon: <Search className="w-3.5 h-3.5" />, onClick: toggleFind },
+              { key: 'youtube', label: 'YouTube Embed…', icon: <YoutubeIcon className="w-3.5 h-3.5" />, onClick: () => { setYoutubeUrl(''); setYoutubeOpen(true); } },
               ...CALLOUT_VARIANTS.map((v) => ({
                 key: `callout-${v.value}`,
                 label: `Callout: ${v.label}`,
@@ -697,7 +697,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
           />
           <Divider />
           <ToolbarButton
-            title="Clear formatting"
+            title="Clear Formatting"
             onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
           >
             <Eraser className="w-4 h-4" />
@@ -707,16 +707,16 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
         {/* Contextual table controls */}
         {inTable && (
           <div className="flex flex-wrap items-center gap-1 px-2 py-1.5 border-b border-border-light bg-surface/40">
-            <ToolbarButton label="Row above" onClick={() => editor.chain().focus().addRowBefore().run()} />
-            <ToolbarButton label="Row below" onClick={() => editor.chain().focus().addRowAfter().run()} />
-            <ToolbarButton label="Column left" onClick={() => editor.chain().focus().addColumnBefore().run()} />
-            <ToolbarButton label="Column right" onClick={() => editor.chain().focus().addColumnAfter().run()} />
+            <ToolbarButton label="Row Above" onClick={() => editor.chain().focus().addRowBefore().run()} />
+            <ToolbarButton label="Row Below" onClick={() => editor.chain().focus().addRowAfter().run()} />
+            <ToolbarButton label="Column Left" onClick={() => editor.chain().focus().addColumnBefore().run()} />
+            <ToolbarButton label="Column Right" onClick={() => editor.chain().focus().addColumnAfter().run()} />
             <Divider />
-            <ToolbarButton label="Header row" active={editor.isActive('tableHeader')} onClick={() => editor.chain().focus().toggleHeaderRow().run()} />
+            <ToolbarButton label="Header Row" active={editor.isActive('tableHeader')} onClick={() => editor.chain().focus().toggleHeaderRow().run()} />
             <Divider />
-            <ToolbarButton label="Delete row" onClick={() => editor.chain().focus().deleteRow().run()} />
-            <ToolbarButton label="Delete column" onClick={() => editor.chain().focus().deleteColumn().run()} />
-            <ToolbarButton label="Delete table" onClick={() => editor.chain().focus().deleteTable().run()} />
+            <ToolbarButton label="Delete Row" onClick={() => editor.chain().focus().deleteRow().run()} />
+            <ToolbarButton label="Delete Column" onClick={() => editor.chain().focus().deleteColumn().run()} />
+            <ToolbarButton label="Delete Table" onClick={() => editor.chain().focus().deleteTable().run()} />
           </div>
         )}
 
@@ -743,9 +743,9 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
             <span className="text-[11px] text-text-subtle tabular-nums shrink-0" aria-live="polite">
               {searchStorage?.total ? `${(searchStorage.currentIndex ?? 0) + 1}/${searchStorage.total}` : '0/0'}
             </span>
-            <ToolbarButton title="Previous match (Shift+Enter)" onClick={() => editor.commands.findPrevious()} disabled={!searchStorage?.total}><ChevronDown className="w-4 h-4 rotate-180" /></ToolbarButton>
-            <ToolbarButton title="Next match (Enter)" onClick={() => editor.commands.findNext()} disabled={!searchStorage?.total}><ChevronDown className="w-4 h-4" /></ToolbarButton>
-            <ToolbarButton title="Close find (Esc)" onClick={toggleFind}><X className="w-4 h-4" /></ToolbarButton>
+            <ToolbarButton title="Previous Match (Shift+Enter)" onClick={() => editor.commands.findPrevious()} disabled={!searchStorage?.total}><ChevronDown className="w-4 h-4 rotate-180" /></ToolbarButton>
+            <ToolbarButton title="Next Match (Enter)" onClick={() => editor.commands.findNext()} disabled={!searchStorage?.total}><ChevronDown className="w-4 h-4" /></ToolbarButton>
+            <ToolbarButton title="Close Find (Esc)" onClick={toggleFind}><X className="w-4 h-4" /></ToolbarButton>
           </div>
         )}
       </div>
@@ -779,12 +779,12 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
           <>
             {linkDialog.editingExisting && (
               <Button variant="ghost" size="sm" onClick={unlinkSelection} className="text-rose-600 hover:bg-rose-50 mr-auto">
-                <Unlink className="w-3.5 h-3.5 mr-1" /> Remove link
+                <Unlink className="w-3.5 h-3.5 mr-1" /> Remove Link
               </Button>
             )}
             <Button variant="ghost" size="sm" onClick={() => setLinkDialog(EMPTY_LINK_DIALOG)}>Cancel</Button>
             <Button variant="primary" size="sm" onClick={applyLinkDialog}>
-              {linkDialog.editingExisting ? 'Save link' : 'Apply link'}
+              {linkDialog.editingExisting ? 'Save Link' : 'Apply Link'}
             </Button>
           </>
         }
@@ -854,12 +854,12 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
           <>
             {imageDialog.editing && (
               <Button variant="ghost" size="sm" onClick={removeImage} className="text-rose-600 hover:bg-rose-50 mr-auto">
-                Remove image
+                Remove Image
               </Button>
             )}
             <Button variant="ghost" size="sm" onClick={() => setImageDialog(EMPTY_IMAGE_DIALOG)}>Cancel</Button>
             <Button variant="primary" size="sm" onClick={applyImageDialog} disabled={!imageDialog.src.trim()}>
-              {imageDialog.editing ? 'Save changes' : 'Insert image'}
+              {imageDialog.editing ? 'Save Changes' : 'Insert Image'}
             </Button>
           </>
         }
@@ -880,7 +880,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
               />
             </div>
             <Button variant="outline" size="sm" loading={uploading} onClick={() => replaceInputRef.current?.click()}>
-              <Pencil className="w-3.5 h-3.5 mr-1" /> Replace with uploaded image…
+              <Pencil className="w-3.5 h-3.5 mr-1" /> Replace With Uploaded Image…
             </Button>
             <div>
               <label className={labelCls} htmlFor="img-alt">Alt text</label>
@@ -949,7 +949,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
               if (url) editor?.commands.setYoutubeVideo({ src: url });
               setYoutubeOpen(false);
             }} disabled={!youtubeUrl.trim()}>
-              Embed video
+              Embed Video
             </Button>
           </>
         }

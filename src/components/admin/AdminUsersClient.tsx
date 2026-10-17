@@ -145,16 +145,16 @@ export function AdminUsersClient() {
             <>
               <span className="text-[12px] text-text-muted">{selected.size.toLocaleString()} users selected</span>
               <ActionButton size="sm" icon={Download} onClick={() => { setExportScope('selected'); setExportOpen(true); }}>
-                Export selected
+                Export Selected
               </ActionButton>
               <button onClick={() => setSelected(new Set())} className="text-[11px] font-semibold text-text-muted hover:text-text hover:underline">
-                Clear selection
+                Clear Selection
               </button>
             </>
           )}
           {hasFilters && (
             <ActionButton size="sm" icon={Download} onClick={() => { setExportScope('filtered'); setExportOpen(true); }}>
-              Export filtered
+              Export Filtered
             </ActionButton>
           )}
         </div>

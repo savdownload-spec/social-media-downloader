@@ -61,7 +61,7 @@ export function InstallSheet() {
               onClick={closeSheet}
               className="inline-flex w-full items-center justify-center rounded-2xl px-5 py-2.5 text-sm font-semibold text-text-muted transition-colors hover:bg-surface hover:text-text"
             >
-              Not now
+              Not Now
             </button>
           </div>
         ) : isIOS ? (
@@ -92,7 +92,7 @@ export function InstallSheet() {
               onClick={closeSheet}
               className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-brand px-5 py-3 text-sm font-semibold text-white shadow-glow-lg"
             >
-              Got it
+              Got It
             </button>
           </div>
         ) : null}

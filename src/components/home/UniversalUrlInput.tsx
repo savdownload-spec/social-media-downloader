@@ -234,7 +234,7 @@ export function UniversalUrlInput() {
               onClick={paste}
               disabled={pasting}
               className="absolute right-2 top-1/2 inline-flex -translate-y-1/2 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-text-muted transition-colors hover:bg-primary-light hover:text-primary disabled:opacity-50"
-              aria-label="Paste from clipboard"
+              aria-label="Paste From Clipboard"
             >
               <Clipboard className="h-4 w-4" />
               <span className="hidden md:inline">Paste</span>

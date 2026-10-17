@@ -166,7 +166,7 @@ export function VideoTool({ slug }: FunctionalToolProps) {
               <button
                 onClick={(e) => { e.stopPropagation(); reset(); }}
                 className="absolute -top-2 -right-2 z-10 w-8 h-8 rounded-full bg-white dark:bg-card shadow-soft-md flex items-center justify-center hover:bg-surface"
-                aria-label="Remove video"
+                aria-label="Remove Video"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -260,7 +260,7 @@ export function VideoTool({ slug }: FunctionalToolProps) {
           )}
 
           <Button onClick={process} loading={loading} className="w-full" size="lg">
-            {loading ? 'Processing…' : <>Process video <Film className="w-4 h-4" /></>}
+            {loading ? 'Processing…' : <>Process Video <Film className="w-4 h-4" /></>}
           </Button>
         </div>
       )}
@@ -310,7 +310,7 @@ export function VideoTool({ slug }: FunctionalToolProps) {
                 >
                   <Download className="w-4 h-4" /> Download
                 </a>
-                <Button variant="outline" size="md" onClick={reset}>Process another</Button>
+                <Button variant="outline" size="md" onClick={reset}>Process Another</Button>
               </div>
             </div>
           </div>

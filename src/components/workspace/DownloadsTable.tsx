@@ -101,7 +101,7 @@ export function DownloadsTable({ items }: { items: ActivityItem[] }) {
           )}
         >
           <CalendarRange className="w-4 h-4" />
-          {dateFilterOpen ? 'Date filter on' : 'Date range'}
+          {dateFilterOpen ? 'Date Filter On' : 'Date Range'}
         </button>
       </div>
 
@@ -147,7 +147,7 @@ export function DownloadsTable({ items }: { items: ActivityItem[] }) {
                 <button
                   onClick={() => copyUrl(item)}
                   className="w-7 h-7 rounded-lg hover:bg-surface flex items-center justify-center text-text-subtle hover:text-text transition-colors"
-                  title="Copy source URL"
+                  title="Copy Source URL"
                 >
                   {copiedId === item.id ? <Check className="w-3.5 h-3.5 text-accent" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
@@ -155,7 +155,7 @@ export function DownloadsTable({ items }: { items: ActivityItem[] }) {
                   <Link
                     href={item.toolHref}
                     className="w-7 h-7 rounded-lg hover:bg-surface flex items-center justify-center text-text-subtle hover:text-text transition-colors"
-                    title="Open tool"
+                    title="Open Tool"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                   </Link>

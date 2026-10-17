@@ -21,7 +21,7 @@ export function BlogPromoCard({ post }: { post: BlogPost }) {
           href={`/tools/${tool.slug}`}
           className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-ink-900 transition-colors hover:bg-indigo-50"
         >
-          Open the downloader
+          Open The Downloader
           <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </div>

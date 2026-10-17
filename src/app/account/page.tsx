@@ -38,7 +38,7 @@ function BillingCard() {
         href="/account/billing"
         className="mt-4 inline-flex w-full items-center justify-center rounded-2xl border border-border bg-white dark:bg-card px-5 py-2.5 text-sm font-semibold text-text transition-all hover:border-primary/40 hover:bg-primary-light"
       >
-        Open billing
+        Open Billing
       </Link>
     </div>
   );

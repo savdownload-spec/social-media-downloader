@@ -73,7 +73,7 @@ function ResetPasswordClientInner() {
                 href="/login"
                 className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
               >
-                Go to Sign In
+                Go To Sign In
               </Link>
             </div>
           </div>

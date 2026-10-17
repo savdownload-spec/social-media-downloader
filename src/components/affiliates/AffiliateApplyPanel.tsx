@@ -60,7 +60,7 @@ export function AffiliateApplyPanel({ variant = 'primary' }: { variant?: 'primar
     return (
       <Link href="/login?callbackUrl=%2Faffiliates">
         <Button size={buttonSize} variant={variant === 'panel' ? 'secondary' : 'primary'}>
-          Join the Affiliate Program <ArrowRight className="h-4 w-4" />
+          Join The Affiliate Program <ArrowRight className="h-4 w-4" />
         </Button>
       </Link>
     );
@@ -69,7 +69,7 @@ export function AffiliateApplyPanel({ variant = 'primary' }: { variant?: 'primar
   if (affiliate === undefined) {
     return (
       <Button size={buttonSize} variant={variant === 'panel' ? 'secondary' : 'primary'} disabled loading>
-        Join the Affiliate Program
+        Join The Affiliate Program
       </Button>
     );
   }
@@ -111,7 +111,7 @@ export function AffiliateApplyPanel({ variant = 'primary' }: { variant?: 'primar
       onClick={apply}
       loading={applying}
     >
-      Join the Affiliate Program <ArrowRight className="h-4 w-4" />
+      Join The Affiliate Program <ArrowRight className="h-4 w-4" />
     </Button>
   );
 }

@@ -37,8 +37,8 @@ export function Header() {
           <LanguageSelector variant="header" />
           <Link
             href={accountHref}
-            aria-label={session ? 'Account' : 'Log in'}
-            title={session ? 'Account' : 'Log in'}
+            aria-label={session ? 'Account' : 'Log In'}
+            title={session ? 'Account' : 'Log In'}
             className="w-10 h-10 rounded-full overflow-hidden border border-transparent hover:border-border flex items-center justify-center transition-colors shrink-0"
           >
             {session?.user?.image ? (
@@ -54,7 +54,7 @@ export function Header() {
             <button
               type="button"
               onClick={openSheet}
-              aria-label="Install app"
+              aria-label="Install App"
               title="Install SavDown"
               className="w-10 h-10 rounded-full hover:bg-primary-light flex items-center justify-center transition-colors"
             >
@@ -119,7 +119,7 @@ export function Header() {
                       <img src={session.user.image} alt="" className="w-4 h-4 rounded-full object-cover border border-border" />
                     ) : (
                       <User className="w-4 h-4" />
-                    )} {session ? 'Account' : 'Log in'}
+                    )} {session ? 'Account' : 'Log In'}
                   </Link>
                 </div>
               </div>

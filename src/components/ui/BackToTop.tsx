@@ -47,7 +47,7 @@ export function BackToTop({ hidden = false }: BackToTopProps) {
   return (
     <button
       type="button"
-      aria-label="Back to top"
+      aria-label="Back To Top"
       onClick={scrollToTop}
       className="relative z-0 grid h-12 w-12 shrink-0 place-items-center rounded-full border border-border bg-white text-primary shadow-soft-lg transition-[transform,background-color,border-color] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:bg-card motion-reduce:transition-none sm:h-14 sm:w-14"
     >

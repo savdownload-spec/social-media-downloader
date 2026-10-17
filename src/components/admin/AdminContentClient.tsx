@@ -142,13 +142,13 @@ export function AdminContentClient() {
             <StatCard label="Drafts" value={stats.drafts} icon={FileWarning} accent="amber" />
             <StatCard label="Avg SEO Score" value={stats.avgSeoScore} icon={Gauge} accent="blue" />
             <StatCard label="Avg Readability" value={stats.avgReadabilityScore} icon={BookOpenCheck} accent="blue" />
-            <button type="button" onClick={() => jumpToFilter('missingMetaDescription')} className="text-left rounded-xl transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" title="Show posts missing a meta description">
+            <button type="button" onClick={() => jumpToFilter('missingMetaDescription')} className="text-left rounded-xl transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" title="Show Posts Missing A Meta Description">
               <StatCard label="Missing Meta Description" value={stats.missingMetaDescription} icon={FileWarning} accent="rose" />
             </button>
-            <button type="button" onClick={() => jumpToFilter('missingFeaturedImage')} className="text-left rounded-xl transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" title="Show posts missing a featured image">
+            <button type="button" onClick={() => jumpToFilter('missingFeaturedImage')} className="text-left rounded-xl transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" title="Show Posts Missing A Featured Image">
               <StatCard label="Missing Featured Image" value={stats.missingFeaturedImage} icon={ImageOff} accent="rose" />
             </button>
-            <button type="button" onClick={() => jumpToFilter('missingInternalLinks')} className="text-left rounded-xl transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" title="Show posts with no internal links">
+            <button type="button" onClick={() => jumpToFilter('missingInternalLinks')} className="text-left rounded-xl transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40" title="Show Posts With No Internal Links">
               <StatCard label="Missing Internal Links" value={stats.missingInternalLinks} icon={Link2Off} accent="rose" />
             </button>
           </>

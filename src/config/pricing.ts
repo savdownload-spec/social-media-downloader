@@ -264,7 +264,7 @@ export function derivePlan(plan: RawPlan, period: BillingPeriod): PlanView {
     credits,
     creditsNote,
     features: plan.features,
-    ctaLabel: free ? 'Get started' : BILLING_LIVE ? `Get ${plan.name}` : 'Join the waitlist',
+    ctaLabel: free ? 'Get Started' : BILLING_LIVE ? `Get ${plan.name}` : 'Join The Waitlist',
     ctaHref: free ? '/#tools' : yearly ? 'safepay:pro-yearly' : 'safepay:pro-monthly',
   };
 }
@@ -323,7 +323,7 @@ export function derivePacks(packs: RawPack[]): PackView[] {
       savePercent,
       badge,
       badgeLabel: badge === 'value' ? 'BEST VALUE' : badge === 'popular' ? 'MOST POPULAR' : undefined,
-      ctaLabel: BILLING_LIVE ? 'Buy credits' : 'Join the waitlist',
+      ctaLabel: BILLING_LIVE ? 'Buy Credits' : 'Join The Waitlist',
       ctaHref: `safepay:${p.id}`,
     };
   });
@@ -352,7 +352,7 @@ export function deriveLifetime(lt: RawLifetime): LifetimeView {
     tagline: lt.tagline,
     benefits: lt.benefits,
     fairUse: lt.fairUse,
-    ctaLabel: BILLING_LIVE ? 'Get Lifetime' : 'Join the waitlist',
+    ctaLabel: BILLING_LIVE ? 'Get Lifetime' : 'Join The Waitlist',
     ctaHref: 'safepay:lifetime',
   };
 }

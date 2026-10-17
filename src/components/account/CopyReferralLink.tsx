@@ -24,7 +24,7 @@ export function CopyReferralLink({ link }: { link: string }) {
       <button
         type="button"
         onClick={copy}
-        aria-label="Copy referral link"
+        aria-label="Copy Referral Link"
         className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-border bg-white dark:bg-card text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
       >
         {copied ? <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> : <Copy className="h-4 w-4" />}

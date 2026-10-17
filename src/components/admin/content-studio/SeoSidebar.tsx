@@ -463,7 +463,7 @@ function LinkRow({ label, url, onCopy, onInsert }: { label: string; url: string;
   return (
     <div className="flex items-center gap-1.5 p-1.5 rounded-lg hover:bg-surface/60">
       <span className="flex-1 min-w-0 text-[12px] text-text truncate">{label}</span>
-      <button type="button" title="Insert link at cursor" onClick={onInsert} className="p-1 rounded text-text-muted hover:text-primary"><Plus className="w-3.5 h-3.5" /></button>
+      <button type="button" title="Insert Link At Cursor" onClick={onInsert} className="p-1 rounded text-text-muted hover:text-primary"><Plus className="w-3.5 h-3.5" /></button>
       <button type="button" title="Copy URL" onClick={onCopy} className="p-1 rounded text-text-muted hover:text-primary"><Copy className="w-3.5 h-3.5" /></button>
     </div>
   );
@@ -526,7 +526,7 @@ function FaqHowToEditor({ form, setField }: { form: StudioForm; setField: <K ext
               <button type="button" onClick={() => updateFaqs(faqs.filter((_, j) => j !== i))} className="text-[11px] text-rose-600 flex items-center gap-1"><Trash2 className="w-3 h-3" /> Remove</button>
             </div>
           ))}
-          <button type="button" onClick={() => updateFaqs([...faqs, { question: '', answer: '' }])} className="text-[12px] text-primary flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Add question</button>
+          <button type="button" onClick={() => updateFaqs([...faqs, { question: '', answer: '' }])} className="text-[12px] text-primary flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Add Question</button>
         </div>
       </div>
       <div>
@@ -539,7 +539,7 @@ function FaqHowToEditor({ form, setField }: { form: StudioForm; setField: <K ext
               <button type="button" onClick={() => updateSteps(steps.filter((_, j) => j !== i))} className="text-[11px] text-rose-600 flex items-center gap-1"><Trash2 className="w-3 h-3" /> Remove</button>
             </div>
           ))}
-          <button type="button" onClick={() => updateSteps([...steps, { title: '', description: '' }])} className="text-[12px] text-primary flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Add step</button>
+          <button type="button" onClick={() => updateSteps([...steps, { title: '', description: '' }])} className="text-[12px] text-primary flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Add Step</button>
         </div>
       </div>
       <p className="text-[10px] text-text-subtle">Schema for these is only generated once a block has content — empty sections are ignored.</p>

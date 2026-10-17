@@ -52,7 +52,7 @@ export function RecentActivity({ items }: { items: ActivityItem[] }) {
               <Link
                 href={item.toolHref}
                 className="w-7 h-7 rounded-lg hover:bg-surface flex items-center justify-center text-text-subtle hover:text-text transition-colors"
-                title="Open tool"
+                title="Open Tool"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
               </Link>

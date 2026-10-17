@@ -120,7 +120,7 @@ export function QrScannerTool(_props: FunctionalToolProps) {
               <button
                 onClick={(e) => { e.stopPropagation(); reset(); }}
                 className="absolute -top-2 -right-2 z-10 w-8 h-8 rounded-full bg-white dark:bg-card shadow-soft-md flex items-center justify-center hover:bg-surface"
-                aria-label="Remove image"
+                aria-label="Remove Image"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -148,7 +148,7 @@ export function QrScannerTool(_props: FunctionalToolProps) {
           className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all disabled:opacity-60"
         >
           {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ScanLine className="w-5 h-5" />}
-          {loading ? 'Scanning…' : 'Scan QR code'}
+          {loading ? 'Scanning…' : 'Scan QR Code'}
         </button>
       )}
 
@@ -187,14 +187,14 @@ export function QrScannerTool(_props: FunctionalToolProps) {
                 href={data} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-text bg-white dark:bg-card border border-border hover:border-primary/40 hover:bg-primary-light transition-colors"
               >
-                <ExternalLink className="w-4 h-4" /> Open link
+                <ExternalLink className="w-4 h-4" /> Open Link
               </a>
             )}
             <button
               onClick={reset}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-text bg-white dark:bg-card border border-border hover:border-primary/40 transition-colors"
             >
-              Scan another
+              Scan Another
             </button>
           </div>
         </div>

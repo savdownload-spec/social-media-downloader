@@ -150,7 +150,7 @@ export function MyReviews({ reviews: initialReviews }: { reviews: MyReview[] }) 
                   <button
                     type="button"
                     onClick={() => openEdit(r)}
-                    aria-label="Edit review"
+                    aria-label="Edit Review"
                     className="w-8 h-8 rounded-lg hover:bg-surface flex items-center justify-center text-text-muted hover:text-text transition-colors"
                   >
                     <Pencil className="w-3.5 h-3.5" />
@@ -158,7 +158,7 @@ export function MyReviews({ reviews: initialReviews }: { reviews: MyReview[] }) 
                   <button
                     type="button"
                     onClick={() => handleDelete(r)}
-                    aria-label="Delete review"
+                    aria-label="Delete Review"
                     className="w-8 h-8 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/15 flex items-center justify-center text-text-muted hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

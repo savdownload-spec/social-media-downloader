@@ -20,9 +20,9 @@ import {
 type Scope = 'all' | 'filtered' | 'selected';
 type Step = 'who' | 'date' | 'fields' | 'format' | 'review';
 const STEPS: { id: Step; label: string; icon: typeof Users }[] = [
-  { id: 'who',    label: 'Who to export', icon: Users },
-  { id: 'date',   label: 'Date range',    icon: Calendar },
-  { id: 'fields', label: 'Data fields',   icon: ListChecks },
+  { id: 'who',    label: 'Who To Export', icon: Users },
+  { id: 'date',   label: 'Date Range',    icon: Calendar },
+  { id: 'fields', label: 'Data Fields',   icon: ListChecks },
   { id: 'format', label: 'Format',        icon: FileOutput },
   { id: 'review', label: 'Review & Export', icon: ClipboardCheck },
 ];
@@ -238,7 +238,7 @@ export function UsersExportDrawer({ open, onClose, initialScope, currentFilters,
               disabled={!canExport}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold bg-primary text-white hover:bg-primary-hover shadow-soft transition-all disabled:opacity-40"
             >
-              <Download className="w-4 h-4" /> Export {previewCount != null ? previewCount.toLocaleString() : ''} users
+              <Download className="w-4 h-4" /> Export {previewCount != null ? previewCount.toLocaleString() : ''} Users
             </button>
           ) : (
             <button
@@ -260,7 +260,7 @@ export function UsersExportDrawer({ open, onClose, initialScope, currentFilters,
           onClick={() => setView('export')}
           className={cn('px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all', view === 'export' ? 'bg-text text-white' : 'bg-white border border-border-light text-text-muted hover:text-text')}
         >
-          New export
+          New Export
         </button>
         <button
           type="button"
@@ -300,16 +300,16 @@ export function UsersExportDrawer({ open, onClose, initialScope, currentFilters,
             <div className="space-y-2.5">
               <ScopeCard
                 active={scope === 'all'} onClick={() => setScope('all')}
-                icon={Users} title="All users" description="Every registered user in SavDown."
+                icon={Users} title="All Users" description="Every registered user in SavDown."
               />
               <ScopeCard
                 active={scope === 'filtered'} onClick={() => setScope('filtered')}
-                icon={Filter} title="Filtered users" description={hasFilters ? 'Users matching the current search and plan filter.' : 'No filters are currently active on the Users table.'}
+                icon={Filter} title="Filtered Users" description={hasFilters ? 'Users matching the current search and plan filter.' : 'No filters are currently active on the Users table.'}
                 disabled={!hasFilters}
               />
               <ScopeCard
                 active={scope === 'selected'} onClick={() => setScope('selected')}
-                icon={CheckSquare} title="Selected users" description={selectedIds.length > 0 ? `${selectedIds.length.toLocaleString()} users selected in the table.` : 'Select rows in the Users table first.'}
+                icon={CheckSquare} title="Selected Users" description={selectedIds.length > 0 ? `${selectedIds.length.toLocaleString()} users selected in the table.` : 'Select rows in the Users table first.'}
                 disabled={selectedIds.length === 0}
               />
               <div className="mt-3 px-3.5 py-2.5 rounded-lg bg-primary/[0.05] border border-primary/10 text-[12px] text-text-muted flex items-center gap-2">
@@ -365,8 +365,8 @@ export function UsersExportDrawer({ open, onClose, initialScope, currentFilters,
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[12px] text-text-muted">{fieldIds.length} of {EXPORT_FIELDS.length} fields selected</p>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => setFieldIds(EXPORT_FIELDS.map((f) => f.id))} className="text-[11px] font-semibold text-primary hover:underline">Select all</button>
-                  <button type="button" onClick={() => setFieldIds([])} className="text-[11px] font-semibold text-text-muted hover:underline">Clear all</button>
+                  <button type="button" onClick={() => setFieldIds(EXPORT_FIELDS.map((f) => f.id))} className="text-[11px] font-semibold text-primary hover:underline">Select All</button>
+                  <button type="button" onClick={() => setFieldIds([])} className="text-[11px] font-semibold text-text-muted hover:underline">Clear All</button>
                 </div>
               </div>
               <div className="space-y-4 max-h-[360px] overflow-y-auto pr-1">
@@ -425,8 +425,8 @@ export function UsersExportDrawer({ open, onClose, initialScope, currentFilters,
                 <ReviewRow label="Fields" value={`${fieldIds.length} selected`} last />
               </div>
               <div className="flex justify-end gap-2 -mt-2">
-                <button type="button" onClick={() => setFieldIds(EXPORT_FIELDS.map((f) => f.id))} className="text-[11px] font-semibold text-primary hover:underline">Select all fields</button>
-                <button type="button" onClick={() => setFieldIds([])} className="text-[11px] font-semibold text-text-muted hover:underline">Clear all fields</button>
+                <button type="button" onClick={() => setFieldIds(EXPORT_FIELDS.map((f) => f.id))} className="text-[11px] font-semibold text-primary hover:underline">Select All Fields</button>
+                <button type="button" onClick={() => setFieldIds([])} className="text-[11px] font-semibold text-text-muted hover:underline">Clear All Fields</button>
               </div>
               <p className="text-[12px] text-text-muted bg-surface/60 border border-border-light rounded-lg p-3">
                 This export is logged in the Admin Audit Log and expires automatically 24 hours after generation.
@@ -486,7 +486,7 @@ function ExportProgress({ phase, message, error, job, onRetry }: {
         </div>
         <p className="text-sm font-semibold text-text mb-1">Export failed</p>
         <p className="text-[13px] text-text-muted max-w-sm mb-4">{error}</p>
-        <button onClick={onRetry} className="px-4 py-2 rounded-lg text-[13px] font-medium text-primary bg-primary/[0.08] hover:bg-primary/[0.12] transition-colors">Try again</button>
+        <button onClick={onRetry} className="px-4 py-2 rounded-lg text-[13px] font-medium text-primary bg-primary/[0.08] hover:bg-primary/[0.12] transition-colors">Try Again</button>
       </div>
     );
   }

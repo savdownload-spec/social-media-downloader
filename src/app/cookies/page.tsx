@@ -163,7 +163,7 @@ export default function CookiesPage() {
       <InfoCallout
         title="Questions about cookies?"
         body={<>Read our privacy policy or reach out, we are happy to explain anything in plain English.</>}
-        cta={{ label: 'Read privacy policy', href: '/privacy' }}
+        cta={{ label: 'Read Privacy Policy', href: '/privacy' }}
       />
     </>
   );

@@ -192,7 +192,7 @@ export default function TermsPage() {
       <InfoCallout
         title="Questions about these terms?"
         body={<>Reach us anytime, we are happy to clarify anything in plain English.</>}
-        cta={{ label: 'Contact us', href: '/contact' }}
+        cta={{ label: 'Contact Us', href: '/contact' }}
       />
     </>
   );

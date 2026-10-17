@@ -119,7 +119,7 @@ export function LanguageSelector({ variant = 'header', alwaysShowLabel = false }
           ref={triggerRef}
           onClick={() => setOpen((v) => !v)}
           className="flex items-center gap-2 text-sm text-ink-muted hover:text-white transition-colors"
-          aria-label="Select language"
+          aria-label="Select Language"
           aria-expanded={open}
         >
           <Globe className="w-4 h-4" />
@@ -137,7 +137,7 @@ export function LanguageSelector({ variant = 'header', alwaysShowLabel = false }
         ref={triggerRef}
         onClick={() => setOpen((v) => !v)}
           className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-text-muted transition-colors hover:bg-surface hover:text-text"
-        aria-label="Select language"
+        aria-label="Select Language"
         aria-expanded={open}
       >
         <Globe className="w-4 h-4" />

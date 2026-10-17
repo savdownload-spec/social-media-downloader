@@ -225,7 +225,7 @@ export function AdminSidebar({ onClose, collapsed, onToggleCollapse, badges }: P
               'hidden lg:flex items-center gap-2 w-full rounded-xl text-[13px] font-medium text-text-muted hover:text-text hover:bg-surface/80 transition-all duration-150 mb-1',
               collapsed ? 'justify-center p-2.5' : 'px-3 py-2',
             )}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
           >
             <ChevronLeft className={cn(
               'w-[18px] h-[18px] shrink-0 transition-transform duration-300',
@@ -241,10 +241,10 @@ export function AdminSidebar({ onClose, collapsed, onToggleCollapse, badges }: P
             'flex items-center gap-2 rounded-xl text-[13px] font-medium text-text-subtle hover:text-primary transition-colors',
             collapsed ? 'justify-center p-2.5' : 'px-3 py-2',
           )}
-          title={collapsed ? 'Back to site' : undefined}
+          title={collapsed ? 'Back To Site' : undefined}
         >
           <ExternalLink className="w-[18px] h-[18px] shrink-0" />
-          {!collapsed && <span>Back to site</span>}
+          {!collapsed && <span>Back To Site</span>}
         </Link>
       </div>
     </aside>

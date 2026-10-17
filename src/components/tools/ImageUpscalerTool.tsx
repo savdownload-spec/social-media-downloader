@@ -218,7 +218,7 @@ export function ImageUpscalerTool({ slug }: { slug: string }) {
           onClick={() => { setFile(null); setPreviewUrl(null); setResultUrl(null); setState('idle'); setError(null); }}
           className="text-sm text-gray-500 hover:text-gray-700 underline"
         >
-          Process another image
+          Process Another Image
         </button>
       )}
     </div>

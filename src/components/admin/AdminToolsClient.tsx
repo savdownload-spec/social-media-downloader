@@ -279,8 +279,8 @@ export function AdminToolsClient() {
                                   : 'text-text-muted hover:bg-surface',
                             )}
                             aria-expanded={isExpanded}
-                            aria-label={`Edit batch limits for ${t.name}`}
-                            title="Edit per-plan batch limits"
+                            aria-label={`Edit Batch Limits For ${t.name}`}
+                            title="Edit Per-Plan Batch Limits"
                           >
                             <span className="hidden sm:inline">
                               {displayFree}F / {displayPro}P / {displayLifetime}L
@@ -365,7 +365,7 @@ export function AdminToolsClient() {
                                     'disabled:opacity-50 disabled:cursor-not-allowed',
                                   )}
                                 >
-                                  Reset to defaults
+                                  Reset To Defaults
                                 </button>
                                 <button
                                   type="button"

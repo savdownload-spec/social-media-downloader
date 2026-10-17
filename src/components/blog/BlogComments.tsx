@@ -122,7 +122,7 @@ export function BlogComments({ postSlug }: BlogCommentsProps) {
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-text-subtle">{body.length}/2000 · Comments are reviewed before publication.</p>
             <button type="button" onClick={submit} disabled={submitting || body.trim().length < 2} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50">
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Submit comment
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Submit Comment
             </button>
           </div>
         </div>
@@ -130,7 +130,7 @@ export function BlogComments({ postSlug }: BlogCommentsProps) {
         <div className="mt-7 rounded-2xl border border-border bg-surface/55 p-5">
           <p className="font-medium text-text">Sign in to join the conversation.</p>
           <p className="mt-1 text-sm leading-6 text-text-muted">Use your existing SavDown account to add a comment, edit your own contribution, and follow the discussion.</p>
-          <button type="button" onClick={() => void signIn(undefined, { callbackUrl: window.location.href })} className="mt-4 inline-flex rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover">Sign in to comment</button>
+          <button type="button" onClick={() => void signIn(undefined, { callbackUrl: window.location.href })} className="mt-4 inline-flex rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover">Sign In To Comment</button>
         </div>
       ) : null}
 
