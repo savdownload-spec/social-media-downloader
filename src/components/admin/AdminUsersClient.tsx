@@ -174,7 +174,7 @@ export function AdminUsersClient() {
                 <Th>Role</Th>
                 <Th>Plan</Th>
                 <Th>Credits</Th>
-                <Th>Downloads</Th>
+                <Th>Operations</Th>
                 <Th>Joined</Th>
                 <Th className="text-right">Actions</Th>
               </tr>

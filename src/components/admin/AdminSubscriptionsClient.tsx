@@ -8,7 +8,17 @@ import {
   StatusBadge, Pagination, FilterBar, FilterTab, EmptyState, ErrorState, Skeleton,
 } from './AdminUI';
 
-const STATUSES = ['ALL', 'active', 'trialing', 'past_due', 'canceled', 'unpaid'];
+const STATUSES = ['ALL', 'active', 'trialing', 'past_due', 'canceled', 'unpaid', 'incomplete'];
+
+const STATUS_LABELS: Record<string, string> = {
+  ALL: 'All',
+  active: 'Active',
+  trialing: 'Trialing',
+  past_due: 'Past Due',
+  canceled: 'Canceled',
+  unpaid: 'Unpaid',
+  incomplete: 'Incomplete',
+};
 
 type Sub = {
   id: string; plan: string; status: string; interval: string;
@@ -53,7 +63,7 @@ export function AdminSubscriptionsClient() {
         {STATUSES.map((s) => (
           <FilterTab
             key={s}
-            label={s === 'ALL' ? 'All' : s.replace('_', ' ')}
+            label={STATUS_LABELS[s] ?? s}
             active={status === s}
             onClick={() => setStatus(s)}
           />

@@ -17,6 +17,6 @@ export function reserveAiCredits(
 }
 
 /** Exactly one refund can be created for a reservation, even on retries. */
-export function releaseAiCredits(userId: string, reservation: AiCreditReservation, reason: string) {
-  return refundCreditSpend(userId, reservation.transactionId, reason, true);
+export function releaseAiCredits(userId: string, reservation: AiCreditReservation, reason: string, failureCode?: string) {
+  return refundCreditSpend(userId, reservation.transactionId, reason, true, failureCode);
 }

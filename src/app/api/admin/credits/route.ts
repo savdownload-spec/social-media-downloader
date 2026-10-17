@@ -91,7 +91,13 @@ export async function GET(req: NextRequest) {
       definitions: {
         totalIssued: 'Positive purchases, plan grants, and plan refills',
         totalSpent: 'Absolute sum of spend transactions',
+        totalRefunded: 'Credits restored after uncompleted or failed operations',
+        purchaseRevoked: 'Revoked purchases or negative refund corrections',
+        adjustments: 'Net manual balance adjustments by administrators',
+        expired: 'Unused plan credits expired at allowance period resets',
+        ledgerNet: 'Net movement of all recorded credit transactions (issued - spent + refunds + adjustments - expired)',
         currentBalance: 'Sum of current plan and purchased balances for all users',
+        historicalReconciliationDelta: 'Difference between current user balances and ledger net movement (pre-audit unlogged allowances baseline)',
       },
     },
   }, { headers: PRIVATE_NO_STORE_HEADERS });

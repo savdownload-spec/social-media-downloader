@@ -63,12 +63,15 @@ export async function GET(req: Request) {
   // Charged after the merge succeeds, so a failed render costs nothing. The
   // cost depends on the resolution actually requested — 4K counts double.
   const cost = costForHeight(height);
-  const gate = await requireCredits({ cost });
-  if (!gate.ok) return gate.response;
   const operation = {
     tool, platform, operationId, sourceUrl: pageUrl,
     idempotencyKey: requestIdempotencyKey(req),
   };
+  const gate = await requireCredits({ cost, request: req, operation });
+  if (!gate.ok) return gate.response;
+  const activeOperationId = await gate.begin(operation);
+  if (!activeOperationId) return NextResponse.json({ error: 'Unable to start this download. Please try again.' }, { status: 500 });
+  const activeOperation = { ...operation, operationId: activeOperationId };
 
   const dir     = await mkdtemp(path.join(tmpdir(), 'savdown-merge-'));
   const outPath = path.join(dir, `v-${randomUUID()}.mp4`);
@@ -98,15 +101,16 @@ export async function GET(req: Request) {
         : msg.includes('Private video') || msg.includes('private')
         ? 'This video is private and cannot be downloaded.'
         : 'Could not download this video.';
-      await gate.fail({ ...operation, failureReason: friendly });
+      await gate.fail({ ...activeOperation, failureCode: 'processing_failed', failureReason: friendly });
       return NextResponse.json({ error: friendly }, { status: 502 });
     }
 
     const buffer = await readFile(outPath);
     if (!(await gate.spend({
-      ...operation,
+      ...activeOperation,
       description: `${height}p download`,
     }))) {
+      await gate.fail({ ...activeOperation, failureCode: 'credit_commit_failed', failureReason: 'Credit balance changed before completion' });
       return NextResponse.json(
         { error: 'Your balance changed before this could be charged. Please retry.' },
         { status: 402 },

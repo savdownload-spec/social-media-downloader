@@ -10,9 +10,19 @@ import {
 
 type Payment = {
   id: string; externalId: string | null; amount: number;
+  amountType: 'currency' | 'credits'; currency: string | null; provider: string;
   description: string | null; status: string; createdAt: string;
   user: { id: string; name: string | null; email: string | null } | null;
 };
+
+function formatAmount(payment: Payment) {
+  if (payment.amountType === 'credits' || !payment.currency) return `${payment.amount.toLocaleString()} credits`;
+  try {
+    return new Intl.NumberFormat(undefined, { style: 'currency', currency: payment.currency.toUpperCase() }).format(payment.amount / 100);
+  } catch {
+    return `${(payment.amount / 100).toFixed(2)} ${payment.currency.toUpperCase()}`;
+  }
+}
 
 export function AdminPaymentsClient() {
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -50,7 +60,7 @@ export function AdminPaymentsClient() {
           <thead>
             <tr>
               <Th>User</Th>
-              <Th className="text-right">Credits</Th>
+              <Th className="text-right">Amount</Th>
               <Th>Description</Th>
               <Th>Status</Th>
               <Th>Transaction ID</Th>
@@ -66,8 +76,8 @@ export function AdminPaymentsClient() {
               <tr><td colSpan={6}>
                 <EmptyState
                   icon={DollarSign}
-                  title="No payments yet"
-                  message="Payment records will appear here after Stripe purchases."
+                  title="No Payments Yet"
+                  message="Payment records will appear here after provider purchases."
                 />
               </td></tr>
             ) : payments.map((p) => (
@@ -81,7 +91,7 @@ export function AdminPaymentsClient() {
                   ) : <span className="text-text-muted">—</span>}
                 </Td>
                 <Td className="text-right">
-                  <span className="font-semibold text-emerald-600 tabular-nums">+{p.amount}</span>
+                  <span className="font-semibold text-emerald-600 tabular-nums">{formatAmount(p)}</span>
                 </Td>
                 <Td className="text-text-muted max-w-[200px] truncate text-[12px]">{p.description ?? '—'}</Td>
                 <Td><StatusBadge status={p.status} dot /></Td>

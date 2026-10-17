@@ -234,11 +234,14 @@ model Download {
   platform       String
   tool           String
   sourceUrl      String
-  status         String    @default("success")
+  /// pending | processing | success | failed | cancelled
+  status         String    @default("pending")
   /// Client request keys are scoped to the authenticated user by the server.
   idempotencyKey String?   @unique
   batchId        String?
   failureReason  String?
+  /// Stable, non-sensitive diagnostic code (for example auth_required).
+  failureCode    String?
   creditCost     Int       @default(0)
   userId         String?
   ipHash         String?

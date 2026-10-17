@@ -11,6 +11,17 @@ import {
 
 const KINDS = ['ALL', 'purchase', 'plan_refill', 'plan_grant', 'spend', 'refund', 'adjustment', 'expiration'];
 
+const KIND_LABELS: Record<string, string> = {
+  ALL: 'All',
+  purchase: 'Purchase',
+  plan_refill: 'Plan Refill',
+  plan_grant: 'Plan Grant',
+  spend: 'Spend',
+  refund: 'Refund',
+  adjustment: 'Adjustment',
+  expiration: 'Expiration',
+};
+
 type Tx = {
   id: string; amount: number; kind: string; bucket: string;
   description: string | null; createdAt: string; externalId: string | null;
@@ -60,17 +71,44 @@ export function AdminCreditsClient() {
       <PageHeader title="Credits" description="Credit ledger and transaction history" />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <StatCard label="Total Issued" value={summary.totalIssued.toLocaleString()} icon={TrendingUp} accent="green" />
-        <StatCard label="Total Spent" value={summary.totalSpent.toLocaleString()} icon={TrendingDown} accent="rose" />
-        <StatCard label="Net Remaining" value={summary.currentBalance.toLocaleString()} icon={Coins} accent="purple" />
-        <StatCard label="Transactions" value={summary.transactionCount.toLocaleString()} icon={Hash} accent="blue" />
+        <StatCard
+          label="Total Issued"
+          value={summary.totalIssued.toLocaleString()}
+          sub={summary.adjustments !== 0 ? `${summary.adjustments > 0 ? '+' : ''}${summary.adjustments.toLocaleString()} adjustments` : undefined}
+          icon={TrendingUp}
+          accent="green"
+        />
+        <StatCard
+          label="Total Spent"
+          value={summary.totalSpent.toLocaleString()}
+          sub={[
+            summary.totalRefunded > 0 ? `${summary.totalRefunded.toLocaleString()} refunded` : '',
+            summary.expired > 0 ? `${summary.expired.toLocaleString()} expired` : '',
+          ].filter(Boolean).join(' · ') || undefined}
+          icon={TrendingDown}
+          accent="rose"
+        />
+        <StatCard
+          label="Net Remaining"
+          value={summary.currentBalance.toLocaleString()}
+          sub={`Ledger net: ${summary.ledgerNet.toLocaleString()}`}
+          icon={Coins}
+          accent="purple"
+        />
+        <StatCard
+          label="Transactions"
+          value={summary.transactionCount.toLocaleString()}
+          sub={summary.historicalReconciliationDelta !== 0 ? `Δ ${summary.historicalReconciliationDelta.toLocaleString()} baseline` : undefined}
+          icon={Hash}
+          accent="blue"
+        />
       </div>
 
       <FilterBar search={search} onSearch={setSearch} placeholder="Search user or description...">
         {KINDS.map((k) => (
           <FilterTab
             key={k}
-            label={k === 'ALL' ? 'All' : k.replace('_', ' ')}
+            label={KIND_LABELS[k] ?? k}
             active={kind === k}
             onClick={() => setKind(k)}
           />

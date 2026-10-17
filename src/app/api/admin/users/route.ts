@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth';
 import { Prisma } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { TIER_ALLOWANCE } from '@/lib/billing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -57,16 +56,10 @@ export async function GET(req: NextRequest) {
       prisma.user.count({ where }),
     ]);
 
-    const now = Date.now();
     return NextResponse.json({
       ok: true,
       data: {
         users: users.map((u) => {
-          // Keep this list read-only. A due Free account receives this balance
-          // on its next account/tool read; that path records the refill ledger.
-          const freeRefillDue = u.plan === 'FREE'
-            && (!u.planCreditsResetAt || u.planCreditsResetAt.getTime() <= now);
-          const planCredits = freeRefillDue ? TIER_ALLOWANCE.FREE.credits : u.planCredits;
           return {
             id: u.id,
             name: u.name,
@@ -76,9 +69,9 @@ export async function GET(req: NextRequest) {
             plan: u.plan,
             createdAt: u.createdAt.toISOString(),
             updatedAt: u.updatedAt.toISOString(),
-            planCredits,
+            planCredits: u.planCredits,
             purchasedCredits: u.purchasedCredits,
-            totalCredits: planCredits + u.purchasedCredits,
+            totalCredits: u.planCredits + u.purchasedCredits,
             _count: u._count,
           };
         }),

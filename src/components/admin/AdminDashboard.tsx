@@ -77,7 +77,7 @@ export function AdminDashboard({ stats, topTools, recentActivity, dailyDownloads
           accent="purple"
         />
         <StatCard
-          label="Total Downloads"
+          label="Total Operations"
           value={stats.totalDownloads.toLocaleString()}
           sub={`${stats.downloadsToday.toLocaleString()} today`}
           icon={Download}
@@ -90,7 +90,7 @@ export function AdminDashboard({ stats, topTools, recentActivity, dailyDownloads
           accent="green"
         />
         <StatCard
-          label="Credits Used"
+          label="Credits Spent"
           value={stats.totalCreditsUsed.toLocaleString()}
           sub={`${stats.creditsUsedToday.toLocaleString()} today`}
           icon={Coins}
@@ -107,7 +107,7 @@ export function AdminDashboard({ stats, topTools, recentActivity, dailyDownloads
           accent="green"
         />
         <StatCard
-          label="Downloads (30d)"
+          label="Operations (30d)"
           value={stats.downloadsMonth.toLocaleString()}
           icon={Activity}
           accent="blue"
@@ -120,7 +120,7 @@ export function AdminDashboard({ stats, topTools, recentActivity, dailyDownloads
           accent="rose"
         />
         <StatCard
-          label="Downloads Today"
+          label="Operations Today"
           value={stats.downloadsToday.toLocaleString()}
           icon={Zap}
           accent="purple"
@@ -130,7 +130,7 @@ export function AdminDashboard({ stats, topTools, recentActivity, dailyDownloads
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
         <div className="lg:col-span-2">
-          <BarChart data={dailyDownloads} title="Download Activity" subtitle="Last 7 days" />
+          <BarChart data={dailyDownloads} title="Operation Activity" subtitle="Last 7 days" />
         </div>
 
         <SectionCard

@@ -6,6 +6,8 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getBillingSummary } from '@/lib/billing';
 import { allocateCreditDebit } from '@/lib/credit-semantics';
+import { getClientId } from '@/lib/ratelimit';
+import { sha256 } from '@/lib/utils';
 
 export { allocateCreditDebit } from '@/lib/credit-semantics';
 
@@ -33,6 +35,7 @@ export type ToolOperationInput = {
   idempotencyKey?: string | null;
   batchId?: string | null;
   failureReason?: string | null;
+  failureCode?: string | null;
   ipHash?: string | null;
   userAgent?: string | null;
   /** Per-item cost. Batch gates authorize the sum and spend once per item. */
@@ -54,6 +57,7 @@ export type CreditGate =
       userId: string;
       spend: (operation: ToolOperationInput) => Promise<boolean>;
       fail: (operation: Omit<ToolOperationInput, 'description'> & { description?: string }) => Promise<string | null>;
+      begin: (operation: Omit<ToolOperationInput, 'description'> & { description?: string }) => Promise<string | null>;
     }
   | { ok: false; response: NextResponse };
 
@@ -61,6 +65,8 @@ type GateOptions = {
   /** Total amount authorized for this request (all items in a batch). */
   cost: number;
   plainText?: boolean;
+  request?: Request;
+  operation?: Omit<ToolOperationInput, 'description'> & { description?: string };
 };
 
 export function requestIdempotencyKey(request: Request, suffix?: string): string | null {
@@ -77,19 +83,25 @@ export function newIdempotencyKey(prefix: string): string {
  * Authenticate and preflight the request balance. The final debit remains an
  * atomic conditional transaction; this read is only an early, friendly error.
  */
-export async function requireCredits({ cost, plainText }: GateOptions): Promise<CreditGate> {
+export async function requireCredits({ cost, plainText, request, operation }: GateOptions): Promise<CreditGate> {
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
   if (!userId) {
+    await recordGateFailure(null, request, operation, 'auth_required', 'Authentication required');
     return { ok: false, response: errorResponse('Sign in to use SavDown tools. Every account gets free daily credits.', 401, plainText) };
   }
 
   const summary = await getBillingSummary(userId);
-  if (!summary) return { ok: false, response: errorResponse('Account not found.', 401, plainText) };
+  if (!summary) {
+    await recordGateFailure(null, request, operation, 'account_not_found', 'Account not found');
+    return { ok: false, response: errorResponse('Account not found.', 401, plainText) };
+  }
   if (summary.role === 'SUSPENDED') {
+    await recordGateFailure(userId, request, operation, 'account_suspended', 'Account suspended');
     return { ok: false, response: errorResponse('This account has been suspended.', 403, plainText) };
   }
   if (cost > 0 && summary.totalCredits < cost) {
+    await recordGateFailure(userId, request, operation, 'insufficient_credits', 'Insufficient credits');
     return {
       ok: false,
       response: errorResponse(
@@ -119,9 +131,52 @@ export async function requireCredits({ cost, plainText }: GateOptions): Promise<
       ...operation,
       status: 'failed',
       creditCost: 0,
+      failureCode: operation.failureCode ?? 'processing_failed',
       failureReason: operation.failureReason ?? operation.description ?? 'Processing failed',
     }),
+    begin: (operation) => recordToolOperation(userId, {
+      ...operation,
+      status: 'processing',
+      creditCost: 0,
+      failureReason: null,
+      failureCode: null,
+    }),
   };
+}
+
+async function recordGateFailure(
+  userId: string | null,
+  request: Request | undefined,
+  operation: GateOptions['operation'],
+  failureCode: string,
+  failureReason: string,
+) {
+  if (!operation) return;
+  try {
+    const ipHash = request ? await sha256(getClientId(request)) : null;
+    await recordToolOperation(userId, {
+      ...operation,
+      idempotencyKey: operation.idempotencyKey ?? (request ? requestIdempotencyKey(request) : null),
+      ipHash: operation.ipHash ?? ipHash,
+      userAgent: operation.userAgent ?? request?.headers.get('user-agent') ?? null,
+      status: 'failed',
+      creditCost: 0,
+      failureCode,
+      failureReason,
+    });
+  } catch (error) {
+    console.error('Operation rejection tracking failed', { failureCode, error });
+  }
+}
+
+/** Record a rejected request that could not enter the authenticated credit gate. */
+export function recordRejectedOperation(
+  request: Request,
+  operation: GateOptions['operation'],
+  failureCode: string,
+  failureReason: string,
+) {
+  return recordGateFailure(null, request, operation, failureCode, failureReason);
 }
 
 export async function spendCredits(
@@ -181,6 +236,7 @@ export async function spendCreditsDetailed(
               status,
               creditCost: { increment: amount },
               failureReason: null,
+              failureCode: null,
               ...(status === 'success' ? { completedAt: now } : {}),
             },
           })
@@ -232,14 +288,14 @@ export async function spendCreditsDetailed(
 
 /** Record a non-credit or failed operation without manufacturing a ledger event. */
 export async function recordToolOperation(
-  userId: string,
+  userId: string | null,
   operation: Omit<ToolOperationInput, 'description'> & {
     description?: string;
-    status: 'pending' | 'success' | 'failed' | 'cancelled';
+    status: 'pending' | 'processing' | 'success' | 'failed' | 'cancelled';
     creditCost?: number;
   },
 ): Promise<string | null> {
-  const scopedKey = scopeKey(userId, operation.idempotencyKey);
+  const scopedKey = scopeKey(userId ?? `anonymous:${operation.ipHash ?? 'unknown'}`, operation.idempotencyKey);
   const now = new Date();
   const data = {
     platform: operation.platform,
@@ -249,14 +305,45 @@ export async function recordToolOperation(
     idempotencyKey: scopedKey,
     batchId: operation.batchId ?? null,
     failureReason: operation.failureReason ?? null,
+    failureCode: operation.failureCode ?? (operation.status === 'failed' ? 'processing_failed' : null),
     creditCost: operation.creditCost ?? 0,
     userId,
     ipHash: operation.ipHash ?? null,
     userAgent: operation.userAgent ?? null,
-    completedAt: operation.status === 'pending' ? null : now,
+    completedAt: operation.status === 'pending' || operation.status === 'processing' ? null : now,
   };
 
   try {
+    if (scopedKey && userId) {
+      const existingSpend = await prisma.creditTransaction.findUnique({
+        where: { idempotencyKey: `${scopedKey}:spend` },
+        select: { userId: true, operationId: true },
+      });
+      if (existingSpend?.userId === userId && existingSpend.operationId) return existingSpend.operationId;
+    }
+    if (operation.operationId && userId) {
+      const updated = await prisma.download.updateMany({
+        where: {
+          id: operation.operationId,
+          userId,
+          creditTransactions: { none: { kind: 'spend' } },
+        },
+        data: {
+          platform: operation.platform,
+          tool: operation.tool,
+          sourceUrl: operation.sourceUrl ?? `tool://${operation.tool}`,
+          status: operation.status,
+          batchId: operation.batchId ?? null,
+          failureReason: data.failureReason,
+          failureCode: data.failureCode,
+          creditCost: data.creditCost,
+          ...(operation.ipHash ? { ipHash: operation.ipHash } : {}),
+          ...(operation.userAgent ? { userAgent: operation.userAgent } : {}),
+          completedAt: data.completedAt,
+        },
+      });
+      if (updated.count === 1) return operation.operationId;
+    }
     if (!scopedKey) return (await prisma.download.create({ data })).id;
     const existing = await prisma.download.findUnique({ where: { idempotencyKey: scopedKey } });
     if (existing) {
@@ -279,6 +366,7 @@ export async function refundCreditSpend(
   spendTransactionId: string,
   reason: string,
   markOperationFailed = true,
+  failureCode = 'processing_failed',
 ): Promise<{ refunded: boolean; transactionId?: string }> {
   return serializable(async (tx) => {
     const spend = await tx.creditTransaction.findUnique({ where: { id: spendTransactionId } });
@@ -316,11 +404,59 @@ export async function refundCreditSpend(
     if (markOperationFailed && spend.operationId) {
       await tx.download.update({
         where: { id: spend.operationId },
-        data: { status: 'failed', failureReason: reason, completedAt: new Date() },
+        data: { status: 'failed', failureReason: reason, failureCode, completedAt: new Date() },
       });
     }
     return { refunded: true, transactionId: refund.id };
   });
+}
+
+/**
+ * Close operations that outlived every supported server execution window.
+ * Reserved credits are restored through the same idempotent refund path used
+ * by ordinary processing failures; uncharged attempts are only marked failed.
+ */
+export async function reconcileStaleOperations(maxAgeMinutes = 30): Promise<number> {
+  const cutoff = new Date(Date.now() - maxAgeMinutes * 60_000);
+  const stale = await prisma.download.findMany({
+    where: { status: { in: ['pending', 'processing'] }, createdAt: { lt: cutoff } },
+    orderBy: { createdAt: 'asc' },
+    take: 100,
+    select: {
+      id: true,
+      userId: true,
+      creditTransactions: {
+        where: { kind: { in: ['spend', 'refund'] } },
+        orderBy: { createdAt: 'asc' },
+        select: { id: true, kind: true },
+      },
+    },
+  });
+
+  for (const operation of stale) {
+    const spend = operation.creditTransactions.find((row) => row.kind === 'spend');
+    const refunded = operation.creditTransactions.some((row) => row.kind === 'refund');
+    if (spend && operation.userId && !refunded) {
+      await refundCreditSpend(
+        operation.userId,
+        spend.id,
+        'Processing was interrupted before completion; reserved credits released',
+        true,
+        'processing_interrupted',
+      );
+      continue;
+    }
+    await prisma.download.updateMany({
+      where: { id: operation.id, status: { in: ['pending', 'processing'] } },
+      data: {
+        status: 'failed',
+        failureCode: 'processing_interrupted',
+        failureReason: 'Processing was interrupted before completion',
+        completedAt: new Date(),
+      },
+    });
+  }
+  return stale.length;
 }
 
 async function upsertOperation(
@@ -340,6 +476,7 @@ async function upsertOperation(
     idempotencyKey: scopedKey,
     batchId: operation.batchId ?? null,
     failureReason: operation.failureReason ?? null,
+    failureCode: operation.failureCode ?? null,
     creditCost: amount,
     userId,
     ipHash: operation.ipHash ?? null,
@@ -354,6 +491,7 @@ async function upsertOperation(
       status,
       creditCost: amount,
       failureReason: null,
+      failureCode: null,
       ...(status === 'success' ? { completedAt: now } : {}),
     },
   });

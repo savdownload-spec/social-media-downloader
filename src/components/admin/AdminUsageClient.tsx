@@ -1,14 +1,23 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Activity, CheckCircle, XCircle, Wrench } from 'lucide-react';
+import { Activity, CheckCircle, Clock3, XCircle, Wrench } from 'lucide-react';
 import {
   AdminPage, PageHeader, TableCard, Table, Th, Td, SectionCard,
   StatusBadge, Pagination, FilterBar, EmptyState, ErrorState,
   BarChart, TimeFilter, StatCard, Skeleton,
 } from './AdminUI';
 
-type Row = { id: string; tool: string; platform: string; status: string; createdAt: string };
+type Row = {
+  id: string;
+  tool: string;
+  platform: string;
+  status: string;
+  failureCode: string | null;
+  failureReason: string | null;
+  createdAt: string;
+  completedAt: string | null;
+};
 
 export function AdminUsageClient() {
   const [data, setData] = useState<{
@@ -46,7 +55,11 @@ export function AdminUsageClient() {
   useEffect(() => { setPage(1); }, [days, search, tool, platform, status]);
 
   const successCount = data?.byStatus.find((s) => s.status === 'success')?.count ?? 0;
-  const failedCount  = data?.byStatus.reduce((sum, s) => s.status !== 'success' ? sum + s.count : sum, 0) ?? 0;
+  const failedCount  = data?.byStatus.find((s) => s.status === 'failed')?.count ?? 0;
+  const inProgressCount = data?.byStatus.reduce(
+    (sum, item) => ['pending', 'processing'].includes(item.status) ? sum + item.count : sum,
+    0,
+  ) ?? 0;
 
   if (error) return <AdminPage><PageHeader title="Usage Analytics" /><ErrorState message="Failed to load usage data." onRetry={load} /></AdminPage>;
 
@@ -57,10 +70,11 @@ export function AdminUsageClient() {
         <div className="sm:ml-auto shrink-0"><TimeFilter value={days} onChange={setDays} /></div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 xl:grid-cols-5 gap-3 mb-6">
         <StatCard label="Total Jobs" value={(data?.total ?? 0).toLocaleString()} icon={Activity} accent="purple" />
         <StatCard label="Successful" value={successCount.toLocaleString()} icon={CheckCircle} accent="green" />
         <StatCard label="Failed" value={failedCount.toLocaleString()} icon={XCircle} accent="rose" />
+        <StatCard label="In Progress" value={inProgressCount.toLocaleString()} icon={Clock3} accent="amber" />
         <StatCard label="Top Tool" value={data?.byTool[0]?.tool ?? '—'} icon={Wrench} accent="blue" />
       </div>
 
@@ -90,20 +104,28 @@ export function AdminUsageClient() {
       <TableCard>
         <Table>
           <thead>
-            <tr><Th>Tool</Th><Th>Platform</Th><Th>Status</Th><Th className="text-right">Date</Th></tr>
+            <tr><Th>Tool</Th><Th>Platform</Th><Th>Status</Th><Th>Details</Th><Th className="text-right">Date</Th></tr>
           </thead>
           <tbody>
             {loading ? (
               Array.from({ length: 8 }).map((_, i) => (
-                <tr key={i}><td colSpan={4} className="px-4 py-3"><Skeleton className="h-5 w-full" /></td></tr>
+                <tr key={i}><td colSpan={5} className="px-4 py-3"><Skeleton className="h-5 w-full" /></td></tr>
               ))
             ) : !data?.downloads.length ? (
-              <tr><td colSpan={4}><EmptyState icon={Activity} title="No activity" message="No processing activity in this period." /></td></tr>
+              <tr><td colSpan={5}><EmptyState icon={Activity} title="No Activity" message="No processing activity in this period." /></td></tr>
             ) : data.downloads.map((d) => (
               <tr key={d.id} className="hover:bg-surface/40 transition-colors">
                 <Td className="font-medium">{d.tool}</Td>
                 <Td className="text-text-muted">{d.platform}</Td>
                 <Td><StatusBadge status={d.status} dot /></Td>
+                <Td className="max-w-[260px] text-[11px] text-text-muted">
+                  {d.failureCode ? (
+                    <span title={d.failureReason ?? d.failureCode}>
+                      <span className="font-mono text-text">{d.failureCode}</span>
+                      {d.failureReason ? ` · ${d.failureReason}` : ''}
+                    </span>
+                  ) : '—'}
+                </Td>
                 <Td className="text-right text-[12px] text-text-muted whitespace-nowrap tabular-nums">{new Date(d.createdAt).toLocaleString('en', { timeZone: 'UTC' })} UTC</Td>
               </tr>
             ))}

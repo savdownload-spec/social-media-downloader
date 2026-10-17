@@ -15,7 +15,7 @@
  */
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
-import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
+import { requireCredits, JOB_COST, recordRejectedOperation, requestIdempotencyKey } from '@/lib/credits';
 import { processVideo, type VideoOperation } from '@/lib/videoService';
 
 export const runtime = 'nodejs';
@@ -26,17 +26,35 @@ const VALID_FORMATS = new Set(['mp4', 'webm', 'mov', 'avi', 'mkv']);
 const TOOL_BY_OP: Record<string, string> = {
   convert: 'video-converter', compress: 'video-compressor', 'to-mp3': 'video-to-mp3', 'to-gif': 'gif-maker',
 };
+const OP_BY_TOOL: Record<string, string> = {
+  'video-converter': 'convert',
+  'video-compressor': 'compress',
+  'video-to-mp3': 'to-mp3',
+  'gif-maker': 'to-gif',
+  'mp4-to-gif': 'to-gif',
+};
 
 export async function POST(req: Request) {
+  const requestKey = requestIdempotencyKey(req);
+  const toolHint = req.headers.get('x-savdown-tool');
+  const hintedTool = toolHint && OP_BY_TOOL[toolHint] ? toolHint : 'video-tool';
+  const gateOperation = {
+    tool: hintedTool,
+    platform: 'video',
+    sourceUrl: `tool://${hintedTool}`,
+    idempotencyKey: requestKey,
+  };
+
   /* ── rate limit (video processing is heavier, tighter limit) ── */
   const ip = getClientId(req);
   const rl = await ratelimit(`vid:${ip}`, { limit: 10, windowSeconds: 60 });
   if (!rl.success) {
+    await recordRejectedOperation(req, gateOperation, 'rate_limited', 'Rate limit exceeded');
     return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
   }
 
   // Credits are spent only once the job below succeeds.
-  const gate = await requireCredits({ cost: JOB_COST.videoTool });
+  const gate = await requireCredits({ cost: JOB_COST.videoTool, request: req, operation: gateOperation });
   if (!gate.ok) return gate.response;
 
   /* ── parse multipart ── */
@@ -44,11 +62,13 @@ export async function POST(req: Request) {
   try {
     formData = await req.formData();
   } catch {
+    await gate.fail({ ...gateOperation, failureCode: 'invalid_request', failureReason: 'Invalid multipart request' });
     return NextResponse.json({ error: 'Expected multipart/form-data.' }, { status: 400 });
   }
 
   const file = formData.get('file');
   if (!file || typeof file === 'string') {
+    await gate.fail({ ...gateOperation, failureCode: 'validation_failed', failureReason: 'No video file uploaded' });
     return NextResponse.json({ error: 'No file uploaded.' }, { status: 400 });
   }
 
@@ -56,11 +76,13 @@ export async function POST(req: Request) {
   // Guard against oversized uploads before buffering — prevents OOM on large files
   const MAX_VIDEO_BYTES = 100 * 1024 * 1024; // 100 MB
   if (inputFile.size > MAX_VIDEO_BYTES) {
+    await gate.fail({ ...gateOperation, failureCode: 'file_too_large', failureReason: 'Video exceeds the 100 MB limit' });
     return NextResponse.json({ error: 'File too large. Maximum video size is 100 MB.' }, { status: 413 });
   }
 
   const op = (formData.get('op') as string | null)?.toLowerCase() || 'compress';
   if (!VALID_OPS.has(op)) {
+    await gate.fail({ ...gateOperation, failureCode: 'validation_failed', failureReason: 'Unknown video operation' });
     return NextResponse.json({ error: `Unknown operation: ${op}` }, { status: 400 });
   }
 
@@ -75,10 +97,10 @@ export async function POST(req: Request) {
   const baseName    = origName.replace(/\.[^.]+$/, '');
   const inputExt    = origName.split('.').pop()?.toLowerCase() || 'mp4';
   const trackingOperation = {
-    tool: TOOL_BY_OP[op] ?? 'video-tool',
+    tool: OP_BY_TOOL[hintedTool] === op ? hintedTool : TOOL_BY_OP[op] ?? 'video-tool',
     platform: 'video',
     sourceUrl: `upload://${origName}`,
-    idempotencyKey: requestIdempotencyKey(req),
+    idempotencyKey: requestKey,
   };
 
   /* ── build operation ── */
@@ -86,6 +108,7 @@ export async function POST(req: Request) {
   switch (op) {
     case 'convert': {
       if (!VALID_FORMATS.has(format)) {
+        await gate.fail({ ...trackingOperation, failureCode: 'validation_failed', failureReason: 'Unsupported target format' });
         return NextResponse.json({ error: `Unsupported target format: ${format}` }, { status: 400 });
       }
       operation = { op: 'convert', format: format as 'mp4' | 'webm' | 'mov' | 'avi' | 'mkv' };
@@ -98,15 +121,21 @@ export async function POST(req: Request) {
   }
 
   /* ── process ── */
+  const operationId = await gate.begin(trackingOperation);
+  if (!operationId) {
+    return NextResponse.json({ error: 'Unable to start processing. Please try again.' }, { status: 500 });
+  }
+  const activeOperation = { ...trackingOperation, operationId };
   const result = await processVideo(inputBuf, inputExt, operation);
   if (!result.ok) {
-    await gate.fail({ ...trackingOperation, failureReason: result.error });
+    await gate.fail({ ...activeOperation, failureCode: 'processing_failed', failureReason: result.error });
     return NextResponse.json({ error: result.error }, { status: 422 });
   }
 
   const filename = `${baseName}.${result.extension}`;
 
-  if (!(await gate.spend({ ...trackingOperation, description: `${trackingOperation.tool}: ${origName}` }))) {
+  if (!(await gate.spend({ ...activeOperation, description: `${trackingOperation.tool}: ${origName}` }))) {
+    await gate.fail({ ...activeOperation, failureCode: 'credit_commit_failed', failureReason: 'Credit balance changed before completion' });
     return NextResponse.json(
       { error: 'Your balance changed before this could be charged. Please retry.' },
       { status: 402 },

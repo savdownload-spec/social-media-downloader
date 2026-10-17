@@ -74,14 +74,17 @@ export async function GET(req: Request) {
     return new NextResponse('Host not allowed.', { status: 403 });
   }
 
-  // This route hands over the actual file, so it is where the credit is spent.
-  // Errors stay plain text to match the rest of this route's responses.
-  const gate = await requireCredits({ cost: JOB_COST.proxyDownload, plainText: true });
-  if (!gate.ok) return gate.response;
   const operation = {
     tool, platform, operationId, sourceUrl: targetUrl,
     idempotencyKey: requestIdempotencyKey(req),
   };
+  // This route hands over the actual file, so it is where the credit is spent.
+  // Errors stay plain text to match the rest of this route's responses.
+  const gate = await requireCredits({ cost: JOB_COST.proxyDownload, plainText: true, request: req, operation });
+  if (!gate.ok) return gate.response;
+  const activeOperationId = await gate.begin(operation);
+  if (!activeOperationId) return new NextResponse('Unable to start this download. Please try again.', { status: 500 });
+  const activeOperation = { ...operation, operationId: activeOperationId };
 
   try {
     const upstream = await fetch(targetUrl, {
@@ -96,13 +99,13 @@ export async function GET(req: Request) {
     });
 
     if (!upstream.ok) {
-      await gate.fail({ ...operation, failureReason: `Upstream responded ${upstream.status}` });
+      await gate.fail({ ...activeOperation, failureCode: 'upstream_http_error', failureReason: `Upstream responded ${upstream.status}` });
       return new NextResponse(`Upstream responded ${upstream.status}.`, { status: 502 });
     }
 
     const contentLength = parseInt(upstream.headers.get('content-length') || '0', 10);
     if (contentLength > MAX_BYTES) {
-      await gate.fail({ ...operation, failureReason: 'File too large to proxy' });
+      await gate.fail({ ...activeOperation, failureCode: 'file_too_large', failureReason: 'File too large to proxy' });
       return new NextResponse('File too large to proxy.', { status: 413 });
     }
 
@@ -113,9 +116,10 @@ export async function GET(req: Request) {
 
     // Charged once the upstream has accepted and the body is on its way.
     if (!(await gate.spend({
-      ...operation,
+      ...activeOperation,
       description: `Download — ${safeFilename}`,
     }))) {
+      await gate.fail({ ...activeOperation, failureCode: 'credit_commit_failed', failureReason: 'Credit balance changed before completion' });
       return new NextResponse('Your balance changed before this could be charged. Please retry.', {
         status: 402,
       });
@@ -135,8 +139,9 @@ export async function GET(req: Request) {
     });
   } catch (err) {
     await gate.fail({
-      ...operation,
-      failureReason: err instanceof Error ? err.message : 'Could not fetch this file',
+      ...activeOperation,
+      failureCode: err instanceof DOMException && err.name === 'TimeoutError' ? 'processing_timeout' : 'upstream_fetch_failed',
+      failureReason: err instanceof DOMException && err.name === 'TimeoutError' ? 'Upstream request timed out' : 'Upstream fetch failed',
     });
     return new NextResponse('Could not fetch this file. Please try again.', { status: 502 });
   }

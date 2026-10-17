@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { catalog } from '@/config/catalog';
-import { cacheJson } from '@/lib/redis';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,25 +33,29 @@ export async function GET(_req: NextRequest) {
 
   const configs = await prisma.toolConfig.findMany({ orderBy: { name: 'asc' } });
 
-  // Cache usage counts for 5 min — this groups the entire downloads table
-  // and is expensive to recompute on every admin page load.
-  const usageMap = await cacheJson<Record<string, number>>(
-    'admin:tool-usage-counts',
-    300,
-    async () => {
-      const usageCounts = await prisma.download.groupBy({
-        by: ['tool'],
-        _count: { tool: true },
-      });
-      return Object.fromEntries(usageCounts.map((r) => [r.tool, r._count.tool]));
-    },
-  );
+  // Admin status totals must reflect the operation ledger at request time.
+  const usageCounts = await prisma.download.groupBy({
+    by: ['tool', 'status'],
+    _count: { _all: true },
+  });
+  const usageMap: Record<string, { total: number; success: number; failed: number; inProgress: number }> = {};
+  for (const row of usageCounts) {
+    const counts = usageMap[row.tool] ?? { total: 0, success: 0, failed: 0, inProgress: 0 };
+    counts.total += row._count._all;
+    if (row.status === 'success') counts.success += row._count._all;
+    else if (row.status === 'failed') counts.failed += row._count._all;
+    else if (row.status === 'pending' || row.status === 'processing') counts.inProgress += row._count._all;
+    usageMap[row.tool] = counts;
+  }
 
   const tools = configs.map((c) => ({
     ...c,
     updatedAt: c.updatedAt.toISOString(),
     createdAt: c.createdAt.toISOString(),
-    usageTotal: usageMap[c.slug] ?? 0,
+    usageTotal: usageMap[c.slug]?.total ?? 0,
+    usageSuccess: usageMap[c.slug]?.success ?? 0,
+    usageFailed: usageMap[c.slug]?.failed ?? 0,
+    usageInProgress: usageMap[c.slug]?.inProgress ?? 0,
   }));
 
   return NextResponse.json({ ok: true, data: { tools } });

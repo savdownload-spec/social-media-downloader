@@ -20,7 +20,7 @@ interface UserData {
   planCreditsResetAt: string | null;
   subscriptions: { id: string; plan: string; status: string; interval: string; currentPeriodEnd: string | null; createdAt: string; updatedAt: string }[];
   creditLedger: { id: string; amount: number; kind: string; bucket: string; description: string | null; createdAt: string }[];
-  downloads: { id: string; tool: string; platform: string; status: string; createdAt: string }[];
+  downloads: { id: string; tool: string; platform: string; status: string; failureCode: string | null; failureReason: string | null; createdAt: string }[];
   reviews: { id: string; rating: number; review: string; status: string; createdAt: string }[];
 }
 
@@ -132,7 +132,7 @@ export function AdminUserDetail({ user }: { user: UserData }) {
         {TABS.map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-3 py-1.5 rounded-md text-[12px] font-semibold capitalize transition-all ${tab === t ? 'bg-white text-text shadow-sm border border-border-light' : 'text-text-muted hover:text-text'}`}>
-            {t}
+            {t === 'downloads' ? 'Operations' : t}
           </button>
         ))}
       </div>
@@ -185,19 +185,20 @@ export function AdminUserDetail({ user }: { user: UserData }) {
         </TableCard>
       )}
 
-      {/* Downloads */}
+      {/* Operations */}
       {tab === 'downloads' && (
         <TableCard>
           <Table>
-            <thead><tr><Th>Tool</Th><Th>Platform</Th><Th>Status</Th><Th>Date</Th></tr></thead>
+            <thead><tr><Th>Tool</Th><Th>Platform</Th><Th>Status</Th><Th>Details</Th><Th>Date</Th></tr></thead>
             <tbody>
               {user.downloads.length === 0 ? (
-                <tr><td colSpan={4}><EmptyState message="No downloads." /></td></tr>
+                <tr><td colSpan={5}><EmptyState message="No operations." /></td></tr>
               ) : user.downloads.map((d) => (
                 <tr key={d.id} className="hover:bg-surface/40">
                   <Td className="font-medium">{d.tool}</Td>
                   <Td className="text-text-muted">{d.platform}</Td>
                   <Td><StatusBadge status={d.status} /></Td>
+                  <Td className="max-w-[240px] text-[11px] text-text-muted">{d.failureCode ? `${d.failureCode}${d.failureReason ? ` · ${d.failureReason}` : ''}` : '—'}</Td>
                   <Td className="text-xs text-text-muted">{new Date(d.createdAt).toLocaleDateString()}</Td>
                 </tr>
               ))}

@@ -109,7 +109,14 @@ export function VideoTool({ slug }: FunctionalToolProps) {
       if (showBitrate) fd.append('bitrate', bitrate);
       if (showGifOpts) fd.append('fps', String(fps));
 
-      const res = await fetch('/api/tools/video', { method: 'POST', headers: { 'Idempotency-Key': `video:${crypto.randomUUID()}` }, body: fd });
+      const res = await fetch('/api/tools/video', {
+        method: 'POST',
+        headers: {
+          'Idempotency-Key': `video:${crypto.randomUUID()}`,
+          'X-SavDown-Tool': slug,
+        },
+        body: fd,
+      });
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -139,7 +146,7 @@ export function VideoTool({ slug }: FunctionalToolProps) {
     } finally {
       setLoading(false);
     }
-  }, [requireAuth, file, op, showFormat, showCrf, showBitrate, showGifOpts, format, crf, bitrate, fps, success, errToast]);
+  }, [requireAuth, file, op, showFormat, showCrf, showBitrate, showGifOpts, format, crf, bitrate, fps, slug, success, errToast]);
 
   const delta = origSize && outSize ? ((origSize - outSize) / origSize) * 100 : 0;
   const smaller = delta > 0;

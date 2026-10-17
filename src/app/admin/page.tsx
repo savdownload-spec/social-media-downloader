@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { buildMetadata } from '@/lib/seo';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { resolveAdminDateRange } from '@/lib/admin-analytics';
+import { reconcileStaleOperations } from '@/lib/credits';
 
 export const metadata = buildMetadata({
   title: 'Admin Dashboard',
@@ -20,6 +21,7 @@ export default async function AdminPage() {
   const now = new Date();
   const today = resolveAdminDateRange('1', now).start;
   const month = resolveAdminDateRange('30', now).start;
+  await reconcileStaleOperations();
 
   const [
     totalUsers,
@@ -46,7 +48,7 @@ export default async function AdminPage() {
     prisma.download.count({ where: { createdAt: { gte: month } } }),
     prisma.review.count({ where: { status: 'PENDING' } }),
     prisma.review.count(),
-    prisma.subscription.count({ where: { status: 'active' } }),
+    prisma.subscription.count({ where: { status: { in: ['active', 'trialing'] } } }),
     prisma.creditTransaction.aggregate({ _sum: { amount: true }, where: { kind: 'spend' } }),
     prisma.creditTransaction.aggregate({ _sum: { amount: true }, where: { kind: 'spend', createdAt: { gte: today } } }),
     prisma.download.groupBy({

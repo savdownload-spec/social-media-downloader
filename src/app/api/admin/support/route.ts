@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { fail, ok } from '@/lib/api';
 import { SUPPORT_CATEGORIES, SUPPORT_PRIORITIES, SUPPORT_STATUSES } from '@/lib/support';
+import { resolveAdminDateRange } from '@/lib/admin-analytics';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,8 +34,8 @@ export async function GET(request: Request) {
     { user: { name: { contains: search, mode: 'insensitive' } } }, { user: { email: { contains: search, mode: 'insensitive' } } },
     { lastMessagePreview: { contains: search, mode: 'insensitive' } },
   ];
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const week = new Date(Date.now() - 7 * 86400000);
+  const today = resolveAdminDateRange('1').start;
+  const week = resolveAdminDateRange('7').start;
   // Analytics sample: fetch at most 300 conversations (was 1500) and only
   // the first 2 messages per conversation (enough for first-response timing).
   const metricsSince = new Date(Date.now() - 90 * 86400000);

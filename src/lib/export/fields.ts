@@ -46,7 +46,7 @@ export const EXPORT_FIELDS: ExportFieldDef[] = [
   { id: 'bio',              label: 'Bio',                category: 'profile' },
 
   // Usage
-  { id: 'totalDownloads',   label: 'Total downloads',   category: 'usage' },
+  { id: 'totalDownloads',   label: 'Total operations',  category: 'usage' },
   { id: 'creditsBalance',   label: 'Credits balance',   category: 'usage' },
   { id: 'creditsUsed',      label: 'Credits used',      category: 'usage' },
   { id: 'lastActivity',     label: 'Last activity',     category: 'usage' },

@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { PRIVATE_NO_STORE_HEADERS, requireAdminApi } from '@/lib/admin-auth';
+import { reconcileStaleOperations } from '@/lib/credits';
 import {
   buildOperationWhere,
   dateWhere,
@@ -24,6 +25,7 @@ export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const type = sp.get('type') ?? 'usage';
   if (!REPORT_TYPES.has(type)) return NextResponse.json({ ok: false, error: 'Unknown report type.' }, { status: 400, headers: PRIVATE_NO_STORE_HEADERS });
+  if (type === 'usage') await reconcileStaleOperations();
 
   const range = resolveAdminDateRange(sp.get('days'));
   const format = sp.get('format') === 'csv' ? 'csv' : 'json';
@@ -50,10 +52,28 @@ export async function GET(req: NextRequest) {
     if (format === 'csv' && total > MAX_EXPORT_ROWS) return exportTooLarge(total);
     const data = await prisma.download.findMany({
       where, skip, take, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-      select: { id: true, tool: true, platform: true, status: true, creditCost: true, batchId: true, createdAt: true },
+      select: {
+        id: true,
+        tool: true,
+        platform: true,
+        status: true,
+        failureCode: true,
+        failureReason: true,
+        creditCost: true,
+        batchId: true,
+        createdAt: true,
+        completedAt: true,
+      },
     });
-    headers = ['id', 'tool', 'platform', 'status', 'creditCost', 'batchId', 'createdAt'];
-    rows = data.map((row) => ({ ...row, batchId: row.batchId ?? '', createdAt: row.createdAt.toISOString() }));
+    headers = ['id', 'tool', 'platform', 'status', 'failureCode', 'failureReason', 'creditCost', 'batchId', 'createdAt', 'completedAt'];
+    rows = data.map((row) => ({
+      ...row,
+      failureCode: row.failureCode ?? '',
+      failureReason: row.failureReason ?? '',
+      batchId: row.batchId ?? '',
+      createdAt: row.createdAt.toISOString(),
+      completedAt: row.completedAt?.toISOString() ?? '',
+    }));
   } else if (type === 'users') {
     const where: Prisma.UserWhereInput = { createdAt: dateWhere(range) };
     if (search) where.OR = [{ name: { contains: search, mode: 'insensitive' } }, { email: { contains: search, mode: 'insensitive' } }];

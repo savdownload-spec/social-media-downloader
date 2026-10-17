@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { PRIVATE_NO_STORE_HEADERS, requireAdminApi } from '@/lib/admin-auth';
+import { reconcileStaleOperations } from '@/lib/credits';
 import {
   buildOperationWhere,
   resolveAdminDateRange,
@@ -15,6 +16,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   const auth = await requireAdminApi(req);
   if (!auth.ok) return auth.response;
+  await reconcileStaleOperations();
 
   const sp = req.nextUrl.searchParams;
   const range = resolveAdminDateRange(sp.get('days'));
@@ -44,7 +46,17 @@ export async function GET(req: NextRequest) {
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       skip: (page - 1) * pageSize,
       take: pageSize,
-      select: { id: true, tool: true, platform: true, status: true, creditCost: true, createdAt: true },
+      select: {
+        id: true,
+        tool: true,
+        platform: true,
+        status: true,
+        creditCost: true,
+        failureCode: true,
+        failureReason: true,
+        createdAt: true,
+        completedAt: true,
+      },
     }),
     prisma.download.count({ where }),
     prisma.download.groupBy({
@@ -83,7 +95,7 @@ export async function GET(req: NextRequest) {
       byTool: byTool.map((row) => ({ tool: row.tool, count: row._count.tool })),
       byStatus: byStatus.map((row) => ({ status: row.status, count: row._count.status })),
       byDay,
-      filters: { tools: toolOptions.map((row) => row.tool), platforms: platformOptions.map((row) => row.platform), statuses: ['success', 'failed', 'pending', 'cancelled'] },
+      filters: { tools: toolOptions.map((row) => row.tool), platforms: platformOptions.map((row) => row.platform), statuses: ['success', 'failed', 'pending', 'processing', 'cancelled'] },
       range: { ...range, start: range.start.toISOString(), end: range.end.toISOString() },
     },
   }, { headers: PRIVATE_NO_STORE_HEADERS });

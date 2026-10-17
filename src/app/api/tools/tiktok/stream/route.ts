@@ -49,10 +49,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
   }
 
-  // Credits are spent only once the job below succeeds.
-  const gate = await requireCredits({ cost: JOB_COST.proxyDownload });
-  if (!gate.ok) return gate.response;
-
   const { searchParams } = new URL(req.url);
   const pageUrl      = searchParams.get('url');
   const selector     = searchParams.get('selector');
@@ -60,17 +56,26 @@ export async function GET(req: Request) {
   const operationId = searchParams.get('operationId') ?? undefined;
   const tool = searchParams.get('tool') || (extractAudio ? 'tiktok-to-mp3' : 'tiktok-video-downloader');
   const filename      = (searchParams.get('filename') || 'tiktok-download').replace(/[/\\?%*:|"<>]/g, '-').slice(0, 200);
+  const operation = {
+    tool, platform: 'tiktok', operationId, sourceUrl: pageUrl ?? `tool://${tool}`,
+    idempotencyKey: requestIdempotencyKey(req),
+  };
+
+  // Credits are spent only once the job below succeeds.
+  const gate = await requireCredits({ cost: JOB_COST.proxyDownload, request: req, operation });
+  if (!gate.ok) return gate.response;
 
   if (!pageUrl || !isSupportedPlatformUrl(pageUrl) || !needsImpersonation(pageUrl)) {
+    await gate.fail({ ...operation, failureCode: 'validation_failed', failureReason: 'Invalid or unsupported URL' });
     return NextResponse.json({ error: 'Invalid or unsupported URL.' }, { status: 400 });
   }
   if (!selector || !KNOWN_SELECTORS.has(selector)) {
+    await gate.fail({ ...operation, failureCode: 'validation_failed', failureReason: 'Invalid format selector' });
     return NextResponse.json({ error: 'Invalid format selector.' }, { status: 400 });
   }
-  const operation = {
-    tool, platform: 'tiktok', operationId, sourceUrl: pageUrl,
-    idempotencyKey: requestIdempotencyKey(req),
-  };
+  const activeOperationId = await gate.begin({ ...operation, sourceUrl: pageUrl });
+  if (!activeOperationId) return NextResponse.json({ error: 'Unable to start this download. Please try again.' }, { status: 500 });
+  const activeOperation = { ...operation, operationId: activeOperationId, sourceUrl: pageUrl };
 
   const dir = await mkdtemp(path.join(tmpdir(), 'savdown-tiktok-'));
   const videoPath = path.join(dir, `v-${randomUUID()}.mp4`);
@@ -93,13 +98,14 @@ export async function GET(req: Request) {
         : msg.includes('Unable to extract') || msg.includes('rehydration')
         ? 'TikTok temporarily blocked this request. Please try again in a moment.'
         : 'Could not download this video.';
-      await gate.fail({ ...operation, failureReason: friendly });
+      await gate.fail({ ...activeOperation, failureCode: 'processing_failed', failureReason: friendly });
       return NextResponse.json({ error: friendly }, { status: 502 });
     }
 
     if (!extractAudio) {
       const buffer = await readFile(videoPath);
-      if (!(await gate.spend({ ...operation, description: 'TikTok video download' }))) {
+      if (!(await gate.spend({ ...activeOperation, description: 'TikTok video download' }))) {
+        await gate.fail({ ...activeOperation, failureCode: 'credit_commit_failed', failureReason: 'Credit balance changed before completion' });
         return NextResponse.json(
           { error: 'Your balance changed before this could be charged. Please retry.' },
           { status: 402 },
@@ -122,16 +128,18 @@ export async function GET(req: Request) {
         '-vn', '-c:a', 'libmp3lame', '-b:a', '192k',
         mp3Path,
       ], { timeout: 30_000, maxBuffer: 10 * 1024 * 1024 });
-    } catch (err) {
+    } catch {
       await gate.fail({
-        ...operation,
-        failureReason: err instanceof Error ? err.message : 'Could not extract audio',
+        ...activeOperation,
+        failureCode: 'processing_failed',
+        failureReason: 'Audio extraction failed',
       });
       return NextResponse.json({ error: 'Could not extract audio from this video.' }, { status: 502 });
     }
 
     const buffer = await readFile(mp3Path);
-    if (!(await gate.spend({ ...operation, description: 'TikTok audio download' }))) {
+    if (!(await gate.spend({ ...activeOperation, description: 'TikTok audio download' }))) {
+      await gate.fail({ ...activeOperation, failureCode: 'credit_commit_failed', failureReason: 'Credit balance changed before completion' });
       return NextResponse.json(
         { error: 'Your balance changed before this could be charged. Please retry.' },
         { status: 402 },

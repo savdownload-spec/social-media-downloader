@@ -183,7 +183,12 @@ const STATUS_MAP: Record<string, string> = {
   MAINTENANCE:  'bg-amber-50 text-amber-700',
   DISABLED:     'bg-rose-50 text-rose-700',
   succeeded:    'bg-emerald-50 text-emerald-700',
+  success:      'bg-emerald-50 text-emerald-700',
   failed:       'bg-rose-50 text-rose-700',
+  pending:      'bg-amber-50 text-amber-700',
+  processing:   'bg-blue-50 text-blue-700',
+  cancelled:    'bg-surface text-text-muted',
+  refunded:     'bg-amber-50 text-amber-700',
   purchase:     'bg-blue-50 text-blue-700',
   plan_refill:  'bg-primary/[0.08] text-primary',
   plan_grant:   'bg-primary/[0.08] text-primary',
@@ -209,11 +214,11 @@ export function StatusBadge({ status, dot }: { status: string; dot?: boolean }) 
       {dot && (
         <span className={cn(
           'w-1.5 h-1.5 rounded-full',
-          status === 'ACTIVE' || status === 'active' || status === 'LIVE' || status === 'APPROVED' || status === 'succeeded' || status === 'PUBLISHED' || status === 'RESOLVED'
+          status === 'ACTIVE' || status === 'active' || status === 'LIVE' || status === 'APPROVED' || status === 'success' || status === 'succeeded' || status === 'PUBLISHED' || status === 'RESOLVED'
             ? 'bg-emerald-500'
-            : status === 'PENDING' || status === 'MAINTENANCE' || status === 'past_due' || status === 'IN_PROGRESS' || status === 'WAITING_FOR_REPLY' || status === 'SCHEDULED'
+            : status === 'PENDING' || status === 'pending' || status === 'processing' || status === 'MAINTENANCE' || status === 'past_due' || status === 'IN_PROGRESS' || status === 'WAITING_FOR_REPLY' || status === 'SCHEDULED'
             ? 'bg-amber-500'
-            : status === 'SUSPENDED' || status === 'REJECTED' || status === 'canceled' || status === 'failed' || status === 'DISABLED'
+            : status === 'SUSPENDED' || status === 'REJECTED' || status === 'canceled' || status === 'cancelled' || status === 'failed' || status === 'DISABLED'
             ? 'bg-rose-500'
             : 'bg-gray-400',
         )} />

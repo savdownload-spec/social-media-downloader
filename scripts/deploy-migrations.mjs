@@ -5,6 +5,9 @@ import { Prisma, PrismaClient } from '@prisma/client';
 const BASELINE = '0_init';
 const BASELINE_SQL = new URL('../prisma/migrations/0_init/migration.sql', import.meta.url);
 const LEGACY_NEWSLETTER_COLUMNS = new Set(['id', 'email', 'active', 'createdAt']);
+const POST_BASELINE_COLUMNS = new Map([
+  ['Download', new Set(['failureCode'])],
+]);
 const prisma = new PrismaClient();
 
 function assertSameDatabaseTarget() {
@@ -61,6 +64,7 @@ async function prepareBaselineIfNeeded() {
     if (model.name === 'NewsletterSubscriber') {
       for (const column of [...expected]) if (!LEGACY_NEWSLETTER_COLUMNS.has(column)) expected.delete(column);
     }
+    for (const column of POST_BASELINE_COLUMNS.get(model.name) ?? []) expected.delete(column);
     const actual = liveColumns.get(model.dbName ?? model.name) ?? new Set();
     const missing = [...expected].filter((column) => !actual.has(column));
     const unexpected = [...actual].filter((column) => !expected.has(column));

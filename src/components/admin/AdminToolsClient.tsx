@@ -18,6 +18,9 @@ type Tool = {
   creditCost: number;
   freeLimit: number;
   usageTotal: number;
+  usageSuccess: number;
+  usageFailed: number;
+  usageInProgress: number;
   updatedAt: string;
   // Batch limit overrides — null means "use the code default".
   batchLimitFree:     number | null;
@@ -176,7 +179,7 @@ export function AdminToolsClient() {
     DISABLED: tools.filter((t) => t.status === 'DISABLED').length,
   };
 
-  const COL_COUNT = 7;
+  const COL_COUNT = 9;
 
   return (
     <AdminPage>
@@ -204,7 +207,9 @@ export function AdminToolsClient() {
                 <Th>Tool</Th>
                 <Th>Category</Th>
                 <Th>Status</Th>
-                <Th className="text-right">Total Uses</Th>
+                <Th className="text-right">Attempts</Th>
+                <Th className="text-right">Successful</Th>
+                <Th className="text-right">Failed</Th>
                 <Th className="text-right">Credit Cost</Th>
                 <Th className="text-right">Batch Limits</Th>
                 <Th>Updated</Th>
@@ -259,6 +264,11 @@ export function AdminToolsClient() {
                         </select>
                       </Td>
                       <Td className="text-right text-text-muted tabular-nums font-medium">{t.usageTotal.toLocaleString()}</Td>
+                      <Td className="text-right text-emerald-600 tabular-nums font-medium">{t.usageSuccess.toLocaleString()}</Td>
+                      <Td className="text-right text-rose-600 tabular-nums font-medium">
+                        {t.usageFailed.toLocaleString()}
+                        {t.usageInProgress > 0 && <span className="ml-1 text-amber-600" title="Pending or processing">({t.usageInProgress})</span>}
+                      </Td>
                       <Td className="text-right">
                         <span className={t.creditCost === 0 ? 'text-emerald-600 text-[12px] font-medium' : 'text-text-muted'}>
                           {t.creditCost === 0 ? 'Free' : t.creditCost}

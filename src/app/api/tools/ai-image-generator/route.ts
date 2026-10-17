@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { authOptions } from '@/lib/auth';
-import { requireCredits, requestIdempotencyKey } from '@/lib/credits';
+import { recordRejectedOperation, recordToolOperation, requireCredits, requestIdempotencyKey } from '@/lib/credits';
 import { getBillingSummary } from '@/lib/billing';
 import { prisma } from '@/lib/prisma';
 import { getImageProvider, ImageProviderError } from '@/lib/ai-image/provider';
@@ -27,12 +27,12 @@ function requestIp(request: NextRequest) {
 }
 
 function cleanError(error: unknown, maintenanceMessage: string) {
-  if (!(error instanceof ImageProviderError)) return { status: 500, message: 'The image could not be created. Please try again.' };
-  if (error.code === 'rate_limited') return { status: 429, message: 'The image provider is busy. Please try again in a moment.' };
-  if (error.code === 'timeout') return { status: 504, message: 'Image generation took too long. Your credits were not charged.' };
-  if (error.code === 'invalid_request') return { status: 400, message: 'That request could not be accepted. Try a different prompt.' };
-  if (error.code === 'unavailable') return { status: 503, message: maintenanceMessage };
-  return { status: 500, message: 'The image could not be created. Your credits were not charged.' };
+  if (!(error instanceof ImageProviderError)) return { status: 500, code: 'processing_failed', message: 'The image could not be created. Please try again.' };
+  if (error.code === 'rate_limited') return { status: 429, code: 'provider_rate_limited', message: 'The image provider is busy. Please try again in a moment.' };
+  if (error.code === 'timeout') return { status: 504, code: 'processing_timeout', message: 'Image generation took too long. Your credits were not charged.' };
+  if (error.code === 'invalid_request') return { status: 400, code: 'provider_validation_failed', message: 'That request could not be accepted. Try a different prompt.' };
+  if (error.code === 'unavailable') return { status: 503, code: 'provider_unavailable', message: maintenanceMessage };
+  return { status: 500, code: 'processing_failed', message: 'The image could not be created. Your credits were not charged.' };
 }
 
 async function isToolDisabled() {
@@ -69,8 +69,12 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const config = await getAiImageConfig();
+  const requestKey = requestIdempotencyKey(request);
 
   if (await isToolDisabled()) {
+    await recordRejectedOperation(request, {
+      tool: 'ai-image-generator', platform: 'ai', sourceUrl: 'tool://ai-image-generator', idempotencyKey: requestKey,
+    }, 'tool_unavailable', 'AI image generation is unavailable');
     return NextResponse.json({ ok: false, error: config.maintenanceMessage }, { status: 503 });
   }
 
@@ -83,26 +87,44 @@ export async function POST(request: NextRequest) {
   });
   const parsed = inputSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
+    await recordRejectedOperation(request, {
+      tool: 'ai-image-generator', platform: 'ai', sourceUrl: 'tool://ai-image-generator', idempotencyKey: requestKey,
+    }, 'validation_failed', 'Invalid AI image request');
     return NextResponse.json(
       { ok: false, error: `Enter a prompt of 3–${config.maxPromptLength} characters and choose valid output settings.` },
       { status: 400 },
     );
   }
 
+  const input = parsed.data;
+  const operation = {
+    tool: input.tool,
+    platform: 'ai',
+    sourceUrl: `tool://${input.tool}`,
+    idempotencyKey: requestKey,
+  };
+
   if (activeJobs >= config.maxConcurrentJobs && queuedJobs >= config.maxQueueSize) {
+    await recordRejectedOperation(request, operation, 'queue_full', 'Generation queue is full');
     return NextResponse.json({ ok: false, error: config.maintenanceMessage }, { status: 503 });
   }
 
   const session = await getServerSession(authOptions);
   const userId = session?.user?.id;
-  if (!userId) return NextResponse.json({ ok: false, error: 'Sign in to use the AI Image Generator.' }, { status: 401 });
+  if (!userId) {
+    await recordRejectedOperation(request, operation, 'auth_required', 'Authentication required');
+    return NextResponse.json({ ok: false, error: 'Sign in to use the AI Image Generator.' }, { status: 401 });
+  }
 
   const summary = await getBillingSummary(userId);
-  if (!summary) return NextResponse.json({ ok: false, error: 'Account not found.' }, { status: 401 });
+  if (!summary) {
+    await recordRejectedOperation(request, operation, 'account_not_found', 'Account not found');
+    return NextResponse.json({ ok: false, error: 'Account not found.' }, { status: 401 });
+  }
 
-  const input = parsed.data;
   const allowedImages = maxImagesFor(summary.plan, config);
   if (input.numberOfImages > allowedImages) {
+    await recordToolOperation(userId, { ...operation, status: 'failed', failureCode: 'plan_limit_exceeded', failureReason: 'Requested image count exceeds plan limit' });
     return NextResponse.json(
       { ok: false, error: `Your plan allows up to ${allowedImages} image${allowedImages === 1 ? '' : 's'} per request. Upgrade for more.` },
       { status: 403 },
@@ -112,12 +134,14 @@ export async function POST(request: NextRequest) {
   const ip = requestIp(request);
   const ipLimit = await ratelimit(`ai-image:ip:${ip}`, { limit: config.rateLimitPerIpPerMinute, windowSeconds: 60 });
   if (!ipLimit.success) {
+    await recordToolOperation(userId, { ...operation, status: 'failed', failureCode: 'rate_limited', failureReason: 'Rate limit exceeded' });
     return NextResponse.json({ ok: false, error: 'You have reached the current generation limit. Please try again later.' }, { status: 429 });
   }
   if (summary.plan === 'FREE') {
     const day = new Date().toISOString().slice(0, 10);
     const dailyLimit = await ratelimit(`ai-image:user:${userId}:${day}`, { limit: config.freeDailyLimit, windowSeconds: 86400 });
     if (!dailyLimit.success) {
+      await recordToolOperation(userId, { ...operation, status: 'failed', failureCode: 'daily_limit_exceeded', failureReason: 'Daily generation limit exceeded' });
       return NextResponse.json({ ok: false, error: `Free accounts get ${config.freeDailyLimit} image generations per day. Upgrade for more, or try again tomorrow.` }, { status: 429 });
     }
   }
@@ -128,18 +152,20 @@ export async function POST(request: NextRequest) {
   if (redis) {
     const acquired = await redis.setNx(inflightKey, '1', 90);
     if (!acquired) {
+      await recordToolOperation(userId, { ...operation, status: 'failed', failureCode: 'duplicate_in_progress', failureReason: 'Another generation is in progress' });
       return NextResponse.json({ ok: false, error: 'A generation is already in progress for your account. Please wait for it to finish.' }, { status: 429 });
     }
   }
 
   const totalCost = Math.ceil(config.creditCostStandard * input.numberOfImages * (input.quality === 'high' ? config.highQualityMultiplier : 1));
-  const gate = await requireCredits({ cost: totalCost });
+  const gate = await requireCredits({ cost: totalCost, request, operation });
   if (!gate.ok) {
     if (redis) await redis.del(inflightKey).catch(() => null);
     return gate.response;
   }
 
   if (activeJobs >= config.maxConcurrentJobs && queuedJobs >= config.maxQueueSize) {
+    await gate.fail({ ...operation, failureCode: 'queue_full', failureReason: 'Generation queue is full' });
     if (redis) await redis.del(inflightKey).catch(() => null);
     return NextResponse.json({ ok: false, error: config.maintenanceMessage }, { status: 503 });
   }
@@ -148,6 +174,7 @@ export async function POST(request: NextRequest) {
   try {
     while (activeJobs >= config.maxConcurrentJobs) {
       if (waitedMs >= Number(process.env.AI_QUEUE_WAIT_TIMEOUT_MS || 45000)) {
+        await gate.fail({ ...operation, failureCode: 'queue_timeout', failureReason: 'Generation queue wait timed out' });
         if (redis) await redis.del(inflightKey).catch(() => null);
         return NextResponse.json({ ok: false, error: 'The generation queue is busy. Please try again later.' }, { status: 503 });
       }
@@ -167,10 +194,18 @@ export async function POST(request: NextRequest) {
       platform: 'ai',
       sourceUrl: `ai://${generationId}`,
       description: 'AI image generation reservation',
-      idempotencyKey: requestIdempotencyKey(request),
+      idempotencyKey: requestKey,
     }) : null;
-    if (!reservation) return NextResponse.json({ ok: false, error: 'Your credit balance changed before generation started. Please try again.' }, { status: 402 });
+    if (!reservation) {
+      await gate.fail({ ...operation, failureCode: 'credit_commit_failed', failureReason: 'Credit balance changed before generation started' });
+      return NextResponse.json({ ok: false, error: 'Your credit balance changed before generation started. Please try again.' }, { status: 402 });
+    }
     if (reservation.duplicate) return NextResponse.json({ ok: false, error: 'This generation request was already processed.' }, { status: 409 });
+
+    await prisma.download.update({
+      where: { id: reservation.operationId },
+      data: { status: 'processing', failureCode: null, failureReason: null },
+    });
 
     const provider = getImageProvider();
     const generated = await provider.generate(input);
@@ -199,8 +234,8 @@ export async function POST(request: NextRequest) {
     const updatedSummary = await getBillingSummary(userId);
     return NextResponse.json({ ok: true, generationId, images: generated.map((image, index) => ({ ...image, id: `${generationId}_${index + 1}` })), credits: updatedSummary?.totalCredits ?? 0 });
   } catch (error) {
-    if (reservation && totalCost > 0) await releaseAiCredits(userId, reservation, 'AI image generation failed; credits released').catch(() => null);
     const safe = cleanError(error, config.maintenanceMessage);
+    if (reservation && totalCost > 0) await releaseAiCredits(userId, reservation, 'AI image generation failed; credits released', safe.code).catch(() => null);
     await prisma.aiImageGeneration.create({
       data: {
         userId,
