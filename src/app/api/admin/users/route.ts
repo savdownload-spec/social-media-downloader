@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { Prisma } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { getBillingSummary } from '@/lib/billing';
+import { TIER_ALLOWANCE } from '@/lib/billing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 function forbidden() { return NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403 }); }
+
+const TRANSIENT_DATABASE_CODES = new Set(['P1001', 'P1002', 'P1017', 'P2024']);
+
+function databaseErrorCode(error: unknown): string | undefined {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) return error.code;
+  if (error instanceof Prisma.PrismaClientInitializationError) return error.errorCode;
+  return undefined;
+}
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -30,47 +39,61 @@ export async function GET(req: NextRequest) {
   if (plan) where.plan = plan;
   if (status === 'SUSPENDED') where.role = 'SUSPENDED';
 
-  const [users, total] = await Promise.all([
-    prisma.user.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-      select: {
-        id: true, name: true, email: true, image: true, role: true,
-        plan: true, planCredits: true, purchasedCredits: true,
-        createdAt: true, updatedAt: true,
-        _count: { select: { downloads: true, subscriptions: true } },
-      },
-    }),
-    prisma.user.count({ where }),
-  ]);
-
-  // Routes each row through the same lazy-refill logic as the Workspace/Account
-  // billing pages, so the list never shows a stale Free-tier balance that just
-  // hasn't been "touched" by a read elsewhere yet — one source of truth.
-  const summaries = await Promise.all(users.map((u) => getBillingSummary(u.id)));
-
-  return NextResponse.json({
-    ok: true,
-    data: {
-      users: users.map((u, i) => {
-        const summary = summaries[i];
-        const planCredits = summary?.planCredits ?? u.planCredits;
-        const purchasedCredits = summary?.purchasedCredits ?? u.purchasedCredits;
-        return {
-          ...u,
-          createdAt: u.createdAt.toISOString(),
-          updatedAt: u.updatedAt.toISOString(),
-          plan: summary?.plan ?? u.plan,
-          planCredits,
-          purchasedCredits,
-          totalCredits: planCredits + purchasedCredits,
-        };
+  const requestId = crypto.randomUUID();
+  try {
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        select: {
+          id: true, name: true, email: true, image: true, role: true,
+          plan: true, planCredits: true, planCreditsResetAt: true, purchasedCredits: true,
+          createdAt: true, updatedAt: true,
+          _count: { select: { downloads: true, subscriptions: true } },
+        },
       }),
-      total,
-      page,
-      totalPages: Math.ceil(total / pageSize),
-    },
-  });
+      prisma.user.count({ where }),
+    ]);
+
+    const now = Date.now();
+    return NextResponse.json({
+      ok: true,
+      data: {
+        users: users.map((u) => {
+          // Keep this list read-only. A due Free account receives this balance
+          // on its next account/tool read; that path records the refill ledger.
+          const freeRefillDue = u.plan === 'FREE'
+            && (!u.planCreditsResetAt || u.planCreditsResetAt.getTime() <= now);
+          const planCredits = freeRefillDue ? TIER_ALLOWANCE.FREE.credits : u.planCredits;
+          return {
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            image: u.image,
+            role: u.role,
+            plan: u.plan,
+            createdAt: u.createdAt.toISOString(),
+            updatedAt: u.updatedAt.toISOString(),
+            planCredits,
+            purchasedCredits: u.purchasedCredits,
+            totalCredits: planCredits + u.purchasedCredits,
+            _count: u._count,
+          };
+        }),
+        total,
+        page,
+        totalPages: Math.ceil(total / pageSize),
+      },
+    });
+  } catch (error) {
+    const code = databaseErrorCode(error);
+    const transient = code ? TRANSIENT_DATABASE_CODES.has(code) : false;
+    console.error('Admin users query failed', { requestId, code, transient, error });
+    return NextResponse.json(
+      { ok: false, error: transient ? 'Users are temporarily unavailable.' : 'Unable to load users.', requestId },
+      { status: transient ? 503 : 500 },
+    );
+  }
 }

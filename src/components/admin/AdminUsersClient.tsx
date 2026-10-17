@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   AdminPage, PageHeader, TableCard, Table, Th, Td,
@@ -35,26 +35,53 @@ export function AdminUsersClient() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [exportOpen, setExportOpen] = useState(false);
   const [exportScope, setExportScope] = useState<'all' | 'filtered' | 'selected'>('all');
+  const requestSequence = useRef(0);
+  const activeRequest = useRef<AbortController | null>(null);
   const { success, error: err } = useToast();
   const { confirm }             = useConfirm();
 
   const load = useCallback(() => {
+    activeRequest.current?.abort();
+    const controller = new AbortController();
+    activeRequest.current = controller;
+    const sequence = ++requestSequence.current;
     setLoading(true);
     setError(false);
     const p = new URLSearchParams({ page: String(page), pageSize: '25' });
     if (search)       p.set('search', search);
     if (plan !== 'ALL') p.set('plan', plan);
-    fetch(`/api/admin/users?${p}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.ok) { setUsers(d.data.users); setTotal(d.data.total); setTotalPages(d.data.totalPages); }
-        else setError(true);
-      })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
+
+    void (async () => {
+      try {
+        let response: Response | undefined;
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+          response = await fetch(`/api/admin/users?${p}`, { signal: controller.signal });
+          if (![502, 503, 504].includes(response.status) || attempt === 1) break;
+          await new Promise((resolve) => setTimeout(resolve, 300));
+        }
+        const data = await response?.json().catch(() => null);
+        if (sequence !== requestSequence.current) return;
+        if (response?.ok && data?.ok) {
+          setUsers(data.data.users);
+          setTotal(data.data.total);
+          setTotalPages(data.data.totalPages);
+        } else {
+          setError(true);
+        }
+      } catch (requestError) {
+        const aborted = requestError instanceof DOMException && requestError.name === 'AbortError';
+        if (sequence === requestSequence.current && !aborted) setError(true);
+      } finally {
+        if (sequence === requestSequence.current) setLoading(false);
+      }
+    })();
+    return controller;
   }, [page, search, plan]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    const controller = load();
+    return () => controller.abort();
+  }, [load]);
   useEffect(() => { setPage(1); }, [search, plan]);
 
   async function doAction(id: string, action: string, extra?: Record<string, unknown>) {
