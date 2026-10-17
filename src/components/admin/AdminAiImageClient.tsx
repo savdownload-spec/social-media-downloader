@@ -84,7 +84,7 @@ export function AdminAiImageClient() {
 
         <div className="grid gap-6 lg:grid-cols-2">
           <SectionCard title="Models" subtitle="Cloudflare Workers AI model identifiers per quality tier.">
-            <div className="space-y-4">
+            <div className="p-5 space-y-4">
               <Field label="Standard quality model" hint="Fast, distilled model (fixed step count).">
                 <input className={fieldCls} value={config.standardModel} onChange={(e) => patch({ standardModel: e.target.value })} />
               </Field>
@@ -101,7 +101,7 @@ export function AdminAiImageClient() {
           </SectionCard>
 
           <SectionCard title="Credit cost" subtitle="How many SavCredits a generation costs.">
-            <div className="space-y-4">
+            <div className="p-5 space-y-4">
               <Field label="Base cost (standard quality, 1 image)">
                 <input type="number" min={1} className={fieldCls} value={config.creditCostStandard} onChange={(e) => patch({ creditCostStandard: Math.round(num(e.target.value)) })} />
               </Field>
@@ -112,7 +112,7 @@ export function AdminAiImageClient() {
           </SectionCard>
 
           <SectionCard title="Free user limits" subtitle="Applies to accounts on the FREE plan.">
-            <div className="space-y-4">
+            <div className="p-5 space-y-4">
               <Field label="Free generations per day">
                 <input type="number" min={0} className={fieldCls} value={config.freeDailyLimit} onChange={(e) => patch({ freeDailyLimit: Math.round(num(e.target.value)) })} />
               </Field>
@@ -126,7 +126,7 @@ export function AdminAiImageClient() {
           </SectionCard>
 
           <SectionCard title="Rate limits & timeouts" subtitle="Protects the provider and the site under concurrent load.">
-            <div className="space-y-4">
+            <div className="p-5 space-y-4">
               <Field label="Requests per IP per minute">
                 <input type="number" min={1} className={fieldCls} value={config.rateLimitPerIpPerMinute} onChange={(e) => patch({ rateLimitPerIpPerMinute: Math.round(num(e.target.value)) })} />
               </Field>
