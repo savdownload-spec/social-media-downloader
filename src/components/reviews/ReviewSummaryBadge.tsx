@@ -146,7 +146,7 @@ export function ReviewSummaryBadge({
       {/* Clickable review count */}
       <Link
         href="/reviews#reviews-list"
-        className="text-sm font-medium text-text-muted underline underline-offset-2 decoration-transparent hover:decoration-current hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-sm transition-colors"
+        className="text-sm font-medium text-text-muted underline underline-offset-2 hover:no-underline hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-sm transition-colors"
       >
         {reviewLabel}
       </Link>
