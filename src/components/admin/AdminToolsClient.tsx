@@ -109,7 +109,7 @@ export function AdminToolsClient() {
       body: JSON.stringify({ status }),
     });
     const d = await res.json().catch(() => null);
-    if (d?.ok) { success('Tool status updated'); setTools((prev) => prev.map((t) => t.slug === slug ? { ...t, status } : t)); }
+    if (d?.ok) { success('Tool status updated'); setTools((prev) => prev.map((t) => t.slug === slug ? { ...t, status: d.data?.status ?? status } : t)); }
     else err('Failed to update status', d?.error);
     setSaving(null);
   }
