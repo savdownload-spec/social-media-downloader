@@ -22,7 +22,7 @@ function StarIcon({ size = 22 }: { size?: number }) {
       aria-hidden="true"
       style={{ width: size, height: size, display: 'block', flexShrink: 0 }}
     >
-      <path d="M12 2l2.9 6.26L22 9.27l-5 5.14 1.18 7.09L12 18.26l-6.18 3.24L7 14.41 2 9.27l7.1-1.01L12 2z" />
+      <path fill="currentColor" d="M12 2l2.9 6.26L22 9.27l-5 5.14 1.18 7.09L12 18.26l-6.18 3.24L7 14.41 2 9.27l7.1-1.01L12 2z" />
     </svg>
   );
 }
@@ -145,7 +145,7 @@ export function ReviewSummaryBadge({
 
       {/* Clickable review count */}
       <Link
-        href="/reviews"
+        href="/reviews#reviews-list"
         className="text-sm font-medium text-text-muted underline underline-offset-2 decoration-transparent hover:decoration-current hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-sm transition-colors"
       >
         {reviewLabel}

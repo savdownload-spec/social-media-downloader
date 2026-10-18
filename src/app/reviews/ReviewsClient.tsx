@@ -74,7 +74,7 @@ export function ReviewsClient({
 
   return (
     <>
-      <Section variant="default" className="pt-16 md:pt-20">
+      <Section id="reviews-list" variant="default" className="pt-16 md:pt-20">
         <Container>
           <div className="max-w-3xl mx-auto text-center mb-12">
             <p className="text-sm font-semibold uppercase tracking-wider text-gradient inline-block mb-3">
