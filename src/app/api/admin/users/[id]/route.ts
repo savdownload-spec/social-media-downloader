@@ -23,6 +23,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       creditLedger:  { orderBy: { createdAt: 'desc' }, take: 30 },
       downloads:     { orderBy: { createdAt: 'desc' }, take: 20 },
       reviews:       { orderBy: { createdAt: 'desc' }, take: 10 },
+      payments:      { orderBy: { createdAt: 'desc' }, take: 10 },
     },
   });
   if (!user) return NextResponse.json({ ok: false, error: 'Not found' }, { status: 404 });
@@ -32,11 +33,63 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   // Free allowance rolled over since their last read elsewhere.
   const summary = await getBillingSummary(params.id);
 
+  const merged = summary
+    ? { ...user, plan: summary.plan, planCredits: summary.planCredits, purchasedCredits: summary.purchasedCredits, planCreditsResetAt: summary.planCreditsResetAt }
+    : user;
+
+  // Serialize dates to ISO strings for the client component
   return NextResponse.json({
     ok: true,
-    data: summary
-      ? { ...user, plan: summary.plan, planCredits: summary.planCredits, purchasedCredits: summary.purchasedCredits, planCreditsResetAt: summary.planCreditsResetAt }
-      : user,
+    data: {
+      ...merged,
+      createdAt: merged.createdAt.toISOString(),
+      updatedAt: merged.updatedAt.toISOString(),
+      emailVerified: merged.emailVerified?.toISOString() ?? null,
+      planCreditsResetAt: merged.planCreditsResetAt
+        ? (typeof merged.planCreditsResetAt === 'string' ? merged.planCreditsResetAt : (merged.planCreditsResetAt as Date).toISOString())
+        : null,
+      subscriptions: merged.subscriptions.map((s) => ({
+        ...s,
+        createdAt: s.createdAt.toISOString(),
+        updatedAt: s.updatedAt.toISOString(),
+        currentPeriodEnd: s.currentPeriodEnd?.toISOString() ?? null,
+        // Extended fields included for the admin UI
+        stripeSubscriptionId: s.stripeSubscriptionId,
+        cancelAtPeriodEnd: s.cancelAtPeriodEnd,
+        provider: s.provider,
+        stripePriceId: s.stripePriceId,
+        interval: s.interval,
+      })),
+      creditLedger: merged.creditLedger.map((c) => ({
+        ...c,
+        createdAt: c.createdAt.toISOString(),
+        // Extended balance-snapshot fields
+        planDelta: c.planDelta,
+        purchasedDelta: c.purchasedDelta,
+        balanceAfter: c.balanceAfter,
+        planBalanceAfter: c.planBalanceAfter,
+        purchasedBalanceAfter: c.purchasedBalanceAfter,
+      })),
+      downloads: merged.downloads.map((d) => ({
+        ...d,
+        createdAt: d.createdAt.toISOString(),
+        failureCode: d.failureCode ?? null,
+        failureReason: d.failureReason ?? null,
+      })),
+      reviews: merged.reviews.map((r) => ({
+        ...r,
+        createdAt: r.createdAt.toISOString(),
+        updatedAt: r.updatedAt.toISOString(),
+        approvedAt: r.approvedAt?.toISOString() ?? null,
+      })),
+      payments: merged.payments.map((p) => ({
+        ...p,
+        createdAt: p.createdAt.toISOString(),
+        updatedAt: p.updatedAt.toISOString(),
+        paidAt: p.paidAt?.toISOString() ?? null,
+        refundedAt: p.refundedAt?.toISOString() ?? null,
+      })),
+    },
   });
 }
 
