@@ -10,6 +10,7 @@ export const dynamic = 'force-dynamic';
 const Body = z.object({
   email: z.string().trim().max(254).email().transform((email) => email.toLowerCase()),
   website: z.string().max(200).optional(),
+  consent: z.boolean().optional(),
 });
 const failure = "We couldn't complete your subscription right now. Please try again in a moment.";
 const reply = (body: object, status = 200, headers = {}) =>
@@ -45,6 +46,7 @@ export async function POST(req: Request) {
     const parsed = Body.safeParse(json);
     if (!parsed.success) return reply({ ok: false, error: 'Please enter a valid email address.' }, 400);
     if (parsed.data.website) return reply({ ok: true });
+    if (!parsed.data.consent) return reply({ ok: false, error: 'Please confirm you agree to receive the newsletter.' }, 400);
     const emailKey = createHash('sha256').update(parsed.data.email).digest('hex');
     const emailLimit = await ratelimit(`nl-email:${emailKey}`, { limit: 3, windowSeconds: 3600, failClosed: true });
     if (emailLimit.unavailable) throw new NewsletterError('rate_limit_unavailable');

@@ -14,10 +14,18 @@ describe('public newsletter endpoint', () => {
     expect(mocks.subscribe).not.toHaveBeenCalled(); log.mockRestore();
   });
   it('normalizes and accepts without a session; ignores untrusted state', async () => {
-    const res = await POST(request({ email: ' Reader@Example.com ', status: 'active', providerSubscriberId: 'evil' }));
+    const res = await POST(request({ email: ' Reader@Example.com ', consent: true, status: 'active', providerSubscriberId: 'evil' }));
     expect(res.status).toBe(200); expect(await res.json()).toEqual({ ok: true });
     expect(mocks.subscribe).toHaveBeenCalledWith('reader@example.com');
     expect(res.headers.get('Cache-Control')).toBe('no-store');
+  });
+  it('rejects submission without consent', async () => {
+    const res = await POST(request({ email: 'reader@example.com' }));
+    expect(res.status).toBe(400); expect(mocks.subscribe).not.toHaveBeenCalled();
+  });
+  it('rejects submission with consent: false', async () => {
+    const res = await POST(request({ email: 'reader@example.com', consent: false }));
+    expect(res.status).toBe(400); expect(mocks.subscribe).not.toHaveBeenCalled();
   });
   it.each(['', 'bad', 'a@', 'x'.repeat(255) + '@example.com'])('rejects invalid email', async (email) => {
     expect((await POST(request({ email }))).status).toBe(400); expect(mocks.subscribe).not.toHaveBeenCalled();
@@ -46,7 +54,7 @@ describe('public newsletter endpoint', () => {
   it('does not leak internal errors', async () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     mocks.subscribe.mockRejectedValue(new Error('secret reader@example.com'));
-    const res = await POST(request({ email: 'reader@example.com' }));
+    const res = await POST(request({ email: 'reader@example.com', consent: true }));
     expect(res.status).toBe(503); expect(await res.text()).not.toMatch(/secret|reader@example/);
     expect(JSON.stringify(log.mock.calls)).not.toMatch(/secret|reader@example/); log.mockRestore();
   });
