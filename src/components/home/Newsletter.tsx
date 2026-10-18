@@ -54,16 +54,16 @@ export function Newsletter() {
     }
   };
   return (
-    <Section variant="default" className="py-14 md:py-20">
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-brand bg-[length:200%_200%] animate-gradient text-white px-8 py-12 md:px-16 md:py-16 shadow-glow-lg">
+    <Section variant="default" className="py-8 md:py-10">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-brand bg-[length:200%_200%] animate-gradient text-white px-8 py-10 md:px-12 md:py-12 shadow-glow-lg">
         <div className="absolute -top-16 -right-16 w-72 h-72 bg-white/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-20 -left-10 w-72 h-72 bg-fuchsia-brand/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative max-w-2xl mx-auto text-center">
+        <div className="relative max-w-3xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight">The Monthly Update</h2>
           <p className="mt-3 text-white leading-relaxed">One calm email a month with new tools, platform updates, creative tips, and useful ideas. No spam, ever.</p>
-          <form onSubmit={submit} noValidate aria-busy={state === 'loading'} className="mt-6 flex flex-col gap-3 max-w-md mx-auto">
+          <form onSubmit={submit} noValidate aria-busy={state === 'loading'} className="mt-5 flex flex-col gap-2">
             {/* Email + subscribe button row */}
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-2">
               <label htmlFor="newsletter-email" className="sr-only">Email address for The Monthly Update</label>
               <input ref={input} id="newsletter-email" name="email" value={email}
                 onChange={(e) => { setEmail(e.target.value); setError(''); setState('idle'); }}
@@ -79,8 +79,8 @@ export function Newsletter() {
                 {state === 'loading' ? <><Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" /> Subscribing</> : state === 'ok' ? <>Thank You <Check aria-hidden="true" className="w-4 h-4" /></> : <>Subscribe <Send aria-hidden="true" className="w-4 h-4" /></>}
               </Button>
             </div>
-            {/* Consent checkbox row */}
-            <div className="flex items-start gap-2.5 text-left">
+            {/* Consent checkbox row — left-aligned to match the form */}
+            <div className="flex items-start gap-2.5 text-left mt-1">
               <input
                 id="newsletter-consent"
                 name="consent"
@@ -96,7 +96,7 @@ export function Newsletter() {
               </label>
             </div>
           </form>
-          <p id="newsletter-feedback" role="status" aria-live="polite" aria-atomic="true" className="mt-3 min-h-5 text-sm text-white max-w-md mx-auto">
+          <p id="newsletter-feedback" role="status" aria-live="polite" aria-atomic="true" className="mt-2 min-h-5 text-sm text-white">
             {error || (state === 'loading' ? 'Adding your request...' : state === 'ok' ? "Thanks! If your address is eligible, you're on the list. Check your inbox for any confirmation email." : '')}
           </p>
         </div>
