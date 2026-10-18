@@ -114,10 +114,12 @@ export function ReviewSummaryBadge({
         ))}
       </div>
 
-      {/* 3. Based on N reviews */}
-      <p className="text-xs text-text-muted">
-        Based on {totalApproved.toLocaleString()} review{totalApproved !== 1 ? 's' : ''}
-      </p>
+      {/* 3. Based on N reviews — only shown when there are reviews */}
+      {hasReviews && (
+        <p className="text-xs text-text-muted">
+          Based on {totalApproved.toLocaleString()} review{totalApproved !== 1 ? 's' : ''}
+        </p>
+      )}
 
       {/* 4. SavDown branding */}
       <p className="text-[11px] font-semibold text-text-muted flex items-center gap-0.5">
