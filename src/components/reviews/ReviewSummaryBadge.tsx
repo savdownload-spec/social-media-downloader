@@ -1,130 +1,155 @@
+import Link from 'next/link';
+
 type Props = {
   averageRating: number | null;
   totalApproved: number;
   className?: string;
 };
 
-const FILLED_BG = '#00b67a';
-const EMPTY_BG = '#dcdce6';
+// SavDown brand purple (#7c3aed = rgb(124,58,237))
+const FILLED_COLOR = '#7c3aed';
+const EMPTY_COLOR = '#d1d5db';
 
-const STAR_SVG = (
-  <svg
-    viewBox="0 0 40 40"
-    fill="white"
-    xmlns="http://www.w3.org/2000/svg"
-    style={{ width: '100%', height: '100%', padding: '6px' }}
-  >
-    <path d="M20 3l4.9 9.9 10.9 1.6-7.9 7.7 1.9 10.8L20 27.9l-9.8 5.1 1.9-10.8L4.2 14.5l10.9-1.6L20 3z" />
-  </svg>
-);
+/**
+ * A single 5-pointed star SVG icon, rendered at the given size.
+ * The star uses a standard polygon path inside a square viewBox.
+ */
+function StarIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      style={{ width: size, height: size, display: 'block', flexShrink: 0 }}
+    >
+      <path d="M12 2l2.9 6.26L22 9.27l-5 5.14 1.18 7.09L12 18.26l-6.18 3.24L7 14.41 2 9.27l7.1-1.01L12 2z" />
+    </svg>
+  );
+}
 
-function StarTile({ fillPercent }: { fillPercent: number }) {
-  const isPartial = fillPercent > 0 && fillPercent < 100;
+/**
+ * Renders one star position: fully filled, fully empty, or partial fill
+ * using a two-layer clip technique (grey base + brand-colour overlay
+ * clipped to fillPercent% width).
+ */
+function Star({ fillPercent }: { fillPercent: number }) {
+  const size = 22;
 
-  if (!isPartial) {
-    // Fully filled or fully empty — single div
+  if (fillPercent <= 0) {
     return (
-      <div
-        style={{
-          width: 36,
-          height: 36,
-          backgroundColor: fillPercent >= 100 ? FILLED_BG : EMPTY_BG,
-          flexShrink: 0,
-        }}
-      >
-        {STAR_SVG}
-      </div>
+      <span style={{ color: EMPTY_COLOR, display: 'inline-flex' }}>
+        <StarIcon size={size} />
+      </span>
     );
   }
 
-  // Partial fill: grey base + green overlay clipped to fillPercent%
+  if (fillPercent >= 100) {
+    return (
+      <span style={{ color: FILLED_COLOR, display: 'inline-flex' }}>
+        <StarIcon size={size} />
+      </span>
+    );
+  }
+
+  // Partial: grey base + brand overlay clipped to fillPercent% width
   return (
-    <div style={{ width: 36, height: 36, position: 'relative', flexShrink: 0 }}>
-      {/* Grey base — always full width */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundColor: EMPTY_BG,
-        }}
-      >
-        {STAR_SVG}
-      </div>
-      {/* Green overlay — clipped to fillPercent% width */}
-      <div
+    <span
+      style={{
+        position: 'relative',
+        display: 'inline-flex',
+        width: size,
+        height: size,
+        flexShrink: 0,
+      }}
+    >
+      {/* Grey base */}
+      <span style={{ position: 'absolute', inset: 0, color: EMPTY_COLOR }}>
+        <StarIcon size={size} />
+      </span>
+      {/* Brand-colour overlay clipped to fillPercent% */}
+      <span
         style={{
           position: 'absolute',
           inset: 0,
           width: `${fillPercent}%`,
           overflow: 'hidden',
-          backgroundColor: FILLED_BG,
+          color: FILLED_COLOR,
         }}
       >
-        {STAR_SVG}
-      </div>
-    </div>
+        <StarIcon size={size} />
+      </span>
+    </span>
   );
 }
 
-function getRatingLabel(rating: number | null, totalApproved: number): string {
-  if (totalApproved === 0 || rating === null) return 'No reviews yet';
-  if (rating >= 4.5) return 'Excellent';
-  if (rating >= 4.0) return 'Great';
-  if (rating >= 3.5) return 'Good';
-  if (rating >= 3.0) return 'Average';
-  return 'Poor';
-}
-
 /**
- * Polished rating badge that shows average star rating and total approved
- * review count using a Trustpilot-inspired layout with SavDown branding.
+ * Native SavDown rating widget. Shows the average rating, a five-star row
+ * using SavDown's brand purple, and a clickable approved-review count.
+ *
+ * Props are unchanged from the previous implementation so all call sites
+ * (Testimonials, ReviewsClient, PricingReviews) continue to work as-is.
  */
 export function ReviewSummaryBadge({
   averageRating,
   totalApproved,
   className = '',
 }: Props) {
-  const label = getRatingLabel(averageRating, totalApproved);
+  const hasReviews = totalApproved > 0 && averageRating !== null;
   const rating = averageRating ?? 0;
 
-  const tiles = [0, 1, 2, 3, 4].map((i) => {
+  // Compute fill percentage for each of the five star positions
+  const starFills = [0, 1, 2, 3, 4].map((i) => {
     const raw = (rating - i) * 100;
-    const fillPercent = Math.min(100, Math.max(0, raw));
-    return fillPercent;
+    return Math.min(100, Math.max(0, raw));
   });
 
-  const hasReviews = totalApproved > 0 && averageRating !== null;
+  if (!hasReviews) {
+    return (
+      <div className={`inline-flex items-center gap-2 ${className}`} aria-label="No reviews yet">
+        {/* Five empty grey stars */}
+        <span className="flex items-center gap-0.5" aria-hidden="true">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <Star key={i} fillPercent={0} />
+          ))}
+        </span>
+        <span className="text-sm text-text-muted">No reviews yet</span>
+      </div>
+    );
+  }
+
+  const reviewLabel = `${totalApproved.toLocaleString()} review${totalApproved !== 1 ? 's' : ''}`;
+  const ariaLabel = `SavDown community rating: ${rating.toFixed(1)} out of 5 — ${reviewLabel}`;
 
   return (
     <div
-      className={`inline-flex flex-col items-center gap-1.5 ${className}`}
+      className={`inline-flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 ${className}`}
+      aria-label={ariaLabel}
     >
-      {/* 1. Rating label */}
-      <p
-        className="text-sm font-bold"
-        style={{ color: hasReviews ? '#191919' : '#6b7280' }}
-      >
-        {label}
-      </p>
-
-      {/* 2. Five square star tiles */}
-      <div className="flex" style={{ gap: 2 }}>
-        {tiles.map((fillPercent, i) => (
-          <StarTile key={i} fillPercent={fillPercent} />
-        ))}
+      {/* Numeric rating */}
+      <div className="flex items-baseline gap-1" aria-hidden="true">
+        <span
+          className="text-2xl font-bold tracking-tight"
+          style={{ color: FILLED_COLOR }}
+        >
+          {rating.toFixed(1)}
+        </span>
+        <span className="text-sm font-medium text-text-muted">/&nbsp;5</span>
       </div>
 
-      {/* 3. Based on N reviews — only shown when there are reviews */}
-      {hasReviews && (
-        <p className="text-xs text-text-muted">
-          Based on {totalApproved.toLocaleString()} review{totalApproved !== 1 ? 's' : ''}
-        </p>
-      )}
+      {/* Five-star row */}
+      <span className="flex items-center gap-0.5" aria-hidden="true">
+        {starFills.map((fill, i) => (
+          <Star key={i} fillPercent={fill} />
+        ))}
+      </span>
 
-      {/* 4. SavDown branding */}
-      <p className="text-[11px] font-semibold text-text-muted flex items-center gap-0.5">
-        <span style={{ color: FILLED_BG }}>★</span> SavDown
-      </p>
+      {/* Clickable review count */}
+      <Link
+        href="/reviews"
+        className="text-sm font-medium text-text-muted underline underline-offset-2 decoration-transparent hover:decoration-current hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-sm transition-colors"
+      >
+        {reviewLabel}
+      </Link>
     </div>
   );
 }
