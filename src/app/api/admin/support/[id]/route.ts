@@ -26,7 +26,8 @@ async function admin() {
 }
 
 export async function GET(_request: Request, { params }: { params: { id: string } }) {
-  if (!await admin()) return fail('Forbidden.', 403);
+  const actor = await admin();
+  if (!actor) return fail('Forbidden.', 403);
   const conversation = await prisma.supportConversation.findUnique({ where: { id: params.id }, include: {
     messages: { orderBy: { createdAt: 'asc' }, select: messageSelect },
     user: { select: { id: true, name: true, email: true, image: true, role: true, plan: true, planCredits: true, purchasedCredits: true, planCreditsResetAt: true, createdAt: true, subscriptions: { orderBy: { createdAt: 'desc' }, take: 1, select: { status: true, plan: true, currentPeriodEnd: true, cancelAtPeriodEnd: true } }, downloads: { orderBy: { createdAt: 'desc' }, take: 6, select: { id: true, tool: true, platform: true, status: true, createdAt: true } } } },
@@ -38,7 +39,13 @@ export async function GET(_request: Request, { params }: { params: { id: string 
     prisma.supportConversation.count({ where: { ...(conversation.userId ? { userId: conversation.userId } : { guestEmail: conversation.guestEmail || undefined }), status: { in: ['OPEN', 'WAITING_FOR_REPLY', 'IN_PROGRESS'] }, id: { not: conversation.id } } }),
     prisma.supportConversation.count({ where: { ...(conversation.userId ? { userId: conversation.userId } : { guestEmail: conversation.guestEmail || undefined }), status: 'RESOLVED' } }),
   ]);
-  await prisma.supportConversation.update({ where: { id: params.id }, data: { adminUnreadCount: 0, adminLastReadAt: new Date() } });
+  const notifications = await prisma.adminNotification.findMany({
+    where: { entityType: 'SupportConversation', entityId: params.id, resolvedAt: null, reads: { none: { adminId: actor.id } } },
+    select: { id: true },
+  });
+  if (notifications.length) {
+    await prisma.adminNotificationRead.createMany({ data: notifications.map((notification) => ({ notificationId: notification.id, adminId: actor.id })), skipDuplicates: true });
+  }
   return ok({ ...conversation, adminUnreadCount: 0, customerContext: { conversationCount: total, previousOpen, resolved } });
 }
 
@@ -74,6 +81,9 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     if (data.assignedAdminId !== undefined) update.assignedAdminId = data.assignedAdminId;
     if (data.markUnread) update.adminUnreadCount = 1;
     const updated = await prisma.supportConversation.update({ where: { id: params.id }, data: update });
+    if (data.status === 'RESOLVED' || data.status === 'CLOSED') {
+      await prisma.adminNotification.updateMany({ where: { entityType: 'SupportConversation', entityId: params.id, resolvedAt: null }, data: { resolvedAt: new Date() } });
+    }
     await writeAuditLog({ adminId: actor.id, adminEmail: actor.email, action: 'support.update', targetType: 'SupportConversation', targetId: params.id, detail: update });
     return ok(updated);
   } catch (error) { const message = error instanceof z.ZodError ? error.errors[0]?.message : 'Invalid support update.'; return fail(message || 'Invalid support update.'); }

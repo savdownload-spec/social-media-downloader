@@ -14,9 +14,11 @@ export async function GET(request: Request) {
   const status = searchParams.get('status');
   const search = searchParams.get('search')?.trim();
   const postSlug = searchParams.get('postSlug')?.trim();
+  const commentId = searchParams.get('commentId')?.trim();
   const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
   const pageSize = Math.min(Math.max(parseInt(searchParams.get('pageSize') || '20', 10), 1), 100);
   const where: Prisma.BlogCommentWhereInput = {};
+  if (commentId) where.id = commentId;
   if (status && ['PENDING', 'APPROVED', 'HIDDEN', 'REJECTED'].includes(status)) where.status = status;
   if (postSlug) where.postSlug = postSlug;
   if (search) where.OR = [{ body: { contains: search } }, { postSlug: { contains: search } }, { user: { name: { contains: search } } }, { user: { email: { contains: search } } }];

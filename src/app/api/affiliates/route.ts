@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { ok, fail } from '@/lib/api';
+import { createAdminNotification } from '@/lib/admin-notifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,10 +58,18 @@ export async function POST(request: Request) {
     code = generateCode(seed);
   }
 
-  const created = await prisma.affiliate.create({
-    data: { userId: user.id, code, status: 'PENDING' },
-    select: { code: true, status: true, createdAt: true },
+  const created = await prisma.$transaction(async (tx) => {
+    const affiliate = await tx.affiliate.create({
+      data: { userId: user.id, code, status: 'PENDING' },
+      select: { id: true, code: true, status: true, createdAt: true },
+    });
+    await createAdminNotification(tx, {
+      type: 'AFFILIATE_APPLICATION', section: 'affiliates', entityType: 'Affiliate', entityId: affiliate.id,
+      title: 'New affiliate application', message: `${user.name ?? user.email ?? 'A user'} applied to the affiliate program.`,
+      href: `/admin/affiliates?affiliateId=${affiliate.id}`, dedupeKey: `affiliate:pending:${affiliate.id}`,
+    });
+    return affiliate;
   });
 
-  return ok({ affiliate: created }, 201);
+  return ok({ affiliate: { code: created.code, status: created.status, createdAt: created.createdAt } }, 201);
 }

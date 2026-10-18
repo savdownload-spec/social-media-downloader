@@ -3,6 +3,7 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { findPurchasable, grantCredits, addMonths, type PlanTier } from '@/lib/billing';
 import { safeJson, safepayEventId, safepayEventType, verifySafepayWebhook } from '@/lib/safepay';
+import { createAdminNotification } from '@/lib/admin-notifications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -62,6 +63,17 @@ async function handleEvent(eventId: string, type: string, payload: Record<string
     update: { userId, itemId, amount, currency, status, reference: stringValue(data.reference ?? data.transaction_id), subscriptionId, metadata: jsonMetadata, ...(status === 'succeeded' ? { paidAt: new Date() } : {}), ...(status === 'refunded' ? { refundedAt: new Date() } : {}) },
   });
 
+  if (status === 'failed' || status === 'refunded') {
+    await createAdminNotification(prisma, {
+      type: status === 'failed' ? 'PAYMENT_FAILED' : 'PAYMENT_REFUNDED', section: 'payments', entityType: 'Payment', entityId: payment.id,
+      title: status === 'failed' ? 'Payment failed' : 'Payment refunded',
+      message: `Safepay payment ${payment.reference ?? payment.providerPaymentId} was ${status}.`,
+      href: `/admin/payments?paymentId=${payment.id}`, dedupeKey: `safepay:${eventId}:payment:${status}`,
+    });
+  } else if (status === 'succeeded') {
+    await prisma.adminNotification.updateMany({ where: { entityType: 'Payment', entityId: payment.id, resolvedAt: null }, data: { resolvedAt: new Date() } });
+  }
+
   if (subscriptionId && (normalized.includes('subscription') || normalized.includes('cancel') || normalized.includes('expire') || normalized.includes('renew'))) {
     const subscription = await prisma.subscription.findUnique({ where: { safepaySubscriptionId: subscriptionId }, select: { id: true, userId: true } });
     if (subscription) {
@@ -70,6 +82,15 @@ async function handleEvent(eventId: string, type: string, payload: Record<string
       if (inactive) {
         const existing = await prisma.user.findUnique({ where: { id: subscription.userId }, select: { plan: true } });
         if (existing?.plan !== 'LIFETIME') await grantCredits({ userId: subscription.userId, amount: 0, kind: 'adjustment', bucket: 'plan', description: 'Safepay subscription ended; plan allowance expired', resetPlanCredits: true, planCreditsResetAt: null, tier: 'FREE' });
+        if (normalized.includes('fail')) {
+          await createAdminNotification(prisma, {
+            type: 'SUBSCRIPTION_ATTENTION', section: 'subscriptions', entityType: 'Subscription', entityId: subscription.id,
+            title: 'Subscription requires attention', message: 'A Safepay subscription payment failed.',
+            href: `/admin/subscriptions?subscriptionId=${subscription.id}`, dedupeKey: `safepay:${eventId}:subscription-failed`,
+          });
+        }
+      } else {
+        await prisma.adminNotification.updateMany({ where: { entityType: 'Subscription', entityId: subscription.id, resolvedAt: null }, data: { resolvedAt: new Date() } });
       }
     }
   }

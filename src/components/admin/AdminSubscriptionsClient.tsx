@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { CreditCard } from 'lucide-react';
 import {
   AdminPage, PageHeader, TableCard, Table, Th, Td,
@@ -28,6 +29,8 @@ type Sub = {
 };
 
 export function AdminSubscriptionsClient() {
+  const searchParams = useSearchParams();
+  const focusedSubscriptionId = searchParams.get('subscriptionId');
   const [subs, setSubs]       = useState<Sub[]>([]);
   const [total, setTotal]     = useState(0);
   const [page, setPage]       = useState(1);
@@ -41,6 +44,7 @@ export function AdminSubscriptionsClient() {
     setLoading(true);
     setError(false);
     const p = new URLSearchParams({ page: String(page), pageSize: '25' });
+    if (focusedSubscriptionId) p.set('subscriptionId', focusedSubscriptionId);
     if (search)           p.set('search', search);
     if (status !== 'ALL') p.set('status', status);
     fetch(`/api/admin/subscriptions?${p}`)
@@ -48,7 +52,7 @@ export function AdminSubscriptionsClient() {
       .then((d) => { if (d.ok) { setSubs(d.data.subscriptions); setTotal(d.data.total); setTotalPages(d.data.totalPages); } else setError(true); })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [page, search, status]);
+  }, [page, search, status, focusedSubscriptionId]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { setPage(1); }, [search, status]);
@@ -97,7 +101,7 @@ export function AdminSubscriptionsClient() {
                 />
               </td></tr>
             ) : subs.map((s) => (
-              <tr key={s.id} className="hover:bg-surface/40 transition-colors">
+              <tr key={s.id} className={`hover:bg-surface/40 transition-colors ${(focusedSubscriptionId === s.id || focusedSubscriptionId === s.stripeSubscriptionId) ? 'bg-primary/[0.06] ring-2 ring-inset ring-primary/20' : ''}`}>
                 <Td>
                   <Link href={`/admin/users/${s.user.id}`} className="hover:text-primary transition-colors">
                     <p className="font-medium text-text">{s.user.name ?? '—'}</p>

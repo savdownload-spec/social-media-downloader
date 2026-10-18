@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Share2 } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import {
   AdminPage, PageHeader, TableCard, Table, Th, Td,
   StatusBadge, Pagination, FilterTab, EmptyState, ErrorState, Skeleton,
@@ -17,6 +18,8 @@ type Affiliate = {
 };
 
 export function AdminAffiliatesClient() {
+  const searchParams = useSearchParams();
+  const focusedAffiliateId = searchParams.get('affiliateId');
   const [affiliates, setAffiliates] = useState<Affiliate[]>([]);
   const [total, setTotal]           = useState(0);
   const [page, setPage]             = useState(1);
@@ -31,13 +34,14 @@ export function AdminAffiliatesClient() {
     setLoading(true);
     setError(false);
     const p = new URLSearchParams({ page: String(page), pageSize: '25' });
+    if (focusedAffiliateId) p.set('affiliateId', focusedAffiliateId);
     if (status !== 'ALL') p.set('status', status);
     fetch(`/api/admin/affiliates?${p}`)
       .then((r) => r.json())
       .then((d) => { if (d.ok) { setAffiliates(d.data.affiliates); setTotal(d.data.total); setTotalPages(d.data.totalPages); } else setError(true); })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [page, status]);
+  }, [page, status, focusedAffiliateId]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { setPage(1); }, [status]);
@@ -49,7 +53,7 @@ export function AdminAffiliatesClient() {
       body: JSON.stringify({ action, id }),
     });
     const d = await res.json().catch(() => null);
-    if (d?.ok) { success(d.data.message); load(); } else err('Failed', d?.error);
+    if (d?.ok) { success(d.data.message); window.dispatchEvent(new Event('admin-notifications:refresh')); load(); } else err('Failed', d?.error);
     setActionId(null);
   }
 
@@ -99,7 +103,7 @@ export function AdminAffiliatesClient() {
                 />
               </td></tr>
             ) : affiliates.map((a) => (
-              <tr key={a.id} className="hover:bg-surface/40 transition-colors">
+              <tr key={a.id} className={`hover:bg-surface/40 transition-colors ${focusedAffiliateId === a.id ? 'bg-primary/[0.06] ring-2 ring-inset ring-primary/20' : ''}`}>
                 <Td>
                   <span className="font-mono text-[12px] font-medium bg-surface px-2 py-0.5 rounded">{a.code}</span>
                 </Td>

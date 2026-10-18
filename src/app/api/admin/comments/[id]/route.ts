@@ -21,7 +21,10 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     reject: { status: 'REJECTED', approvedAt: null, moderatedAt: new Date(), moderatedById: session.user.id },
   } as const;
   if (action !== 'approve' && action !== 'hide' && action !== 'reject') return fail('Unsupported action.');
-  await prisma.blogComment.update({ where: { id: comment.id }, data: updateByAction[action] });
+  await prisma.$transaction([
+    prisma.blogComment.update({ where: { id: comment.id }, data: updateByAction[action] }),
+    prisma.adminNotification.updateMany({ where: { entityType: 'BlogComment', entityId: comment.id, resolvedAt: null }, data: { resolvedAt: new Date() } }),
+  ]);
   await writeAuditLog({ adminId: session.user.id, adminEmail: session.user.email ?? 'admin', action: `COMMENT_${action.toUpperCase()}`, targetType: 'BLOG_COMMENT', targetId: comment.id });
   return ok({ message: `Comment ${action}d.` });
 }
@@ -31,7 +34,10 @@ export async function DELETE(_request: Request, { params }: { params: { id: stri
   if (session?.user?.role !== 'ADMIN' || !session.user.id) return fail('Forbidden.', 403);
   const comment = await prisma.blogComment.findUnique({ where: { id: params.id }, select: { id: true } });
   if (!comment) return fail('Comment not found.', 404);
-  await prisma.blogComment.delete({ where: { id: comment.id } });
+  await prisma.$transaction([
+    prisma.blogComment.delete({ where: { id: comment.id } }),
+    prisma.adminNotification.updateMany({ where: { entityType: 'BlogComment', entityId: comment.id, resolvedAt: null }, data: { resolvedAt: new Date() } }),
+  ]);
   await writeAuditLog({ adminId: session.user.id, adminEmail: session.user.email ?? 'admin', action: 'COMMENT_DELETE', targetType: 'BLOG_COMMENT', targetId: comment.id });
   return ok({ message: 'Comment deleted.' });
 }

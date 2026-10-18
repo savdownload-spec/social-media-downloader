@@ -11,16 +11,34 @@ interface Props {
 
 export type AdminBadges = {
   supportUnread: number;
-  pendingReviews: number;
+  commentsUnread: number;
+  reviewsUnread: number;
+  affiliatesUnread: number;
+  paymentsUnread: number;
+  subscriptionsUnread: number;
   total: number;
+  notifications: AdminNotificationItem[];
 };
 
-const POLL_INTERVAL_MS = 30_000; // 30 s — cheap enough, no websockets needed
+export type AdminNotificationItem = {
+  id: string;
+  type: string;
+  section: string;
+  entityId: string;
+  title: string;
+  message: string;
+  href: string;
+  createdAt: string;
+};
+
+const EMPTY_BADGES: AdminBadges = { supportUnread: 0, commentsUnread: 0, reviewsUnread: 0, affiliatesUnread: 0, paymentsUnread: 0, subscriptionsUnread: 0, total: 0, notifications: [] };
+
+const POLL_INTERVAL_MS = 10_000;
 
 export function AdminShell({ children }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
-  const [badges, setBadges] = useState<AdminBadges>({ supportUnread: 0, pendingReviews: 0, total: 0 });
+  const [badges, setBadges] = useState<AdminBadges>(EMPTY_BADGES);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -28,7 +46,7 @@ export function AdminShell({ children }: Props) {
   }, [pathname]);
 
   // Fetch badge counts from the lightweight /api/admin/badges endpoint.
-  // Called on mount and then every 30 s so the bell + sidebar stay in sync
+  // Called on mount and then every 10 s so the bell + sidebar stay in sync
   // without needing websockets or SSE. Re-fetches whenever the pathname
   // changes so navigating to /admin/support immediately reflects reads.
   const fetchBadges = useCallback(async () => {
@@ -46,10 +64,17 @@ export function AdminShell({ children }: Props) {
   useEffect(() => {
     void fetchBadges();
     const id = setInterval(() => { void fetchBadges(); }, POLL_INTERVAL_MS);
-    return () => clearInterval(id);
+    const refresh = () => { void fetchBadges(); };
+    window.addEventListener('focus', refresh);
+    window.addEventListener('admin-notifications:refresh', refresh);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('admin-notifications:refresh', refresh);
+    };
   }, [fetchBadges]);
 
-  // Refresh counts when the admin navigates (e.g. opens support → resets unread)
+  // Refresh counts when the admin navigates (for example after opening a notification).
   useEffect(() => {
     void fetchBadges();
   }, [pathname, fetchBadges]);

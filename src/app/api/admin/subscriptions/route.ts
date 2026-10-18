@@ -17,13 +17,15 @@ export async function GET(req: NextRequest) {
   const pageSize = safePageSize(sp.get('pageSize'), 25, 50);
   const status   = sp.get('status')?.trim() ?? '';
   const search   = sp.get('search')?.trim().slice(0, 100) ?? '';
+  const subscriptionId = sp.get('subscriptionId')?.trim() ?? '';
   if (status && !SUBSCRIPTION_STATUSES.has(status)) {
     return NextResponse.json({ ok: false, error: 'Unknown subscription status.' }, { status: 400, headers: PRIVATE_NO_STORE_HEADERS });
   }
 
   const where: Record<string, unknown> = {};
+  if (subscriptionId) where.OR = [{ id: subscriptionId }, { stripeSubscriptionId: subscriptionId }, { safepaySubscriptionId: subscriptionId }];
   if (status) where.status = status;
-  if (search) where.user = { OR: [
+  if (search && !subscriptionId) where.user = { OR: [
     { email: { contains: search, mode: 'insensitive' } },
     { name:  { contains: search, mode: 'insensitive' } },
   ]};

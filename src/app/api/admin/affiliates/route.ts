@@ -18,8 +18,10 @@ export async function GET(req: NextRequest) {
   const page     = Math.max(1, parseInt(sp.get('page') ?? '1', 10));
   const pageSize = Math.min(50, parseInt(sp.get('pageSize') ?? '25', 10));
   const status   = sp.get('status') ?? '';
+  const affiliateId = sp.get('affiliateId')?.trim() ?? '';
 
   const where: Record<string, unknown> = {};
+  if (affiliateId) where.id = affiliateId;
   if (status) where.status = status;
 
   const [affiliates, total] = await Promise.all([
@@ -54,7 +56,10 @@ export async function PATCH(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ ok: false, error: 'Invalid' }, { status: 400 });
 
   const status = parsed.data.action === 'approve' ? 'ACTIVE' : 'SUSPENDED';
-  await prisma.affiliate.update({ where: { id: parsed.data.id }, data: { status } });
+  await prisma.$transaction([
+    prisma.affiliate.update({ where: { id: parsed.data.id }, data: { status } }),
+    prisma.adminNotification.updateMany({ where: { entityType: 'Affiliate', entityId: parsed.data.id, resolvedAt: null }, data: { resolvedAt: new Date() } }),
+  ]);
   await writeAuditLog({ adminId: admin.id!, adminEmail: admin.email!, action: `affiliate.${parsed.data.action}`, targetType: 'Affiliate', targetId: parsed.data.id });
 
   return NextResponse.json({ ok: true, data: { message: `Affiliate ${parsed.data.action}d` } });

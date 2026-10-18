@@ -4,13 +4,9 @@
  * Lightweight endpoint that returns the badge counts the admin UI needs
  * to populate the bell indicator and sidebar badges. Only admins can call it.
  *
- * Counts are derived from real DB records:
- *   supportUnread  — total adminUnreadCount across all active conversations
- *   pendingReviews — reviews with status = 'PENDING'
- *
- * Kept intentionally cheap: two simple aggregate queries, no heavy joins.
- * The admin shell polls this every 30 s so the numbers stay fresh without
- * requiring websockets or SSE.
+ * Counts come from the shared AdminNotification ledger and are filtered by
+ * the current admin's read receipts. The Admin shell polls this lightweight
+ * endpoint so the bell and section badges stay synchronized.
  */
 
 import { getServerSession } from 'next-auth';
@@ -23,22 +19,37 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if ((session?.user as { role?: string } | undefined)?.role !== 'ADMIN') {
+  const admin = session?.user as { id?: string; role?: string } | undefined;
+  if (admin?.role !== 'ADMIN' || !admin.id) {
     return fail('Forbidden.', 403);
   }
 
-  const [supportAgg, pendingReviews] = await Promise.all([
-    // Sum of adminUnreadCount across all non-closed conversations.
-    prisma.supportConversation.aggregate({
-      _sum: { adminUnreadCount: true },
-      where: { status: { notIn: ['CLOSED'] } },
+  const unreadWhere = { resolvedAt: null, reads: { none: { adminId: admin.id } } } as const;
+  const [notifications, grouped] = await Promise.all([
+    prisma.adminNotification.findMany({
+      where: unreadWhere,
+      orderBy: { createdAt: 'desc' },
+      take: 12,
+      select: { id: true, type: true, section: true, entityId: true, title: true, message: true, href: true, createdAt: true },
     }),
-    // Reviews waiting for admin action.
-    prisma.review.count({ where: { status: 'PENDING' } }),
+    prisma.adminNotification.groupBy({
+      by: ['section'],
+      where: unreadWhere,
+      _count: { _all: true },
+    }),
   ]);
 
-  const supportUnread = supportAgg._sum.adminUnreadCount ?? 0;
-  const total = supportUnread + pendingReviews;
+  const counts = Object.fromEntries(grouped.map((row) => [row.section, row._count._all]));
+  const total = grouped.reduce((sum, row) => sum + row._count._all, 0);
 
-  return ok({ supportUnread, pendingReviews, total });
+  return ok({
+    supportUnread: counts.support ?? 0,
+    commentsUnread: counts.comments ?? 0,
+    reviewsUnread: counts.reviews ?? 0,
+    affiliatesUnread: counts.affiliates ?? 0,
+    paymentsUnread: counts.payments ?? 0,
+    subscriptionsUnread: counts.subscriptions ?? 0,
+    total,
+    notifications,
+  });
 }

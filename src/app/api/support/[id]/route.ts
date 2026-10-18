@@ -4,6 +4,7 @@ import { fail, ok } from '@/lib/api';
 import { getClientId, ratelimit } from '@/lib/ratelimit';
 import { canAccessSupportConversation, cleanSupportText, MAX_SUPPORT_FILES, MAX_SUPPORT_FILE_SIZE, SUPPORT_ATTACHMENT_TYPES, supportPreview } from '@/lib/support';
 import { detectSupportLanguage, translateSupportMessage } from '@/lib/support-translation';
+import { createAdminNotification } from '@/lib/admin-notifications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -59,6 +60,11 @@ export async function POST(request: Request, { params }: { params: { id: string 
         status: 'WAITING_FOR_REPLY',
         resolvedAt: null, adminUnreadCount: { increment: 1 }, lastMessageAt: now, lastMessagePreview: supportPreview(body),
       } });
+      await createAdminNotification(tx, {
+        type: 'SUPPORT_MESSAGE', section: 'support', entityType: 'SupportConversation', entityId: params.id,
+        title: 'New customer reply', message: supportPreview(body),
+        href: `/admin/support?conversationId=${params.id}`, dedupeKey: `support:message:${created.id}`,
+      });
       return created;
     });
     return ok(message, 201);

@@ -117,7 +117,11 @@ export function AdminSidebar({ onClose, collapsed, onToggleCollapse, badges }: P
   // they are overridden here rather than duplicated in two places.
   const liveBadge: Record<string, number | undefined> = {
     '/admin/support': badges?.supportUnread || undefined,
-    '/admin/reviews': badges?.pendingReviews || undefined,
+    '/admin/reviews': badges?.reviewsUnread || undefined,
+    '/admin/comments': badges?.commentsUnread || undefined,
+    '/admin/affiliates': badges?.affiliatesUnread || undefined,
+    '/admin/payments': badges?.paymentsUnread || undefined,
+    '/admin/subscriptions': badges?.subscriptionsUnread || undefined,
   };
 
   function isActive(href: string) {

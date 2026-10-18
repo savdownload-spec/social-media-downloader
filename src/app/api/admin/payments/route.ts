@@ -15,7 +15,8 @@ export async function GET(req: NextRequest) {
   const page = safePage(sp.get('page'));
   const pageSize = safePageSize(sp.get('pageSize'), 25, 50);
   const search = sp.get('search')?.trim().slice(0, 100) ?? '';
-  const paymentWhere: Prisma.PaymentWhereInput = search ? { OR: [
+  const paymentId = sp.get('paymentId')?.trim() ?? '';
+  const paymentWhere: Prisma.PaymentWhereInput = paymentId ? { id: paymentId } : search ? { OR: [
     { user: { email: { contains: search, mode: 'insensitive' } } },
     { providerPaymentId: { contains: search, mode: 'insensitive' } },
     { reference: { contains: search, mode: 'insensitive' } },
@@ -24,6 +25,7 @@ export async function GET(req: NextRequest) {
   const legacyWhere: Prisma.CreditTransactionWhereInput = {
     kind: 'purchase',
     paymentId: null,
+    ...(paymentId ? { id: '__notification_payment_only__' } : {}),
     ...(search ? { OR: [
       { user: { email: { contains: search, mode: 'insensitive' } } },
       { externalId: { contains: search, mode: 'insensitive' } },

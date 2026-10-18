@@ -37,22 +37,22 @@ export async function PATCH(
 
     switch (action.data.action) {
       case 'approve':
-        await prisma.review.update({
-          where: { id: params.id },
-          data: { status: 'APPROVED', approved: true, approvedAt: new Date() },
-        });
+        await prisma.$transaction([
+          prisma.review.update({ where: { id: params.id }, data: { status: 'APPROVED', approved: true, approvedAt: new Date() } }),
+          prisma.adminNotification.updateMany({ where: { entityType: 'Review', entityId: params.id, resolvedAt: null }, data: { resolvedAt: new Date() } }),
+        ]);
         revalidateReviews();
         return ok({ message: 'Review approved.' });
       case 'reject':
-        await prisma.review.update({
-          where: { id: params.id },
-          data: {
+        await prisma.$transaction([
+          prisma.review.update({ where: { id: params.id }, data: {
             status: 'REJECTED',
             approved: false,
             approvedAt: null,
             featured: false,
-          },
-        });
+          } }),
+          prisma.adminNotification.updateMany({ where: { entityType: 'Review', entityId: params.id, resolvedAt: null }, data: { resolvedAt: new Date() } }),
+        ]);
         revalidateReviews();
         return ok({ message: 'Review rejected.' });
       case 'feature':
@@ -119,7 +119,10 @@ export async function DELETE(
   });
   if (!review) return fail('Review not found.', 404);
 
-  await prisma.review.delete({ where: { id: params.id } });
+  await prisma.$transaction([
+    prisma.review.delete({ where: { id: params.id } }),
+    prisma.adminNotification.updateMany({ where: { entityType: 'Review', entityId: params.id, resolvedAt: null }, data: { resolvedAt: new Date() } }),
+  ]);
 
   revalidateReviews();
   return ok({ message: 'Review deleted.' });

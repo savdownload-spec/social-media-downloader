@@ -15,6 +15,7 @@ import {
   SUPPORT_ATTACHMENT_TYPES,
 } from '@/lib/support';
 import { detectSupportLanguage, translateSupportMessage } from '@/lib/support-translation';
+import { createAdminNotification } from '@/lib/admin-notifications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -111,8 +112,9 @@ export async function POST(request: Request) {
       }))
     );
 
-    const conversation = await prisma.supportConversation.create({
-      data: {
+    const conversation = await prisma.$transaction(async (tx) => {
+      const created = await tx.supportConversation.create({
+        data: {
         userId: actor.userId,
         guestName: actor.userId ? null : cleanSupportText(parsed.name!),
         guestEmail: actor.userId ? null : parsed.email!.toLowerCase(),
@@ -144,7 +146,7 @@ export async function POST(request: Request) {
           ],
         },
       },
-      select: {
+        select: {
         id: true,
         category: true,
         status: true,
@@ -153,7 +155,14 @@ export async function POST(request: Request) {
         lastMessageAt: true,
         customerUnreadCount: true,
         createdAt: true,
-      },
+        },
+      });
+      await createAdminNotification(tx, {
+        type: 'SUPPORT_MESSAGE', section: 'support', entityType: 'SupportConversation', entityId: created.id,
+        title: 'New support request', message: supportPreview(message),
+        href: `/admin/support?conversationId=${created.id}`, dedupeKey: `support:conversation:${created.id}`,
+      });
+      return created;
     });
 
     return NextResponse.json({ ok: true, data: { conversation, guestToken } }, { status: 201 });

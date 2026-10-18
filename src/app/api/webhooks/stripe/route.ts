@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getStripe } from '@/lib/stripe';
 import { claimStripeEvent, findByPriceId, grantCredits, type PlanTier } from '@/lib/billing';
+import { createAdminNotification } from '@/lib/admin-notifications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -55,10 +56,13 @@ export async function POST(request: Request) {
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
-        await handleSubscriptionChange(event.data.object);
+        await handleSubscriptionChange(event.data.object, event.id);
         break;
       case 'invoice.paid':
         await handleInvoicePaid(event.data.object);
+        break;
+      case 'invoice.payment_failed':
+        await handleInvoiceFailed(event.data.object, event.id);
         break;
       default:
         break;
@@ -123,7 +127,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 }
 
 /** Keeps the local subscription mirror and the user's tier in step with Stripe. */
-async function handleSubscriptionChange(subscription: Stripe.Subscription) {
+async function handleSubscriptionChange(subscription: Stripe.Subscription, eventId: string) {
   const userId = await resolveUserId(subscription.metadata?.userId, subscription.customer);
   if (!userId) {
     console.error('No user for subscription:', subscription.id);
@@ -165,6 +169,16 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
     },
   });
 
+  if (['past_due', 'unpaid', 'incomplete'].includes(subscription.status)) {
+    await createAdminNotification(prisma, {
+      type: 'SUBSCRIPTION_ATTENTION', section: 'subscriptions', entityType: 'Subscription', entityId: subscription.id,
+      title: 'Subscription requires attention', message: `Stripe subscription is ${subscription.status.replace('_', ' ')}.`,
+      href: `/admin/subscriptions?subscriptionId=${subscription.id}`, dedupeKey: `stripe:${eventId}:subscription-attention`,
+    });
+  } else if (entitled) {
+    await prisma.adminNotification.updateMany({ where: { entityType: 'Subscription', entityId: subscription.id, resolvedAt: null }, data: { resolvedAt: new Date() } });
+  }
+
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true } });
   // A lifetime purchase outranks any subscription state, so never downgrade it.
   if (user?.plan === 'LIFETIME') return;
@@ -181,6 +195,26 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
       resetPlanCredits: true,
       planCreditsResetAt: null,
       tier: 'FREE',
+    });
+  }
+}
+
+async function handleInvoiceFailed(invoice: Stripe.Invoice, eventId: string) {
+  const subscriptionId = typeof invoice.parent?.subscription_details?.subscription === 'string'
+    ? invoice.parent.subscription_details.subscription
+    : invoice.parent?.subscription_details?.subscription?.id;
+  const entityId = subscriptionId ?? invoice.id;
+  await createAdminNotification(prisma, {
+    type: 'PAYMENT_FAILED', section: 'payments', entityType: 'StripeInvoice', entityId: invoice.id,
+    title: 'Subscription payment failed', message: `Stripe invoice ${invoice.number ?? invoice.id} could not be paid.`,
+    href: subscriptionId ? `/admin/subscriptions?subscriptionId=${subscriptionId}` : '/admin/payments',
+    dedupeKey: `stripe:${eventId}:invoice-failed`,
+  });
+  if (subscriptionId) {
+    await createAdminNotification(prisma, {
+      type: 'SUBSCRIPTION_ATTENTION', section: 'subscriptions', entityType: 'Subscription', entityId,
+      title: 'Subscription requires attention', message: 'The latest subscription invoice payment failed.',
+      href: `/admin/subscriptions?subscriptionId=${subscriptionId}`, dedupeKey: `stripe:${eventId}:subscription-payment-failed`,
     });
   }
 }

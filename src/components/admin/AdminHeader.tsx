@@ -25,6 +25,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/pricing': 'Pricing',
   '/admin/affiliates': 'Affiliates',
   '/admin/content': 'Content',
+  '/admin/comments': 'Comments',
   '/admin/reports': 'Reports',
   '/admin/audit': 'Audit Log',
   '/admin/settings': 'Settings',
@@ -43,6 +44,7 @@ const QUICK_LINKS: SearchResult[] = [
   { type: 'page', label: 'Reviews', href: '/admin/reviews', sub: 'User Management' },
   { type: 'page', label: 'Tools', href: '/admin/tools', sub: 'Product' },
   { type: 'page', label: 'Content', href: '/admin/content', sub: 'Content Management' },
+  { type: 'page', label: 'Comments', href: '/admin/comments', sub: 'Content Management' },
   { type: 'page', label: 'Settings', href: '/admin/settings', sub: 'System' },
   { type: 'page', label: 'Pricing', href: '/admin/pricing', sub: 'Billing' },
   { type: 'page', label: 'Subscriptions', href: '/admin/subscriptions', sub: 'Billing' },
@@ -130,6 +132,16 @@ export function AdminHeader({ onMenuClick, collapsed, onToggleCollapse, badges }
     router.push(href);
   }, [router]);
 
+  const handleNotificationSelect = useCallback(async (id: string, href: string) => {
+    setBellOpen(false);
+    try {
+      await fetch(`/api/admin/notifications/${id}/read`, { method: 'PATCH' });
+    } finally {
+      window.dispatchEvent(new Event('admin-notifications:refresh'));
+      router.push(href);
+    }
+  }, [router]);
+
   return (
     <>
       <header className="h-14 bg-white border-b border-border flex items-center gap-2 px-4 lg:px-5 shrink-0">
@@ -206,47 +218,22 @@ export function AdminHeader({ onMenuClick, collapsed, onToggleCollapse, badges }
                   Activity
                 </p>
 
-                {badges.supportUnread > 0 && (
-                  <Link
-                    href="/admin/support"
-                    onClick={() => setBellOpen(false)}
-                    className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-surface transition-colors"
+                {badges.notifications.map((notification) => (
+                  <button
+                    key={notification.id}
+                    type="button"
+                    onClick={() => void handleNotificationSelect(notification.id, notification.href)}
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left hover:bg-surface transition-colors"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        <Bell className="w-3.5 h-3.5 text-primary" />
-                      </span>
-                      <div>
-                        <p className="text-[13px] font-semibold text-text">Support</p>
-                        <p className="text-[11px] text-text-muted">New customer messages</p>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-bold bg-primary text-white rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shrink-0">
-                      {badges.supportUnread > 99 ? '99+' : badges.supportUnread}
+                    <span className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <Bell className="w-3.5 h-3.5 text-primary" />
                     </span>
-                  </Link>
-                )}
-
-                {badges.pendingReviews > 0 && (
-                  <Link
-                    href="/admin/reviews"
-                    onClick={() => setBellOpen(false)}
-                    className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-surface transition-colors"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
-                        <Star className="w-3.5 h-3.5 text-amber-500" />
-                      </span>
-                      <div>
-                        <p className="text-[13px] font-semibold text-text">Reviews</p>
-                        <p className="text-[11px] text-text-muted">Pending approval</p>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-bold bg-amber-500 text-white rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shrink-0">
-                      {badges.pendingReviews > 99 ? '99+' : badges.pendingReviews}
+                    <span className="min-w-0">
+                      <span className="block truncate text-[13px] font-semibold text-text">{notification.title}</span>
+                      <span className="block truncate text-[11px] text-text-muted">{notification.message}</span>
                     </span>
-                  </Link>
-                )}
+                  </button>
+                ))}
 
                 {badges.total === 0 && (
                   <p className="px-4 py-5 text-[13px] text-text-muted text-center">

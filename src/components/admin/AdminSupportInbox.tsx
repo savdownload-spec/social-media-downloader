@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AlertCircle, CheckCircle2, Clock3, Copy, Inbox, Loader2, MessageSquare, Search, Send, UserRound, Users } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 
@@ -18,12 +19,15 @@ const fmt = (date: string) => new Date(date).toLocaleString([], { month: 'short'
 const fmtMinutes = (m: number | null | undefined) => (!m ? '—' : m < 60 ? `${Math.round(m)} min` : `${(m / 60).toFixed(1)} h`);
 
 export function AdminSupportInbox() {
+  const searchParams = useSearchParams();
+  const focusedConversationId = searchParams.get('conversationId');
   const [folder, setFolder] = useState('ALL'); const [search, setSearch] = useState(''); const [status, setStatus] = useState(''); const [priority, setPriority] = useState(''); const [assigned, setAssigned] = useState('');
   const [items, setItems] = useState<ListConversation[]>([]); const [admins, setAdmins] = useState<Admin[]>([]); const [metrics, setMetrics] = useState<Record<string, number>>({}); const [selected, setSelected] = useState<Detail | null>(null); const [loading, setLoading] = useState(true); const [composer, setComposer] = useState(''); const [note, setNote] = useState(false); const [saving, setSaving] = useState(false); const [translatingId, setTranslatingId] = useState<string | null>(null); const [showTranslation, setShowTranslation] = useState<Record<string, boolean>>({}); const [copiedTranslationId, setCopiedTranslationId] = useState<string | null>(null);
   const { error, success } = useToast();
   const load = useCallback(async () => { setLoading(true); try { const p = new URLSearchParams(); if (folder !== 'ALL') p.set('folder', folder); if (search.trim()) p.set('search', search.trim()); if (status) p.set('status', status); if (priority) p.set('priority', priority); if (assigned) p.set('assigned', assigned); const res = await fetch(`/api/admin/support?${p}`); const data = await res.json(); if (!res.ok || !data?.ok) throw new Error(data?.error); setItems(data.data.conversations); setAdmins(data.data.admins); setMetrics(data.data.metrics); } catch (e) { error('Could not load support inbox', e instanceof Error ? e.message : undefined); } finally { setLoading(false); } }, [folder, search, status, priority, assigned, error]);
-  const open = useCallback(async (id: string) => { try { const res = await fetch(`/api/admin/support/${id}`); const data = await res.json(); if (!res.ok || !data?.ok) throw new Error(data?.error); setSelected(data.data); load(); } catch (e) { error('Could not open conversation', e instanceof Error ? e.message : undefined); } }, [error, load]);
+  const open = useCallback(async (id: string) => { try { const res = await fetch(`/api/admin/support/${id}`); const data = await res.json(); if (!res.ok || !data?.ok) throw new Error(data?.error); setSelected(data.data); window.dispatchEvent(new Event('admin-notifications:refresh')); load(); } catch (e) { error('Could not open conversation', e instanceof Error ? e.message : undefined); } }, [error, load]);
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (focusedConversationId) void open(focusedConversationId); }, [focusedConversationId, open]);
   useEffect(() => { const t = setInterval(load, 20000); return () => clearInterval(t); }, [load]);
   const metricCards = useMemo(() => [['Open', metrics.open, Inbox, 'blue'], ['Waiting', metrics.waiting, Clock3, 'amber'], ['Unassigned', metrics.unassigned, Users, 'purple'], ['Urgent', metrics.urgent, AlertCircle, 'rose'], ['Resolved today', metrics.resolvedToday, CheckCircle2, 'green'], ['Avg. first reply', fmtMinutes(metrics.averageResponseMinutes), Clock3, 'blue'], ['Avg. resolution', fmtMinutes(metrics.averageResolutionMinutes), CheckCircle2, 'green']], [metrics]);
   async function translateMessage(messageId: string) { setTranslatingId(messageId); try { const res = await fetch(`/api/support/messages/${messageId}/translate`, { method: 'POST' }); const json = await res.json(); if (!res.ok || !json?.ok || json.data?.translationStatus === 'FAILED') throw new Error('Translation is temporarily unavailable.'); setSelected(current => current ? { ...current, messages: current.messages.map(message => message.id === messageId ? { ...message, ...json.data } : message) } : current); setShowTranslation(current => ({ ...current, [messageId]: true })); } catch (e) { error('Could not translate message', e instanceof Error ? e.message : 'Please try again.'); } finally { setTranslatingId(null); } }

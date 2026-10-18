@@ -74,6 +74,7 @@ model User {
   supportConversations         SupportConversation[] @relation("SupportCustomer")
   assignedSupportConversations SupportConversation[] @relation("SupportAssignee")
   supportMessages              SupportMessage[]      @relation("SupportSender")
+  adminNotificationReads       AdminNotificationRead[] @relation("AdminNotificationReader")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -511,6 +512,43 @@ model AuditLog {
   @@index([adminId, createdAt])
   @@index([targetType, targetId])
   @@index([action, createdAt])
+}
+
+/// Actionable events shown in the existing Admin bell/sidebar notification UI.
+/// A stable dedupeKey makes public API retries and webhook replays idempotent.
+model AdminNotification {
+  id         String    @id @default(cuid())
+  type       String
+  section    String
+  entityType String
+  entityId   String
+  title      String
+  message    String
+  href       String
+  dedupeKey  String    @unique
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+
+  reads AdminNotificationRead[]
+
+  @@index([section, createdAt])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@index([resolvedAt])
+}
+
+/// Read state belongs to an individual admin; moderation/payment state remains
+/// on the source record and is deliberately independent from this receipt.
+model AdminNotificationRead {
+  notificationId String
+  adminId        String
+  readAt         DateTime @default(now())
+
+  notification AdminNotification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  admin        User              @relation("AdminNotificationReader", fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@id([notificationId, adminId])
+  @@index([adminId, readAt])
 }
 
 /// Admin-managed per-tool configuration (status, free limit, credit cost, batch limits).

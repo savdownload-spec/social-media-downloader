@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Star, Check, X as XIcon, Pencil, Trash2, BadgeCheck, MessageSquare } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -32,6 +33,8 @@ type AdminReview = {
 const STATUS_TABS = ['ALL', 'PENDING', 'APPROVED', 'REJECTED'] as const;
 
 export function AdminReviewsTable() {
+  const searchParams = useSearchParams();
+  const focusedReviewId = searchParams.get('reviewId');
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -57,6 +60,7 @@ export function AdminReviewsTable() {
     setLoading(true);
     setError(false);
     const params = new URLSearchParams({ page: String(page), pageSize: '20' });
+    if (focusedReviewId) params.set('reviewId', focusedReviewId);
     if (status !== 'ALL') params.set('status', status);
     if (search.trim()) params.set('search', search.trim());
 
@@ -71,7 +75,7 @@ export function AdminReviewsTable() {
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [page, status, search]);
+  }, [page, status, search, focusedReviewId]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { setPage(1); }, [status, search]);
@@ -90,6 +94,7 @@ export function AdminReviewsTable() {
         return;
       }
       success(data.data.message);
+      window.dispatchEvent(new Event('admin-notifications:refresh'));
       load();
     } catch {
       errorToast('Network error', 'Could not reach the server.');
@@ -114,6 +119,7 @@ export function AdminReviewsTable() {
         return;
       }
       success('Review deleted');
+      window.dispatchEvent(new Event('admin-notifications:refresh'));
       load();
     } catch {
       errorToast('Network error', 'Could not reach the server.');
@@ -200,7 +206,7 @@ export function AdminReviewsTable() {
       ) : (
         <div className="space-y-3">
           {reviews.map((r) => (
-            <div key={r.id} className="bg-white border border-border-light rounded-xl p-5 hover:shadow-soft transition-shadow">
+            <div key={r.id} className={`bg-white border rounded-xl p-5 hover:shadow-soft transition-shadow ${focusedReviewId === r.id ? 'border-primary ring-4 ring-primary/10' : 'border-border-light'}`}>
               <div className="flex flex-col md:flex-row md:items-start gap-4">
                 {/* Avatar */}
                 <div className="w-9 h-9 rounded-full bg-primary/[0.08] flex items-center justify-center text-[12px] font-bold text-primary shrink-0 hidden md:flex">

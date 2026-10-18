@@ -15,10 +15,12 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status');
   const search = searchParams.get('search')?.trim();
+  const reviewId = searchParams.get('reviewId')?.trim();
   const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
   const pageSize = Math.min(Math.max(parseInt(searchParams.get('pageSize') || '20', 10), 1), 100);
 
   const where: Record<string, unknown> = {};
+  if (reviewId) where.id = reviewId;
   if (status && ['PENDING', 'APPROVED', 'REJECTED'].includes(status)) {
     where.status = status;
   }

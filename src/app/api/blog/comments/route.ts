@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth';
 import { ok, fail } from '@/lib/api';
 import { getPublicBlogPost } from '@/lib/blog';
 import { prisma } from '@/lib/prisma';
+import { createAdminNotification } from '@/lib/admin-notifications';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -42,7 +43,15 @@ export async function POST(request: Request) {
     const { user } = await currentUser();
     if (!user) return fail('Please sign in to join the conversation.', 401);
     if (!(await getPublicBlogPost(slug))) return fail('Article not found.', 404);
-    const comment = await prisma.blogComment.create({ data: { postSlug: slug, userId: user.id, body: text, status: 'PENDING' }, select: { id: true, status: true, createdAt: true } });
+    const comment = await prisma.$transaction(async (tx) => {
+      const created = await tx.blogComment.create({ data: { postSlug: slug, userId: user.id, body: text, status: 'PENDING' }, select: { id: true, status: true, createdAt: true } });
+      await createAdminNotification(tx, {
+        type: 'COMMENT_MODERATION', section: 'comments', entityType: 'BlogComment', entityId: created.id,
+        title: 'Comment awaiting moderation', message: text.slice(0, 180),
+        href: `/admin/comments?commentId=${created.id}`, dedupeKey: `comment:pending:${created.id}`,
+      });
+      return created;
+    });
     return ok(comment, 201);
   } catch {
     return fail('Comments are temporarily unavailable. Please try again shortly.', 503);

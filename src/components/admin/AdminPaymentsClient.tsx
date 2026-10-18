@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { DollarSign } from 'lucide-react';
 import {
   AdminPage, PageHeader, TableCard, Table, Th, Td,
@@ -25,6 +26,8 @@ function formatAmount(payment: Payment) {
 }
 
 export function AdminPaymentsClient() {
+  const searchParams = useSearchParams();
+  const focusedPaymentId = searchParams.get('paymentId');
   const [payments, setPayments] = useState<Payment[]>([]);
   const [total, setTotal]       = useState(0);
   const [page, setPage]         = useState(1);
@@ -37,13 +40,14 @@ export function AdminPaymentsClient() {
     setLoading(true);
     setError(false);
     const p = new URLSearchParams({ page: String(page), pageSize: '25' });
+    if (focusedPaymentId) p.set('paymentId', focusedPaymentId);
     if (search) p.set('search', search);
     fetch(`/api/admin/payments?${p}`)
       .then((r) => r.json())
       .then((d) => { if (d.ok) { setPayments(d.data.payments); setTotal(d.data.total); setTotalPages(d.data.totalPages); } else setError(true); })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [page, search]);
+  }, [page, search, focusedPaymentId]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => { setPage(1); }, [search]);
@@ -81,7 +85,7 @@ export function AdminPaymentsClient() {
                 />
               </td></tr>
             ) : payments.map((p) => (
-              <tr key={p.id} className="hover:bg-surface/40 transition-colors">
+              <tr key={p.id} className={`hover:bg-surface/40 transition-colors ${focusedPaymentId === p.id ? 'bg-primary/[0.06] ring-2 ring-inset ring-primary/20' : ''}`}>
                 <Td>
                   {p.user ? (
                     <Link href={`/admin/users/${p.user.id}`} className="hover:text-primary transition-colors">

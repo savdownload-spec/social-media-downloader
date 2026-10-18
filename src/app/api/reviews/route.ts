@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { reviewCreateSchema } from '@/lib/auth/validators';
 import { ok, fail } from '@/lib/api';
+import { createAdminNotification } from '@/lib/admin-notifications';
 
 export const dynamic = 'force-dynamic';
 
@@ -124,8 +125,9 @@ export async function POST(request: Request) {
 
     const { rating, review, role, company, platform } = parsed.data;
 
-    const created = await prisma.review.create({
-      data: {
+    const created = await prisma.$transaction(async (tx) => {
+      const newReview = await tx.review.create({
+        data: {
         userId: user.id,
         name: user.name ?? (user.email ? user.email.split('@')[0] : 'SavDown User'),
         email: user.email ?? null,
@@ -139,13 +141,20 @@ export async function POST(request: Request) {
         approved: false,
         featured: false,
       },
-      select: {
+        select: {
         id: true,
         rating: true,
         review: true,
         status: true,
         createdAt: true,
-      },
+        },
+      });
+      await createAdminNotification(tx, {
+        type: 'REVIEW_MODERATION', section: 'reviews', entityType: 'Review', entityId: newReview.id,
+        title: 'Review awaiting approval', message: review.slice(0, 180),
+        href: `/admin/reviews?reviewId=${newReview.id}`, dedupeKey: `review:pending:${newReview.id}`,
+      });
+      return newReview;
     });
 
     return ok(created, 201);

@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
-  if (session?.user?.role !== 'ADMIN') return fail('Forbidden.', 403);
+  if (session?.user?.role !== 'ADMIN' || !session.user.id) return fail('Forbidden.', 403);
   const p = new URL(request.url).searchParams;
   const folder = p.get('folder'); const status = p.get('status'); const priority = p.get('priority');
   const category = p.get('category'); const assigned = p.get('assigned'); const search = p.get('search')?.trim();
@@ -66,5 +66,11 @@ export async function GET(request: Request) {
     }
   }
   const average = (values: number[]) => values.length ? Math.round(values.reduce((sum, value) => sum + value, 0) / values.length) : null;
-  return ok({ conversations, admins, metrics: { open, waiting, unassigned, urgent, resolvedToday, today: todayCount, week: weekCount, averageResponseMinutes: average(responseMinutes), averageResolutionMinutes: average(resolutionMinutes) } });
+  const unread = conversations.length ? await prisma.adminNotification.groupBy({
+    by: ['entityId'],
+    where: { entityType: 'SupportConversation', entityId: { in: conversations.map((conversation) => conversation.id) }, resolvedAt: null, reads: { none: { adminId: session.user.id } } },
+    _count: { _all: true },
+  }) : [];
+  const unreadByConversation = new Map(unread.map((row) => [row.entityId, row._count._all]));
+  return ok({ conversations: conversations.map((conversation) => ({ ...conversation, adminUnreadCount: unreadByConversation.get(conversation.id) ?? 0 })), admins, metrics: { open, waiting, unassigned, urgent, resolvedToday, today: todayCount, week: weekCount, averageResponseMinutes: average(responseMinutes), averageResolutionMinutes: average(resolutionMinutes) } });
 }
