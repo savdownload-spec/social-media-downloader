@@ -20,7 +20,7 @@ export async function writeAuditLog({
   ip?: string;
 }) {
   try {
-    await prisma.auditLog.create({
+    return await prisma.auditLog.create({
       data: {
         adminId, adminEmail, action, targetType, targetId, ip,
         detail: detail as Prisma.InputJsonValue | undefined,
@@ -28,6 +28,7 @@ export async function writeAuditLog({
     });
   } catch {
     // audit failures must never break the main action
+    return null;
   }
 }
 

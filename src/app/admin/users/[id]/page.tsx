@@ -33,6 +33,7 @@ export default async function AdminUserPage({ params }: { params: { id: string }
         updatedAt: user.updatedAt.toISOString(),
         emailVerified: user.emailVerified?.toISOString() ?? null,
         planCreditsResetAt: user.planCreditsResetAt?.toISOString() ?? null,
+        stripeCustomerId: user.stripeCustomerId ?? null,
         subscriptions: user.subscriptions.map((s) => ({
           ...s,
           createdAt: s.createdAt.toISOString(),
