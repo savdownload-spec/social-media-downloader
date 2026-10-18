@@ -9,6 +9,10 @@ import { WorkspaceToolShell } from '@/components/tools/WorkspaceToolShell';
 import { DownloaderForm } from '@/components/tools/DownloaderForm';
 import { downloaderPerks } from '@/components/tools/toolPerks';
 import { functionalToolContent } from '@/config/functionalToolContent';
+import { ToolStatusOverlay } from '@/components/tools/ToolStatusOverlay';
+
+/** Status values that block the live tool UI. */
+const BLOCKED_STATUSES = new Set(['COMING_SOON', 'MAINTENANCE', 'DISABLED']);
 
 /**
  * Shared dispatch: downloader config -> live downloader UI, catalog entry
@@ -16,8 +20,20 @@ import { functionalToolContent } from '@/config/functionalToolContent';
  * entry only -> "Coming soon" page, otherwise null (caller should 404).
  * Used by both the public /tools/[slug] route and the in-workspace
  * /workspace/tools/[group]/[slug] route so the two never drift apart.
+ *
+ * @param slug   Tool slug
+ * @param status Persisted Admin status from DB (optional). LIVE or unknown
+ *               values fall through to normal rendering (fail-safe).
  */
-export function resolveToolPage(slug: string): ReactElement | null {
+export function resolveToolPage(slug: string, status?: string): ReactElement | null {
+  // If the tool is blocked, show the appropriate overlay instead of the live UI.
+  if (status && BLOCKED_STATUSES.has(status)) {
+    const entry = getCatalogTool(slug);
+    const tool = toolsBySlug.get(slug);
+    const toolName = entry?.name ?? tool?.name ?? slug;
+    return <ToolStatusOverlay status={status} toolName={toolName} tool={entry ?? undefined} />;
+  }
+
   const tool = toolsBySlug.get(slug);
   if (tool) return <ToolPageView tool={tool} />;
 
@@ -44,8 +60,19 @@ export function resolveToolPage(slug: string): ReactElement | null {
  * link out to the public page), instead of the full marketing page. Reuses
  * exactly the same DownloaderForm / functional-tool components as
  * resolveToolPage — only the surrounding chrome differs.
+ *
+ * @param slug   Tool slug
+ * @param status Persisted Admin status from DB (optional). LIVE or unknown
+ *               values fall through to normal rendering (fail-safe).
  */
-export function resolveWorkspaceToolPage(slug: string): ReactElement | null {
+export function resolveWorkspaceToolPage(slug: string, status?: string): ReactElement | null {
+  // If the tool is blocked, show the appropriate overlay instead of the live UI.
+  if (status && BLOCKED_STATUSES.has(status)) {
+    const entry = getCatalogTool(slug);
+    const tool = toolsBySlug.get(slug);
+    const toolName = entry?.name ?? tool?.name ?? slug;
+    return <ToolStatusOverlay status={status} toolName={toolName} tool={entry ?? undefined} />;
+  }
   const tool = toolsBySlug.get(slug);
   if (tool) {
     const entry = getCatalogTool(slug);
