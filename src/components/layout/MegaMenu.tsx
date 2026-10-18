@@ -211,17 +211,15 @@ const PRICING_TILE_STYLES: Record<string, { icon: typeof Zap; iconColor: string;
 function PricingPanel({ close }: { close: () => void }) {
   const config = usePricing();
 
-  const free = config.plans.find((p) => p.id === 'free');
-  const pro = config.plans.find((p) => p.id === 'pro');
-  const freeV = free ? derivePlan(free, 'monthly') : null;
-  const proV = pro ? derivePlan(pro, 'monthly') : null;
-  const ltV = deriveLifetime(config.lifetime);
-
   const tiles = [
-    freeV && { id: 'free', name: freeV.name, price: freeV.price, period: 'forever', credits: freeV.credits, href: freeV.ctaHref, cta: freeV.ctaLabel, highlight: false },
-    proV && { id: 'pro', name: proV.name, price: proV.price, period: '/mo', credits: proV.credits, href: proV.ctaHref, cta: proV.ctaLabel, highlight: true },
-    { id: 'lifetime', name: ltV.name, price: ltV.price, period: 'one-time', credits: ltV.credits, href: ltV.ctaHref, cta: ltV.ctaLabel, highlight: false },
-  ].filter(Boolean) as {
+    ...config.plans.filter((p) => p.visible && !p.archived).sort((a, b) => a.order - b.order).map((plan) => {
+      const view = derivePlan(plan, plan.billingIntervals.includes('monthly') ? 'monthly' : 'yearly');
+      return { id: plan.entitlementTier === 'FREE' ? 'free' : 'pro', name: view.name, price: view.price, period: view.period, credits: view.credits, href: view.ctaHref, cta: view.ctaLabel, highlight: !!plan.popular };
+    }),
+    ...config.lifetimes.filter((p) => p.visible && !p.archived).sort((a, b) => a.order - b.order).map((plan) => {
+      const view = deriveLifetime(plan); return { id: 'lifetime', name: view.name, price: view.price, period: 'one-time', credits: view.credits, href: view.ctaHref, cta: view.ctaLabel, highlight: false };
+    }),
+  ].slice(0, 3) as {
     id: string; name: string; price: string; period: string; credits: string; href: string; cta: string; highlight: boolean;
   }[];
 

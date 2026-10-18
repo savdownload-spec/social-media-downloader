@@ -124,8 +124,35 @@ export const PURCHASABLES: Purchasable[] = [
   },
 ];
 
-export function findPurchasable(id: string): Purchasable | undefined {
-  return PURCHASABLES.find((p) => p.id === id);
+/** Resolves the live admin catalogue. Archived items remain resolvable for
+ * webhook retries, but are never offered to a new checkout. */
+export async function findPurchasable(id: string, includeUnavailable = false): Promise<Purchasable | undefined> {
+  const pricing = await getPricingConfig();
+  if (id.startsWith('subscription:')) {
+    const [, planId, period] = id.split(':');
+    const plan = pricing.plans.find((value) => value.id === planId);
+    if (!plan || !['monthly', 'yearly'].includes(period) || !plan.billingIntervals.includes(period as 'monthly' | 'yearly')) return undefined;
+    if (!includeUnavailable && (!plan.visible || plan.archived)) return undefined;
+    const amount = period === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice;
+    if (amount <= 0 || plan.entitlementTier === 'FREE') return undefined;
+    return {
+      id, kind: 'subscription', label: `${plan.name} (${period})`, priceEnv: '', tier: plan.entitlementTier,
+      credits: plan.monthlyCredits, interval: period === 'yearly' ? 'year' : 'month', amountCents: Math.round(amount * 100), currency: 'usd',
+      productName: plan.name, productDescription: plan.description || plan.tagline,
+    };
+  }
+  if (id.startsWith('pack:')) {
+    const pack = pricing.packs.find((value) => value.id === id.slice('pack:'.length));
+    if (!pack || (!includeUnavailable && (!pack.visible || pack.archived))) return undefined;
+    return { id, kind: 'pack', label: `${pack.name}, ${(pack.credits + (pack.bonus ?? 0)).toLocaleString()} credits`, priceEnv: '', credits: pack.credits + (pack.bonus ?? 0), amountCents: Math.round(pack.price * 100), currency: 'usd', productName: pack.name, productDescription: pack.tagline };
+  }
+  if (id.startsWith('lifetime:')) {
+    const lifetime = pricing.lifetimes.find((value) => value.id === id.slice('lifetime:'.length));
+    if (!lifetime || (!includeUnavailable && (!lifetime.visible || lifetime.archived))) return undefined;
+    return { id, kind: 'lifetime', label: lifetime.name, priceEnv: '', tier: 'LIFETIME', credits: lifetime.credits, amountCents: Math.round(lifetime.price * 100), currency: 'usd', productName: lifetime.name, productDescription: lifetime.tagline };
+  }
+  // Legacy identifiers stay resolvable for existing Stripe/Safepay events.
+  return PURCHASABLES.find((item) => item.id === id);
 }
 
 export function priceIdFor(item: Purchasable): string | undefined {
@@ -135,18 +162,11 @@ export function priceIdFor(item: Purchasable): string | undefined {
 
 /** Resolve Safepay's quote amount from SavDown's centralized pricing source. */
 export async function resolveSafepayPurchase(item: Purchasable): Promise<{ amount: number; currency: 'USD' }> {
-  const pricing = await getPricingConfig();
-  const amount = item.id === 'pro-monthly'
-    ? pricing.plans.find((plan) => plan.id === 'pro')?.monthlyPrice
-    : item.id === 'pro-yearly'
-      ? pricing.plans.find((plan) => plan.id === 'pro')?.yearlyPrice
-      : item.id.startsWith('pack-')
-        ? pricing.packs.find((pack) => pack.id === item.id.slice('pack-'.length))?.price
-        : item.id === 'lifetime' ? pricing.lifetime.price : undefined;
-  if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) {
+  const amount = item.amountCents;
+  if (!Number.isInteger(amount) || amount <= 0) {
     throw new Error(`No valid centralized price configured for ${item.id}`);
   }
-  return { amount: Math.round(amount * 100), currency: 'USD' };
+  return { amount, currency: 'USD' };
 }
 
 /** Reverse lookup used by the webhook: Stripe tells us the price, we resolve the grant. */

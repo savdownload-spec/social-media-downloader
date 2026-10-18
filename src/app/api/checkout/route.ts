@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   const itemId = (body as { item?: unknown })?.item;
   if (typeof itemId !== 'string') return fail('Choose a plan to continue.');
 
-  const item = findPurchasable(itemId);
+  const item = await findPurchasable(itemId);
   if (!item) return fail('That plan is not available.', 404);
   let purchase: { amount: number; currency: 'USD' };
   try { purchase = await resolveSafepayPurchase(item); } catch { return fail('That plan is not configured for purchase yet.', 503); }
@@ -44,7 +44,12 @@ export async function POST(request: Request) {
 
   try {
     const origin = resolveOrigin(request);
-    const metadata = { userId: user.id, itemId: item.id, provider: 'SAFEPAY' };
+    const providerMetadata = {
+      userId: user.id, itemId: item.id, provider: 'SAFEPAY', itemKind: item.kind,
+      itemLabel: item.label, itemCredits: String(item.credits), itemAmountCents: String(item.amountCents),
+      itemTier: item.tier ?? '', itemInterval: item.interval ?? '',
+    };
+    const paymentMetadata = { ...providerMetadata, itemSnapshot: item };
     const trackerResponse = await safepay.payments.session.setup({
       merchant_api_key: config.merchantApiKey,
       intent: config.intent,
@@ -52,7 +57,7 @@ export async function POST(request: Request) {
       entry_mode: config.entryMode,
       currency: purchase.currency,
       amount: purchase.amount,
-      metadata,
+      metadata: providerMetadata,
       include_fees: false,
     });
     const tracker = trackerResponse?.data?.tracker;
@@ -72,8 +77,8 @@ export async function POST(request: Request) {
 
     await prisma.payment.upsert({
       where: { provider_providerPaymentId: { provider: 'SAFEPAY', providerPaymentId: tracker.token } },
-      create: { provider: 'SAFEPAY', providerPaymentId: tracker.token, userId: user.id, itemId: item.id, amount: purchase.amount, currency: purchase.currency, status: 'pending', metadata },
-      update: { userId: user.id, itemId: item.id, amount: purchase.amount, currency: purchase.currency, status: 'pending', metadata },
+      create: { provider: 'SAFEPAY', providerPaymentId: tracker.token, userId: user.id, itemId: item.id, amount: purchase.amount, currency: purchase.currency, status: 'pending', metadata: paymentMetadata },
+      update: { userId: user.id, itemId: item.id, amount: purchase.amount, currency: purchase.currency, status: 'pending', metadata: paymentMetadata },
     });
     return ok({ url });
   } catch (error) {

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { findPurchasable, grantCredits, addMonths, type PlanTier } from '@/lib/billing';
+import { findPurchasable, grantCredits, addMonths, type PlanTier, type Purchasable } from '@/lib/billing';
 import { safeJson, safepayEventId, safepayEventType, verifySafepayWebhook } from '@/lib/safepay';
 import { createAdminNotification } from '@/lib/admin-notifications';
 
@@ -57,10 +57,13 @@ async function handleEvent(eventId: string, type: string, payload: Record<string
         : normalized.includes('cancel') ? 'cancelled' : 'pending';
 
   const jsonMetadata = payload as Prisma.InputJsonValue;
+  const pendingPayment = await prisma.payment.findUnique({ where: { provider_providerPaymentId: { provider: 'SAFEPAY', providerPaymentId: paymentId } } });
+  const storedMetadata = safeJson(pendingPayment?.metadata);
+  const snapshot = purchasableSnapshot(storedMetadata.itemSnapshot) ?? purchasableFromProviderMetadata(metadata);
   const payment = await prisma.payment.upsert({
     where: { provider_providerPaymentId: { provider: 'SAFEPAY', providerPaymentId: paymentId } },
     create: { provider: 'SAFEPAY', providerPaymentId: paymentId, userId, itemId, amount, currency, status, reference: stringValue(data.reference ?? data.transaction_id), subscriptionId, metadata: jsonMetadata, paidAt: status === 'succeeded' ? new Date() : null, refundedAt: status === 'refunded' ? new Date() : null },
-    update: { userId, itemId, amount, currency, status, reference: stringValue(data.reference ?? data.transaction_id), subscriptionId, metadata: jsonMetadata, ...(status === 'succeeded' ? { paidAt: new Date() } : {}), ...(status === 'refunded' ? { refundedAt: new Date() } : {}) },
+    update: { userId, itemId, amount, currency, status, reference: stringValue(data.reference ?? data.transaction_id), subscriptionId, metadata: pendingPayment?.metadata ?? jsonMetadata, ...(status === 'succeeded' ? { paidAt: new Date() } : {}), ...(status === 'refunded' ? { refundedAt: new Date() } : {}) },
   });
 
   if (status === 'failed' || status === 'refunded') {
@@ -96,12 +99,17 @@ async function handleEvent(eventId: string, type: string, payload: Record<string
   }
 
   if (status === 'refunded' && userId && itemId) {
-    const refundedItem = findPurchasable(itemId);
-    if (refundedItem) await grantCredits({ userId, amount: -refundedItem.credits, kind: 'refund', bucket: 'purchased', description: `Refund — ${refundedItem.label}`, externalId: eventId, paymentId: payment.id });
+    const refundedItem = snapshot ?? await findPurchasable(itemId, true);
+    if (refundedItem?.kind === 'subscription') {
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true } });
+      await grantCredits({ userId, amount: 0, kind: 'refund', bucket: 'plan', description: `Refund — ${refundedItem.label}`, externalId: eventId, paymentId: payment.id, resetPlanCredits: true, planCreditsResetAt: null, tier: user?.plan === 'LIFETIME' ? undefined : 'FREE' });
+    } else if (refundedItem) {
+      await grantCredits({ userId, amount: -refundedItem.credits, kind: 'refund', bucket: 'purchased', description: `Refund — ${refundedItem.label}`, externalId: eventId, paymentId: payment.id });
+    }
     return;
   }
   if (status !== 'succeeded' || !userId || !itemId) return;
-  const item = findPurchasable(itemId);
+  const item = snapshot ?? await findPurchasable(itemId, true);
   if (!item) { console.error('Unknown Safepay item:', itemId); return; }
 
   if (item.kind === 'subscription') {
@@ -121,3 +129,18 @@ async function handleEvent(eventId: string, type: string, payload: Record<string
 function stringValue(value: unknown): string | undefined { return typeof value === 'string' && value ? value : undefined; }
 function numberValue(value: unknown): number | undefined { return typeof value === 'number' && Number.isFinite(value) ? value : typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : undefined; }
 function isUniqueViolation(error: unknown): boolean { return typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === 'P2002'; }
+
+function purchasableSnapshot(value: unknown): Purchasable | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const item = value as Partial<Purchasable>;
+  return typeof item.id === 'string' && typeof item.kind === 'string' && typeof item.credits === 'number' && typeof item.amountCents === 'number' ? item as Purchasable : undefined;
+}
+
+function purchasableFromProviderMetadata(metadata: Record<string, unknown>): Purchasable | undefined {
+  const id = stringValue(metadata.itemId); const kind = stringValue(metadata.itemKind);
+  const label = stringValue(metadata.itemLabel); const credits = Number(metadata.itemCredits); const amountCents = Number(metadata.itemAmountCents);
+  if (!id || !label || !['subscription', 'pack', 'lifetime'].includes(kind ?? '') || !Number.isInteger(credits) || credits <= 0 || !Number.isInteger(amountCents) || amountCents <= 0) return undefined;
+  const tier = stringValue(metadata.itemTier) as PlanTier | undefined;
+  const interval = stringValue(metadata.itemInterval) as 'month' | 'year' | undefined;
+  return { id, kind: kind as Purchasable['kind'], label, credits, amountCents, tier, interval, priceEnv: '', currency: 'usd', productName: label, productDescription: label };
+}

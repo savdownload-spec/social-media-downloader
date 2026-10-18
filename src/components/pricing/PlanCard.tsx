@@ -20,6 +20,7 @@ export function PlanCard({ plan }: { plan: PlanView }) {
       <div className="flex h-full flex-col">
         <h3 className="text-lg font-bold text-text">{plan.name}</h3>
         <p className="mt-1.5 text-sm leading-relaxed text-text-muted">{plan.tagline}</p>
+        {plan.description && <p className="mt-2 text-sm leading-relaxed text-text-subtle">{plan.description}</p>}
 
         <div className="mt-5 flex flex-wrap items-end gap-x-1.5">
           <span className="text-4xl font-bold tracking-tight text-text">{plan.price}</span>

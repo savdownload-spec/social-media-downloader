@@ -37,13 +37,13 @@ export function PricingTabs() {
   const plans = useMemo(
     () =>
       config.plans
-        .filter((p) => p.visible)
+        .filter((p) => p.visible && !p.archived && (p.monthlyPrice === 0 && p.yearlyPrice === 0 || p.billingIntervals.includes(period)))
         .sort((a, b) => a.order - b.order)
         .map((p) => derivePlan(p, period)),
     [config.plans, period],
   );
   const packs = useMemo(() => derivePacks(config.packs), [config.packs]);
-  const lifetime = useMemo(() => deriveLifetime(config.lifetime), [config.lifetime]);
+  const lifetimes = useMemo(() => config.lifetimes.filter((item) => item.visible && !item.archived).sort((a, b) => a.order - b.order).map(deriveLifetime), [config.lifetimes]);
 
   function onTabKey(e: React.KeyboardEvent, index: number) {
     if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
@@ -123,7 +123,7 @@ export function PricingTabs() {
           )}
         </div>
 
-        <div className="mx-auto mt-8 grid max-w-3xl grid-cols-1 gap-6 px-1 pt-8 sm:grid-cols-2 sm:gap-5">
+        <div className="mx-auto mt-8 grid max-w-6xl grid-cols-1 gap-6 px-1 pt-8 sm:grid-cols-2 lg:grid-cols-3 sm:gap-5">
           {plans.map((plan) => (
             <PlanCard key={plan.id} plan={plan} />
           ))}
@@ -155,7 +155,7 @@ export function PricingTabs() {
           </div>
         </div>
 
-        <div className="mx-auto mt-10 grid max-w-4xl grid-cols-1 gap-6 px-1 pt-8 md:grid-cols-3 md:gap-5">
+        <div className="mx-auto mt-10 grid max-w-6xl grid-cols-1 gap-6 px-1 pt-8 sm:grid-cols-2 lg:grid-cols-3 md:gap-5">
           {packs.map((pack) => (
             <CreditPackCard key={pack.id} pack={pack} />
           ))}
@@ -179,8 +179,8 @@ export function PricingTabs() {
           </p>
         </div>
 
-        <div className="mt-10 px-1 pt-8">
-          <LifetimeCard lifetime={lifetime} />
+        <div className="mx-auto mt-10 grid max-w-6xl grid-cols-1 gap-6 px-1 pt-8 lg:grid-cols-2">
+          {lifetimes.map((lifetime) => <LifetimeCard key={lifetime.id} lifetime={lifetime} />)}
         </div>
       </div>
     </Container>

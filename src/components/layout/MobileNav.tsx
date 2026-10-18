@@ -49,23 +49,15 @@ export function MobileNav({ close }: { close: () => void }) {  const config = u
   const [openSection, setOpenSection] = useState<SectionId | null>(null);
   const latest3 = blogPostsByDate.slice(0, 3);
 
-  // Pricing tiles derived from the shared model (Free, Pro, Lifetime).
-  const freePlan = config.plans.find((p) => p.id === 'free');
-  const proPlan = config.plans.find((p) => p.id === 'pro');
-  const ltView = deriveLifetime(config.lifetime);
   const pricingTiles = [
-    freePlan &&
-      (() => {
-        const v = derivePlan(freePlan, 'monthly');
-        return { id: 'free', name: v.name, price: v.price, period: '', credits: v.credits, href: v.ctaHref };
-      })(),
-    proPlan &&
-      (() => {
-        const v = derivePlan(proPlan, 'monthly');
-        return { id: 'pro', name: v.name, price: v.price, period: '/mo', credits: v.credits, href: v.ctaHref };
-      })(),
-    { id: 'lifetime', name: ltView.name, price: ltView.price, period: '', credits: ltView.credits, href: ltView.ctaHref },
-  ].filter(Boolean) as { id: string; name: string; price: string; period: string; credits: string; href: string }[];
+    ...config.plans.filter((p) => p.visible && !p.archived).sort((a, b) => a.order - b.order).map((plan) => {
+      const v = derivePlan(plan, plan.billingIntervals.includes('monthly') ? 'monthly' : 'yearly');
+      return { id: plan.entitlementTier === 'FREE' ? 'free' : 'pro', name: v.name, price: v.price, period: v.free ? '' : v.period, credits: v.credits, href: v.ctaHref };
+    }),
+    ...config.lifetimes.filter((p) => p.visible && !p.archived).sort((a, b) => a.order - b.order).map((plan) => {
+      const v = deriveLifetime(plan); return { id: 'lifetime', name: v.name, price: v.price, period: '', credits: v.credits, href: v.ctaHref };
+    }),
+  ].slice(0, 3);
 
   function toggle(id: SectionId) {
     setOpenSection((prev) => (prev === id ? null : id));

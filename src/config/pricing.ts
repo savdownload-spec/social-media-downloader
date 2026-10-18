@@ -51,6 +51,7 @@ export type RawPlan = {
   id: string;
   name: string;
   tagline: string;
+  description?: string;
   /** Dollars. 0 for Free. */
   monthlyPrice: number;
   /** Dollars for a full year. 0 for Free. */
@@ -64,8 +65,11 @@ export type RawPlan = {
   features: string[];
   /** The single primary-conversion plan. */
   popular?: boolean;
+  billingIntervals: BillingPeriod[];
+  entitlementTier: 'FREE' | 'PRO' | 'MAX';
   order: number;
   visible: boolean;
+  archived?: boolean;
 };
 
 export type RawPack = {
@@ -79,9 +83,11 @@ export type RawPack = {
   bonus?: number;
   order: number;
   visible: boolean;
+  archived?: boolean;
 };
 
 export type RawLifetime = {
+  id: string;
   name: string;
   /** Dollars, one-time. */
   price: number;
@@ -90,13 +96,15 @@ export type RawLifetime = {
   tagline: string;
   benefits: string[];
   fairUse: string[];
+  order: number;
   visible: boolean;
+  archived?: boolean;
 };
 
 export type PricingConfig = {
   plans: RawPlan[];
   packs: RawPack[];
-  lifetime: RawLifetime;
+  lifetimes: RawLifetime[];
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -131,6 +139,8 @@ export const DEFAULT_PRICING: PricingConfig = {
         'Standard processing',
       ],
       popular: false,
+      billingIntervals: ['monthly', 'yearly'],
+      entitlementTier: 'FREE',
       order: 0,
       visible: true,
     },
@@ -143,6 +153,8 @@ export const DEFAULT_PRICING: PricingConfig = {
       monthlyCredits: 1000,
       features: PRO_FEATURES,
       popular: true,
+      billingIntervals: ['monthly', 'yearly'],
+      entitlementTier: 'PRO',
       order: 1,
       visible: true,
     },
@@ -152,7 +164,8 @@ export const DEFAULT_PRICING: PricingConfig = {
     { id: 'creator', name: 'Creator', tagline: 'For regular one-off usage', credits: 1000, price: 14, order: 1, visible: true },
     { id: 'power', name: 'Power', tagline: 'For heavy one-off usage', credits: 3000, price: 36, order: 2, visible: true },
   ],
-  lifetime: {
+  lifetimes: [{
+    id: 'lifetime',
     name: 'Lifetime',
     price: 199,
     credits: 30000,
@@ -170,8 +183,9 @@ export const DEFAULT_PRICING: PricingConfig = {
       'Top up any time with a credit pack once your balance runs low.',
       'For personal and individual use, not resale or automated bulk pipelines.',
     ],
+    order: 0,
     visible: true,
-  },
+  }],
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -190,6 +204,7 @@ export type PlanView = {
   id: string;
   name: string;
   tagline: string;
+  description?: string;
   free: boolean;
   popular: boolean;
   badge: BadgeKind;
@@ -253,6 +268,7 @@ export function derivePlan(plan: RawPlan, period: BillingPeriod): PlanView {
     id: plan.id,
     name: plan.name,
     tagline: plan.tagline,
+    description: plan.description,
     free,
     popular: Boolean(plan.popular),
     badge,
@@ -265,7 +281,7 @@ export function derivePlan(plan: RawPlan, period: BillingPeriod): PlanView {
     creditsNote,
     features: plan.features,
     ctaLabel: free ? 'Get Started' : BILLING_LIVE ? `Get ${plan.name}` : 'Join The Waitlist',
-    ctaHref: free ? '/#tools' : yearly ? 'safepay:pro-yearly' : 'safepay:pro-monthly',
+    ctaHref: free ? '/#tools' : `safepay:subscription:${plan.id}:${yearly ? 'yearly' : 'monthly'}`,
   };
 }
 
@@ -295,7 +311,7 @@ export type PackView = {
  * price; MOST POPULAR to the middle pack.
  */
 export function derivePacks(packs: RawPack[]): PackView[] {
-  const visible = packs.filter((p) => p.visible).sort((a, b) => a.order - b.order);
+  const visible = packs.filter((p) => p.visible && !p.archived).sort((a, b) => a.order - b.order);
   if (visible.length === 0) return [];
 
   const totalCredits = (p: RawPack) => p.credits + (p.bonus ?? 0);
@@ -324,12 +340,13 @@ export function derivePacks(packs: RawPack[]): PackView[] {
       badge,
       badgeLabel: badge === 'value' ? 'BEST VALUE' : badge === 'popular' ? 'MOST POPULAR' : undefined,
       ctaLabel: BILLING_LIVE ? 'Buy Credits' : 'Join The Waitlist',
-      ctaHref: `safepay:${p.id}`,
+      ctaHref: `safepay:pack:${p.id}`,
     };
   });
 }
 
 export type LifetimeView = {
+  id: string;
   name: string;
   price: string;
   period: string;
@@ -344,6 +361,7 @@ export type LifetimeView = {
 
 export function deriveLifetime(lt: RawLifetime): LifetimeView {
   return {
+    id: lt.id,
     name: lt.name,
     price: formatMoney(lt.price),
     period: 'one-time payment',
@@ -353,7 +371,7 @@ export function deriveLifetime(lt: RawLifetime): LifetimeView {
     benefits: lt.benefits,
     fairUse: lt.fairUse,
     ctaLabel: BILLING_LIVE ? 'Get Lifetime' : 'Join The Waitlist',
-    ctaHref: 'safepay:lifetime',
+    ctaHref: `safepay:lifetime:${lt.id}`,
   };
 }
 
@@ -362,10 +380,10 @@ export type PlanSummary = { id: string; name: string; price: string; period: str
 
 export function derivePlanSummaries(config: PricingConfig): PlanSummary[] {
   const plans = config.plans
-    .filter((p) => p.visible)
+    .filter((p) => p.visible && !p.archived)
     .sort((a, b) => a.order - b.order)
     .map((p) => {
-      const v = derivePlan(p, 'monthly');
+      const v = derivePlan(p, p.billingIntervals.includes('monthly') ? 'monthly' : 'yearly');
       return { id: p.id, name: p.name, price: v.price, period: v.free ? 'forever' : '/mo', credits: v.credits, href: v.ctaHref };
     });
   return plans;
@@ -414,33 +432,49 @@ export const trustPoints: TrustPoint[] = [
 ];
 
 export type ComparisonValue = boolean | string;
-export type ComparisonRow = { label: string; free: ComparisonValue; pro: ComparisonValue; lifetime: ComparisonValue };
-export const comparisonColumns = ['Free', 'Pro', 'Lifetime'] as const;
+export type ComparisonRow = { label: string; values: Record<string, ComparisonValue> };
 
 /** Built from the model so allowances stay in step with the plans. */
-export function buildComparison(config: PricingConfig): ComparisonRow[] {
-  const free = config.plans.find((p) => p.id === 'free');
-  const pro = config.plans.find((p) => p.id === 'pro');
-  return [
-    {
-      label: 'Credit allowance',
-      free: free?.creditsNote ?? `${(free?.monthlyCredits ?? 0).toLocaleString()} / month`,
-      pro: `${(pro?.monthlyCredits ?? 0).toLocaleString()} / month`,
-      lifetime: `${config.lifetime.credits.toLocaleString()} total`,
-    },
-    { label: 'Up to 4K quality', free: false, pro: true, lifetime: true },
-    { label: 'Priority processing', free: false, pro: true, lifetime: true },
-    { label: 'Batch downloads', free: false, pro: true, lifetime: true },
-    { label: 'Ads', free: 'Minimal', pro: 'None', lifetime: 'None' },
-    { label: 'Credit expiry', free: 'Daily reset', pro: 'Monthly reset', lifetime: 'Never expire' },
-    { label: 'Recurring payment', free: 'None', pro: 'Monthly or yearly', lifetime: 'One-time' },
-    { label: 'Priority new features', free: false, pro: false, lifetime: true },
+export function buildComparison(config: PricingConfig): { columns: { id: string; name: string }[]; rows: ComparisonRow[] } {
+  const plans = config.plans.filter((p) => p.visible && !p.archived).sort((a, b) => a.order - b.order);
+  const lifetimes = config.lifetimes.filter((p) => p.visible && !p.archived).sort((a, b) => a.order - b.order);
+  const columns = [
+    ...plans.map((p) => ({ id: `plan:${p.id}`, name: p.name })),
+    ...lifetimes.map((p) => ({ id: `lifetime:${p.id}`, name: p.name })),
   ];
+  const featureNames = Array.from(new Set([...plans.flatMap((p) => p.features), ...lifetimes.flatMap((p) => p.benefits)]));
+  return {
+    columns,
+    rows: [
+      {
+        label: 'Credit allowance',
+        values: Object.fromEntries([
+          ...plans.map((p) => [`plan:${p.id}`, p.creditsLabel ?? `${p.monthlyCredits.toLocaleString()} / month`]),
+          ...lifetimes.map((p) => [`lifetime:${p.id}`, `${p.credits.toLocaleString()} total`]),
+        ]),
+      },
+      {
+        label: 'Billing',
+        values: Object.fromEntries([
+          ...plans.map((p) => [`plan:${p.id}`, p.monthlyPrice === 0 && p.yearlyPrice === 0 ? 'Free' : p.billingIntervals.join(' or ')]),
+          ...lifetimes.map((p) => [`lifetime:${p.id}`, 'One-time']),
+        ]),
+      },
+      ...featureNames.map((feature) => ({
+        label: feature,
+        values: Object.fromEntries([
+          ...plans.map((p) => [`plan:${p.id}`, p.features.includes(feature)]),
+          ...lifetimes.map((p) => [`lifetime:${p.id}`, p.benefits.includes(feature)]),
+        ]),
+      })),
+    ],
+  };
 }
 
 /** FAQ, with the annual-saving answer computed from the model. */
 export function buildPricingFaqs(config: PricingConfig) {
-  const pro = config.plans.find((p) => p.id === 'pro');
+  const pro = config.plans.find((p) => p.visible && !p.archived && p.monthlyPrice > 0);
+  const lifetime = config.lifetimes.find((p) => p.visible && !p.archived);
   const monthly = pro?.monthlyPrice ?? 0;
   const yearly = pro?.yearlyPrice ?? 0;
   const savings = monthly * 12 - yearly;
@@ -471,7 +505,7 @@ export function buildPricingFaqs(config: PricingConfig) {
     {
       question: 'What is the Lifetime plan?',
       answer:
-        `A single payment of ${formatMoney(config.lifetime.price)} for ${config.lifetime.credits.toLocaleString()} lifetime credits that never expire, plus lifetime access to premium features and all future standard updates. It is a large but fixed credit balance rather than unlimited processing — when it runs low you can top up with a credit pack. Best for people who would rather own SavDown than subscribe.`,
+        lifetime ? `A single payment of ${formatMoney(lifetime.price)} for ${lifetime.credits.toLocaleString()} finite lifetime credits that never expire. Available tiers are shown on the Lifetime tab.` : 'Lifetime plans are not currently offered.',
     },
     {
       question: 'Can I buy credits without subscribing?',

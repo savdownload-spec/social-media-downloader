@@ -58,6 +58,31 @@ export async function PUT(req: NextRequest) {
     );
   }
 
+  const currentRow = await prisma.adminSetting.findUnique({ where: { key: PRICING_SETTING_KEY } });
+  let currentParsed: ReturnType<typeof pricingConfigSchema.safeParse> | null = null;
+  try { currentParsed = currentRow ? pricingConfigSchema.safeParse(JSON.parse(currentRow.value)) : null; } catch { currentParsed = null; }
+  const current = currentParsed?.success ? currentParsed.data : DEFAULT_PRICING;
+  const nextIds = new Set([
+    ...parsed.data.plans.map((item) => `subscription:${item.id}`),
+    ...parsed.data.packs.map((item) => `pack:${item.id}`),
+    ...parsed.data.lifetimes.map((item) => `lifetime:${item.id}`),
+  ]);
+  const removed = [
+    ...current.plans.map((item) => ({ key: `subscription:${item.id}`, ids: [`subscription:${item.id}:monthly`, `subscription:${item.id}:yearly`, `${item.id}-monthly`, `${item.id}-yearly`], providerRefs: item.id === 'pro' ? [process.env.STRIPE_PRICE_PRO_MONTHLY, process.env.STRIPE_PRICE_PRO_YEARLY].filter(Boolean) as string[] : [] })),
+    ...current.packs.map((item) => ({ key: `pack:${item.id}`, ids: [`pack:${item.id}`, `pack-${item.id}`, item.id], providerRefs: [process.env[`STRIPE_PRICE_PACK_${item.id.toUpperCase().replace(/-/g, '_')}`]].filter(Boolean) as string[] })),
+    ...current.lifetimes.map((item) => ({ key: `lifetime:${item.id}`, ids: [`lifetime:${item.id}`, item.id], providerRefs: item.id === 'lifetime' ? [process.env.STRIPE_PRICE_LIFETIME].filter(Boolean) as string[] : [] })),
+  ].filter((item) => !nextIds.has(item.key));
+
+  for (const item of removed) {
+    const [payments, subscriptions] = await Promise.all([
+      prisma.payment.count({ where: { itemId: { in: item.ids } } }),
+      prisma.subscription.count({ where: { OR: [...item.ids.map((id) => ({ stripePriceId: { contains: id } })), ...item.providerRefs.map((id) => ({ stripePriceId: id }))] } }),
+    ]);
+    if (payments > 0 || subscriptions > 0 || item.providerRefs.length > 0) {
+      return NextResponse.json({ ok: false, error: `Cannot permanently remove ${item.key}; it has billing history. Archive it instead.` }, { status: 409 });
+    }
+  }
+
   await prisma.adminSetting.upsert({
     where: { key: PRICING_SETTING_KEY },
     update: { value: JSON.stringify(parsed.data) },
@@ -70,6 +95,7 @@ export async function PUT(req: NextRequest) {
     action: 'pricing.update',
     targetType: 'AdminSetting',
     targetId: PRICING_SETTING_KEY,
+    detail: { removed: removed.map((item) => item.key) },
   });
 
   // Bust the cached pricing so the public site reflects the change.

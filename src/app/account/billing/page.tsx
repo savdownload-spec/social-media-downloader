@@ -8,6 +8,7 @@ import { Container } from '@/components/layout/Container';
 import { Section } from '@/components/layout/Section';
 import { ManageBillingButton } from '@/components/account/ManageBillingButton';
 import { getBillingSummary, TIER_ALLOWANCE } from '@/lib/billing';
+import { getPricingConfig } from '@/lib/pricing-server';
 import { buildMetadata } from '@/lib/seo';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
@@ -35,7 +36,7 @@ export default async function BillingPage({
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect('/login?callbackUrl=/account/billing');
 
-  const [summary, subscription, ledger] = await Promise.all([
+  const [summary, subscription, ledger, pricing, latestLifetimePayment] = await Promise.all([
     getBillingSummary(session.user.id),
     prisma.subscription.findFirst({
       where: { userId: session.user.id, status: { in: ['active', 'trialing', 'past_due'] } },
@@ -46,11 +47,19 @@ export default async function BillingPage({
       orderBy: { createdAt: 'desc' },
       take: 10,
     }),
+    getPricingConfig(),
+    prisma.payment.findFirst({ where: { userId: session.user.id, status: 'succeeded', itemId: { startsWith: 'lifetime:' } }, orderBy: { paidAt: 'desc' } }),
   ]);
 
   if (!summary) redirect('/login?callbackUrl=/account/billing');
 
   const allowance = TIER_ALLOWANCE[summary.plan];
+  const subscriptionItemId = subscription?.stripePriceId.startsWith('safepay:') ? subscription.stripePriceId.slice('safepay:'.length) : null;
+  const subscriptionPlanId = subscriptionItemId?.startsWith('subscription:') ? subscriptionItemId.split(':')[1] : null;
+  const configuredPlan = subscriptionPlanId ? pricing.plans.find((plan) => plan.id === subscriptionPlanId) : null;
+  const lifetimeItemId = latestLifetimePayment?.itemId?.startsWith('lifetime:') ? latestLifetimePayment.itemId.slice('lifetime:'.length) : null;
+  const configuredLifetime = lifetimeItemId ? pricing.lifetimes.find((plan) => plan.id === lifetimeItemId) : null;
+  const planLabel = configuredPlan?.name ?? configuredLifetime?.name ?? PLAN_LABEL[summary.plan] ?? summary.plan;
   const justPaid = searchParams.checkout === 'success';
 
   return (
@@ -99,14 +108,14 @@ export default async function BillingPage({
                   Current plan
                 </p>
                 <p className="mt-2 text-2xl font-bold tracking-tight text-text">
-                  {PLAN_LABEL[summary.plan] ?? summary.plan}
+                  {planLabel}
                 </p>
                 <p className="mt-1 text-sm text-text-muted">
                   {summary.plan === 'LIFETIME'
-                    ? `${allowance.credits.toLocaleString()} lifetime credits (never expire)`
+                    ? `${(configuredLifetime?.credits ?? allowance.credits).toLocaleString()} finite lifetime credits (never expire)`
                     : summary.plan === 'FREE'
                       ? `${allowance.credits.toLocaleString()} credits per ${allowance.period}`
-                      : `${allowance.credits.toLocaleString()} credits per month`}
+                      : `${(configuredPlan?.monthlyCredits ?? allowance.credits).toLocaleString()} credits per month`}
                 </p>
               </div>
 

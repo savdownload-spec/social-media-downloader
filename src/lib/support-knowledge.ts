@@ -947,9 +947,9 @@ export function buildKnowledgeCorpus(): KnowledgeDocument[] {
 /** Live pricing documents, generated from the current pricing config. */
 export function buildPricingKnowledge(config: PricingConfig): KnowledgeDocument[] {
   const money = (n: number) => (Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`);
-  const plans = config.plans.filter((p) => p.visible).sort((a, b) => a.order - b.order);
-  const packs = config.packs.filter((p) => p.visible).sort((a, b) => a.order - b.order);
-  const lifetime = config.lifetime;
+  const plans = config.plans.filter((p) => p.visible && !p.archived).sort((a, b) => a.order - b.order);
+  const packs = config.packs.filter((p) => p.visible && !p.archived).sort((a, b) => a.order - b.order);
+  const lifetimes = config.lifetimes.filter((p) => p.visible && !p.archived).sort((a, b) => a.order - b.order);
 
   const planLines = plans.map((p) => {
     const price = p.monthlyPrice === 0
@@ -992,7 +992,7 @@ export function buildPricingKnowledge(config: PricingConfig): KnowledgeDocument[
     doc_(
       'pricing-plans',
       'SavDown Plans and Prices',
-      `SavDown plans:\n${planLines.join('\n')}${lifetime.visible ? `\n• Lifetime — ${money(lifetime.price)} one-time. ${lifetime.credits.toLocaleString()} lifetime credits that never expire.` : ''}`,
+      `SavDown plans:\n${planLines.join('\n')}${lifetimes.map((lifetime) => `\n• ${lifetime.name} — ${money(lifetime.price)} one-time. ${lifetime.credits.toLocaleString()} finite lifetime credits that never expire.`).join('')}`,
       ['pricing', 'plans', 'what_is'],
       0.97,
       'pricing',
@@ -1037,12 +1037,12 @@ export function buildPricingKnowledge(config: PricingConfig): KnowledgeDocument[
     );
   }
 
-  if (lifetime.visible) {
+  for (const lifetime of lifetimes) {
     docs.push(
       doc_(
-        'pricing-lifetime',
-        'Lifetime Plan',
-        `The Lifetime plan is a one-time payment of ${money(lifetime.price)} for ${lifetime.credits.toLocaleString()} SavCredits that never expire. ${lifetime.tagline} Benefits: ${lifetime.benefits.join('; ')}. Fair use: ${lifetime.fairUse.join(' ')}`,
+        `pricing-lifetime-${lifetime.id}`,
+        `${lifetime.name} Lifetime Plan`,
+        `The ${lifetime.name} plan is a one-time payment of ${money(lifetime.price)} for ${lifetime.credits.toLocaleString()} finite SavCredits that never expire. ${lifetime.tagline} Benefits: ${lifetime.benefits.join('; ')}. Fair use: ${lifetime.fairUse.join(' ')}`,
         ['pricing', 'plans'],
         0.93,
         'pricing',
