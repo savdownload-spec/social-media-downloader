@@ -10,6 +10,7 @@ import { releaseAiCredits, reserveAiCredits, type AiCreditReservation } from '@/
 import { getAiImageConfig } from '@/lib/ai-image-config-server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { getRedis } from '@/lib/redis';
+import { requireToolAvailable } from '@/lib/toolStatus';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,11 +34,6 @@ function cleanError(error: unknown, maintenanceMessage: string) {
   if (error.code === 'invalid_request') return { status: 400, code: 'provider_validation_failed', message: 'That request could not be accepted. Try a different prompt.' };
   if (error.code === 'unavailable') return { status: 503, code: 'provider_unavailable', message: maintenanceMessage };
   return { status: 500, code: 'processing_failed', message: 'The image could not be created. Your credits were not charged.' };
-}
-
-async function isToolDisabled() {
-  const toolConfig = await prisma.toolConfig.findUnique({ where: { slug: 'ai-image-generator' } });
-  return toolConfig?.status === 'DISABLED' || toolConfig?.status === 'MAINTENANCE';
 }
 
 function maxImagesFor(plan: string, config: Awaited<ReturnType<typeof getAiImageConfig>>) {
@@ -71,13 +67,6 @@ export async function POST(request: NextRequest) {
   const config = await getAiImageConfig();
   const requestKey = requestIdempotencyKey(request);
 
-  if (await isToolDisabled()) {
-    await recordRejectedOperation(request, {
-      tool: 'ai-image-generator', platform: 'ai', sourceUrl: 'tool://ai-image-generator', idempotencyKey: requestKey,
-    }, 'tool_unavailable', 'AI image generation is unavailable');
-    return NextResponse.json({ ok: false, error: config.maintenanceMessage }, { status: 503 });
-  }
-
   const inputSchema = z.object({
     tool: z.enum(['ai-image-generator', 'ai-thumbnail-generator']).default('ai-image-generator'),
     prompt: z.string().trim().min(3).max(config.maxPromptLength),
@@ -103,6 +92,13 @@ export async function POST(request: NextRequest) {
     sourceUrl: `tool://${input.tool}`,
     idempotencyKey: requestKey,
   };
+
+  /* ── Tool status gate — covers COMING_SOON, MAINTENANCE, DISABLED for both tool slugs ── */
+  const statusGate = await requireToolAvailable(input.tool);
+  if (!statusGate.ok) {
+    await recordRejectedOperation(request, operation, 'tool_unavailable', 'Tool is not available');
+    return statusGate.response;
+  }
 
   if (activeJobs >= config.maxConcurrentJobs && queuedJobs >= config.maxQueueSize) {
     await recordRejectedOperation(request, operation, 'queue_full', 'Generation queue is full');

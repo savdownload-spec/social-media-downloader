@@ -16,6 +16,7 @@ import sharp from 'sharp';
 import jsQR from 'jsqr';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
+import { requireToolAvailable } from '@/lib/toolStatus';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,6 +28,9 @@ export async function POST(req: Request) {
   const rl = await ratelimit(`qrscan:${ip}`, { limit: 30, windowSeconds: 60 });
   if (!rl.success) return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
 
+  /* ── Tool status gate — reject before credits are charged ── */
+  const statusGate = await requireToolAvailable('qr-code-scanner');
+  if (!statusGate.ok) return statusGate.response;
 
   // Credits are spent only once the job below succeeds.
   const gate = await requireCredits({ cost: JOB_COST.qrTool });

@@ -23,6 +23,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
+import { requireToolAvailable } from '@/lib/toolStatus';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -164,6 +165,10 @@ export async function POST(req: Request) {
   if (!TOOL_SLUGS.has(slug)) {
     return NextResponse.json({ ok: false, error: 'Unknown tool.' }, { status: 400 });
   }
+
+  /* ── Tool status gate — reject before credits are charged ── */
+  const statusGate = await requireToolAvailable(slug);
+  if (!statusGate.ok) return statusGate.response;
 
   // Per-user daily quota: max 10 AI text calls per day
   const session = await getServerSession(authOptions);

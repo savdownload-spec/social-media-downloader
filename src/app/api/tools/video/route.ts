@@ -17,6 +17,7 @@ import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, JOB_COST, recordRejectedOperation, requestIdempotencyKey } from '@/lib/credits';
 import { processVideo, type VideoOperation } from '@/lib/videoService';
+import { requireToolAvailable } from '@/lib/toolStatus';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -52,6 +53,10 @@ export async function POST(req: Request) {
     await recordRejectedOperation(req, gateOperation, 'rate_limited', 'Rate limit exceeded');
     return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
   }
+
+  /* ── Tool status gate — reject before credits are charged ── */
+  const statusGate = await requireToolAvailable(hintedTool);
+  if (!statusGate.ok) return statusGate.response;
 
   // Credits are spent only once the job below succeeds.
   const gate = await requireCredits({ cost: JOB_COST.videoTool, request: req, operation: gateOperation });

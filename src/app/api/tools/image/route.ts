@@ -19,6 +19,7 @@ import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 import { processImage, type ImageOperation, type OutputFormat } from '@/lib/imageService';
+import { requireToolAvailable } from '@/lib/toolStatus';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,17 +42,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
   }
 
-  // Credits are spent only once the job below succeeds.
-  const gate = await requireCredits({ cost: JOB_COST.imageTool });
-  if (!gate.ok) return gate.response;
-
-  /* ── parse multipart ── */
+  /* ── parse multipart early (needed to resolve tool slug for status gate) ── */
   let formData: FormData;
   try {
     formData = await req.formData();
   } catch {
     return NextResponse.json({ error: 'Expected multipart/form-data.' }, { status: 400 });
   }
+
+  const op = (formData.get('op') as string | null)?.toLowerCase() || 'compress';
+  if (!VALID_OPS.has(op)) {
+    return NextResponse.json({ error: `Unknown operation: ${op}` }, { status: 400 });
+  }
+
+  /* ── Tool status gate — reject before credits are charged ── */
+  const statusGate = await requireToolAvailable(TOOL_BY_OP[op] ?? 'image-tool');
+  if (!statusGate.ok) return statusGate.response;
+
+  // Credits are spent only once the job below succeeds.
+  const gate = await requireCredits({ cost: JOB_COST.imageTool });
+  if (!gate.ok) return gate.response;
 
   const file = formData.get('file');
   if (!file || typeof file === 'string') {
@@ -62,11 +72,6 @@ export async function POST(req: Request) {
   const MAX_IMAGE_BYTES = 25 * 1024 * 1024; // 25 MB — matches imageService.ts MAX_INPUT_BYTES
   if ((file as File).size > MAX_IMAGE_BYTES) {
     return NextResponse.json({ error: 'File too large. Maximum image size is 25 MB.' }, { status: 413 });
-  }
-
-  const op = (formData.get('op') as string | null)?.toLowerCase() || 'compress';
-  if (!VALID_OPS.has(op)) {
-    return NextResponse.json({ error: `Unknown operation: ${op}` }, { status: 400 });
   }
 
   const quality = parseInt(formData.get('quality') as string || '0', 10) || undefined;

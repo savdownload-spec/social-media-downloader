@@ -20,6 +20,7 @@ import { z } from 'zod';
 import QRCode from 'qrcode';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
+import { requireToolAvailable } from '@/lib/toolStatus';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -39,6 +40,9 @@ export async function POST(req: Request) {
   const rl = await ratelimit(`qr:${ip}`, { limit: 60, windowSeconds: 60 });
   if (!rl.success) return NextResponse.json({ error: 'Too many requests.' }, { status: 429 });
 
+  /* ── Tool status gate — reject before credits are charged ── */
+  const statusGate = await requireToolAvailable('qr-code-generator');
+  if (!statusGate.ok) return statusGate.response;
 
   // Credits are spent only once the job below succeeds.
   const gate = await requireCredits({ cost: JOB_COST.qrTool });

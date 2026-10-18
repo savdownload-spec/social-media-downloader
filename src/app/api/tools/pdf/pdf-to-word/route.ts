@@ -7,6 +7,7 @@ import { cleanupPdfUploadRefs, readPdfUploadRefs, type PdfUploadRef } from '@/li
 import { checkBatchLimit } from '@/lib/batchLimitGate';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { requireToolAvailable } from '@/lib/toolStatus';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -26,6 +27,10 @@ async function isLibreOfficeAvailable(): Promise<boolean> {
 export async function POST(req: Request) {
   const rl = await ratelimit(`pdf:${getClientId(req)}`, { limit: 10, windowSeconds: 60 });
   if (!rl.success) return NextResponse.json({ error: 'Too many requests. Please wait a minute and try again.' }, { status: 429 });
+
+  /* ── Tool status gate ── */
+  const statusGate = await requireToolAvailable('pdf-to-word');
+  if (statusGate.ok === false) return statusGate.response;
 
   // Check capability before accepting any file or credits — avoids wasting
   // credits on a job that cannot run because LibreOffice is not installed.

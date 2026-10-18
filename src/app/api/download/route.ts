@@ -9,6 +9,7 @@ import { resolveWithYtdlp } from '@/lib/ytdlp';
 import { resolveWithGalleryDl } from '@/lib/gallerydl';
 import type { DownloadResult } from '@/types';
 import { isSupportedPlatformUrl } from '@/lib/security/remote-url';
+import { requireToolAvailable } from '@/lib/toolStatus';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -97,6 +98,11 @@ export async function POST(req: Request) {
       { status: 404 },
     );
   }
+
+  /* ── 4a. Tool status gate — reject before any processing for unavailable tools ── */
+  const statusGate = await requireToolAvailable(body.tool);
+  if (!statusGate.ok) return statusGate.response;
+
   if (!tool.urlPattern.test(body.url)) {
     return NextResponse.json<DownloadResult>(
       { ok: false, error: `That doesn't look like a valid ${tool.platform} link.` },

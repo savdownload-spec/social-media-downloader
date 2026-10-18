@@ -24,6 +24,7 @@ import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, costForHeight, requestIdempotencyKey } from '@/lib/credits';
 import { getYtdlpBin, getFfmpegBin } from '@/lib/binaryPaths';
 import { isSupportedPlatformUrl } from '@/lib/security/remote-url';
+import { requireToolAvailable } from '@/lib/toolStatus';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -59,6 +60,10 @@ export async function GET(req: Request) {
   if (!Number.isInteger(height) || height < 1 || height > 4320) {
     return NextResponse.json({ error: 'Invalid quality.' }, { status: 400 });
   }
+
+  /* ── Tool status gate — reject before credits are charged ── */
+  const statusGate = await requireToolAvailable(tool);
+  if (!statusGate.ok) return statusGate.response;
 
   // Charged after the merge succeeds, so a failed render costs nothing. The
   // cost depends on the resolution actually requested — 4K counts double.

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
+import { requireToolAvailable } from '@/lib/toolStatus';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,6 +17,10 @@ export async function POST(req: Request) {
   if (!rl.success) {
     return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
   }
+
+  /* ── Tool status gate — reject before credits are charged ── */
+  const statusGate = await requireToolAvailable('background-remover');
+  if (!statusGate.ok) return statusGate.response;
 
   const gate = await requireCredits({ cost: JOB_COST.qrTool });
   if (!gate.ok) return gate.response;

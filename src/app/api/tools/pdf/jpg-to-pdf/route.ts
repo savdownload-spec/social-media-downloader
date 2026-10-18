@@ -5,6 +5,7 @@ import { imagesToPdf } from '@/lib/pdfService';
 import { PDF_MAX_BATCH_BYTES } from '@/lib/pdfConfig';
 import { cleanupPdfUploadRefs, readPdfUploadRefs, type PdfUploadRef } from '@/lib/pdfUpload';
 import { checkBatchLimit } from '@/lib/batchLimitGate';
+import { requireToolAvailable } from '@/lib/toolStatus';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,6 +13,11 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   const rl = await ratelimit(`pdf:jpg-to-pdf:${getClientId(req)}`, { limit: 20, windowSeconds: 60 });
   if (!rl.success) return NextResponse.json({ error: 'Too many requests. Please wait a minute and try again.' }, { status: 429 });
+
+  /* ── Tool status gate ── */
+  const statusGate = await requireToolAvailable('jpg-to-pdf');
+  if (statusGate.ok === false) return statusGate.response;
+
   let urls: string[] = [];
   try {
     const body = await req.json() as { files?: PdfUploadRef[] };
