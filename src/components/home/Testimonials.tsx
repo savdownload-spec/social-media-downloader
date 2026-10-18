@@ -5,19 +5,34 @@ import { Section, SectionHeading } from '@/components/layout/Section';
 import { Reveal } from '@/components/ui/Reveal';
 import { ReviewMarquee } from '@/components/reviews/ReviewMarquee';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
+import { ReviewSummaryBadge } from '@/components/reviews/ReviewSummaryBadge';
 import { Review } from '@/components/reviews/ReviewCard';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 export function Testimonials() {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [summary, setSummary] = useState<{ averageRating: number | null; reviewCount: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    // Fetch featured reviews for the marquee
     fetch('/api/reviews?featured=true&limit=12')
       .then((res) => res.json())
       .then((data) => {
         if (!cancelled && data?.ok) setReviews(data.data.reviews || []);
+      })
+      .catch(() => {});
+    // Fetch site-wide totals (limit=1 minimises payload — we only need aggregates)
+    fetch('/api/reviews?limit=1')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled && data?.ok) {
+          setSummary({
+            averageRating: data.data.averageRating ?? null,
+            reviewCount: data.data.reviewCount ?? 0,
+          });
+        }
       })
       .catch(() => {});
     return () => {
@@ -36,6 +51,11 @@ export function Testimonials() {
             </>
           }
           description=""
+        />
+        <ReviewSummaryBadge
+          averageRating={summary?.averageRating ?? null}
+          totalApproved={summary?.reviewCount ?? 0}
+          className="mt-3"
         />
       </div>
 

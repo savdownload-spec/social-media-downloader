@@ -6,6 +6,7 @@ import { Section } from '@/components/layout/Section';
 import { ReviewCard } from '@/components/reviews/ReviewCard';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
 import { ReviewMarquee } from '@/components/reviews/ReviewMarquee';
+import { ReviewSummaryBadge } from '@/components/reviews/ReviewSummaryBadge';
 import { Review } from '@/components/reviews/ReviewCard';
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
@@ -29,6 +30,7 @@ export function ReviewsClient({
 }) {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState<{ averageRating: number | null; reviewCount: number } | null>(null);
   const highlightId = searchParams.review;
   const activeFilter = searchParams.filter || 'all';
   const initialVisible = 12;
@@ -42,6 +44,10 @@ export function ReviewsClient({
       .then((data) => {
         if (!cancelled && data?.ok) {
           setReviews(data.data.reviews || []);
+          setSummary({
+            averageRating: data.data.averageRating ?? null,
+            reviewCount: data.data.reviewCount ?? 0,
+          });
         }
       })
       .catch(() => {})
@@ -80,6 +86,11 @@ export function ReviewsClient({
             <p className="mt-4 text-text-muted leading-relaxed">
               Real experiences from creators, professionals and everyday users.
             </p>
+            <ReviewSummaryBadge
+              averageRating={summary?.averageRating ?? null}
+              totalApproved={summary?.reviewCount ?? 0}
+              className="mt-3"
+            />
           </div>
 
           {!loading && featured.length > 0 && (

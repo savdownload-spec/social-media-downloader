@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { reviewUpdateSchema } from '@/lib/auth/validators';
 import { ok, fail } from '@/lib/api';
+import { revalidateReviews } from '@/lib/reviews-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -72,6 +73,12 @@ export async function PATCH(
     },
   });
 
+  // If the review was approved, editing it moves it back to PENDING so the
+  // approved count drops — bust the cache.
+  if (wasApproved) {
+    revalidateReviews();
+  }
+
   return ok(updated);
 }
 
@@ -95,5 +102,6 @@ export async function DELETE(
 
   await prisma.review.delete({ where: { id: params.id } });
 
+  revalidateReviews();
   return ok({ message: 'Review deleted.' });
 }

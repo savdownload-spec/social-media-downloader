@@ -5,6 +5,7 @@ import { buildMetadata } from '@/lib/seo';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { resolveAdminDateRange } from '@/lib/admin-analytics';
 import { reconcileStaleOperations } from '@/lib/credits';
+import { getReviewSummary } from '@/lib/reviews-server';
 
 export const metadata = buildMetadata({
   title: 'Admin Dashboard',
@@ -39,6 +40,7 @@ export default async function AdminPage() {
     recentActivity,
     dailyDownloads,
     usersByPlan,
+    reviewSummary,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { createdAt: { gte: today } } }),
@@ -69,6 +71,7 @@ export default async function AdminPage() {
       })
     ),
     prisma.user.groupBy({ by: ['plan'], _count: { plan: true } }),
+    getReviewSummary(),
   ]);
 
   const stats = {
@@ -83,6 +86,8 @@ export default async function AdminPage() {
     activeSubscriptions,
     totalCreditsUsed: Math.abs(totalCreditsUsed._sum.amount ?? 0),
     creditsUsedToday: Math.abs(creditsUsedToday._sum.amount ?? 0),
+    approvedReviews: reviewSummary.totalApproved,
+    avgRating: reviewSummary.averageRating,
   };
 
   return (

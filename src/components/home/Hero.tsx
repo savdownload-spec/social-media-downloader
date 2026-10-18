@@ -1,12 +1,26 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { ArrowRight, Check, Database, ShieldCheck, Star, Sparkles, Users } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { HeroToolkit } from '@/components/home/HeroToolkit';
 import { UniversalUrlInput } from '@/components/home/UniversalUrlInput';
 
 export function Hero() {
+  const [liveRating, setLiveRating] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch('/api/reviews?limit=1')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.ok && data.data.averageRating != null) {
+          setLiveRating(data.data.averageRating);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const trustBadges = [
     "Unlimited Downloads",
     "No Ads",
@@ -40,7 +54,7 @@ export function Hero() {
       iconBg: 'bg-sky-50 dark:bg-sky-500/15',
     },
     {
-      value: '4.9',
+      value: liveRating != null ? liveRating.toFixed(1) : '4.9',
       label: "Rating",
       detail: 'Loved by the community',
       icon: Star,

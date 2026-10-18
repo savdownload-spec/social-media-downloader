@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { Section, SectionHeading } from '@/components/layout/Section';
 import { ReviewMarquee } from '@/components/reviews/ReviewMarquee';
+import { ReviewSummaryBadge } from '@/components/reviews/ReviewSummaryBadge';
 import { Review } from '@/components/reviews/ReviewCard';
 
 export function PricingReviews() {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [summary, setSummary] = useState<{ averageRating: number | null; reviewCount: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -37,6 +39,16 @@ export function PricingReviews() {
           }
         }
 
+        // Fetch site-wide aggregates for the summary badge
+        const summaryRes = await fetch('/api/reviews?limit=1');
+        const summaryData = await summaryRes.json();
+        if (!cancelled && summaryData?.ok) {
+          setSummary({
+            averageRating: summaryData.data.averageRating ?? null,
+            reviewCount: summaryData.data.reviewCount ?? 0,
+          });
+        }
+
         if (!cancelled) setReviews(list.slice(0, 8));
       } catch {
         // Leave reviews empty; ReviewMarquee renders nothing in that case.
@@ -61,6 +73,11 @@ export function PricingReviews() {
             </>
           }
           description="See why creators, students, marketers, and everyday users choose SavDown."
+        />
+        <ReviewSummaryBadge
+          averageRating={summary?.averageRating ?? null}
+          totalApproved={summary?.reviewCount ?? 0}
+          className="mt-3"
         />
       </div>
 

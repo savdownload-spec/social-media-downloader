@@ -23,6 +23,8 @@ interface Props {
     activeSubscriptions: number;
     totalCreditsUsed: number;
     creditsUsedToday: number;
+    approvedReviews: number;
+    avgRating: number | null;
   };
   topTools: { tool: string; count: number }[];
   recentActivity: { id: string; tool: string; platform: string; createdAt: string; status: string }[];
@@ -115,7 +117,7 @@ export function AdminDashboard({ stats, topTools, recentActivity, dailyDownloads
         <StatCard
           label="Pending Reviews"
           value={stats.pendingReviews.toLocaleString()}
-          sub={`${stats.totalReviews.toLocaleString()} total`}
+          sub={`${stats.approvedReviews.toLocaleString()} approved · avg ${stats.avgRating != null ? stats.avgRating.toFixed(1) + '★' : 'N/A'}`}
           icon={Star}
           accent="rose"
         />

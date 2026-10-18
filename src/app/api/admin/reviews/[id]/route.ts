@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { adminEditSchema, adminActionSchema } from '@/lib/auth/validators';
 import { ok, fail } from '@/lib/api';
+import { revalidateReviews } from '@/lib/reviews-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -40,6 +41,7 @@ export async function PATCH(
           where: { id: params.id },
           data: { status: 'APPROVED', approved: true, approvedAt: new Date() },
         });
+        revalidateReviews();
         return ok({ message: 'Review approved.' });
       case 'reject':
         await prisma.review.update({
@@ -51,18 +53,21 @@ export async function PATCH(
             featured: false,
           },
         });
+        revalidateReviews();
         return ok({ message: 'Review rejected.' });
       case 'feature':
         await prisma.review.update({
           where: { id: params.id },
           data: { featured: true },
         });
+        revalidateReviews();
         return ok({ message: 'Review featured.' });
       case 'unfeature':
         await prisma.review.update({
           where: { id: params.id },
           data: { featured: false },
         });
+        revalidateReviews();
         return ok({ message: 'Review unfeatured.' });
     }
   }
@@ -95,6 +100,7 @@ export async function PATCH(
     },
   });
 
+  revalidateReviews();
   return ok(updated);
 }
 
@@ -115,5 +121,6 @@ export async function DELETE(
 
   await prisma.review.delete({ where: { id: params.id } });
 
+  revalidateReviews();
   return ok({ message: 'Review deleted.' });
 }
