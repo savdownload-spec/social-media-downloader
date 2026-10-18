@@ -51,6 +51,8 @@ export function AdminReviewsTable() {
   const { confirm } = useConfirm();
   const { success, error: errorToast } = useToast();
 
+  const closeEditModal = useCallback(() => setEditing(null), []);
+
   const load = useCallback(() => {
     setLoading(true);
     setError(false);
@@ -292,7 +294,7 @@ export function AdminReviewsTable() {
 
       <Modal
         open={!!editing}
-        onClose={() => setEditing(null)}
+        onClose={closeEditModal}
         title="Edit Review"
         size="sm"
         footer={

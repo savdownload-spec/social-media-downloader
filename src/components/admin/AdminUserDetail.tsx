@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -37,6 +37,10 @@ export function AdminUserDetail({ user }: { user: UserData }) {
   const [newPlan, setNewPlan]         = useState(user.plan);
   const [newRole, setNewRole]         = useState(user.role === 'ADMIN' ? 'ADMIN' : 'USER');
   const [tab, setTab]                 = useState<'overview' | 'credits' | 'downloads' | 'subscriptions' | 'reviews'>('overview');
+
+  const closeCreditModal = useCallback(() => setCreditModal(null), []);
+  const closePlanModal   = useCallback(() => setPlanModal(false), []);
+  const closeRoleModal   = useCallback(() => setRoleModal(false), []);
 
   async function doAction(action: string, extra?: Record<string, unknown>) {
     setLoading(true);
@@ -251,7 +255,7 @@ export function AdminUserDetail({ user }: { user: UserData }) {
       )}
 
       {/* Credit modal */}
-      <Modal open={!!creditModal} onClose={() => setCreditModal(null)} title={creditModal === 'add' ? 'Add Credits' : 'Remove Credits'} size="sm">
+      <Modal open={!!creditModal} onClose={closeCreditModal} title={creditModal === 'add' ? 'Add Credits' : 'Remove Credits'} size="sm">
         <div className="space-y-4">
           <div>
             <label className="text-xs font-semibold text-text-muted block mb-1">Amount</label>
@@ -273,7 +277,7 @@ export function AdminUserDetail({ user }: { user: UserData }) {
       </Modal>
 
       {/* Change plan modal */}
-      <Modal open={planModal} onClose={() => setPlanModal(false)} title="Change Plan" size="sm">
+      <Modal open={planModal} onClose={closePlanModal} title="Change Plan" size="sm">
         <div className="space-y-4">
           <div>
             <label className="text-xs font-semibold text-text-muted block mb-1">New Plan</label>
@@ -292,7 +296,7 @@ export function AdminUserDetail({ user }: { user: UserData }) {
       </Modal>
 
       {/* Change role modal */}
-      <Modal open={roleModal} onClose={() => setRoleModal(false)} title="Change Role" size="sm">
+      <Modal open={roleModal} onClose={closeRoleModal} title="Change Role" size="sm">
         <div className="space-y-4">
           <div>
             <label className="text-xs font-semibold text-text-muted block mb-1">New Role</label>

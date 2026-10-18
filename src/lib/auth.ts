@@ -86,7 +86,7 @@ export const authOptions: NextAuthOptions = {
     signIn: '/login',
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account, profile }) {
       // ── Initial sign-in: populate the token from the DB ─────────────────
       if (user?.email) {
         const normalizedEmail = user.email.toLowerCase();
@@ -95,18 +95,31 @@ export const authOptions: NextAuthOptions = {
         // separate /api/auth/register step) can tell first sign-in apart
         // from a returning user, and credit a referral exactly once.
         const existed = await prisma.user.findUnique({ where: { email: user.email }, select: { id: true } });
+
+        // Determine if the provider vouches for email verification.
+        // Only Google is checked; GitHub and Credentials providers are handled
+        // separately and are not affected by this check.
+        const providerVerifiesEmail =
+          account?.provider === 'google' &&
+          (profile as Record<string, unknown> | undefined)?.email_verified === true;
+
         const dbUser = await prisma.user.upsert({
           where: { email: user.email },
           update: {
             name: user.name,
             image: user.image,
             ...(isConfiguredAdmin ? { role: 'ADMIN' } : {}),
+            // Back-fill emailVerified for Google users on every sign-in when
+            // Google confirms the address is verified. Writing new Date() each
+            // time is safe — Google is authoritative for its own verified claim.
+            ...(providerVerifiesEmail ? { emailVerified: new Date() } : {}),
           },
           create: {
             email: user.email,
             name: user.name,
             image: user.image,
             role: isConfiguredAdmin ? 'ADMIN' : 'USER',
+            ...(providerVerifiesEmail ? { emailVerified: new Date() } : {}),
           },
         });
         if (!existed) {

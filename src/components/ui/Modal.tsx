@@ -93,7 +93,7 @@ export function Modal({
       clearTimeout(t);
       previousActive.current?.focus();
     };
-  }, [open, onClose]);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBackdropClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {

@@ -30,7 +30,7 @@ export default async function AdminUserPage({ params }: { params: { id: string }
         planCreditsResetAt: user.planCreditsResetAt?.toISOString() ?? null,
         subscriptions: user.subscriptions.map((s) => ({ ...s, createdAt: s.createdAt.toISOString(), updatedAt: s.updatedAt.toISOString(), currentPeriodEnd: s.currentPeriodEnd?.toISOString() ?? null })),
         creditLedger: user.creditLedger.map((c) => ({ ...c, createdAt: c.createdAt.toISOString() })),
-        downloads: user.downloads.map((d) => ({ ...d, createdAt: d.createdAt.toISOString() })),
+        downloads: user.downloads.map((d) => ({ ...d, createdAt: d.createdAt.toISOString(), failureCode: d.failureCode ?? null, failureReason: d.failureReason ?? null })),
         reviews: user.reviews.map((r) => ({ ...r, createdAt: r.createdAt.toISOString(), updatedAt: r.updatedAt.toISOString(), approvedAt: r.approvedAt?.toISOString() ?? null })),
       }}
     />
