@@ -96,9 +96,16 @@ export function Newsletter() {
               </label>
             </div>
           </form>
-          <p id="newsletter-feedback" role="status" aria-live="polite" aria-atomic="true" className="mt-2 min-h-5 text-sm text-white">
-            {error || (state === 'loading' ? 'Adding your request...' : state === 'ok' ? "Thanks! If your address is eligible, you're on the list. Check your inbox for any confirmation email." : '')}
-          </p>
+          {/* Feedback paragraph is only rendered when there is a message, so it
+              never occupies reserved space when idle. The aria-live region is
+              kept as a sibling so screen readers still announce updates. */}
+          <div id="newsletter-feedback" role="status" aria-live="polite" aria-atomic="true">
+            {(error || state === 'loading' || state === 'ok') && (
+              <p className="mt-2 text-sm text-white">
+                {error || (state === 'loading' ? 'Adding your request...' : "Thanks! If your address is eligible, you're on the list. Check your inbox for any confirmation email.")}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </Section>
