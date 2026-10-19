@@ -87,14 +87,18 @@ const lifetimeSchema = z.object({
   archived: z.boolean().optional().default(false),
 });
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 function normalizeLegacyLifetime(value: unknown): unknown {
-  if (!value || typeof value !== 'object') return value;
-  const lifetime = value as Record<string, unknown>;
-  if (typeof lifetime.credits !== 'number' || !Array.isArray(lifetime.benefits)) return value;
+  if (!isRecord(value)) return value;
+  const { credits, benefits } = value;
+  if (typeof credits !== 'number' || !Number.isFinite(credits) || credits < 0 || !Array.isArray(benefits)) return value;
   return {
-    ...lifetime,
-    benefits: lifetime.benefits.map((benefit) => benefit === '30,000 lifetime credits'
-      ? `${lifetime.credits.toLocaleString()} lifetime credits`
+    ...value,
+    benefits: benefits.map((benefit: unknown) => benefit === '30,000 lifetime credits'
+      ? `${credits.toLocaleString()} lifetime credits`
       : benefit),
   };
 }
