@@ -39,6 +39,10 @@ export type BuiltBackup = { buffer: Buffer; manifest: BackupManifest; fileName: 
 
 const delegate = (name: string) => (prisma as unknown as Record<string, Delegate>)[name];
 const safeFilePart = (value: string) => value.replace(/[^a-zA-Z0-9._/-]/g, '_').replace(/\.\./g, '_');
+const contentTypeForPath = (value: string) => ({
+  '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif', '.svg': 'image/svg+xml', '.pdf': 'application/pdf',
+}[path.extname(value).toLowerCase()] ?? 'application/octet-stream');
 
 async function rows(name: string, args?: unknown) {
   const result = await delegate(name).findMany({ ...(args as object ?? {}), take: MAX_ROWS_PER_MODEL + 1 });
@@ -182,7 +186,7 @@ async function collectMediaSources(data: Record<string, JsonRecord[]>, includeAl
           byUrl.set(blob.url, {
             originalUrl: blob.url,
             storagePath: blob.pathname,
-            contentType: blob.contentType || 'application/octet-stream',
+            contentType: contentTypeForPath(blob.pathname),
             load: async () => {
               const response = await fetch(blob.url, { cache: 'no-store' });
               if (!response.ok) throw new Error(`Could not read managed media ${blob.pathname}.`);
@@ -201,14 +205,14 @@ async function collectMediaSources(data: Record<string, JsonRecord[]>, includeAl
       const diskPath = path.join(process.cwd(), 'public', ...relative.split('/'));
       byUrl.set(reference, {
         originalUrl: reference, storagePath: relative,
-        contentType: reference.endsWith('.webp') ? 'image/webp' : 'application/octet-stream',
+        contentType: contentTypeForPath(reference),
         load: () => readFile(diskPath),
       });
     } else if (isManagedBlobUrl(reference) && !byUrl.has(reference)) {
       const url = new URL(reference);
       const storagePath = decodeURIComponent(url.pathname.replace(/^\/+/, ''));
       byUrl.set(reference, {
-        originalUrl: reference, storagePath, contentType: 'application/octet-stream',
+        originalUrl: reference, storagePath, contentType: contentTypeForPath(storagePath),
         load: async () => {
           const response = await fetch(reference, { cache: 'no-store' });
           if (!response.ok) throw new Error(`Could not read managed media ${storagePath}.`);
@@ -226,7 +230,7 @@ async function collectMediaSources(data: Record<string, JsonRecord[]>, includeAl
         const relative = path.relative(path.join(process.cwd(), 'public'), diskPath).split(path.sep).join('/');
         const originalUrl = `/${relative}`;
         if (!byUrl.has(originalUrl)) byUrl.set(originalUrl, {
-          originalUrl, storagePath: relative, contentType: 'application/octet-stream', load: () => readFile(diskPath),
+          originalUrl, storagePath: relative, contentType: contentTypeForPath(relative), load: () => readFile(diskPath),
         });
       }
     }
