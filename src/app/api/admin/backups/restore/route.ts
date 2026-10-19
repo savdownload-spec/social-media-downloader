@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   const form = await request.formData().catch(() => null);
   const file = form?.get('file');
   const mode = form?.get('mode');
-  if (!(file instanceof File) || (mode !== 'preview' && mode !== 'restore')) {
+  if (!form || !(file instanceof File) || (mode !== 'preview' && mode !== 'restore')) {
     return NextResponse.json({ ok: false, error: 'Choose a SavDown ZIP and a valid restore action.' }, { status: 400, headers: PRIVATE_NO_STORE_HEADERS });
   }
   if (file.size < 1 || file.size > MAX_UPLOAD_BYTES) {
