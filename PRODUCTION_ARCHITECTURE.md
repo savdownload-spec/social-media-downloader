@@ -218,6 +218,7 @@ _Last updated: final free-first pass — 48 → 56 active tools_
 | `NEXTAUTH_URL` | Full production URL |
 | `NEXTAUTH_SECRET` | NextAuth signing secret |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob |
+| `BACKUP_BLOB_READ_WRITE_TOKEN` or `BACKUP_BLOB_STORE_ID` | Dedicated **private** Vercel Blob store for Admin backups (token recommended; store ID uses Vercel OIDC) |
 | `CRON_SECRET` | PDF cleanup cron |
 
 ### Payments (Safepay)

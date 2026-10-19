@@ -4,7 +4,7 @@ import { requireAdminApi, PRIVATE_NO_STORE_HEADERS } from '@/lib/admin-auth';
 import { writeAuditLog } from '@/lib/admin';
 import { buildBackup } from '@/lib/backup/archive';
 import { restoreValidatedArchive, validateBackupArchive } from '@/lib/backup/restore';
-import { storeBackup, type BackupHistoryItem } from '@/lib/backup/storage';
+import { assertBackupStorageConfigured, BackupStorageConfigurationError, storeBackup, type BackupHistoryItem } from '@/lib/backup/storage';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
     }
 
     // A restore never starts unless its recovery archive is fully built and persisted.
+    assertBackupStorageConfigured();
     const recoveryId = crypto.randomUUID();
     const recovery = await buildBackup({ categories: archive.manifest.selectedCategories, createdBy: auth.user.email ?? 'admin', type: 'recovery' });
     const recoveryMetadata: BackupHistoryItem = {
@@ -69,7 +70,11 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ ok: true, data: { report, recovery: { ...recoveryMetadata, downloadUrl: `/api/admin/backups/${recoveryId}/download` } } }, { headers: PRIVATE_NO_STORE_HEADERS });
   } catch (error) {
-    console.error('Admin restore failed', error);
-    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : 'Restore validation failed.' }, { status: 400, headers: PRIVATE_NO_STORE_HEADERS });
+    // Do not log Blob URLs, SDK request details, tokens, or archive data.
+    console.error('Admin restore failed', error instanceof Error ? error.name : 'RestoreError');
+    return NextResponse.json(
+      { ok: false, error: error instanceof Error ? error.message : 'Restore validation failed.' },
+      { status: error instanceof BackupStorageConfigurationError ? 503 : 400, headers: PRIVATE_NO_STORE_HEADERS },
+    );
   }
 }

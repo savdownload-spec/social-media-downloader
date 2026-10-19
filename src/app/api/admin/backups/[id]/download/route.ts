@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { requireAdminApi } from '@/lib/admin-auth';
-import { readBackup } from '@/lib/backup/storage';
+import { BackupStorageConfigurationError, readBackup } from '@/lib/backup/storage';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,7 +19,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       Vary: 'Cookie',
       'X-Content-Type-Options': 'nosniff',
     } });
-  } catch {
-    return new Response('Backup not found.', { status: 404, headers: { 'Cache-Control': 'private, no-store' } });
+  } catch (error) {
+    const configurationError = error instanceof BackupStorageConfigurationError;
+    return new Response(configurationError ? error.message : 'Backup not found.', {
+      status: configurationError ? 503 : 404,
+      headers: { 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' },
+    });
   }
 }

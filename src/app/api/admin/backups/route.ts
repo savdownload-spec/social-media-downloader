@@ -5,7 +5,7 @@ import { requireAdminApi, PRIVATE_NO_STORE_HEADERS } from '@/lib/admin-auth';
 import { writeAuditLog } from '@/lib/admin';
 import { buildBackup } from '@/lib/backup/archive';
 import { ALL_BACKUP_CATEGORIES, isBackupCategory } from '@/lib/backup/catalog';
-import { listBackups, storeBackup, type BackupHistoryItem } from '@/lib/backup/storage';
+import { assertBackupStorageConfigured, BackupStorageConfigurationError, listBackups, storeBackup, type BackupHistoryItem } from '@/lib/backup/storage';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,8 +18,15 @@ const line = (value: unknown) => encoder.encode(`${JSON.stringify(value)}\n`);
 export async function GET(request: NextRequest) {
   const auth = await requireAdminApi(request);
   if (!auth.ok) return auth.response;
-  const history = await listBackups();
-  return NextResponse.json({ ok: true, data: history }, { headers: PRIVATE_NO_STORE_HEADERS });
+  try {
+    const history = await listBackups();
+    return NextResponse.json({ ok: true, data: history }, { headers: PRIVATE_NO_STORE_HEADERS });
+  } catch (error) {
+    return NextResponse.json(
+      { ok: false, error: error instanceof Error ? error.message : 'Backup history is unavailable.' },
+      { status: error instanceof BackupStorageConfigurationError ? 503 : 502, headers: PRIVATE_NO_STORE_HEADERS },
+    );
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -32,6 +39,13 @@ export async function POST(request: NextRequest) {
   }
 
   const categories = [...new Set(parsed.data.categories)].filter(isBackupCategory);
+  try { assertBackupStorageConfigured(); }
+  catch (error) {
+    return NextResponse.json(
+      { ok: false, error: error instanceof Error ? error.message : 'Secure backup storage is not configured.' },
+      { status: 503, headers: PRIVATE_NO_STORE_HEADERS },
+    );
+  }
   const id = crypto.randomUUID();
   const stream = new ReadableStream({
     async start(controller) {
@@ -52,7 +66,8 @@ export async function POST(request: NextRequest) {
         });
         controller.enqueue(line({ phase: 'done', message: 'Backup ready to download', progress: 100, backup: { ...metadata, downloadUrl: `/api/admin/backups/${id}/download` } }));
       } catch (error) {
-        console.error('Admin backup failed', error);
+        // Do not log Blob URLs, SDK request details, tokens, or archive data.
+        console.error('Admin backup failed', error instanceof Error ? error.name : 'BackupError');
         controller.enqueue(line({ phase: 'error', message: error instanceof Error ? error.message : 'Backup failed.' }));
       } finally { controller.close(); }
     },
