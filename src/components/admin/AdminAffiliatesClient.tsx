@@ -63,19 +63,21 @@ export function AdminAffiliatesClient() {
     <AdminPage>
       <PageHeader title="Affiliates" description={`${total.toLocaleString()} affiliates`} />
 
-      <div className="flex flex-wrap gap-2 mb-5">
-        {STATUSES.map((s) => (
-          <FilterTab
-            key={s}
-            label={s === 'ALL' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()}
-            active={status === s}
-            onClick={() => setStatus(s)}
-          />
-        ))}
+      <div className="admin-sticky-toolbar mb-5">
+        <div className="admin-sticky-toolbar-filters flex min-h-9 min-w-0 items-center gap-2 overflow-x-auto">
+          {STATUSES.map((s) => (
+            <FilterTab
+              key={s}
+              label={s === 'ALL' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()}
+              active={status === s}
+              onClick={() => setStatus(s)}
+            />
+          ))}
+        </div>
       </div>
 
-      <TableCard>
-        <Table>
+      <TableCard stickyHeader>
+        <Table stickyHeader>
           <thead>
             <tr>
               <Th>Code</Th>

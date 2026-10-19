@@ -115,8 +115,8 @@ export function AdminCreditsClient() {
         ))}
       </FilterBar>
 
-      <TableCard>
-        <Table>
+      <TableCard stickyHeader>
+        <Table stickyHeader>
           <thead>
             <tr>
               <Th>User</Th>

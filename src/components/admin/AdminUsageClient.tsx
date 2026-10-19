@@ -101,8 +101,8 @@ export function AdminUsageClient() {
         <select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-lg border border-border bg-white px-3 py-2 text-xs text-text dark:bg-card" aria-label="Filter by status"><option value="">All Statuses</option>{data?.filters.statuses.map((value) => <option key={value} value={value}>{value}</option>)}</select>
       </FilterBar>
 
-      <TableCard>
-        <Table>
+      <TableCard stickyHeader>
+        <Table stickyHeader>
           <thead>
             <tr><Th>Tool</Th><Th>Platform</Th><Th>Status</Th><Th>Details</Th><Th className="text-right">Date</Th></tr>
           </thead>

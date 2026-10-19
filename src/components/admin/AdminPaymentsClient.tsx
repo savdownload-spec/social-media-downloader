@@ -59,8 +59,8 @@ export function AdminPaymentsClient() {
       <PageHeader title="Payments" description={`${total.toLocaleString()} payment records`} />
       <FilterBar search={search} onSearch={setSearch} placeholder="Search user or transaction ID..." />
 
-      <TableCard>
-        <Table>
+      <TableCard stickyHeader>
+        <Table stickyHeader>
           <thead>
             <tr>
               <Th>User</Th>

@@ -187,8 +187,8 @@ export function AdminContentClient() {
       {error ? (
         <ErrorState message="Failed to load posts." onRetry={load} />
       ) : (
-        <TableCard>
-          <Table>
+        <TableCard stickyHeader>
+          <Table stickyHeader>
             <thead>
               <tr>
                 <Th>Title</Th>

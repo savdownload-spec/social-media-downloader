@@ -115,18 +115,22 @@ export function PageHeader({ eyebrow, title, description, actions }: PageHeaderP
 
 // ─── Table Shell ─────────────────────────────────────────────────────────────
 
-export function TableCard({ children, className }: { children: React.ReactNode; className?: string }) {
+export function TableCard({ children, className, stickyHeader = false }: { children: React.ReactNode; className?: string; stickyHeader?: boolean }) {
   return (
-    <div className={cn('bg-white border border-border-light rounded-xl overflow-hidden', className)}>
+    <div className={cn(
+      'bg-white border border-border-light rounded-xl',
+      stickyHeader ? 'admin-sticky-table-card overflow-visible' : 'overflow-hidden',
+      className,
+    )}>
       {children}
     </div>
   );
 }
 
-export function Table({ children }: { children: React.ReactNode }) {
+export function Table({ children, stickyHeader = false }: { children: React.ReactNode; stickyHeader?: boolean }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-[13px]">{children}</table>
+    <div className={cn(stickyHeader ? 'admin-sticky-table-scroll overflow-auto' : 'overflow-x-auto')}>
+      <table className={cn('w-full text-[13px]', stickyHeader && 'admin-sticky-table')}>{children}</table>
     </div>
   );
 }
@@ -326,8 +330,8 @@ interface FilterBarProps {
 
 export function FilterBar({ search, onSearch, placeholder = 'Search...', children }: FilterBarProps) {
   return (
-    <div className="flex flex-col sm:flex-row gap-3 mb-5">
-      <div className="relative w-full sm:w-80">
+    <div className="admin-sticky-toolbar mb-5 flex flex-col gap-3 sm:flex-row">
+      <div className="relative w-full shrink-0 sm:w-80">
         <input
           value={search}
           onChange={(e) => onSearch(e.target.value)}
@@ -338,7 +342,7 @@ export function FilterBar({ search, onSearch, placeholder = 'Search...', childre
           <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
         </svg>
       </div>
-      {children && <div className="flex flex-wrap gap-2 items-center">{children}</div>}
+      {children && <div className="admin-sticky-toolbar-filters flex min-h-9 min-w-0 items-center gap-2 overflow-x-auto">{children}</div>}
     </div>
   );
 }

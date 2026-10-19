@@ -65,8 +65,8 @@ export function AdminAuditClient() {
       <PageHeader title="Audit Log" description={`${total.toLocaleString()} events recorded`} />
       <FilterBar search={search} onSearch={setSearch} placeholder="Search action, admin, or target..." />
 
-      <TableCard>
-        <Table>
+      <TableCard stickyHeader>
+        <Table stickyHeader>
           <thead>
             <tr>
               <Th>Admin</Th>

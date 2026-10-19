@@ -798,12 +798,12 @@ export function AdminUserDetail({ user: initialUser }: { user: UserData }) {
           </SectionCard>
 
           {/* Credit Ledger */}
-          <TableCard>
+          <TableCard stickyHeader>
             <div className="px-5 py-3.5 border-b border-border-light">
               <h3 className="text-sm font-semibold text-text">Credit Ledger</h3>
               <p className="text-[11px] text-text-muted mt-0.5">Last 30 transactions</p>
             </div>
-            <Table>
+            <Table stickyHeader>
               <thead>
                 <tr>
                   <Th>Type</Th>
@@ -880,8 +880,8 @@ export function AdminUserDetail({ user: initialUser }: { user: UserData }) {
           Operations tab (was "downloads")
       ══════════════════════════════════════════════════════════════════════ */}
       {tab === 'operations' && (
-        <TableCard>
-          <Table>
+        <TableCard stickyHeader>
+          <Table stickyHeader>
             <thead>
               <tr>
                 <Th>Tool</Th>

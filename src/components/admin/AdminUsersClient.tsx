@@ -163,8 +163,8 @@ export function AdminUsersClient() {
       {error ? (
         <ErrorState message="Failed to load users." onRetry={load} />
       ) : (
-        <TableCard>
-          <Table>
+        <TableCard stickyHeader>
+          <Table stickyHeader>
             <thead>
               <tr>
                 <Th className="w-10">

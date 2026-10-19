@@ -74,8 +74,8 @@ export function AdminSubscriptionsClient() {
         ))}
       </FilterBar>
 
-      <TableCard>
-        <Table>
+      <TableCard stickyHeader>
+        <Table stickyHeader>
           <thead>
             <tr>
               <Th>Subscriber</Th>

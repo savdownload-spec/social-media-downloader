@@ -77,7 +77,7 @@ export function AdminReportsClient() {
       {error ? (
         <ErrorState message="Failed to generate report." onRetry={load} />
       ) : (
-        <TableCard>
+        <TableCard stickyHeader>
           {loading ? (
             <div className="p-4 space-y-2">
               {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
@@ -90,7 +90,7 @@ export function AdminReportsClient() {
             />
           ) : (
             <>
-              <Table>
+              <Table stickyHeader>
                 <thead>
                   <tr>{columns.map((c) => <Th key={c}>{c.replace(/_/g, ' ')}</Th>)}</tr>
                 </thead>

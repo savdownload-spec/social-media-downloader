@@ -204,8 +204,8 @@ export function AdminToolsClient() {
       {error ? (
         <ErrorState message="Failed to load tools." onRetry={load} />
       ) : (
-        <TableCard>
-          <Table>
+        <TableCard stickyHeader>
+          <Table stickyHeader>
             <thead>
               <tr>
                 <Th>Tool</Th>
