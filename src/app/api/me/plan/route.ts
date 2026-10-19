@@ -12,7 +12,7 @@
 
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getBillingSummary } from '@/lib/billing';
+import { getBillingSummary, getTierAllowance } from '@/lib/billing';
 import { prisma } from '@/lib/prisma';
 import { getToolBatchLimits, MULTI_FILE_TOOL_SLUGS } from '@/lib/batchLimits';
 import { JOB_COST } from '@/lib/credits';
@@ -27,11 +27,20 @@ export async function GET() {
 
   // Unauthenticated → treat as FREE so the UI still renders correctly.
   if (!userId) {
+    const allowance = await getTierAllowance('FREE');
     return Response.json({
       ok: true,
       authenticated: false,
       plan: 'FREE' as PlanTier,
+      planName: allowance.name ?? null,
       totalCredits: null,
+      planCredits: null,
+      purchasedCredits: null,
+      planAllowance: allowance.credits,
+      planAllowancePeriod: allowance.period,
+      planMonthlyCap: allowance.monthlyCap ?? null,
+      creditsLabel: allowance.creditsLabel ?? null,
+      creditsNote: allowance.creditsNote ?? null,
       imageToolCreditCost: JOB_COST.imageTool,
       limits: buildLimits(null),
     });
@@ -56,7 +65,15 @@ export async function GET() {
     ok: true,
     authenticated: true,
     plan,
+    planName: summary?.planName ?? null,
     totalCredits: summary?.totalCredits ?? null,
+    planCredits: summary?.planCredits ?? null,
+    purchasedCredits: summary?.purchasedCredits ?? null,
+    planAllowance: summary?.planAllowance ?? null,
+    planAllowancePeriod: summary?.planAllowancePeriod ?? null,
+    planMonthlyCap: summary?.planMonthlyCap ?? null,
+    creditsLabel: summary?.planCreditsLabel ?? null,
+    creditsNote: summary?.planCreditsNote ?? null,
     imageToolCreditCost: JOB_COST.imageTool,
     limits: buildLimits(configs),
   });

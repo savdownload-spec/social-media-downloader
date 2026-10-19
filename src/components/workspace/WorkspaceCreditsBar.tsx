@@ -28,7 +28,12 @@ export function WorkspaceCreditsBar({ billing }: { billing: BillingSummary }) {
 
       <div>
         <p className="text-[11px] font-bold uppercase tracking-wide text-text-subtle">Plan</p>
-        <p className="text-sm font-semibold text-text mt-1">{PLAN_LABEL[billing.plan]}</p>
+        <p className="text-sm font-semibold text-text mt-1">{billing.planName ?? PLAN_LABEL[billing.plan]}</p>
+        {billing.plan === 'FREE' && billing.planCreditsLabel && (
+          <p className="mt-1 max-w-xs break-words text-xs leading-snug text-text-muted [overflow-wrap:anywhere]">
+            {billing.planCreditsLabel}{billing.planCreditsNote ? ` · ${billing.planCreditsNote}` : ''}
+          </p>
+        )}
       </div>
 
       {billing.planCreditsResetAt && (

@@ -21,6 +21,12 @@ export function PlanCard({ plan }: { plan: PlanView }) {
         <h3 className="text-lg font-bold text-text">{plan.name}</h3>
         <p className="mt-1.5 text-sm leading-relaxed text-text-muted">{plan.tagline}</p>
         {plan.description && <p className="mt-2 text-sm leading-relaxed text-text-subtle">{plan.description}</p>}
+        {plan.promotion && (
+          <div className="mt-3 rounded-xl border border-primary/15 bg-primary-light/60 p-3">
+            {plan.promotion.badge && <span className="mb-1 inline-flex max-w-full break-words rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">{plan.promotion.badge}</span>}
+            <p className="break-words text-sm font-semibold leading-snug text-primary [overflow-wrap:anywhere]">{plan.promotion.text}</p>
+          </div>
+        )}
 
         <div className="mt-5 flex flex-wrap items-end gap-x-1.5">
           <span className="text-4xl font-bold tracking-tight text-text">{plan.price}</span>

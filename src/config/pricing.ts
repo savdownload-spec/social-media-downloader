@@ -43,6 +43,16 @@ export const WAITLIST_HREF = '/contact';
 export type BillingPeriod = 'monthly' | 'yearly';
 export type BadgeKind = 'popular' | 'value' | null;
 
+export type RawPromotion = {
+  enabled: boolean;
+  text: string;
+  badge?: string;
+  startsOn?: string;
+  endsOn?: string;
+};
+
+export type PromotionView = { text: string; badge?: string };
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Raw model (what the admin edits / the DB stores)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -56,15 +66,19 @@ export type RawPlan = {
   monthlyPrice: number;
   /** Dollars for a full year. 0 for Free. */
   yearlyPrice: number;
-  /** Monthly credit allowance (resets each period). */
+  /** Paid monthly allowance, or the Free plan's monthly cap. */
   monthlyCredits: number;
-  /** Optional override for how the allowance reads, e.g. "10 credits / day". */
+  /** Free plan credits granted each day. `monthlyCredits` is its monthly cap. */
+  dailyCredits?: number;
+  /** Optional display override for paid monthly allowances. Free labels are generated from dailyCredits and monthlyCredits. */
   creditsLabel?: string;
-  /** Optional secondary allowance note, e.g. "up to 300 / month". */
+  /** Optional secondary display note for paid allowances. */
   creditsNote?: string;
   features: string[];
   /** The single primary-conversion plan. */
   popular?: boolean;
+  /** Monthly and yearly offers can carry independent promotions. */
+  promotions?: Partial<Record<BillingPeriod, RawPromotion>>;
   billingIntervals: BillingPeriod[];
   entitlementTier: 'FREE' | 'PRO' | 'MAX';
   order: number;
@@ -81,6 +95,7 @@ export type RawPack = {
   price: number;
   /** Optional extra credits granted on top. */
   bonus?: number;
+  promotion?: RawPromotion;
   order: number;
   visible: boolean;
   archived?: boolean;
@@ -96,6 +111,7 @@ export type RawLifetime = {
   tagline: string;
   benefits: string[];
   fairUse: string[];
+  promotion?: RawPromotion;
   order: number;
   visible: boolean;
   archived?: boolean;
@@ -128,9 +144,10 @@ export const DEFAULT_PRICING: PricingConfig = {
       tagline: 'Try SavDown before you pay.',
       monthlyPrice: 0,
       yearlyPrice: 0,
-      monthlyCredits: 300,
-      creditsLabel: '10 credits / day',
-      creditsNote: 'up to 300 / month',
+      monthlyCredits: 600,
+      dailyCredits: 20,
+      creditsLabel: '20 credits / day',
+      creditsNote: 'up to 600 / month',
       features: [
         'Every downloader included',
         'Up to 1080p HD',
@@ -172,7 +189,7 @@ export const DEFAULT_PRICING: PricingConfig = {
     tagline: 'Pay once. Use your lifetime credits whenever you need them.',
     benefits: [
       'One-time payment, no subscription',
-      '30,000 lifetime credits',
+      'A finite lifetime credit bank',
       'Credits never expire',
       'Lifetime access to premium features',
       'All future standard feature updates',
@@ -219,6 +236,7 @@ export type PlanView = {
   valueMessage?: string;
   credits: string;
   creditsNote?: string;
+  promotion?: PromotionView;
   features: string[];
   ctaLabel: string;
   ctaHref: string;
@@ -229,7 +247,7 @@ export type PlanView = {
  * yearly savings from the numbers (never hardcoded).
  */
 export function derivePlan(plan: RawPlan, period: BillingPeriod): PlanView {
-  const free = plan.monthlyPrice === 0 && plan.yearlyPrice === 0;
+  const free = plan.entitlementTier === 'FREE';
   const yearly = period === 'yearly';
 
   let price: string;
@@ -256,13 +274,17 @@ export function derivePlan(plan: RawPlan, period: BillingPeriod): PlanView {
     periodLabel = 'per month';
   }
 
-  const badge: BadgeKind = plan.popular ? (yearly ? 'value' : 'popular') : null;
-  const badgeLabel = badge === 'popular' ? 'MOST POPULAR' : badge === 'value' ? 'BEST VALUE' : undefined;
+  const badge: BadgeKind = plan.popular ? 'popular' : null;
+  const badgeLabel = badge === 'popular' ? 'MOST POPULAR' : undefined;
 
-  const credits =
-    plan.creditsLabel ??
-    (free ? `${plan.monthlyCredits.toLocaleString()} credits / month` : `${plan.monthlyCredits.toLocaleString()} credits / month`);
-  const creditsNote = yearly && !free ? `${(plan.monthlyCredits * 12).toLocaleString()} credits / year` : plan.creditsNote;
+  const credits = free
+    ? `${(plan.dailyCredits ?? Math.floor(plan.monthlyCredits / 30)).toLocaleString()} credits / day`
+    : plan.creditsLabel ?? `${plan.monthlyCredits.toLocaleString()} credits / month`;
+  const creditsNote = free
+    ? `up to ${plan.monthlyCredits.toLocaleString()} / month`
+    : yearly && !free
+      ? `${(plan.monthlyCredits * 12).toLocaleString()} credits / year`
+      : plan.creditsNote;
 
   return {
     id: plan.id,
@@ -279,6 +301,7 @@ export function derivePlan(plan: RawPlan, period: BillingPeriod): PlanView {
     valueMessage,
     credits,
     creditsNote,
+    promotion: activePromotion(plan.promotions?.[period]),
     features: plan.features,
     ctaLabel: free ? 'Get Started' : BILLING_LIVE ? `Get ${plan.name}` : 'Join The Waitlist',
     ctaHref: free ? '/#tools' : `safepay:subscription:${plan.id}:${yearly ? 'yearly' : 'monthly'}`,
@@ -300,6 +323,7 @@ export type PackView = {
   savePercent: number;
   badge: BadgeKind;
   badgeLabel?: string;
+  promotion?: PromotionView;
   ctaLabel: string;
   ctaHref: string;
 };
@@ -339,6 +363,7 @@ export function derivePacks(packs: RawPack[]): PackView[] {
       savePercent,
       badge,
       badgeLabel: badge === 'value' ? 'BEST VALUE' : badge === 'popular' ? 'MOST POPULAR' : undefined,
+      promotion: activePromotion(p.promotion),
       ctaLabel: BILLING_LIVE ? 'Buy Credits' : 'Join The Waitlist',
       ctaHref: `safepay:pack:${p.id}`,
     };
@@ -355,6 +380,7 @@ export type LifetimeView = {
   tagline: string;
   benefits: string[];
   fairUse: string[];
+  promotion?: PromotionView;
   ctaLabel: string;
   ctaHref: string;
 };
@@ -370,13 +396,23 @@ export function deriveLifetime(lt: RawLifetime): LifetimeView {
     tagline: lt.tagline,
     benefits: lt.benefits,
     fairUse: lt.fairUse,
+    promotion: activePromotion(lt.promotion),
     ctaLabel: BILLING_LIVE ? 'Get Lifetime' : 'Join The Waitlist',
     ctaHref: `safepay:lifetime:${lt.id}`,
   };
 }
 
+/** Returns an enabled promotion only while its optional UTC dates are active. */
+export function activePromotion(promotion?: RawPromotion, now = new Date()): PromotionView | undefined {
+  if (!promotion?.enabled || !promotion.text.trim()) return undefined;
+  const today = now.toISOString().slice(0, 10);
+  if (promotion.startsOn && today < promotion.startsOn) return undefined;
+  if (promotion.endsOn && today > promotion.endsOn) return undefined;
+  return { text: promotion.text.trim(), badge: promotion.badge?.trim() || undefined };
+}
+
 /** A compact, consistent summary for nav dropdowns (monthly framing). */
-export type PlanSummary = { id: string; name: string; price: string; period: string; credits: string; href: string };
+export type PlanSummary = { id: string; name: string; price: string; period: string; credits: string; creditsNote?: string; href: string; promotion?: PromotionView };
 
 export function derivePlanSummaries(config: PricingConfig): PlanSummary[] {
   const plans = config.plans
@@ -384,7 +420,7 @@ export function derivePlanSummaries(config: PricingConfig): PlanSummary[] {
     .sort((a, b) => a.order - b.order)
     .map((p) => {
       const v = derivePlan(p, p.billingIntervals.includes('monthly') ? 'monthly' : 'yearly');
-      return { id: p.id, name: p.name, price: v.price, period: v.free ? 'forever' : '/mo', credits: v.credits, href: v.ctaHref };
+      return { id: p.id, name: p.name, price: v.price, period: v.free ? 'forever' : '/mo', credits: v.credits, creditsNote: v.creditsNote, href: v.ctaHref, promotion: v.promotion };
     });
   return plans;
 }
@@ -449,7 +485,9 @@ export function buildComparison(config: PricingConfig): { columns: { id: string;
       {
         label: 'Credit allowance',
         values: Object.fromEntries([
-          ...plans.map((p) => [`plan:${p.id}`, p.creditsLabel ?? `${p.monthlyCredits.toLocaleString()} / month`]),
+          ...plans.map((p) => [`plan:${p.id}`, p.entitlementTier === 'FREE'
+            ? `${(p.dailyCredits ?? Math.floor(p.monthlyCredits / 30)).toLocaleString()} / day, up to ${p.monthlyCredits.toLocaleString()} / month`
+            : p.creditsLabel ?? `${p.monthlyCredits.toLocaleString()} / month`]),
           ...lifetimes.map((p) => [`lifetime:${p.id}`, `${p.credits.toLocaleString()} total`]),
         ]),
       },
@@ -480,6 +518,14 @@ export function buildPricingFaqs(config: PricingConfig) {
   const savings = monthly * 12 - yearly;
   const percent = monthly > 0 ? Math.round((savings / (monthly * 12)) * 100) : 0;
   const perMonth = yearly / 12;
+  const yearlyPlanName = pro?.name ?? 'Plan';
+  const yearlyComparison = !pro || !pro.billingIntervals.includes('yearly') || yearly <= 0
+    ? 'Yearly billing is not currently offered.'
+    : savings > 0
+    ? `${yearlyPlanName} Yearly costs ${formatMoney(yearly)} — that is ${formatMoney(perMonth)} a month, versus ${formatMoney(monthly)} a month on the monthly plan. You get the same features and credits for about ${percent}% less, saving ${formatMoney(savings)} over the year.`
+    : savings === 0
+      ? `${yearlyPlanName} Yearly costs ${formatMoney(yearly)} — the same as twelve monthly payments at ${formatMoney(monthly)}. You get the same features and credits either way.`
+      : `${yearlyPlanName} Yearly costs ${formatMoney(yearly)}, or ${formatMoney(perMonth)} a month billed yearly, versus ${formatMoney(monthly)} a month. It costs ${formatMoney(Math.abs(savings))} more over the year than monthly billing.`;
 
   return [
     {
@@ -494,8 +540,7 @@ export function buildPricingFaqs(config: PricingConfig) {
     },
     {
       question: 'Why choose yearly over monthly?',
-      answer:
-        `Pro Yearly costs ${formatMoney(yearly)} — that is ${formatMoney(perMonth)} a month, versus ${formatMoney(monthly)} a month on the monthly plan. You get the same features and credits for about ${percent}% less, saving ${formatMoney(savings)} over the year.`,
+      answer: yearlyComparison,
     },
     {
       question: 'Do credits expire?',

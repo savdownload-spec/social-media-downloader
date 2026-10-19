@@ -30,7 +30,7 @@
 import { z } from 'zod';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getBillingSummary, TIER_ALLOWANCE, type BillingSummary } from '@/lib/billing';
+import { getBillingSummary, type BillingSummary } from '@/lib/billing';
 import { JOB_COST } from '@/lib/credits';
 import { getPricingConfig } from '@/lib/pricing-server';
 import { getAiImageConfig } from '@/lib/ai-image-config-server';
@@ -328,15 +328,14 @@ const PLAN_LABELS: Record<string, string> = {
 };
 
 function accountCreditsAnswer(billing: BillingSummary): string {
-  const plan = PLAN_LABELS[billing.plan] ?? billing.plan;
-  const allowance = TIER_ALLOWANCE[billing.plan as keyof typeof TIER_ALLOWANCE];
+  const plan = billing.planName ?? PLAN_LABELS[billing.plan] ?? billing.plan;
   let refill: string;
   if (billing.plan === 'LIFETIME') {
     refill = 'a one-time lifetime bank that never expires';
-  } else if (allowance) {
-    refill = `refilled every ${allowance.period} (${allowance.credits.toLocaleString()} per ${allowance.period})`;
+  } else if (billing.plan === 'FREE') {
+    refill = `refilled daily (${billing.planCreditsLabel}${billing.planCreditsNote ? `, ${billing.planCreditsNote}` : ''})`;
   } else {
-    refill = 'refilled with your plan period';
+    refill = `refilled every ${billing.planAllowancePeriod} (${billing.planAllowance.toLocaleString()} per ${billing.planAllowancePeriod})`;
   }
   return (
     `You're on the ${plan} plan with ${billing.totalCredits} SavCredits: ` +
@@ -534,9 +533,15 @@ export async function POST(request: Request) {
         }
       } catch { /* fall through to the static answer */ }
     }
+    const pricing = await getPricingConfig();
+    const freePlan = pricing.plans.find((plan) => plan.entitlementTier === 'FREE' && !plan.archived)
+      ?? pricing.plans.find((plan) => plan.entitlementTier === 'FREE');
+    const freeCredits = freePlan
+      ? `${freePlan.creditsLabel ?? `${freePlan.dailyCredits ?? 0} credits / day`}${freePlan.creditsNote ? `, ${freePlan.creditsNote}` : ''}`
+      : 'free daily credits';
     return ok({
       answer:
-        'Sign in to SavDown to see your current SavCredits balance — your plan credits, purchased credits, and billing history are listed at /account/billing. Every account gets free daily credits (Free plan: 10 credits per day, up to 300 per month); purchased credits never expire.',
+        `Sign in to SavDown to see your current SavCredits balance — your plan credits, purchased credits, and billing history are listed at /account/billing. Every account gets free daily credits (${freeCredits}); purchased credits never expire.`,
       sources: [{ title: 'How SavCredits Work', url: '/pricing' }],
       canAnswer: true,
       toolCta: { url: '/pricing', label: 'View Plans & Credits' },
@@ -551,10 +556,13 @@ export async function POST(request: Request) {
   // Static corpus (cached per process) + dynamic docs read
   // live at request time, so pricing/credit/limit edits
   // propagate without a deploy.
+  const pricing = await getPricingConfig();
+  const freePlan = pricing.plans.find((plan) => plan.entitlementTier === 'FREE' && !plan.archived)
+    ?? pricing.plans.find((plan) => plan.entitlementTier === 'FREE');
   const docs = [
     ...buildKnowledgeCorpus(),
-    ...buildPricingKnowledge(await getPricingConfig()),
-    ...buildCreditsKnowledge(JOB_COST),
+    ...buildPricingKnowledge(pricing),
+    ...buildCreditsKnowledge(JOB_COST, freePlan?.dailyCredits ?? 0, freePlan?.monthlyCredits ?? 0),
     ...buildAiImageKnowledge(await getAiImageConfig()),
   ];
   // DB-backed blog posts (admin Content Studio) override

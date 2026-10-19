@@ -45,7 +45,7 @@ import {
   PDF_MAX_BATCH_FILES,
   PDF_MAX_PAGES,
 } from '@/lib/pdfConfig';
-import type { PricingConfig } from '@/config/pricing';
+import { activePromotion, type PricingConfig } from '@/config/pricing';
 import type { AiImageConfig } from '@/config/aiImage';
 import { detectIntent, type SupportIntent } from './support-nlp';
 
@@ -947,6 +947,10 @@ export function buildKnowledgeCorpus(): KnowledgeDocument[] {
 /** Live pricing documents, generated from the current pricing config. */
 export function buildPricingKnowledge(config: PricingConfig): KnowledgeDocument[] {
   const money = (n: number) => (Number.isInteger(n) ? `$${n}` : `$${n.toFixed(2)}`);
+  const promoText = (promotion: Parameters<typeof activePromotion>[0]) => {
+    const active = activePromotion(promotion);
+    return active ? ` Promotion: ${active.badge ? `${active.badge} — ` : ''}${active.text}.` : '';
+  };
   const plans = config.plans.filter((p) => p.visible && !p.archived).sort((a, b) => a.order - b.order);
   const packs = config.packs.filter((p) => p.visible && !p.archived).sort((a, b) => a.order - b.order);
   const lifetimes = config.lifetimes.filter((p) => p.visible && !p.archived).sort((a, b) => a.order - b.order);
@@ -957,10 +961,13 @@ export function buildPricingKnowledge(config: PricingConfig): KnowledgeDocument[
       : p.yearlyPrice > 0
         ? `${money(p.monthlyPrice)}/month or ${money(p.yearlyPrice)}/year`
         : `${money(p.monthlyPrice)}/month`;
-    const credits = p.creditsLabel
-      ? `${p.creditsLabel}${p.creditsNote ? ` (${p.creditsNote})` : ''}`
-      : `${p.monthlyCredits.toLocaleString()} credits/month`;
-    return `• ${p.name} — ${price}. ${credits}. ${p.features.join(', ')}.`;
+    const credits = p.entitlementTier === 'FREE'
+      ? `${(p.dailyCredits ?? Math.floor(p.monthlyCredits / 30)).toLocaleString()} credits/day, up to ${p.monthlyCredits.toLocaleString()}/month`
+      : p.creditsLabel
+        ? `${p.creditsLabel}${p.creditsNote ? ` (${p.creditsNote})` : ''}`
+        : `${p.monthlyCredits.toLocaleString()} credits/month`;
+    const promotions = `${promoText(p.promotions?.monthly)}${promoText(p.promotions?.yearly)}`;
+    return `• ${p.name} — ${price}. ${credits}. ${p.features.join(', ')}.${promotions}`;
   });
 
   const doc_ = (
@@ -992,7 +999,7 @@ export function buildPricingKnowledge(config: PricingConfig): KnowledgeDocument[
     doc_(
       'pricing-plans',
       'SavDown Plans and Prices',
-      `SavDown plans:\n${planLines.join('\n')}${lifetimes.map((lifetime) => `\n• ${lifetime.name} — ${money(lifetime.price)} one-time. ${lifetime.credits.toLocaleString()} finite lifetime credits that never expire.`).join('')}`,
+       `SavDown plans:\n${planLines.join('\n')}${packs.map((pack) => `\n• ${pack.name} credit pack — ${money(pack.price)} one-time for ${(pack.credits + (pack.bonus ?? 0)).toLocaleString()} credits.${promoText(pack.promotion)}`).join('')}${lifetimes.map((lifetime) => `\n• ${lifetime.name} — ${money(lifetime.price)} one-time. ${lifetime.credits.toLocaleString()} finite lifetime credits that never expire.${promoText(lifetime.promotion)}`).join('')}`,
       ['pricing', 'plans', 'what_is'],
       0.97,
       'pricing',
@@ -1004,9 +1011,11 @@ export function buildPricingKnowledge(config: PricingConfig): KnowledgeDocument[
     const price = p.monthlyPrice === 0
       ? 'free, forever'
       : `${money(p.monthlyPrice)} per month${p.yearlyPrice > 0 ? `, or ${money(p.yearlyPrice)} per year (${money(Math.round((p.yearlyPrice / 12) * 100) / 100)}/month billed yearly)` : ''}`;
-    const credits = p.creditsLabel
-      ? `${p.creditsLabel}${p.creditsNote ? `, ${p.creditsNote}` : ''}`
-      : `${p.monthlyCredits.toLocaleString()} SavCredits per month`;
+    const credits = p.entitlementTier === 'FREE'
+      ? `${(p.dailyCredits ?? Math.floor(p.monthlyCredits / 30)).toLocaleString()} SavCredits per day, up to ${p.monthlyCredits.toLocaleString()} per month`
+      : p.creditsLabel
+        ? `${p.creditsLabel}${p.creditsNote ? `, ${p.creditsNote}` : ''}`
+        : `${p.monthlyCredits.toLocaleString()} SavCredits per month`;
     docs.push(
       doc_(
         `pricing-${p.id}`,
@@ -1022,7 +1031,7 @@ export function buildPricingKnowledge(config: PricingConfig): KnowledgeDocument[
 
   if (packs.length) {
     const packLines = packs
-      .map((p) => `• ${p.name} — ${p.credits.toLocaleString()} credits for ${money(p.price)}${p.bonus ? ` (${(p.credits + p.bonus).toLocaleString()} with bonus)` : ''}.`)
+      .map((p) => `• ${p.name} — ${p.credits.toLocaleString()} credits for ${money(p.price)}${p.bonus ? ` (${(p.credits + p.bonus).toLocaleString()} with bonus)` : ''}.${promoText(p.promotion)}`)
       .join('\n');
     docs.push(
       doc_(
@@ -1042,7 +1051,7 @@ export function buildPricingKnowledge(config: PricingConfig): KnowledgeDocument[
       doc_(
         `pricing-lifetime-${lifetime.id}`,
         `${lifetime.name} Lifetime Plan`,
-        `The ${lifetime.name} plan is a one-time payment of ${money(lifetime.price)} for ${lifetime.credits.toLocaleString()} finite SavCredits that never expire. ${lifetime.tagline} Benefits: ${lifetime.benefits.join('; ')}. Fair use: ${lifetime.fairUse.join(' ')}`,
+        `The ${lifetime.name} plan is a one-time payment of ${money(lifetime.price)} for ${lifetime.credits.toLocaleString()} finite SavCredits that never expire. ${lifetime.tagline} Benefits: ${lifetime.benefits.join('; ')}. Fair use: ${lifetime.fairUse.join(' ')}.${promoText(lifetime.promotion)}`,
         ['pricing', 'plans'],
         0.93,
         'pricing',
@@ -1063,7 +1072,7 @@ export function buildCreditsKnowledge(costs: {
   imageTool: number;
   pdfTool: number;
   qrTool: number;
-}): KnowledgeDocument[] {
+}, freeDailyCredits: number, freeMonthlyCap: number): KnowledgeDocument[] {
   const body =
     'SavCredits are SavDown\'s credit currency. What each operation costs:\n' +
     `• Direct downloads served from the CDN: ${costs.proxyDownload} credit.\n` +
@@ -1072,7 +1081,7 @@ export function buildCreditsKnowledge(costs: {
     `• Image tools: ${costs.imageTool} credit.\n` +
     `• PDF tools: ${costs.pdfTool} credit.\n` +
     `• QR tools: ${costs.qrTool} credit.\n` +
-    'Every account gets free daily credits (Free plan: 10 credits per day, up to 300 per month). Purchased credits never expire. When you run out, wait for the daily refill, buy a credit pack, or upgrade to Pro at /pricing. Nothing is charged until a job succeeds — a failed job never costs a credit.';
+    `Every account gets free daily credits (Free plan: ${freeDailyCredits} credits per day, up to ${freeMonthlyCap} per month). Purchased credits never expire. When you run out, wait for the daily refill, buy a credit pack, or upgrade to Pro at /pricing. Nothing is charged until a job succeeds — a failed job never costs a credit.`;
   return [
     doc({
       id: 'credits-explainer',

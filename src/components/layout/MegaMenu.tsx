@@ -214,13 +214,13 @@ function PricingPanel({ close }: { close: () => void }) {
   const tiles = [
     ...config.plans.filter((p) => p.visible && !p.archived).sort((a, b) => a.order - b.order).map((plan) => {
       const view = derivePlan(plan, plan.billingIntervals.includes('monthly') ? 'monthly' : 'yearly');
-      return { id: plan.entitlementTier === 'FREE' ? 'free' : 'pro', name: view.name, price: view.price, period: view.period, credits: view.credits, href: view.ctaHref, cta: view.ctaLabel, highlight: !!plan.popular };
+      return { id: plan.entitlementTier === 'FREE' ? 'free' : 'pro', name: view.name, price: view.price, period: view.period, credits: view.credits, creditsNote: view.creditsNote, href: view.ctaHref, cta: view.ctaLabel, highlight: !!plan.popular, promotion: view.promotion };
     }),
     ...config.lifetimes.filter((p) => p.visible && !p.archived).sort((a, b) => a.order - b.order).map((plan) => {
-      const view = deriveLifetime(plan); return { id: 'lifetime', name: view.name, price: view.price, period: 'one-time', credits: view.credits, href: view.ctaHref, cta: view.ctaLabel, highlight: false };
+      const view = deriveLifetime(plan); return { id: 'lifetime', name: view.name, price: view.price, period: 'one-time', credits: view.credits, creditsNote: undefined, href: view.ctaHref, cta: view.ctaLabel, highlight: false, promotion: view.promotion };
     }),
   ].slice(0, 3) as {
-    id: string; name: string; price: string; period: string; credits: string; href: string; cta: string; highlight: boolean;
+    id: string; name: string; price: string; period: string; credits: string; creditsNote?: string; href: string; cta: string; highlight: boolean; promotion?: { text: string; badge?: string };
   }[];
 
   return (
@@ -264,8 +264,9 @@ function PricingPanel({ close }: { close: () => void }) {
                 <span className="text-xs text-text-muted">{tile.period}</span>
               </div>
               <p className="text-xs text-text-muted leading-relaxed mb-5 flex items-center gap-1.5">
-                <Coins className="w-3.5 h-3.5 text-primary shrink-0" /> {tile.credits}
+                <Coins className="w-3.5 h-3.5 text-primary shrink-0" /> {tile.credits}{tile.creditsNote ? ` · ${tile.creditsNote}` : ''}
               </p>
+              {tile.promotion && <p className="-mt-4 mb-4 break-words text-xs font-semibold leading-snug text-primary [overflow-wrap:anywhere]">{tile.promotion.badge ? `${tile.promotion.badge}: ` : ''}{tile.promotion.text}</p>}
               <Link href={tile.href} onClick={close} className={`mt-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                 tile.highlight
                   ? 'bg-gradient-brand text-white shadow-glow hover:opacity-90'

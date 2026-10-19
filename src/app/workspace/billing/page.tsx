@@ -5,7 +5,7 @@ import { Coins, CheckCircle2 } from 'lucide-react';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { ManageBillingButton } from '@/components/account/ManageBillingButton';
-import { getBillingSummary, TIER_ALLOWANCE } from '@/lib/billing';
+import { getBillingSummary } from '@/lib/billing';
 import { DataSection } from '@/components/workspace/DataSection';
 import { SectionHeader } from '@/components/workspace/SectionHeader';
 import { WorkspaceContainer } from '@/components/workspace/WorkspaceContainer';
@@ -50,7 +50,7 @@ export default async function WorkspaceBillingPage({
 
   if (!summary) redirect('/login?callbackUrl=/workspace/billing');
 
-  const allowance = TIER_ALLOWANCE[summary.plan];
+  const allowance = { credits: summary.planAllowance, period: summary.planAllowancePeriod };
   const justPaid = searchParams.checkout === 'success';
 
   return (
@@ -76,13 +76,13 @@ export default async function WorkspaceBillingPage({
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Current plan</p>
             <p className="mt-2 text-2xl font-bold tracking-tight text-text">
-              {PLAN_LABEL[summary.plan] ?? summary.plan}
+              {summary.planName ?? PLAN_LABEL[summary.plan] ?? summary.plan}
             </p>
             <p className="mt-1 text-sm text-text-muted">
               {summary.plan === 'LIFETIME'
-                ? `${allowance.credits.toLocaleString()} lifetime credits (never expire)`
+                ? `${summary.totalCredits.toLocaleString()} lifetime credits available (never expire)`
                 : summary.plan === 'FREE'
-                  ? `${allowance.credits.toLocaleString()} credits per ${allowance.period}`
+                  ? `${summary.planCreditsLabel}${summary.planCreditsNote ? ` · ${summary.planCreditsNote}` : ''}`
                   : `${allowance.credits.toLocaleString()} credits per month`}
             </p>
           </div>
@@ -114,9 +114,12 @@ export default async function WorkspaceBillingPage({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <BalanceTile label="Total credits" value={summary.totalCredits} emphasis note="Everything available to spend" />
         <BalanceTile
-          label="Plan allowance"
+          label="Plan credits"
           value={summary.planCredits}
-          note={summary.planCreditsResetAt ? `Resets ${summary.planCreditsResetAt.toLocaleDateString()}` : 'Refills each period'}
+          note={[
+            summary.plan === 'FREE' ? `${summary.planCreditsLabel}${summary.planCreditsNote ? ` · ${summary.planCreditsNote}` : ''}` : null,
+            summary.planCreditsResetAt ? `Resets ${summary.planCreditsResetAt.toLocaleDateString()}` : 'Refills each period',
+          ].filter(Boolean).join(' · ')}
         />
         <BalanceTile label="Purchased" value={summary.purchasedCredits} note="Never expires" />
       </div>

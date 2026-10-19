@@ -37,7 +37,7 @@ export function PricingTabs() {
   const plans = useMemo(
     () =>
       config.plans
-        .filter((p) => p.visible && !p.archived && (p.monthlyPrice === 0 && p.yearlyPrice === 0 || p.billingIntervals.includes(period)))
+        .filter((p) => p.visible && !p.archived && (p.entitlementTier === 'FREE' || p.billingIntervals.includes(period)))
         .sort((a, b) => a.order - b.order)
         .map((p) => derivePlan(p, period)),
     [config.plans, period],

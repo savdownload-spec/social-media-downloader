@@ -136,7 +136,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription, event
 
   const firstItem = subscription.items.data[0];
   const priceId = firstItem?.price?.id;
-  const item = priceId ? findByPriceId(priceId) : undefined;
+  const item = priceId ? await findByPriceId(priceId) : undefined;
   const tier: PlanTier = item?.tier ?? 'PRO';
 
   // In current API versions the period boundary lives on the subscription item,
@@ -227,7 +227,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   const priceId = typeof rawPrice === 'string' ? rawPrice : rawPrice?.id;
   if (!priceId) return;
 
-  const item = findByPriceId(priceId);
+  const item = await findByPriceId(priceId);
   if (!item || item.kind !== 'subscription') return;
 
   const userId = await resolveUserId(invoice.metadata?.userId, invoice.customer);

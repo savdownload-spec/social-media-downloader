@@ -101,10 +101,10 @@ interface UserData {
 
 // Plan descriptions for admin change-plan UI
 const PLAN_DESCRIPTIONS: Record<string, string> = {
-  FREE: 'Free daily allowance — 10 plan credits per day, resets at midnight.',
-  PRO: 'Pro monthly plan — 1,000 plan credits per month, 4K downloads, batch jobs.',
-  MAX: 'Max monthly plan — 5,000 plan credits per month, all Pro features.',
-  LIFETIME: 'Lifetime — grants 30,000 purchased credits (never expire), no subscription.',
+  FREE: 'Uses the current Free plan daily allowance and monthly cap from Pricing.',
+  PRO: 'Uses the current Pro plan allowance and features configured in Pricing.',
+  MAX: 'Uses the current Max plan allowance and features configured in Pricing.',
+  LIFETIME: 'Uses the current finite lifetime credit package configured in Pricing.',
 };
 
 // ── Sub-components ─────────────────────────────────────────────────────────

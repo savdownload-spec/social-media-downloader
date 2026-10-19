@@ -6,10 +6,11 @@ import type { PlanTier } from '@/types/plans';
 /**
  * The server-side purchase catalogue.
  *
- * The pricing page in `@/config/pricing` is presentation only. This file is the
- * authority on what a purchase actually grants, and it is keyed by Stripe price
- * ID so the amount charged and the credits granted can never drift apart: the
- * webhook looks up what Stripe says was bought, not what a client asked for.
+ * Admin Pricing is stored in `pricing_config` and shared by public views,
+ * Safepay checkout and recurring allowance lookups. The fixed catalogue below
+ * remains the compatibility map for older Stripe price IDs; payment webhooks
+ * use provider metadata or the configured subscription allowance where the
+ * historical Stripe product does not carry an offer snapshot.
  */
 
 export type { PlanTier } from '@/types/plans';
@@ -43,9 +44,8 @@ export type Purchasable = {
   productDescription: string;
 };
 
-// Amounts here must match src/config/pricing.ts (the public display) — see the
-// note there. Kept in sync manually since this file is the future-checkout
-// catalogue and that file is the public display.
+// Stable identifiers and expected legacy Stripe price IDs. New Safepay checkouts
+// resolve their amount and credits from the saved Admin Pricing configuration.
 const PRO_BLURB = '1,000 SavCredits every month, 4K downloads, batch jobs and priority processing.';
 
 export const PURCHASABLES: Purchasable[] = [
@@ -169,9 +169,27 @@ export async function resolveSafepayPurchase(item: Purchasable): Promise<{ amoun
   return { amount, currency: 'USD' };
 }
 
-/** Reverse lookup used by the webhook: Stripe tells us the price, we resolve the grant. */
-export function findByPriceId(priceId: string): Purchasable | undefined {
-  return PURCHASABLES.find((p) => priceIdFor(p) === priceId);
+/** Reverse lookup for legacy Stripe prices. Stable provider IDs and one-off
+ * purchase terms stay tied to the Stripe product; recurring allowances follow
+ * the current Admin Pricing entitlement. */
+export async function findByPriceId(priceId: string): Promise<Purchasable | undefined> {
+  const legacy = PURCHASABLES.find((item) => priceIdFor(item) === priceId);
+  if (!legacy) return undefined;
+
+  let dynamicId: string | undefined;
+  if (legacy.kind === 'subscription' && legacy.tier) {
+    const pricing = await getPricingConfig();
+    const plan = pricing.plans.find((value) => value.entitlementTier === legacy.tier && !value.archived)
+      ?? pricing.plans.find((value) => value.entitlementTier === legacy.tier);
+    if (plan) {
+      const period = legacy.interval === 'year' ? 'yearly' : 'monthly';
+      dynamicId = `subscription:${plan.id}:${period}`;
+    }
+  }
+  if (!dynamicId) return legacy;
+
+  const configured = await findPurchasable(dynamicId, true);
+  return configured ? { ...legacy, ...configured, id: legacy.id, priceEnv: legacy.priceEnv } : legacy;
 }
 
 /** Which purchasables are actually buyable right now (price ID present). */
@@ -295,9 +313,10 @@ function isUniqueViolation(error: unknown): boolean {
   );
 }
 
-/** Credits included with each tier's allowance period. */
-export const TIER_ALLOWANCE: Record<PlanTier, { credits: number; period: 'day' | 'month' }> = {
-  FREE: { credits: 10, period: 'day' },
+export type PlanAllowance = { credits: number; period: 'day' | 'month'; name?: string; monthlyCap?: number; creditsLabel?: string; creditsNote?: string };
+
+/** Fixed paid-tier references. The Free allowance is read from saved pricing. */
+export const TIER_ALLOWANCE: Record<Exclude<PlanTier, 'FREE'>, PlanAllowance> = {
   PRO: { credits: 1000, period: 'month' },
   // Not yet sellable (no PURCHASABLES entry / Stripe price) — the number here
   // only prevents a crash if a user's plan is ever set to MAX; update it
@@ -309,11 +328,58 @@ export const TIER_ALLOWANCE: Record<PlanTier, { credits: number; period: 'day' |
   LIFETIME: { credits: 30000, period: 'month' },
 };
 
+function tierAllowanceFromPricing(tier: PlanTier, pricing: Awaited<ReturnType<typeof getPricingConfig>>): PlanAllowance {
+  if (tier === 'LIFETIME') {
+    const lifetime = pricing.lifetimes.find((plan) => plan.id === 'lifetime' && !plan.archived)
+      ?? pricing.lifetimes.find((plan) => !plan.archived)
+      ?? pricing.lifetimes.find((plan) => plan.id === 'lifetime');
+    return lifetime
+      ? { credits: lifetime.credits, period: 'month', name: lifetime.name, creditsLabel: `${lifetime.credits.toLocaleString()} lifetime credits` }
+      : TIER_ALLOWANCE.LIFETIME;
+  }
+
+  const plan = pricing.plans.find((value) => value.entitlementTier === tier && !value.archived)
+    ?? pricing.plans.find((value) => value.entitlementTier === tier);
+  if (plan) {
+    if (tier === 'FREE') {
+      const dailyCredits = plan.dailyCredits ?? Math.floor(plan.monthlyCredits / 30);
+      return {
+        credits: dailyCredits,
+        period: 'day',
+        name: plan.name,
+        monthlyCap: plan.monthlyCredits,
+        creditsLabel: `${dailyCredits.toLocaleString()} credits / day`,
+        creditsNote: `up to ${plan.monthlyCredits.toLocaleString()} / month`,
+      };
+    }
+    return {
+      credits: plan.monthlyCredits,
+      period: 'month',
+      name: plan.name,
+      creditsLabel: plan.creditsLabel ?? `${plan.monthlyCredits.toLocaleString()} credits / month`,
+      creditsNote: plan.creditsNote,
+    };
+  }
+
+  if (tier === 'FREE') return { credits: 0, period: 'day', name: 'Free', monthlyCap: 0, creditsLabel: '0 credits / day', creditsNote: 'up to 0 / month' };
+  return TIER_ALLOWANCE[tier];
+}
+
+export async function getTierAllowance(tier: PlanTier): Promise<PlanAllowance> {
+  return tierAllowanceFromPricing(tier, await getPricingConfig());
+}
+
 export type BillingSummary = {
   plan: PlanTier;
   planCredits: number;
   purchasedCredits: number;
   totalCredits: number;
+  planName?: string;
+  planAllowance: number;
+  planAllowancePeriod: 'day' | 'month';
+  planMonthlyCap: number | null;
+  planCreditsLabel?: string;
+  planCreditsNote?: string;
   planCreditsResetAt: Date | null;
   role: string;
 };
@@ -341,83 +407,145 @@ export async function getBillingSummary(userId: string): Promise<BillingSummary 
   if (!user) return null;
 
   const tier = user.plan as PlanTier;
+  const pricing = await getPricingConfig();
+  const allowance = tierAllowanceFromPricing(tier, pricing);
   const due = !user.planCreditsResetAt || user.planCreditsResetAt.getTime() <= Date.now();
   // Only Free self-renews on read (a daily allowance). Lifetime is a finite
   // bank granted once; Pro is refilled by the paid `invoice.paid` webhook.
   const selfRenewing = tier === 'FREE';
 
   if (due && selfRenewing) {
-    const allowance = TIER_ALLOWANCE[tier];
     const now = new Date();
     const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
     const resetAt = new Date(periodStart); resetAt.setUTCDate(resetAt.getUTCDate() + 1);
-    const refillKey = `free-refill:${userId}:${periodStart.toISOString().slice(0, 10)}`;
+    const dateKey = periodStart.toISOString().slice(0, 10);
+    const refillKey = `free-refill:${userId}:${dateKey}`;
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 
-    return prisma.$transaction(async (tx) => {
-      const current = await tx.user.findUnique({
-        where: { id: userId },
-        select: { plan: true, planCredits: true, purchasedCredits: true, planCreditsResetAt: true, role: true },
-      });
-      if (!current) return null;
-      const stillDue = !current.planCreditsResetAt || current.planCreditsResetAt.getTime() <= Date.now();
-      if (!stillDue || current.plan !== 'FREE') {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        const current = await tx.user.findUnique({
+          where: { id: userId },
+          select: { plan: true, planCredits: true, purchasedCredits: true, planCreditsResetAt: true, role: true },
+        });
+        if (!current) return null;
+        const stillDue = !current.planCreditsResetAt || current.planCreditsResetAt.getTime() <= Date.now();
+        if (!stillDue || current.plan !== 'FREE') {
+          const currentAllowance = tierAllowanceFromPricing(current.plan as PlanTier, pricing);
+          return {
+            plan: current.plan as PlanTier,
+            planCredits: current.planCredits,
+            purchasedCredits: current.purchasedCredits,
+            totalCredits: current.planCredits + current.purchasedCredits,
+            planName: currentAllowance.name,
+            planAllowance: currentAllowance.credits,
+            planAllowancePeriod: currentAllowance.period,
+            planMonthlyCap: currentAllowance.monthlyCap ?? null,
+            planCreditsLabel: currentAllowance.creditsLabel,
+            planCreditsNote: currentAllowance.creditsNote,
+            planCreditsResetAt: current.planCreditsResetAt,
+            role: current.role,
+          };
+        }
+
+        const [existingRefill, monthlyRefills] = await Promise.all([
+          tx.creditTransaction.findUnique({ where: { idempotencyKey: refillKey }, select: { id: true } }),
+          tx.creditTransaction.aggregate({
+            where: {
+              userId,
+              kind: 'plan_refill',
+              bucket: 'plan',
+              idempotencyKey: { startsWith: `free-refill:${userId}:` },
+              createdAt: { gte: monthStart },
+            },
+            _sum: { planDelta: true },
+          }),
+        ]);
+        const alreadyGrantedThisMonth = monthlyRefills._sum.planDelta ?? 0;
+        const remainingThisMonth = Math.max(0, (allowance.monthlyCap ?? 0) - alreadyGrantedThisMonth);
+        const refillAmount = existingRefill ? 0 : Math.min(allowance.credits, remainingThisMonth);
+
+        if (current.planCredits > 0) {
+          const expirationKey = `${refillKey}:expiration`;
+          const priorExpiration = await tx.creditTransaction.findUnique({ where: { idempotencyKey: expirationKey }, select: { id: true } });
+          if (!priorExpiration) {
+            await tx.creditTransaction.create({
+              data: {
+                userId,
+                amount: -current.planCredits,
+                kind: 'expiration',
+                bucket: 'plan',
+                description: 'Unused free daily credits expired',
+                idempotencyKey: expirationKey,
+                planDelta: -current.planCredits,
+                planBalanceAfter: 0,
+                purchasedBalanceAfter: current.purchasedCredits,
+                balanceAfter: current.purchasedCredits,
+              },
+            });
+          }
+        }
+        await tx.user.update({ where: { id: userId }, data: { planCredits: refillAmount, planCreditsResetAt: resetAt } });
+        if (!existingRefill) {
+          await tx.creditTransaction.create({
+            data: {
+              userId,
+              amount: refillAmount,
+              kind: 'plan_refill',
+              bucket: 'plan',
+              description: refillAmount > 0 ? 'Free daily credit refill' : 'Free daily credit allowance capped for this month',
+              idempotencyKey: refillKey,
+              planDelta: refillAmount,
+              planBalanceAfter: refillAmount,
+              purchasedBalanceAfter: current.purchasedCredits,
+              balanceAfter: refillAmount + current.purchasedCredits,
+            },
+          });
+        }
         return {
-          plan: current.plan as PlanTier,
-          planCredits: current.planCredits,
+          plan: tier,
+          planCredits: refillAmount,
           purchasedCredits: current.purchasedCredits,
-          totalCredits: current.planCredits + current.purchasedCredits,
-          planCreditsResetAt: current.planCreditsResetAt,
+          totalCredits: refillAmount + current.purchasedCredits,
+          planName: allowance.name,
+          planAllowance: allowance.credits,
+          planAllowancePeriod: allowance.period,
+          planMonthlyCap: allowance.monthlyCap ?? null,
+          planCreditsLabel: allowance.creditsLabel,
+          planCreditsNote: allowance.creditsNote,
+          planCreditsResetAt: resetAt,
           role: current.role,
         };
-      }
-
-      if (current.planCredits > 0) {
-        await tx.creditTransaction.create({
-          data: {
-            userId,
-            amount: -current.planCredits,
-            kind: 'expiration',
-            bucket: 'plan',
-            description: 'Unused free daily credits expired',
-            idempotencyKey: `${refillKey}:expiration`,
-            planDelta: -current.planCredits,
-            planBalanceAfter: 0,
-            purchasedBalanceAfter: current.purchasedCredits,
-            balanceAfter: current.purchasedCredits,
-          },
-        });
-      }
-      await tx.user.update({ where: { id: userId }, data: { planCredits: allowance.credits, planCreditsResetAt: resetAt } });
-      await tx.creditTransaction.create({
-        data: {
-          userId,
-          amount: allowance.credits,
-          kind: 'plan_refill',
-          bucket: 'plan',
-          description: 'Free daily credit refill',
-          idempotencyKey: refillKey,
-          planDelta: allowance.credits,
-          planBalanceAfter: allowance.credits,
-          purchasedBalanceAfter: current.purchasedCredits,
-          balanceAfter: allowance.credits + current.purchasedCredits,
-        },
-      });
-      return {
-        plan: tier,
-        planCredits: allowance.credits,
-        purchasedCredits: current.purchasedCredits,
-        totalCredits: allowance.credits + current.purchasedCredits,
-        planCreditsResetAt: resetAt,
-        role: current.role,
-      };
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    } catch (error) {
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError) || !['P2002', 'P2034'].includes(error.code)) throw error;
+      // A concurrent read/refill already won the unique daily idempotency key.
+      // Return the committed balance instead of retrying and granting twice.
+      const refreshed = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true, planCredits: true, planCreditsResetAt: true, purchasedCredits: true, role: true } });
+      if (!refreshed) return null;
+      const refreshedAllowance = await getTierAllowance(refreshed.plan as PlanTier);
+      return summarize(refreshed, refreshedAllowance);
+    }
   }
 
+  return summarize(user, allowance);
+}
+
+function summarize(
+  user: { plan: string; planCredits: number; purchasedCredits: number; planCreditsResetAt: Date | null; role: string },
+  allowance: PlanAllowance,
+): BillingSummary {
   return {
-    plan: tier,
+    plan: user.plan as PlanTier,
     planCredits: user.planCredits,
     purchasedCredits: user.purchasedCredits,
     totalCredits: user.planCredits + user.purchasedCredits,
+    planName: allowance.name,
+    planAllowance: allowance.credits,
+    planAllowancePeriod: allowance.period,
+    planMonthlyCap: allowance.monthlyCap ?? null,
+    planCreditsLabel: allowance.creditsLabel,
+    planCreditsNote: allowance.creditsNote,
     planCreditsResetAt: user.planCreditsResetAt,
     role: user.role,
   };

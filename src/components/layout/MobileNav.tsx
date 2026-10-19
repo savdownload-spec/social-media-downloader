@@ -52,10 +52,10 @@ export function MobileNav({ close }: { close: () => void }) {  const config = u
   const pricingTiles = [
     ...config.plans.filter((p) => p.visible && !p.archived).sort((a, b) => a.order - b.order).map((plan) => {
       const v = derivePlan(plan, plan.billingIntervals.includes('monthly') ? 'monthly' : 'yearly');
-      return { id: plan.entitlementTier === 'FREE' ? 'free' : 'pro', name: v.name, price: v.price, period: v.free ? '' : v.period, credits: v.credits, href: v.ctaHref };
+      return { id: plan.entitlementTier === 'FREE' ? 'free' : 'pro', name: v.name, price: v.price, period: v.free ? '' : v.period, credits: v.credits, creditsNote: v.creditsNote, href: v.ctaHref, promotion: v.promotion };
     }),
     ...config.lifetimes.filter((p) => p.visible && !p.archived).sort((a, b) => a.order - b.order).map((plan) => {
-      const v = deriveLifetime(plan); return { id: 'lifetime', name: v.name, price: v.price, period: '', credits: v.credits, href: v.ctaHref };
+      const v = deriveLifetime(plan); return { id: 'lifetime', name: v.name, price: v.price, period: '', credits: v.credits, creditsNote: undefined, href: v.ctaHref, promotion: v.promotion };
     }),
   ].slice(0, 3);
 
@@ -164,7 +164,8 @@ export function MobileNav({ close }: { close: () => void }) {  const config = u
                                   <span className="text-xs font-normal text-text-muted">{tile.period}</span>
                                 </span>
                               </div>
-                              <p className="text-xs text-text-muted leading-snug truncate">{tile.credits}</p>
+                              <p className="break-words text-xs text-text-muted leading-snug [overflow-wrap:anywhere]">{tile.credits}{tile.creditsNote ? ` · ${tile.creditsNote}` : ''}</p>
+                              {tile.promotion && <p className="break-words text-[11px] font-semibold leading-snug text-primary [overflow-wrap:anywhere]">{tile.promotion.badge ? `${tile.promotion.badge}: ` : ''}{tile.promotion.text}</p>}
                             </div>
                           </Link>
                         );

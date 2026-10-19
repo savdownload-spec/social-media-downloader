@@ -27,6 +27,12 @@ export function CreditPackCard({ pack }: { pack: PackView }) {
           )}
         </div>
         <p className="mt-1.5 text-sm text-text-muted">{pack.tagline}</p>
+        {pack.promotion && (
+          <div className="mt-3 rounded-xl border border-primary/15 bg-primary-light/60 p-3">
+            {pack.promotion.badge && <span className="mb-1 inline-flex max-w-full break-words rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">{pack.promotion.badge}</span>}
+            <p className="break-words text-sm font-semibold leading-snug text-primary [overflow-wrap:anywhere]">{pack.promotion.text}</p>
+          </div>
+        )}
 
         <div className="mt-5 flex items-center gap-2">
           <Coins className="h-6 w-6 flex-shrink-0 text-primary" />
@@ -51,7 +57,7 @@ export function CreditPackCard({ pack }: { pack: PackView }) {
 
         <div className="mt-auto">
           {pack.ctaHref.startsWith('safepay:') ? (
-            <CheckoutButton item={`pack-${pack.id}`} label={pack.ctaLabel} className={cta} />
+            <CheckoutButton item={`pack:${pack.id}`} label={pack.ctaLabel} className={cta} />
           ) : (
             <Link href={pack.ctaHref} className={cta}>{pack.ctaLabel}</Link>
           )}

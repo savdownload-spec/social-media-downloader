@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { writeAuditLog } from '@/lib/admin';
-import { grantCredits, getBillingSummary, TIER_ALLOWANCE, addMonths, type PlanTier } from '@/lib/billing';
+import { grantCredits, getBillingSummary, getTierAllowance, addMonths, type PlanTier } from '@/lib/billing';
 import { sendEmail } from '@/lib/emails';
 import { getStripe } from '@/lib/stripe';
 import { z } from 'zod';
@@ -422,7 +422,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     // purchase would, instead of just flipping the `plan` label and leaving the
     // credit balance stuck at whatever it happened to be before.
     if (newPlan === 'LIFETIME') {
-      const allowance = TIER_ALLOWANCE.LIFETIME;
+      const allowance = await getTierAllowance('LIFETIME');
       await grantCredits({
         userId: params.id,
         amount: allowance.credits,
@@ -448,7 +448,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         tier: 'FREE',
       });
     } else {
-      const allowance = TIER_ALLOWANCE[newPlan];
+      const allowance = await getTierAllowance(newPlan);
       await grantCredits({
         userId: params.id,
         amount: allowance.credits,

@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { Container } from '@/components/layout/Container';
 import { Section } from '@/components/layout/Section';
 import { ManageBillingButton } from '@/components/account/ManageBillingButton';
-import { getBillingSummary, TIER_ALLOWANCE } from '@/lib/billing';
+import { getBillingSummary } from '@/lib/billing';
 import { getPricingConfig } from '@/lib/pricing-server';
 import { buildMetadata } from '@/lib/seo';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
@@ -53,13 +53,13 @@ export default async function BillingPage({
 
   if (!summary) redirect('/login?callbackUrl=/account/billing');
 
-  const allowance = TIER_ALLOWANCE[summary.plan];
+  const allowance = { credits: summary.planAllowance, period: summary.planAllowancePeriod };
   const subscriptionItemId = subscription?.stripePriceId.startsWith('safepay:') ? subscription.stripePriceId.slice('safepay:'.length) : null;
   const subscriptionPlanId = subscriptionItemId?.startsWith('subscription:') ? subscriptionItemId.split(':')[1] : null;
   const configuredPlan = subscriptionPlanId ? pricing.plans.find((plan) => plan.id === subscriptionPlanId) : null;
   const lifetimeItemId = latestLifetimePayment?.itemId?.startsWith('lifetime:') ? latestLifetimePayment.itemId.slice('lifetime:'.length) : null;
   const configuredLifetime = lifetimeItemId ? pricing.lifetimes.find((plan) => plan.id === lifetimeItemId) : null;
-  const planLabel = configuredPlan?.name ?? configuredLifetime?.name ?? PLAN_LABEL[summary.plan] ?? summary.plan;
+  const planLabel = configuredPlan?.name ?? configuredLifetime?.name ?? summary.planName ?? PLAN_LABEL[summary.plan] ?? summary.plan;
   const justPaid = searchParams.checkout === 'success';
 
   return (
@@ -112,9 +112,9 @@ export default async function BillingPage({
                 </p>
                 <p className="mt-1 text-sm text-text-muted">
                   {summary.plan === 'LIFETIME'
-                    ? `${(configuredLifetime?.credits ?? allowance.credits).toLocaleString()} finite lifetime credits (never expire)`
+                    ? `${summary.totalCredits.toLocaleString()} finite lifetime credits available (never expire)`
                     : summary.plan === 'FREE'
-                      ? `${allowance.credits.toLocaleString()} credits per ${allowance.period}`
+                      ? `${summary.planCreditsLabel}${summary.planCreditsNote ? ` · ${summary.planCreditsNote}` : ''}`
                       : `${(configuredPlan?.monthlyCredits ?? allowance.credits).toLocaleString()} credits per month`}
                 </p>
               </div>
@@ -155,12 +155,13 @@ export default async function BillingPage({
               note="Everything available to spend"
             />
             <BalanceTile
-              label="Plan allowance"
+              label="Plan credits"
               value={summary.planCredits}
               note={
-                summary.planCreditsResetAt
-                  ? `Resets ${summary.planCreditsResetAt.toLocaleDateString()}`
-                  : 'Refills each period'
+                [
+                  summary.plan === 'FREE' ? `${summary.planCreditsLabel}${summary.planCreditsNote ? ` · ${summary.planCreditsNote}` : ''}` : null,
+                  summary.planCreditsResetAt ? `Resets ${summary.planCreditsResetAt.toLocaleDateString()}` : 'Refills each period',
+                ].filter(Boolean).join(' · ')
               }
             />
             <BalanceTile

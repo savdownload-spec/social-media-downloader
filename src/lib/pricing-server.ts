@@ -21,6 +21,24 @@ import { DEFAULT_PRICING, type PricingConfig } from '@/config/pricing';
 export const PRICING_SETTING_KEY = 'pricing_config';
 export const PRICING_CACHE_TAG = 'pricing';
 
+const promotionDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+}, 'Use a valid calendar date.');
+
+const promotionSchema = z.object({
+  enabled: z.boolean().default(false),
+  text: z.string().trim().max(120).default(''),
+  badge: z.string().trim().max(40).optional(),
+  startsOn: promotionDateSchema.optional(),
+  endsOn: promotionDateSchema.optional(),
+}).superRefine((promotion, ctx) => {
+  if (promotion.enabled && !promotion.text) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['text'], message: 'Promotion text is required when enabled.' });
+  if (promotion.startsOn && promotion.endsOn && promotion.startsOn > promotion.endsOn) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['endsOn'], message: 'End date must be on or after the start date.' });
+  }
+});
+
 const planSchema = z.object({
   id: z.string().min(1).max(80).regex(/^[a-z0-9][a-z0-9_-]*$/),
   name: z.string().trim().min(1).max(80),
@@ -29,10 +47,12 @@ const planSchema = z.object({
   monthlyPrice: z.number().finite().nonnegative(),
   yearlyPrice: z.number().finite().nonnegative(),
   monthlyCredits: z.number().int().nonnegative(),
+  dailyCredits: z.number().int().nonnegative().optional(),
   creditsLabel: z.string().optional(),
   creditsNote: z.string().optional(),
   features: z.array(z.string().trim().min(1).max(200)),
   popular: z.boolean().optional(),
+  promotions: z.object({ monthly: promotionSchema.optional(), yearly: promotionSchema.optional() }).optional(),
   billingIntervals: z.array(z.enum(['monthly', 'yearly'])).min(1).default(['monthly', 'yearly']),
   entitlementTier: z.enum(['FREE', 'PRO', 'MAX']).default('PRO'),
   order: z.number().int().nonnegative(),
@@ -47,6 +67,7 @@ const packSchema = z.object({
   credits: z.number().int().positive(),
   price: z.number().finite().nonnegative(),
   bonus: z.number().int().nonnegative().optional(),
+  promotion: promotionSchema.optional(),
   order: z.number().int().nonnegative(),
   visible: z.boolean(),
   archived: z.boolean().optional().default(false),
@@ -60,10 +81,23 @@ const lifetimeSchema = z.object({
   tagline: z.string().trim().max(200),
   benefits: z.array(z.string().trim().min(1).max(200)),
   fairUse: z.array(z.string().trim().min(1).max(300)),
+  promotion: promotionSchema.optional(),
   order: z.number().int().nonnegative(),
   visible: z.boolean(),
   archived: z.boolean().optional().default(false),
 });
+
+function normalizeLegacyLifetime(value: unknown): unknown {
+  if (!value || typeof value !== 'object') return value;
+  const lifetime = value as Record<string, unknown>;
+  if (typeof lifetime.credits !== 'number' || !Array.isArray(lifetime.benefits)) return value;
+  return {
+    ...lifetime,
+    benefits: lifetime.benefits.map((benefit) => benefit === '30,000 lifetime credits'
+      ? `${lifetime.credits.toLocaleString()} lifetime credits`
+      : benefit),
+  };
+}
 
 const currentPricingConfigSchema = z.object({
   plans: z.array(planSchema).min(1),
@@ -72,8 +106,12 @@ const currentPricingConfigSchema = z.object({
 }).superRefine((config, ctx) => {
   const ids = [...config.plans, ...config.packs, ...config.lifetimes].map((item) => item.id);
   if (new Set(ids).size !== ids.length) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Every pricing item must have a unique stable ID.' });
+  if (!config.plans.some((plan) => plan.entitlementTier === 'FREE')) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Keep a FREE entitlement configured for existing Free accounts.' });
   if (config.plans.filter((plan) => plan.popular && !plan.archived).length > 1) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Only one subscription plan can be marked popular.' });
+  if (config.plans.filter((plan) => plan.entitlementTier === 'FREE' && !plan.archived).length > 1) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Only one active subscription plan can use the FREE entitlement.' });
   config.plans.forEach((plan, index) => {
+    if (plan.entitlementTier === 'FREE' && (plan.monthlyPrice !== 0 || plan.yearlyPrice !== 0)) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['plans', index, 'monthlyPrice'], message: 'A FREE entitlement must have zero monthly and yearly prices.' });
+    if (plan.entitlementTier === 'FREE' && (plan.dailyCredits ?? 0) > plan.monthlyCredits) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['plans', index, 'dailyCredits'], message: 'Daily credits cannot exceed the monthly cap.' });
     if (plan.billingIntervals.includes('monthly') && plan.entitlementTier !== 'FREE' && plan.monthlyPrice <= 0) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['plans', index, 'monthlyPrice'], message: 'Monthly price must be greater than zero.' });
     if (plan.billingIntervals.includes('yearly') && plan.entitlementTier !== 'FREE' && plan.yearlyPrice <= 0) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['plans', index, 'yearlyPrice'], message: 'Yearly price must be greater than zero.' });
   });
@@ -95,12 +133,29 @@ export const pricingConfigSchema = z.preprocess((input) => {
       ...plan,
       billingIntervals: plan.billingIntervals ?? ['monthly', 'yearly'],
       entitlementTier: plan.entitlementTier ?? (plan.monthlyPrice === 0 && plan.yearlyPrice === 0 ? 'FREE' : 'PRO'),
+      ...(plan.entitlementTier === 'FREE' || (plan.entitlementTier == null && plan.monthlyPrice === 0 && plan.yearlyPrice === 0)
+        ? (() => {
+            const labelCredits = typeof plan.creditsLabel === 'string'
+              ? /^(\s*[\d,]+)\s+credits?\s*\/\s*day\b/i.exec(plan.creditsLabel)?.[1]?.replace(/,/g, '')
+              : undefined;
+            const dailyCredits = plan.dailyCredits ?? (labelCredits !== undefined
+              ? Number(labelCredits)
+              : Math.floor(Number(plan.monthlyCredits ?? 0) / 30));
+            const validDailyCredits = typeof dailyCredits === 'number' && Number.isInteger(dailyCredits) && dailyCredits >= 0;
+            return {
+              dailyCredits,
+              creditsLabel: validDailyCredits ? `${dailyCredits.toLocaleString()} credits / day` : plan.creditsLabel,
+              creditsNote: validDailyCredits && typeof plan.monthlyCredits === 'number' ? `up to ${plan.monthlyCredits.toLocaleString()} / month` : plan.creditsNote,
+            };
+          })()
+        : {}),
     };
   }) : legacy.plans;
-  if (!Array.isArray(legacy.lifetimes) && legacy.lifetime && typeof legacy.lifetime === 'object') {
-    return { ...legacy, plans, lifetimes: [{ id: 'lifetime', order: 0, ...(legacy.lifetime as object) }] };
+  const lifetimes = Array.isArray(legacy.lifetimes) ? legacy.lifetimes.map(normalizeLegacyLifetime) : legacy.lifetimes;
+  if (!Array.isArray(lifetimes) && legacy.lifetime && typeof legacy.lifetime === 'object') {
+    return { ...legacy, plans, lifetimes: [normalizeLegacyLifetime({ id: 'lifetime', order: 0, ...(legacy.lifetime as object) })] };
   }
-  return { ...legacy, plans };
+  return { ...legacy, plans, lifetimes };
 }, currentPricingConfigSchema);
 
 async function readPricingFromDb(): Promise<PricingConfig> {
