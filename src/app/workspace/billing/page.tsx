@@ -111,7 +111,7 @@ export default async function WorkspaceBillingPage({
       </div>
 
       {/* Balance */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <BalanceTile label="Total credits" value={summary.totalCredits} emphasis note="Everything available to spend" />
         <BalanceTile
           label="Plan credits"
@@ -122,6 +122,7 @@ export default async function WorkspaceBillingPage({
           ].filter(Boolean).join(' · ')}
         />
         <BalanceTile label="Purchased" value={summary.purchasedCredits} note="Never expires" />
+        <BalanceTile label="Referral rewards" value={summary.referralCredits} note="Expire one month after grant" />
       </div>
 
       {/* History */}
@@ -130,7 +131,7 @@ export default async function WorkspaceBillingPage({
         {ledger.length === 0 ? (
           <div className="text-center py-10 px-6 rounded-2xl border border-dashed border-border">
             <p className="text-sm text-text-muted">
-              Nothing yet. Your free daily credits do not appear here, only purchases and plan refills do.
+              Nothing yet. Credit grants and purchases will appear here when they are issued.
             </p>
           </div>
         ) : (
@@ -139,7 +140,10 @@ export default async function WorkspaceBillingPage({
               <div key={entry.id} className="flex items-center justify-between gap-4 px-4 py-3.5 border-b border-border-light last:border-0">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-text">{entry.description ?? entry.kind}</p>
-                  <p className="text-xs text-text-subtle">{entry.createdAt.toLocaleDateString()}</p>
+                  <p className="text-xs text-text-subtle">
+                    {entry.createdAt.toLocaleDateString()}
+                    {entry.expiresAt ? ` · Expires ${entry.expiresAt.toLocaleDateString()}` : ''}
+                  </p>
                 </div>
                 <span className={`flex-shrink-0 text-sm font-semibold ${entry.amount >= 0 ? 'text-accent-hover' : 'text-text-muted'}`}>
                   {entry.amount >= 0 ? '+' : ''}

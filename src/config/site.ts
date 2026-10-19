@@ -1,9 +1,14 @@
+const configuredSiteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.NEXTAUTH_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+
 export const siteConfig = {
   name: 'SavDown',
   tagline: 'The Free Video Downloader',
   description:
     'SavDown is a fast, free video downloader for YouTube, TikTok, Instagram, Facebook, Pinterest, and X. No watermarks, free daily credits, with AI-powered tools on the way.',
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+  url: configuredSiteUrl.replace(/\/+$/, ''),
   ogImage: '/og-default.svg',
   twitterHandle: '@SavDownload',
   footerDescription:

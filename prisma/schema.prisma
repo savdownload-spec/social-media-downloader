@@ -60,6 +60,9 @@ model User {
   planCreditsResetAt DateTime?
   /// Credits bought outright in a pack. These never expire and never reset.
   purchasedCredits   Int       @default(0)
+  /// Referral reward credits are tracked separately because each grant expires
+  /// independently and must never reduce purchased or plan credits.
+  referralCredits    Int       @default(0)
 
   accounts                     Account[]
   sessions                     Session[]
@@ -75,6 +78,7 @@ model User {
   assignedSupportConversations SupportConversation[] @relation("SupportAssignee")
   supportMessages              SupportMessage[]      @relation("SupportSender")
   adminNotificationReads       AdminNotificationRead[] @relation("AdminNotificationReader")
+  referredBy                   Referral? @relation("ReferredUser")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -115,7 +119,7 @@ model CreditTransaction {
   amount                Int
   /// purchase | plan_refill | plan_grant | spend | refund | adjustment
   kind                  String
-  /// Which bucket moved: plan | purchased
+  /// Which bucket moved: plan | purchased | referral | mixed
   bucket                String   @default("purchased")
   description           String?
   /// Stripe event / session / invoice id. Unique so replays cannot double-grant.
@@ -129,15 +133,24 @@ model CreditTransaction {
   /// Exact movement in each balance bucket. `amount` is their sum.
   planDelta             Int      @default(0)
   purchasedDelta        Int      @default(0)
+  referralDelta         Int      @default(0)
   /// Balance snapshot immediately after the movement.
   balanceAfter          Int?
   planBalanceAfter      Int?
   purchasedBalanceAfter Int?
+  referralBalanceAfter  Int?
+  /// Referral reward credit expiration timestamp, when this movement grants
+  /// expiring referral credits.
+  expiresAt             DateTime?
+  /// The reward transaction associated with a referral, if this is its grant.
+  referralId            String?  @unique
   createdAt             DateTime @default(now())
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   operation Download? @relation(fields: [operationId], references: [id], onDelete: SetNull)
   payment   Payment?  @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  referral  Referral? @relation(fields: [referralId], references: [id], onDelete: SetNull)
+  creditAllocations CreditAllocation[]
 
   @@index([userId, createdAt])
   @@index([kind, createdAt])
@@ -594,7 +607,57 @@ model Affiliate {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
+  referrals Referral[]
+
   @@index([status])
+}
+
+/// One first-touch attribution per newly registered user. `remainingCredits`
+/// tracks the unspent part of its single 20-credit reward; `expiredCredits`
+/// preserves how much was forfeited when the one-month window elapsed.
+model Referral {
+  id                String   @id @default(cuid())
+  affiliateId       String
+  referredUserId    String   @unique
+  code              String
+  /// PENDING | QUALIFIED | REJECTED
+  status            String
+  rejectionReason   String?
+  rewardCredits     Int      @default(0)
+  remainingCredits  Int      @default(0)
+  expiredCredits    Int      @default(0)
+  /// Frozen estimated accounting value for the reward at grant time.
+  estimatedUsdValue Decimal? @db.Decimal(12, 6)
+  createdAt         DateTime @default(now())
+  qualifiedAt       DateTime?
+  rewardedAt        DateTime?
+  expiresAt         DateTime?
+
+  affiliate        Affiliate          @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+  referredUser     User               @relation("ReferredUser", fields: [referredUserId], references: [id], onDelete: Cascade)
+  rewardTransaction CreditTransaction?
+  allocations      CreditAllocation[]
+
+  @@index([affiliateId, createdAt])
+  @@index([affiliateId, status, createdAt])
+  @@index([status, expiresAt])
+}
+
+/// Links the expiring reward lot(s) used by a spend so a failed operation can
+/// return credits to their original lots without extending their expiry.
+model CreditAllocation {
+  id                 String   @id @default(cuid())
+  referralId         String
+  spendTransactionId String
+  amount             Int
+  refundedAmount     Int      @default(0)
+  createdAt          DateTime @default(now())
+
+  referral         Referral         @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  spendTransaction CreditTransaction @relation(fields: [spendTransactionId], references: [id], onDelete: Cascade)
+
+  @@unique([spendTransactionId, referralId])
+  @@index([referralId, createdAt])
 }
 
 model BlogComment {

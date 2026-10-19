@@ -19,7 +19,7 @@ import { buildMetadata } from '@/lib/seo';
 export const metadata = buildMetadata({
   title: 'Affiliate Program',
   description:
-    'Share SavDown with your audience and earn when your referrals become customers. Simple referral links, transparent tracking, and a growing product ecosystem.',
+    'Share SavDown with your audience and earn 20 SavCredits for each qualifying new user. Referral credits expire after one month.',
   path: '/affiliates',
   keywords: ['savdown affiliate program', 'referral program', 'earn with savdown', 'affiliate marketing'],
 });
@@ -52,7 +52,7 @@ export default function AffiliatesPage() {
             Earn <span className="text-gradient">With SavDown</span>
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-text-muted">
-            Share SavDown with your audience and earn when your referrals become customers.
+            Share SavDown with your audience and earn 20 SavCredits for each qualifying new user.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <AffiliateApplyPanel />
@@ -145,20 +145,17 @@ export default function AffiliatesPage() {
         </div>
       </Section>
 
-      {/* Commission, Tracking, Payouts */}
+      {/* Referral rewards and tracking */}
       <Section variant="white" containerClassName="max-w-4xl">
-        <SectionHeading eyebrow="The Details" title="Commission, tracking, and payouts." />
+        <SectionHeading eyebrow="The Details" title="Referral rewards, tracked clearly." />
         <div className="mt-14 grid grid-cols-1 gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-border bg-white dark:bg-card p-6 shadow-soft">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-light">
               <BadgeCheck className="h-5 w-5 text-primary" />
             </div>
-            <div className="mt-4 text-sm font-semibold text-text">Commission</div>
+            <div className="mt-4 text-sm font-semibold text-text">Referral reward</div>
             <p className="mt-1.5 text-xs leading-relaxed text-text-muted">
-              You earn commission on qualifying referrals — people who sign up through your link and become
-              paying customers. Our commission model supports flat, percentage, first-purchase, recurring, and
-              product-specific structures, and the exact terms are confirmed with you once your application is
-              approved.
+              Earn 20 SavCredits for each qualifying new user you refer. Reward credits expire one month after they are granted.
             </p>
           </div>
           <div className="rounded-2xl border border-border bg-white dark:bg-card p-6 shadow-soft">
@@ -167,10 +164,9 @@ export default function AffiliatesPage() {
             </div>
             <div className="mt-4 text-sm font-semibold text-text">Tracking</div>
             <p className="mt-1.5 text-xs leading-relaxed text-text-muted">
-              Every affiliate gets a unique referral link. Visits, signups, and conversions attributed to your
-              link are recorded against your{' '}
-              <Link href="/account" className="font-medium text-primary hover:text-primary-hover underline underline-offset-4">
-                account
+              Your workspace tracks link opens, new sign-ups, qualifying referrals, reward credits, and expiry dates separately in your{' '}
+              <Link href="/workspace/affiliate" className="font-medium text-primary hover:text-primary-hover underline underline-offset-4">
+                affiliate dashboard
               </Link>
               , so you always know what came from your audience.
             </p>
@@ -179,10 +175,9 @@ export default function AffiliatesPage() {
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-light">
               <LineChart className="h-5 w-5 text-primary" />
             </div>
-            <div className="mt-4 text-sm font-semibold text-text">Payouts</div>
+            <div className="mt-4 text-sm font-semibold text-text">SavCredits only</div>
             <p className="mt-1.5 text-xs leading-relaxed text-text-muted">
-              Minimum payout, payout method, and payout schedule are shared with you during onboarding once
-              you&apos;re approved, so you know exactly what to expect before you start promoting.
+              The current program does not offer cash earnings, withdrawals, or payouts. Referral rewards are SavCredits for use in SavDown.
             </p>
           </div>
         </div>
@@ -196,8 +191,8 @@ export default function AffiliatesPage() {
           description={
             <>
               Made available to approved affiliates from their{' '}
-              <Link href="/account" className="font-medium text-primary hover:text-primary-hover underline underline-offset-4">
-                account
+              <Link href="/workspace/affiliate" className="font-medium text-primary hover:text-primary-hover underline underline-offset-4">
+                workspace
               </Link>
               .
             </>

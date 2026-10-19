@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { Suspense, useEffect, useState, type FormEvent } from 'react';
+import { Suspense, useEffect, useRef, useState, type FormEvent } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { signIn, useSession } from 'next-auth/react';
 import { ArrowLeft, ArrowRight, Eye, EyeOff, LockKeyhole, ShieldCheck } from 'lucide-react';
@@ -53,6 +53,8 @@ function LoginClientInner() {
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
   const callbackUrl = getSafeDestination(searchParams.get('callbackUrl'));
+  const autoGoogle = searchParams.get('google') === '1';
+  const autoGoogleStarted = useRef(false);
   const { success, error: errorToast } = useToast();
   const [tab, setTab] = useState<Tab>('signin');
   const [email, setEmail] = useState('');
@@ -94,6 +96,19 @@ function LoginClientInner() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (
+      !autoGoogle ||
+      status !== 'unauthenticated' ||
+      searchParams.get('error') ||
+      autoGoogleStarted.current
+    ) return;
+    autoGoogleStarted.current = true;
+    void handleGoogle();
+  // The ref ensures this only initiates once even if auth state updates.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoGoogle, callbackUrl, status]);
 
   const handleSignIn = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

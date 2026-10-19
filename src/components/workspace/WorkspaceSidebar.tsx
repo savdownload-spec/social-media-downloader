@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { toolGroups, groupSlug } from '@/config/catalog';
@@ -25,8 +26,10 @@ import {
   LifeBuoy,
   Tag,
   X,
+  Share2,
 } from 'lucide-react';
 import { OPEN_SUPPORT_EVENT } from '@/components/support/SupportChat';
+import { Logo } from '@/components/ui/Logo';
 
 interface NavItem {
   label: string;
@@ -79,6 +82,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Credits & Billing', href: '/workspace/billing', icon: CreditCard },
       { label: 'Pricing', href: '/workspace/pricing', icon: Tag },
       { label: 'Profile & Settings', href: '/workspace/settings', icon: Settings },
+      { label: 'Affiliate Program', href: '/workspace/affiliate', icon: Share2 },
     ],
   },
 ];
@@ -113,13 +117,13 @@ export function WorkspaceSidebar({ onClose, collapsed, onToggleCollapse }: Props
         )}
       >
         <Link href="/workspace" className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-gradient-brand flex items-center justify-center shrink-0">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          {!collapsed && (
-            <span className="font-bold text-text tracking-tight whitespace-nowrap">
-              SavDown <span className="text-primary">Workspace</span>
-            </span>
+          {collapsed ? (
+            <Image src="/icon-48.png" alt="SavDown" width={28} height={28} className="h-7 w-7 shrink-0" priority />
+          ) : (
+            <>
+              <Logo variant="dark" height={20} linked={false} />
+              <span className="text-xs font-semibold text-primary whitespace-nowrap">Workspace</span>
+            </>
           )}
         </Link>
         {onClose && !collapsed && (

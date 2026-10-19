@@ -28,7 +28,7 @@ const SECTIONS = [
   {
     title: 'Affiliates',
     icon: Share2,
-    keys: ['affiliate_enabled', 'affiliate_commission_rate'],
+    keys: ['affiliate_enabled', 'affiliate_credit_usd_per_credit'],
   },
   {
     title: 'Features',
@@ -47,7 +47,7 @@ const LABELS: Record<string, string> = {
   reviews_enabled:           'Reviews Enabled',
   reviews_require_approval:  'Reviews Require Approval',
   affiliate_enabled:         'Affiliate Program',
-  affiliate_commission_rate: 'Commission Rate (%)',
+  affiliate_credit_usd_per_credit: 'Estimated credit value (USD) per SavCredit',
   newsletter_enabled:        'Newsletter',
 };
 
@@ -61,7 +61,7 @@ const DESCRIPTIONS: Record<string, string> = {
   reviews_enabled:           'Allow users to submit reviews',
   reviews_require_approval:  'Require admin approval before reviews go live',
   affiliate_enabled:         'Enable the affiliate partner program',
-  affiliate_commission_rate: 'Percentage commission for affiliates',
+  affiliate_credit_usd_per_credit: 'Accounting estimate used to value referral reward credits. The default is based on the current $9.99 Pro price for 1,000 SavCredits; this is not a cash payout rate.',
   newsletter_enabled:        'Enable newsletter subscription',
 };
 
@@ -245,6 +245,10 @@ export function AdminSettingsClient() {
                   </label>
                 ) : (
                   <input
+                    type={key === 'affiliate_credit_usd_per_credit' ? 'number' : 'text'}
+                    min={key === 'affiliate_credit_usd_per_credit' ? '0.000001' : undefined}
+                    max={key === 'affiliate_credit_usd_per_credit' ? '1' : undefined}
+                    step={key === 'affiliate_credit_usd_per_credit' ? '0.000001' : undefined}
                     value={settings[key] ?? ''}
                     onChange={(e) => setSettings({ ...settings, [key]: e.target.value })}
                     className="w-full sm:w-64 h-9 rounded-lg border border-border-light px-3 text-[13px] text-text bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"

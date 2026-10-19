@@ -20,6 +20,7 @@ import {
   LifeBuoy,
   ExternalLink,
   Tag,
+  Share2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
@@ -42,6 +43,7 @@ const MORE_LINKS = [
   { label: 'Credits & Billing', href: '/workspace/billing', icon: CreditCard },
   { label: 'Pricing', href: '/workspace/pricing', icon: Tag },
   { label: 'Profile & Settings', href: '/workspace/settings', icon: Settings },
+  { label: 'Affiliate Program', href: '/workspace/affiliate', icon: Share2 },
 ];
 
 /** Dispatched so the Home screen's UniversalInput can focus itself even when

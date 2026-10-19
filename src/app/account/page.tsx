@@ -83,8 +83,20 @@ export default async function AccountPage() {
     }),
     prisma.affiliate.findUnique({
       where: { userId: session.user.id },
-      select: { code: true, status: true, totalSignups: true },
-    }),
+      select: {
+        code: true,
+        status: true,
+        totalSignups: true,
+        referrals: {
+          where: { status: { in: ['PENDING', 'QUALIFIED'] } },
+          select: { id: true },
+        },
+      },
+    }).then((value) => value ? {
+      code: value.code,
+      status: value.status,
+      totalSignups: value.totalSignups + value.referrals.length,
+    } : null),
   ]);
 
   if (!user) redirect('/login?callbackUrl=/account');

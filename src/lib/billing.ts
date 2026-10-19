@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { getPricingConfig } from '@/lib/pricing-server';
+import { expireReferralRewards } from '@/lib/affiliates';
 import type { PlanTier } from '@/types/plans';
 
 /**
@@ -237,7 +238,7 @@ export async function grantCredits(opts: {
 
       const user = await tx.user.findUnique({
         where: { id: userId },
-        select: { planCredits: true, purchasedCredits: true },
+          select: { planCredits: true, purchasedCredits: true, referralCredits: true },
       });
       if (!user) throw new Error('Credit recipient not found');
 
@@ -257,7 +258,8 @@ export async function grantCredits(opts: {
             planDelta: -expired,
             planBalanceAfter: 0,
             purchasedBalanceAfter: purchasedCredits,
-            balanceAfter: purchasedCredits,
+            referralBalanceAfter: user.referralCredits,
+            balanceAfter: purchasedCredits + user.referralCredits,
           },
         });
       }
@@ -290,7 +292,8 @@ export async function grantCredits(opts: {
           purchasedDelta: bucket === 'purchased' ? appliedAmount : 0,
           planBalanceAfter: planCredits,
           purchasedBalanceAfter: purchasedCredits,
-          balanceAfter: planCredits + purchasedCredits,
+          referralBalanceAfter: user.referralCredits,
+          balanceAfter: planCredits + purchasedCredits + user.referralCredits,
         },
       });
       return true;
@@ -373,6 +376,7 @@ export type BillingSummary = {
   plan: PlanTier;
   planCredits: number;
   purchasedCredits: number;
+  referralCredits: number;
   totalCredits: number;
   planName?: string;
   planAllowance: number;
@@ -394,6 +398,7 @@ export type BillingSummary = {
  * paid for); Lifetime is granted once as a finite, never-expiring bank.
  */
 export async function getBillingSummary(userId: string): Promise<BillingSummary | null> {
+  await expireReferralRewards(userId);
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -401,6 +406,7 @@ export async function getBillingSummary(userId: string): Promise<BillingSummary 
       planCredits: true,
       planCreditsResetAt: true,
       purchasedCredits: true,
+      referralCredits: true,
       role: true,
     },
   });
@@ -426,7 +432,7 @@ export async function getBillingSummary(userId: string): Promise<BillingSummary 
       return await prisma.$transaction(async (tx) => {
         const current = await tx.user.findUnique({
           where: { id: userId },
-          select: { plan: true, planCredits: true, purchasedCredits: true, planCreditsResetAt: true, role: true },
+          select: { plan: true, planCredits: true, purchasedCredits: true, referralCredits: true, planCreditsResetAt: true, role: true },
         });
         if (!current) return null;
         const stillDue = !current.planCreditsResetAt || current.planCreditsResetAt.getTime() <= Date.now();
@@ -436,7 +442,8 @@ export async function getBillingSummary(userId: string): Promise<BillingSummary 
             plan: current.plan as PlanTier,
             planCredits: current.planCredits,
             purchasedCredits: current.purchasedCredits,
-            totalCredits: current.planCredits + current.purchasedCredits,
+            referralCredits: current.referralCredits,
+            totalCredits: current.planCredits + current.purchasedCredits + current.referralCredits,
             planName: currentAllowance.name,
             planAllowance: currentAllowance.credits,
             planAllowancePeriod: currentAllowance.period,
@@ -480,7 +487,8 @@ export async function getBillingSummary(userId: string): Promise<BillingSummary 
                 planDelta: -current.planCredits,
                 planBalanceAfter: 0,
                 purchasedBalanceAfter: current.purchasedCredits,
-                balanceAfter: current.purchasedCredits,
+                referralBalanceAfter: current.referralCredits,
+                balanceAfter: current.purchasedCredits + current.referralCredits,
               },
             });
           }
@@ -498,7 +506,8 @@ export async function getBillingSummary(userId: string): Promise<BillingSummary 
               planDelta: refillAmount,
               planBalanceAfter: refillAmount,
               purchasedBalanceAfter: current.purchasedCredits,
-              balanceAfter: refillAmount + current.purchasedCredits,
+              referralBalanceAfter: current.referralCredits,
+              balanceAfter: refillAmount + current.purchasedCredits + current.referralCredits,
             },
           });
         }
@@ -506,7 +515,8 @@ export async function getBillingSummary(userId: string): Promise<BillingSummary 
           plan: tier,
           planCredits: refillAmount,
           purchasedCredits: current.purchasedCredits,
-          totalCredits: refillAmount + current.purchasedCredits,
+          referralCredits: current.referralCredits,
+          totalCredits: refillAmount + current.purchasedCredits + current.referralCredits,
           planName: allowance.name,
           planAllowance: allowance.credits,
           planAllowancePeriod: allowance.period,
@@ -521,7 +531,7 @@ export async function getBillingSummary(userId: string): Promise<BillingSummary 
       if (!(error instanceof Prisma.PrismaClientKnownRequestError) || !['P2002', 'P2034'].includes(error.code)) throw error;
       // A concurrent read/refill already won the unique daily idempotency key.
       // Return the committed balance instead of retrying and granting twice.
-      const refreshed = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true, planCredits: true, planCreditsResetAt: true, purchasedCredits: true, role: true } });
+      const refreshed = await prisma.user.findUnique({ where: { id: userId }, select: { plan: true, planCredits: true, planCreditsResetAt: true, purchasedCredits: true, referralCredits: true, role: true } });
       if (!refreshed) return null;
       const refreshedAllowance = await getTierAllowance(refreshed.plan as PlanTier);
       return summarize(refreshed, refreshedAllowance);
@@ -532,14 +542,15 @@ export async function getBillingSummary(userId: string): Promise<BillingSummary 
 }
 
 function summarize(
-  user: { plan: string; planCredits: number; purchasedCredits: number; planCreditsResetAt: Date | null; role: string },
+  user: { plan: string; planCredits: number; purchasedCredits: number; referralCredits: number; planCreditsResetAt: Date | null; role: string },
   allowance: PlanAllowance,
 ): BillingSummary {
   return {
     plan: user.plan as PlanTier,
     planCredits: user.planCredits,
     purchasedCredits: user.purchasedCredits,
-    totalCredits: user.planCredits + user.purchasedCredits,
+    referralCredits: user.referralCredits,
+    totalCredits: user.planCredits + user.purchasedCredits + user.referralCredits,
     planName: allowance.name,
     planAllowance: allowance.credits,
     planAllowancePeriod: allowance.period,

@@ -76,10 +76,10 @@ export function AffiliateApplyPanel({ variant = 'primary' }: { variant?: 'primar
 
   if (affiliate?.status === 'ACTIVE') {
     return (
-      <div className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950 px-5 py-3.5 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+      <Link href="/workspace/affiliate" className="inline-flex items-center gap-2 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950 px-5 py-3.5 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
         <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-        You&apos;re an active affiliate — check your account for your referral link.
-      </div>
+        You&apos;re active. Open your affiliate dashboard.
+      </Link>
     );
   }
 

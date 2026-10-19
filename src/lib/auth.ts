@@ -7,7 +7,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from './prisma';
 import { verifyPassword } from './passwords';
 import { loginSchema } from './auth/validators';
-import { creditReferralSignup, REFERRAL_COOKIE } from './affiliates';
+import { attributeReferralSignupInTransaction, qualifyPendingReferralInTransaction, REFERRAL_COOKIE, runSerializableTransaction } from './affiliates';
 import { ratelimit } from './ratelimit';
 
 // Admin emails are configured exclusively via the ADMIN_EMAILS environment
@@ -26,6 +26,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      authorization: { params: { prompt: 'select_account' } },
     }),
   );
 }
@@ -89,43 +90,46 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account, profile }) {
       // ── Initial sign-in: populate the token from the DB ─────────────────
       if (user?.email) {
-        const normalizedEmail = user.email.toLowerCase();
+        const email = user.email;
+        const normalizedEmail = email.toLowerCase();
+        const userName = user.name ?? normalizedEmail.split('@')[0];
         const isConfiguredAdmin = adminEmails.includes(normalizedEmail);
-        // Checked ahead of the upsert so OAuth signups (which have no
-        // separate /api/auth/register step) can tell first sign-in apart
-        // from a returning user, and credit a referral exactly once.
-        const existed = await prisma.user.findUnique({ where: { email: user.email }, select: { id: true } });
-
         // Determine if the provider vouches for email verification.
         // Only Google is checked; GitHub and Credentials providers are handled
         // separately and are not affected by this check.
         const providerVerifiesEmail =
           account?.provider === 'google' &&
           (profile as Record<string, unknown> | undefined)?.email_verified === true;
+        // This app has no separate email-verification flow for other providers.
+        // A new non-Google OAuth account therefore qualifies on successful creation.
+        const qualifiesReferralSignup = account?.provider !== 'google' || providerVerifiesEmail;
 
-        const dbUser = await prisma.user.upsert({
-          where: { email: user.email },
-          update: {
-            name: user.name,
-            image: user.image,
-            ...(isConfiguredAdmin ? { role: 'ADMIN' } : {}),
-            // Back-fill emailVerified for Google users on every sign-in when
-            // Google confirms the address is verified. Writing new Date() each
-            // time is safe — Google is authoritative for its own verified claim.
-            ...(providerVerifiesEmail ? { emailVerified: new Date() } : {}),
-          },
-          create: {
-            email: user.email,
-            name: user.name,
-            image: user.image,
-            role: isConfiguredAdmin ? 'ADMIN' : 'USER',
-            ...(providerVerifiesEmail ? { emailVerified: new Date() } : {}),
-          },
+        const refCode = cookies().get(REFERRAL_COOKIE)?.value;
+        const dbUser = await runSerializableTransaction(async (tx) => {
+          const existed = await tx.user.findUnique({ where: { email }, select: { id: true } });
+          const dbUser = await tx.user.upsert({
+            where: { email },
+            update: {
+              name: userName,
+              image: user.image,
+              ...(isConfiguredAdmin ? { role: 'ADMIN' } : {}),
+              // Back-fill emailVerified for Google users on every sign-in when
+              // Google confirms the address is verified. Writing new Date() each
+              // time is safe — Google is authoritative for its own verified claim.
+              ...(providerVerifiesEmail ? { emailVerified: new Date() } : {}),
+            },
+            create: {
+              email,
+              name: userName,
+              image: user.image,
+              role: isConfiguredAdmin ? 'ADMIN' : 'USER',
+              ...(providerVerifiesEmail ? { emailVerified: new Date() } : {}),
+            },
+          });
+          if (!existed) await attributeReferralSignupInTransaction(tx, dbUser.id, refCode, qualifiesReferralSignup);
+          else if (providerVerifiesEmail) await qualifyPendingReferralInTransaction(tx, dbUser.id);
+          return dbUser;
         });
-        if (!existed) {
-          const refCode = cookies().get(REFERRAL_COOKIE)?.value;
-          await creditReferralSignup(refCode);
-        }
         token.id = dbUser.id;
         (token as Record<string, unknown>).role = dbUser.role;
         // Record when this token was issued so subsequent requests can compare

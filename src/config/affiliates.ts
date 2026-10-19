@@ -2,7 +2,6 @@ import {
   UserPlus,
   Share2,
   Coins,
-  Wallet,
   Sparkles,
   Link2,
   ShieldCheck,
@@ -27,10 +26,8 @@ import type { AccordionItem } from '@/components/ui/Accordion';
  * SavDown Affiliate Program — static marketing content for /affiliates.
  *
  * The backend (Prisma `Affiliate` model, admin approval queue) already
- * exists, but the commission economics haven't been finalized publicly, so
- * this file intentionally avoids hardcoding a percentage or payout terms —
- * see the "commission" and "payouts" copy below, which describes the model
- * without a number.
+ * exists. The current reward is a fixed amount of SavCredits; cash payouts
+ * are not part of the program.
  */
 
 export type Step = {
@@ -55,15 +52,15 @@ export const steps: Step[] = [
   },
   {
     number: '03',
-    title: 'Earn',
-    description: 'Earn commission when people you referred become paying SavDown customers.',
+    title: 'Get rewarded',
+    description: 'Earn 20 SavCredits for each qualifying new user you refer. Reward credits expire after one month.',
     icon: Coins,
   },
   {
     number: '04',
-    title: 'Get Paid',
-    description: 'Track everything from your dashboard and get paid out once you qualify.',
-    icon: Wallet,
+    title: 'Track rewards',
+    description: 'See attributed sign-ups, qualifying referrals, and reward expiry dates in your workspace.',
+    icon: ShieldCheck,
   },
 ];
 
@@ -80,8 +77,8 @@ export const benefits: Benefit[] = [
     icon: Sparkles,
   },
   {
-    title: 'Earn from qualifying referrals',
-    description: 'Get rewarded when the people you send to SavDown become paying customers.',
+    title: 'Earn referral SavCredits',
+    description: 'Receive 20 SavCredits when a new user signs up through your link and meets the program criteria.',
     icon: Coins,
   },
   {
@@ -163,7 +160,7 @@ export function buildAffiliatesFaqs(): AccordionItem[] {
     {
       question: 'How do referrals work?',
       answer:
-        'Once you join, you get a unique referral link tied to your account. When someone visits SavDown through your link and later becomes a customer, that referral is attributed to you.',
+        'Once approved, share your unique link. A genuinely new user who registers through it becomes a qualifying referral. Existing users logging in do not count.',
     },
     {
       question: 'How do I get my referral link?',
@@ -171,14 +168,14 @@ export function buildAffiliatesFaqs(): AccordionItem[] {
         'Apply to the program from this page while signed in to your SavDown account. Once approved, your referral link and dashboard become available in your account.',
     },
     {
-      question: 'How are commissions calculated?',
+      question: 'What is the referral reward?',
       answer:
-        'Commission is earned on qualifying referrals — people who sign up through your link and become paying customers. The exact commission model (percentage, fixed, or product-specific) will be shared with you once your application is approved.',
+        'You receive 20 SavCredits for each qualifying new user. Reward credits expire one month after they are granted and can be used in SavDown.',
     },
     {
-      question: 'When are payouts made?',
+      question: 'Can I withdraw or receive cash?',
       answer:
-        'Payout schedule, minimum payout amount, and payout method are confirmed with approved affiliates as part of onboarding, so every partner knows the exact terms before they start promoting.',
+        'No. The current program rewards SavCredits only. It does not offer cash earnings, withdrawals, or payouts.',
     },
     {
       question: 'What products can I promote?',

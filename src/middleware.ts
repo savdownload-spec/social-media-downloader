@@ -46,9 +46,11 @@ export async function middleware(request: NextRequest) {
   }
 
   let response = NextResponse.next();
+  let hasSessionToken = false;
 
   if (!isMaintenanceBypassPath(pathname)) {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+    hasSessionToken = Boolean(token);
     const isAdmin = token?.role === 'ADMIN';
 
     if (!isAdmin && await maintenanceEnabled(request)) {
@@ -73,12 +75,28 @@ export async function middleware(request: NextRequest) {
   // simply credits nothing when a signup later checks it.
   const rawRef = request.nextUrl.searchParams.get('ref');
   const refCode = rawRef && /^[a-z0-9-]{1,40}$/i.test(rawRef) ? rawRef : null;
+  if (
+    refCode && pathname === '/' && !hasSessionToken &&
+    !response.headers.has('x-middleware-rewrite')
+  ) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = '/login';
+    loginUrl.search = '';
+    loginUrl.searchParams.set('google', '1');
+    loginUrl.searchParams.set('callbackUrl', '/workspace');
+    response = NextResponse.redirect(loginUrl);
+  }
   if (refCode && !request.cookies.has(REFERRAL_COOKIE)) {
     response.cookies.set(REFERRAL_COOKIE, refCode, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
       maxAge: REFERRAL_COOKIE_MAX_AGE,
       sameSite: 'lax',
       path: '/',
     });
+  }
+  if (hasSessionToken && request.cookies.has(REFERRAL_COOKIE)) {
+    response.cookies.delete(REFERRAL_COOKIE);
   }
 
   // Regional day/night for Auto theme mode, resolved from Vercel's free

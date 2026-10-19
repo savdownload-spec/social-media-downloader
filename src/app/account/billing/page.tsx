@@ -147,7 +147,7 @@ export default async function BillingPage({
           </div>
 
           {/* Balance */}
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <BalanceTile
               label="Total credits"
               value={summary.totalCredits}
@@ -169,6 +169,11 @@ export default async function BillingPage({
               value={summary.purchasedCredits}
               note="Never expires"
             />
+            <BalanceTile
+              label="Referral rewards"
+              value={summary.referralCredits}
+              note="Expire one month after grant"
+            />
           </div>
 
           {/* History */}
@@ -178,8 +183,7 @@ export default async function BillingPage({
             </p>
             {ledger.length === 0 ? (
               <p className="mt-4 text-sm text-text-muted">
-                Nothing yet. Your free daily credits do not appear here, only purchases and
-                plan refills do.
+                Nothing yet. Credit grants and purchases will appear here when they are issued.
               </p>
             ) : (
               <ul className="mt-4 divide-y divide-border-light">
@@ -191,6 +195,7 @@ export default async function BillingPage({
                       </p>
                       <p className="text-xs text-text-subtle">
                         {entry.createdAt.toLocaleDateString()}
+                        {entry.expiresAt ? ` · Expires ${entry.expiresAt.toLocaleDateString()}` : ''}
                       </p>
                     </div>
                     <span

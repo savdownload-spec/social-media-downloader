@@ -5,7 +5,7 @@ import { hashPassword } from '@/lib/passwords';
 import { registerSchema } from '@/lib/auth/validators';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { ok, fail } from '@/lib/api';
-import { creditReferralSignup, REFERRAL_COOKIE } from '@/lib/affiliates';
+import { attributeReferralSignupInTransaction, REFERRAL_COOKIE } from '@/lib/affiliates';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,13 +36,23 @@ export async function POST(request: Request) {
   if (existing) return fail('An account with this email already exists.', 409);
 
   const passwordHash = await hashPassword(password);
-  const user = await prisma.user.create({
-    data: { name, email, password: passwordHash },
-    select: { id: true, name: true, email: true },
-  });
-
   const refCode = cookies().get(REFERRAL_COOKIE)?.value;
-  await creditReferralSignup(refCode);
+  let user;
+  try {
+    user = await prisma.$transaction(async (tx) => {
+      const created = await tx.user.create({
+        data: { name, email, password: passwordHash },
+        select: { id: true, name: true, email: true },
+      });
+      await attributeReferralSignupInTransaction(tx, created.id, refCode, true);
+      return created;
+    });
+  } catch (error) {
+    if (typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === 'P2002') {
+      return fail('An account with this email already exists.', 409);
+    }
+    throw error;
+  }
 
   return NextResponse.json({ ok: true, user }, { status: 201 });
 }

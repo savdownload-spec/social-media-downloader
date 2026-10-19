@@ -14,7 +14,7 @@ export function AffiliateCard({ affiliate, siteUrl }: { affiliate: AccountAffili
           <h2 className="text-sm font-semibold text-text">Affiliate program</h2>
         </div>
         <p className="mt-2 text-sm text-text-muted">
-          Earn commission by sharing SavDown with your audience.
+          Earn 20 SavCredits for each qualifying new user you refer.
         </p>
         <Link
           href="/affiliates"
@@ -26,7 +26,7 @@ export function AffiliateCard({ affiliate, siteUrl }: { affiliate: AccountAffili
     );
   }
 
-  const referralLink = `${siteUrl}/?ref=${affiliate.code}`;
+  const referralLink = `${siteUrl.replace(/\/$/, '')}/r/${encodeURIComponent(affiliate.code)}`;
 
   return (
     <div className="rounded-2xl border border-border bg-white dark:bg-card p-6 shadow-soft">
@@ -42,6 +42,12 @@ export function AffiliateCard({ affiliate, siteUrl }: { affiliate: AccountAffili
           <p className="mt-3 text-xs text-text-subtle">
             {affiliate.totalSignups} {affiliate.totalSignups === 1 ? 'signup' : 'signups'} so far.
           </p>
+          <Link
+            href="/workspace/affiliate"
+            className="mt-3 inline-flex w-full items-center justify-center rounded-2xl border border-border bg-white dark:bg-card px-5 py-2.5 text-sm font-semibold text-text transition-all hover:border-primary/40 hover:bg-primary-light"
+          >
+            Open Affiliate Dashboard
+          </Link>
         </>
       )}
 

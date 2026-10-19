@@ -5,11 +5,12 @@ import { NextResponse } from 'next/server';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { getBillingSummary } from '@/lib/billing';
-import { allocateCreditDebit } from '@/lib/credit-semantics';
+import { allocateCreditDebitWithReferral } from '@/lib/credit-semantics';
+import { expireReferralRewardsInTransaction } from '@/lib/affiliates';
 import { getClientId } from '@/lib/ratelimit';
 import { sha256 } from '@/lib/utils';
 
-export { allocateCreditDebit } from '@/lib/credit-semantics';
+export { allocateCreditDebit, allocateCreditDebitWithReferral } from '@/lib/credit-semantics';
 
 /** Credit prices shared by every delivery/processing route. */
 export const JOB_COST = {
@@ -48,6 +49,7 @@ export type CreditSpend = {
   amount: number;
   planCredits: number;
   purchasedCredits: number;
+  referralCredits: number;
   duplicate: boolean;
 };
 
@@ -208,27 +210,56 @@ export async function spendCreditsDetailed(
             amount: Math.abs(existing.amount),
             planCredits: Math.abs(existing.planDelta),
             purchasedCredits: Math.abs(existing.purchasedDelta),
+            referralCredits: Math.abs(existing.referralDelta),
             duplicate: true,
           };
         }
       }
 
+      const now = new Date();
+      await expireReferralRewardsInTransaction(tx, userId, now);
       const user = await tx.user.findUnique({
         where: { id: userId },
-        select: { planCredits: true, purchasedCredits: true },
+        select: { planCredits: true, purchasedCredits: true, referralCredits: true },
       });
       if (!user) return null;
-      const allocation = allocateCreditDebit(user.planCredits, user.purchasedCredits, amount);
+      const allocation = allocateCreditDebitWithReferral(user.planCredits, user.referralCredits, user.purchasedCredits, amount);
       if (!allocation) return null;
-      const { fromPlan, fromPurchased, nextPlan, nextPurchased } = allocation;
+      const { fromPlan, fromReferral, fromPurchased, nextPlan, nextReferral, nextPurchased } = allocation;
+
+      const referralAllocations: Array<{ referralId: string; amount: number }> = [];
+      let referralAmountLeft = fromReferral;
+      if (referralAmountLeft > 0) {
+        const lots = await tx.referral.findMany({
+          where: { referredUserId: userId, status: 'QUALIFIED', remainingCredits: { gt: 0 }, expiresAt: { gt: now } },
+          orderBy: [{ expiresAt: 'asc' }, { rewardedAt: 'asc' }],
+          select: { id: true, remainingCredits: true },
+        });
+        for (const lot of lots) {
+          const used = Math.min(lot.remainingCredits, referralAmountLeft);
+          if (used <= 0) break;
+          const updatedLot = await tx.referral.updateMany({
+            where: { id: lot.id, remainingCredits: { gte: used }, expiresAt: { gt: now } },
+            data: { remainingCredits: { decrement: used } },
+          });
+          if (updatedLot.count !== 1) throw retryableConflict();
+          referralAllocations.push({ referralId: lot.id, amount: used });
+          referralAmountLeft -= used;
+        }
+        if (referralAmountLeft > 0) throw retryableConflict();
+      }
 
       const updated = await tx.user.updateMany({
-        where: { id: userId, planCredits: user.planCredits, purchasedCredits: user.purchasedCredits },
-        data: { planCredits: nextPlan, purchasedCredits: nextPurchased },
+        where: {
+          id: userId,
+          planCredits: user.planCredits,
+          purchasedCredits: user.purchasedCredits,
+          referralCredits: user.referralCredits,
+        },
+        data: { planCredits: nextPlan, purchasedCredits: nextPurchased, referralCredits: nextReferral },
       });
       if (updated.count !== 1) throw retryableConflict();
 
-      const now = new Date();
       const op = operation.operationId
         ? await tx.download.update({
             where: { id: operation.operationId, userId },
@@ -242,22 +273,35 @@ export async function spendCreditsDetailed(
           })
         : await upsertOperation(tx, userId, operation, status, amount, scopedKey, now);
 
+      const usedBuckets = [fromPlan, fromReferral, fromPurchased].filter((value) => value > 0).length;
+      const bucket = usedBuckets > 1 ? 'mixed' : fromPlan > 0 ? 'plan' : fromReferral > 0 ? 'referral' : 'purchased';
       const ledger = await tx.creditTransaction.create({
         data: {
           userId,
           operationId: op.id,
           amount: -amount,
           kind: 'spend',
-          bucket: fromPlan > 0 && fromPurchased > 0 ? 'mixed' : fromPlan > 0 ? 'plan' : 'purchased',
+          bucket,
           description: operation.description,
           idempotencyKey: scopedKey ? `${scopedKey}:spend` : null,
           planDelta: -fromPlan,
           purchasedDelta: -fromPurchased,
+          referralDelta: -fromReferral,
           planBalanceAfter: nextPlan,
           purchasedBalanceAfter: nextPurchased,
-          balanceAfter: nextPlan + nextPurchased,
+          referralBalanceAfter: nextReferral,
+          balanceAfter: nextPlan + nextPurchased + nextReferral,
         },
       });
+      if (referralAllocations.length > 0) {
+        await tx.creditAllocation.createMany({
+          data: referralAllocations.map((allocation) => ({
+            referralId: allocation.referralId,
+            spendTransactionId: ledger.id,
+            amount: allocation.amount,
+          })),
+        });
+      }
 
       return {
         operationId: op.id,
@@ -265,6 +309,7 @@ export async function spendCreditsDetailed(
         amount,
         planCredits: fromPlan,
         purchasedCredits: fromPurchased,
+        referralCredits: fromReferral,
         duplicate: false,
       };
     });
@@ -278,6 +323,7 @@ export async function spendCreditsDetailed(
           amount: Math.abs(existing.amount),
           planCredits: Math.abs(existing.planDelta),
           purchasedCredits: Math.abs(existing.purchasedDelta),
+          referralCredits: Math.abs(existing.referralDelta),
           duplicate: true,
         };
       }
@@ -375,30 +421,56 @@ export async function refundCreditSpend(
     const existing = await tx.creditTransaction.findUnique({ where: { idempotencyKey: refundKey } });
     if (existing) return { refunded: false, transactionId: existing.id };
 
+    const now = new Date();
+    await expireReferralRewardsInTransaction(tx, userId, now);
     const planDelta = Math.abs(spend.planDelta);
     const purchasedDelta = Math.abs(spend.purchasedDelta);
+    const allocations = await tx.creditAllocation.findMany({
+      where: { spendTransactionId: spend.id },
+      include: { referral: { select: { status: true, expiresAt: true } } },
+    });
+    let referralDelta = 0;
+    for (const allocation of allocations) {
+      const refundable = allocation.amount - allocation.refundedAmount;
+      if (refundable <= 0 || allocation.referral.status !== 'QUALIFIED' || !allocation.referral.expiresAt || allocation.referral.expiresAt <= now) continue;
+      const restored = await tx.referral.updateMany({
+        where: { id: allocation.referralId, status: 'QUALIFIED', expiresAt: { gt: now } },
+        data: { remainingCredits: { increment: refundable } },
+      });
+      if (restored.count !== 1) continue;
+      await tx.creditAllocation.update({ where: { id: allocation.id }, data: { refundedAmount: { increment: refundable } } });
+      referralDelta += refundable;
+    }
+
     const user = await tx.user.update({
       where: { id: userId },
       data: {
         planCredits: { increment: planDelta },
         purchasedCredits: { increment: purchasedDelta },
+        referralCredits: { increment: referralDelta },
       },
-      select: { planCredits: true, purchasedCredits: true },
+      select: { planCredits: true, purchasedCredits: true, referralCredits: true },
     });
+    const amount = planDelta + purchasedDelta + referralDelta;
+    const usedBuckets = [planDelta, referralDelta, purchasedDelta].filter((value) => value > 0).length;
+    const bucket = usedBuckets > 1 ? 'mixed' : planDelta > 0 ? 'plan' : referralDelta > 0 ? 'referral' : purchasedDelta > 0 ? 'purchased' : 'referral';
+    const expiredReferralAmount = Math.max(0, Math.abs(spend.referralDelta) - referralDelta);
     const refund = await tx.creditTransaction.create({
       data: {
         userId,
         operationId: spend.operationId,
-        amount: planDelta + purchasedDelta,
+        amount,
         kind: 'refund',
-        bucket: planDelta > 0 && purchasedDelta > 0 ? 'mixed' : planDelta > 0 ? 'plan' : 'purchased',
-        description: reason,
+        bucket,
+        description: expiredReferralAmount > 0 ? `${reason}; ${expiredReferralAmount} expired referral credits were not restored` : reason,
         idempotencyKey: refundKey,
         planDelta,
         purchasedDelta,
+        referralDelta,
         planBalanceAfter: user.planCredits,
         purchasedBalanceAfter: user.purchasedCredits,
-        balanceAfter: user.planCredits + user.purchasedCredits,
+        referralBalanceAfter: user.referralCredits,
+        balanceAfter: user.planCredits + user.purchasedCredits + user.referralCredits,
       },
     });
     if (markOperationFailed && spend.operationId) {

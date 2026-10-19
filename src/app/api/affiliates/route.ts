@@ -50,26 +50,35 @@ export async function POST(request: Request) {
   }
 
   const seed = user.name ?? user.email ?? 'savdown';
-  let code = generateCode(seed);
-
   for (let attempt = 0; attempt < 5; attempt++) {
-    const codeTaken = await prisma.affiliate.findUnique({ where: { code } });
-    if (!codeTaken) break;
-    code = generateCode(seed);
+    const code = generateCode(seed);
+    try {
+      const created = await prisma.$transaction(async (tx) => {
+        const affiliate = await tx.affiliate.create({
+          data: { userId: user.id, code, status: 'PENDING' },
+          select: { id: true, code: true, status: true, createdAt: true },
+        });
+        await createAdminNotification(tx, {
+          type: 'AFFILIATE_APPLICATION', section: 'affiliates', entityType: 'Affiliate', entityId: affiliate.id,
+          title: 'New affiliate application', message: `${user.name ?? user.email ?? 'A user'} applied to the affiliate program.`,
+          href: `/admin/affiliates?affiliateId=${affiliate.id}`, dedupeKey: `affiliate:pending:${affiliate.id}`,
+        });
+        return affiliate;
+      });
+
+      return ok({ affiliate: { code: created.code, status: created.status, createdAt: created.createdAt } }, 201);
+    } catch (error) {
+      if (typeof error === 'object' && error !== null && 'code' in error && (error as { code?: string }).code === 'P2002') {
+        const existingAfterRace = await prisma.affiliate.findUnique({
+          where: { userId: user.id },
+          select: { code: true, status: true, createdAt: true },
+        });
+        if (existingAfterRace) return ok({ affiliate: existingAfterRace });
+        continue;
+      }
+      throw error;
+    }
   }
 
-  const created = await prisma.$transaction(async (tx) => {
-    const affiliate = await tx.affiliate.create({
-      data: { userId: user.id, code, status: 'PENDING' },
-      select: { id: true, code: true, status: true, createdAt: true },
-    });
-    await createAdminNotification(tx, {
-      type: 'AFFILIATE_APPLICATION', section: 'affiliates', entityType: 'Affiliate', entityId: affiliate.id,
-      title: 'New affiliate application', message: `${user.name ?? user.email ?? 'A user'} applied to the affiliate program.`,
-      href: `/admin/affiliates?affiliateId=${affiliate.id}`, dedupeKey: `affiliate:pending:${affiliate.id}`,
-    });
-    return affiliate;
-  });
-
-  return ok({ affiliate: { code: created.code, status: created.status, createdAt: created.createdAt } }, 201);
+  return fail('Could not create a unique referral code. Please try again.', 503);
 }

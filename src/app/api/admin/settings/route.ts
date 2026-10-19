@@ -6,6 +6,7 @@ import { writeAuditLog } from '@/lib/admin';
 import { z } from 'zod';
 import { requireAdminApi, PRIVATE_NO_STORE_HEADERS } from '@/lib/admin-auth';
 import { MAINTENANCE_SETTING_KEY } from '@/lib/maintenance';
+import { DEFAULT_REFERRAL_CREDIT_USD_RATE, REFERRAL_CREDIT_VALUE_SETTING } from '@/lib/affiliates-constants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,6 +23,7 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   reviews_enabled:            'true',
   affiliate_enabled:          'false',
   affiliate_commission_rate:  '20',
+  [REFERRAL_CREDIT_VALUE_SETTING]: String(DEFAULT_REFERRAL_CREDIT_USD_RATE),
   newsletter_enabled:         'true',
   maintenance_mode:           'false',
 };
@@ -83,6 +85,11 @@ export async function PUT(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = updateSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ ok: false, error: 'Invalid' }, { status: 400 });
+
+  const creditRate = parsed.data[REFERRAL_CREDIT_VALUE_SETTING];
+  if (creditRate !== undefined && (!Number.isFinite(Number(creditRate)) || Number(creditRate) <= 0 || Number(creditRate) > 1)) {
+    return NextResponse.json({ ok: false, error: 'Estimated USD value per SavCredit must be greater than 0 and no more than 1.' }, { status: 400 });
+  }
 
   // Upsert each setting
   await Promise.all(
