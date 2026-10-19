@@ -25,6 +25,7 @@ import {
   ShieldCheck,
   ChevronLeft,
   ExternalLink,
+  DatabaseBackup,
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 
@@ -95,6 +96,7 @@ const NAV_GROUPS: NavGroup[] = [
     section: 'System',
     items: [
       { label: 'Audit Log', href: '/admin/audit', icon: ClipboardList },
+      { label: 'Backup & Restore', href: '/admin/backups', icon: DatabaseBackup },
       { label: 'Settings', href: '/admin/settings', icon: Settings },
     ],
   },
