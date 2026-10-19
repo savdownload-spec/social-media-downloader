@@ -19,12 +19,12 @@ const CATEGORY_MODELS: Record<BackupCategory, string[]> = {
   media: [],
   users: ['users'],
   pricing: ['pricingSettings'],
-  credits_usage: ['creditTransactions', 'downloads', 'aiImageGenerations', 'analyticsEvents', 'userCreditState'],
+  credits_usage: ['creditTransactions', 'creditAllocations', 'downloads', 'aiImageGenerations', 'analyticsEvents', 'userCreditState'],
   billing: ['subscriptions', 'payments', 'userEntitlements'],
   feedback: ['reviews', 'blogComments'],
   settings: ['adminSettings', 'toolConfigs'],
   support: ['contactMessages', 'supportConversations', 'supportMessages', 'supportAttachments'],
-  audience: ['newsletterSubscribers', 'affiliates'],
+  audience: ['newsletterSubscribers', 'affiliates', 'referrals'],
 };
 
 type JsonRecord = Record<string, unknown>;
@@ -152,7 +152,8 @@ const ALLOWED_FIELDS: Record<string, string[]> = {
   postRevisions: ['id', 'postId', 'snapshotJson', 'changeSummary', 'authorId', 'authorEmail', 'createdAt'],
   pricingSettings: ['key', 'value', 'updatedAt'], adminSettings: ['key', 'value', 'updatedAt'],
   toolConfigs: ['id', 'slug', 'name', 'category', 'status', 'creditCost', 'freeLimit', 'batchLimitFree', 'batchLimitPro', 'batchLimitMax', 'batchLimitLifetime', 'updatedAt', 'createdAt'],
-  creditTransactions: ['id', 'userId', 'amount', 'kind', 'bucket', 'description', 'externalId', 'idempotencyKey', 'operationId', 'paymentId', 'planDelta', 'purchasedDelta', 'balanceAfter', 'planBalanceAfter', 'purchasedBalanceAfter', 'createdAt'],
+  creditTransactions: ['id', 'userId', 'amount', 'kind', 'bucket', 'description', 'externalId', 'idempotencyKey', 'operationId', 'paymentId', 'planDelta', 'purchasedDelta', 'referralDelta', 'balanceAfter', 'planBalanceAfter', 'purchasedBalanceAfter', 'referralBalanceAfter', 'expiresAt', 'referralId', 'createdAt'],
+  creditAllocations: ['id', 'referralId', 'spendTransactionId', 'amount', 'refundedAmount', 'createdAt'],
   downloads: ['id', 'platform', 'tool', 'sourceUrl', 'status', 'idempotencyKey', 'batchId', 'failureReason', 'failureCode', 'creditCost', 'userId', 'ipHash', 'userAgent', 'createdAt', 'updatedAt', 'completedAt'],
   aiImageGenerations: ['id', 'userId', 'operationId', 'prompt', 'aspectRatio', 'quality', 'model', 'numberOfImages', 'creditsUsed', 'status', 'failureReason', 'createdAt'],
   analyticsEvents: ['id', 'name', 'path', 'referrer', 'country', 'device', 'metaJson', 'createdAt'],
@@ -166,19 +167,20 @@ const ALLOWED_FIELDS: Record<string, string[]> = {
   supportAttachments: ['id', 'messageId', 'fileName', 'contentType', 'size', 'createdAt', 'data'],
   newsletterSubscribers: ['id', 'email', 'active', 'createdAt', 'status', 'source', 'provider', 'providerSubscriberId', 'providerListId', 'subscribedAt', 'updatedAt'],
   affiliates: ['id', 'userId', 'code', 'commissionRate', 'status', 'totalClicks', 'totalSignups', 'totalConversions', 'totalRevenue', 'totalCommission', 'paidOut', 'createdAt', 'updatedAt'],
-  userCreditState: ['id', 'planCredits', 'planCreditsResetAt', 'purchasedCredits'],
+  referrals: ['id', 'affiliateId', 'referredUserId', 'code', 'status', 'rejectionReason', 'rewardCredits', 'remainingCredits', 'expiredCredits', 'estimatedUsdValue', 'createdAt', 'qualifiedAt', 'rewardedAt', 'expiresAt'],
+  userCreditState: ['id', 'planCredits', 'planCreditsResetAt', 'purchasedCredits', 'referralCredits'],
   userEntitlements: ['id', 'plan'],
 };
 
-const DATE_FIELDS = new Set(['emailVerified', 'planCreditsResetAt', 'publishedAt', 'scheduledAt', 'reportedAt', 'approvedAt', 'moderatedAt', 'currentPeriodEnd', 'paidAt', 'refundedAt', 'lastMessageAt', 'customerLastReadAt', 'adminLastReadAt', 'resolvedAt', 'subscribedAt', 'completedAt', 'createdAt', 'updatedAt']);
+const DATE_FIELDS = new Set(['emailVerified', 'planCreditsResetAt', 'publishedAt', 'scheduledAt', 'reportedAt', 'approvedAt', 'moderatedAt', 'currentPeriodEnd', 'paidAt', 'refundedAt', 'lastMessageAt', 'customerLastReadAt', 'adminLastReadAt', 'resolvedAt', 'subscribedAt', 'completedAt', 'qualifiedAt', 'rewardedAt', 'expiresAt', 'createdAt', 'updatedAt']);
 
 const IMPORT_ORDER: Array<[string, string]> = [
   ['users', 'user'], ['posts', 'post'], ['postRevisions', 'postRevision'],
   ['pricingSettings', 'adminSetting'], ['adminSettings', 'adminSetting'], ['toolConfigs', 'toolConfig'],
   ['contactMessages', 'contactMessage'], ['supportConversations', 'supportConversation'], ['supportMessages', 'supportMessage'], ['supportAttachments', 'supportAttachment'],
-  ['newsletterSubscribers', 'newsletterSubscriber'], ['affiliates', 'affiliate'],
+  ['newsletterSubscribers', 'newsletterSubscriber'], ['affiliates', 'affiliate'], ['referrals', 'referral'],
   ['downloads', 'download'], ['payments', 'payment'], ['subscriptions', 'subscription'],
-  ['creditTransactions', 'creditTransaction'], ['aiImageGenerations', 'aiImageGeneration'], ['analyticsEvents', 'analyticsEvent'],
+  ['creditTransactions', 'creditTransaction'], ['creditAllocations', 'creditAllocation'], ['aiImageGenerations', 'aiImageGeneration'], ['analyticsEvents', 'analyticsEvent'],
   ['reviews', 'review'], ['blogComments', 'blogComment'],
 ];
 
@@ -313,7 +315,7 @@ export async function restoreValidatedArchive(archive: ValidatedArchive): Promis
   }
 
   const newlyCreatedUsers = new Set(userRecords.map((record) => String(record.id)).filter((id) => !usersBefore.has(id)));
-  for (const [name, fields] of [['userCreditState', ['planCredits', 'planCreditsResetAt', 'purchasedCredits']], ['userEntitlements', ['plan']]] as const) {
+  for (const [name, fields] of [['userCreditState', ['planCredits', 'planCreditsResetAt', 'purchasedCredits', 'referralCredits']], ['userEntitlements', ['plan']]] as const) {
     const records = parseRecords(archive, name);
     let created = 0; let skipped = 0; const errors: string[] = [];
     for (const record of records) {

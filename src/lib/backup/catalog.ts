@@ -49,7 +49,7 @@ export const BACKUP_CATEGORIES = [
   {
     id: 'audience',
     label: 'Newsletter & affiliates',
-    description: 'Newsletter subscribers and affiliate programme records, excluding provider-side identifiers.',
+    description: 'Newsletter subscribers, affiliates, referral attribution and reward records, excluding provider-side identifiers.',
   },
 ] as const;
 

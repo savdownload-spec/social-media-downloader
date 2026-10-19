@@ -69,15 +69,16 @@ async function collectData(categories: Set<BackupCategory>) {
     data.pricingSettings = await rows('adminSetting', { where: { key: 'pricing_config' } });
   }
   if (categories.has('credits_usage')) {
-    const [creditTransactions, downloads, aiImageGenerations, analyticsEvents, creditState] = await Promise.all([
+    const [creditTransactions, downloads, aiImageGenerations, analyticsEvents, creditAllocations, creditState] = await Promise.all([
       rows('creditTransaction', { select: {
         id: true, userId: true, amount: true, kind: true, bucket: true, description: true,
         externalId: true, idempotencyKey: true, operationId: true, paymentId: true,
-        planDelta: true, purchasedDelta: true, balanceAfter: true, planBalanceAfter: true,
-        purchasedBalanceAfter: true, createdAt: true,
-      } }), rows('download'), rows('aiImageGeneration'), rows('analyticsEvent'),
+        planDelta: true, purchasedDelta: true, referralDelta: true, balanceAfter: true,
+        planBalanceAfter: true, purchasedBalanceAfter: true, referralBalanceAfter: true,
+        expiresAt: true, referralId: true, createdAt: true,
+      } }), rows('download'), rows('aiImageGeneration'), rows('analyticsEvent'), rows('creditAllocation'),
       rows('user', { select: {
-        id: true, planCredits: true, planCreditsResetAt: true, purchasedCredits: true,
+        id: true, planCredits: true, planCreditsResetAt: true, purchasedCredits: true, referralCredits: true,
       } }),
     ]);
     data.creditTransactions = creditTransactions.map((record) => ({
@@ -86,6 +87,7 @@ async function collectData(categories: Set<BackupCategory>) {
     data.downloads = downloads.map((record) => ({ ...record, idempotencyKey: null, ipHash: null, userAgent: null }));
     data.aiImageGenerations = aiImageGenerations;
     data.analyticsEvents = analyticsEvents.map((record) => ({ ...record, metaJson: null }));
+    data.creditAllocations = creditAllocations;
     data.userCreditState = creditState;
   }
   if (categories.has('billing')) {
@@ -129,6 +131,7 @@ async function collectData(categories: Set<BackupCategory>) {
       ...record, providerSubscriberId: null, providerListId: null,
     }));
     data.affiliates = await rows('affiliate');
+    data.referrals = await rows('referral');
   }
 
   return data;
