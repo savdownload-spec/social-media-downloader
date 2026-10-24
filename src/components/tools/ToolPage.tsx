@@ -169,9 +169,18 @@ export function ToolPageView({ tool }: { tool: Tool }) {
       {(() => {
         const meta = getCatalogTool(tool.slug);
         if (!meta) return null;
-        const related = catalog
-          .filter((t) => t.group === meta.group && t.slug !== tool.slug)
-          .slice(0, 6);
+        const youtubeVideoRelatedSlugs = [
+          'youtube-shorts-downloader',
+          'youtube-thumbnail-downloader',
+          'youtube-to-mp3',
+        ];
+        const related = tool.slug === 'youtube-video-downloader'
+          ? youtubeVideoRelatedSlugs
+              .map((slug) => getCatalogTool(slug))
+              .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
+          : catalog
+              .filter((t) => t.group === meta.group && t.slug !== tool.slug)
+              .slice(0, 6);
         if (related.length === 0) return null;
         return (
           <Section variant="default">

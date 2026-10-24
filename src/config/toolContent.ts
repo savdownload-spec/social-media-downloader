@@ -17,20 +17,26 @@ export type ToolLongContent = {
   tipsAndTricks: string[];
   whyChoose: string;
   conclusion: string;
+  resources?: {
+    introduction: string;
+    guides: { label: string; href: string; description: string }[];
+    officialReferences: { label: string; href: string; description: string }[];
+    disclosure: string;
+  };
 };
 
 export const toolContent: Record<string, ToolLongContent> = {
   /* ── 1. YouTube Video Downloader ─────────────────────────────── */
   'youtube-video-downloader': {
     introduction:
-      "YouTube is the world's largest video library, with more than 720,000 hours of content uploaded every single day. From tutorials and lectures to music videos and full-length films, the platform hosts material people genuinely need to revisit, on a plane, in a classroom, or during a flaky-WiFi workday. The SavDown YouTube Video Downloader turns that wish into one paste-and-click action: copy the URL, pick a quality, save the file. No accounts, no plugins, no sketchy popups, and, critically, no watermark burned into the video you save. Whether you are a creator collecting reference footage, a student archiving a lecture series, or someone who just wants the original 4K version of a music video before the audio gets replaced, this tool is built for you.",
+      "YouTube hosts tutorials, lectures, music, interviews, and other videos people may need to revisit offline or preserve for work they are authorized to do. The SavDown YouTube Video Downloader provides a focused workflow for eligible videos: copy the URL, choose an available quality, and save the file without a SavDown watermark or browser extension. Use it for videos you uploaded, content you have permission to download, or material your local law otherwise allows you to save.",
     whatItDoes:
-      "The YouTube Video Downloader fetches the source stream of any publicly available YouTube video and gives you a clean download link in your chosen format. We support MP4 up to 4K (2160p), with secondary tiers at 1080p and 720p for devices that prefer smaller files, plus an MP3 audio-only path for music, podcasts, and interviews. Resolution is bound by what the original uploader supplied, if a video tops out at 1080p on YouTube, that is the ceiling, not a tool limitation. We never re-encode or transcode your file unless you explicitly ask for a format change, so the saved video is bit-for-bit the same as what was uploaded. The whole flow takes roughly 3–6 seconds end-to-end on a typical broadband connection.",
+      "The YouTube Video Downloader resolves eligible public or unlisted video links and presents available MP4 qualities up to 4K (2160p), with 1080p and 720p choices for smaller files. Available resolution depends on the original upload: if a video tops out at 1080p on YouTube, this tool cannot create genuine 4K detail. Private videos and content that requires an authenticated YouTube session are not supported.",
     keyFeatures: [
       { title: 'Up to 4K (2160p)', description: 'Save videos in the same resolution the uploader supplied, up to true 4K when available on the source.' },
-      { title: 'MP4 and MP3', description: 'Pick MP4 for video, or extract clean MP3 audio at up to 320kbps without re-encoding.' },
+      { title: 'MP4 quality choices', description: 'Pick an available MP4 resolution up to 4K; audio-only conversion is available in the separate YouTube to MP3 tool.' },
       { title: 'Zero watermarks', description: 'We never stamp your file with a logo, channel ID, or "downloaded from X" overlay.' },
-      { title: 'No signup, no account', description: 'Open the page, paste a link, save the file. We never ask for an email or a phone number.' },
+      { title: 'Account-based credits', description: 'Sign in to use free daily credits and keep charges tied to completed deliveries.' },
       { title: 'Original file, not a re-encode', description: 'The stream is routed directly, so the saved video is the same quality as the source.' },
       { title: 'Works on any device', description: 'Modern browser on phone, tablet, laptop, or desktop, no app, no extension, no install.' },
     ],
@@ -39,13 +45,13 @@ export const toolContent: Record<string, ToolLongContent> = {
       { title: 'Personal archival', description: 'Build a private library of lectures, tutorials, and performances you want to revisit forever.' },
       { title: 'Reference for creators', description: 'Collect footage for editing breakdowns, color studies, or cinematography analysis.' },
       { title: 'Educational use', description: 'Distribute course material, training videos, and demonstrations in places without reliable internet.' },
-      { title: 'No daily caps or throttling', description: 'Download what you need, when you need it. We do not lock downloads behind a paywall.' },
-      { title: 'Privacy respected', description: 'We never log the videos you save, we never sell your activity, and we do not track you across the web.' },
+      { title: 'Useful quality choices', description: 'Choose an available MP4 resolution based on your device, storage, and intended use.' },
+      { title: 'Clear usage records', description: 'SavDown records tool usage and credit activity needed to operate accounts and prevent duplicate charges.' },
     ],
     bestPractices: [
       'Always respect copyright. Only download videos you own, have explicit permission to save, or that are licensed for your intended use.',
       'Pick the lowest resolution that still looks good, 720p is usually enough for phone screens and saves a lot of space.',
-      'When extracting audio, choose MP3 320kbps for music and 128kbps for podcasts and voice to keep file sizes sensible.',
+      'For authorised audio-only use, switch to the dedicated YouTube to MP3 tool.',
       'Save the original YouTube URL alongside the file so you can re-fetch a higher quality version later if needed.',
       'If the source video has captions, download the captions separately for accessibility and translation workflows.',
       'For batch workflows, save multiple videos in one session before closing the tab, the tool is fastest when warmed up.',
@@ -70,14 +76,28 @@ export const toolContent: Record<string, ToolLongContent> = {
       'Append " &t=" to the URL to start the download from a specific timestamp, useful for cutting a long video to a single scene.',
       'If 4K is missing, the original uploader did not supply it. Try the creator\'s other uploads or wait for them to re-upload in higher quality.',
       'For very long videos, prefer MP4 1080p, the 4K version can be 5–10x larger with no visible difference on a phone screen.',
-      'Use the MP3 path for music you already own in another format, it will save space without audible loss for most listeners.',
+      'Use the dedicated audio tool when you only need audio and have permission to save it.',
       'Bookmark the tool in your browser bar for one-click access next time you need to save something quickly.',
-      'Combine with our YouTube Playlist Downloader to save a whole series in one shot rather than link by link.',
+      'For a YouTube Short, use the dedicated Shorts downloader to preserve the vertical format and keep that workflow focused.',
     ],
     whyChoose:
-      "There are dozens of YouTube downloaders on the web, and almost all of them are ad farms, malware vectors, or paywalled front-ends for low-quality streams. SavDown is different because the tool itself is the product, we make money from the upcoming Pro tier and AI features, not from running an ad network on top of your downloads. There are no popups, no required installs, no email captures, and the saved file is the actual source stream, not a re-encode. We respect your time, your data, and the creators whose work you are saving. The same philosophy runs through every tool on the platform.",
+      "SavDown keeps the workflow focused: paste a supported link, review the formats available from the source, and choose the file that fits your device or project. There is no browser extension to install and SavDown does not add its own watermark to the output. The same straightforward interface is used across SavDown's YouTube tools, so moving between video, audio, Shorts, and thumbnail workflows remains familiar.",
     conclusion:
-      "The SavDown YouTube Video Downloader is the fastest, cleanest way to keep the videos that matter to you. Paste a link, pick a format, and you have a file in seconds, no watermark, no signup, no friction. Save what you love, watch it anywhere.",
+      "The SavDown YouTube Video Downloader gives you a straightforward way to save eligible videos in an available MP4 quality. Confirm that you own the content, have permission, or are otherwise allowed to download it, then paste the link and choose the quality that fits your needs.",
+    resources: {
+      introduction: 'Use these guides to choose a format and understand permissions before downloading. For platform rules and official download options, consult YouTube directly.',
+      guides: [
+        { label: 'How to Download YouTube Videos in HD', href: '/blog/how-to-download-youtube-videos-in-hd-quality', description: 'Compare 720p, 1080p, and source-quality limits before choosing a file.' },
+        { label: 'How to Download YouTube Videos in 4K', href: '/blog/how-to-download-youtube-videos-4k', description: 'Review 4K availability, device compatibility, and storage considerations.' },
+        { label: 'Legal Considerations for Downloaded Videos', href: '/blog/is-it-legal-to-download-social-media-videos', description: 'A practical overview of ownership, permission, platform terms, and reuse.' },
+      ],
+      officialReferences: [
+        { label: 'YouTube Terms of Service', href: 'https://www.youtube.com/t/terms', description: 'YouTube explains when accessing, downloading, and using content is permitted.' },
+        { label: 'YouTube Offline Video FAQs', href: 'https://support.google.com/youtube/answer/7381437?hl=en', description: 'Official guidance on Premium downloads and offline viewing availability.' },
+        { label: 'Download Videos You Uploaded', href: 'https://support.google.com/youtube/answer/56100', description: 'Official steps and limitations for downloading your own uploads.' },
+      ],
+      disclosure: 'SavDown is an independent service and is not affiliated with, sponsored by, or endorsed by YouTube or Google.',
+    },
   },
 
   /* ── 2. YouTube Shorts Downloader ────────────────────────────── */

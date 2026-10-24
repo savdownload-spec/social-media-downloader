@@ -20,9 +20,10 @@ import { Button } from '@/components/ui/Button';
 type Props = {
   open: boolean;
   onClose: () => void;
+  callbackUrl?: string;
 };
 
-export function SignInRequiredModal({ open, onClose }: Props) {
+export function SignInRequiredModal({ open, onClose, callbackUrl: requestedCallbackUrl }: Props) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -30,7 +31,7 @@ export function SignInRequiredModal({ open, onClose }: Props) {
     onClose();
     // Navigate to the login page with a callbackUrl pointing back to this
     // tool so the user lands here after authenticating.
-    const callbackUrl = encodeURIComponent(pathname ?? '/');
+    const callbackUrl = encodeURIComponent(requestedCallbackUrl ?? pathname ?? '/');
     router.push(`/login?callbackUrl=${callbackUrl}`);
   }
 

@@ -61,6 +61,7 @@ export async function cacheJson<T>(
   key: string,
   ttlSeconds: number,
   fetcher: () => Promise<T>,
+  shouldCache: (value: T) => boolean = () => true,
 ): Promise<T> {
   const r = getRedis();
   if (!r) return fetcher();
@@ -71,8 +72,10 @@ export async function cacheJson<T>(
   } catch { /* fall through on any cache error */ }
 
   const fresh = await fetcher();
-  try {
-    await r.set(key, JSON.stringify(fresh), ttlSeconds);
-  } catch { /* ignore */ }
+  if (shouldCache(fresh)) {
+    try {
+      await r.set(key, JSON.stringify(fresh), ttlSeconds);
+    } catch { /* ignore */ }
+  }
   return fresh;
 }

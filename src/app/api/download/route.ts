@@ -10,6 +10,7 @@ import { resolveWithGalleryDl } from '@/lib/gallerydl';
 import type { DownloadResult } from '@/types';
 import { isSupportedPlatformUrl } from '@/lib/security/remote-url';
 import { requireToolAvailable } from '@/lib/toolStatus';
+import { normalizeYouTubeVideoUrl } from '@/lib/youtube-url';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -65,20 +66,21 @@ const PLAYLIST_TOOLS = new Set([
 export async function POST(req: Request) {
   /* ── 1. Rate limit ── */
   const ip = getClientId(req);
-  const rl = await ratelimit(`dl:${ip}`, { limit: 20, windowSeconds: 60 });
+  const rl = await ratelimit(`dl:${ip}`, {
+    limit: 20,
+    windowSeconds: 60,
+    failClosed: process.env.NODE_ENV === 'production',
+  });
   if (!rl.success) {
     return NextResponse.json<DownloadResult>(
-      { ok: false, error: 'Too many requests. Please slow down.' },
-      { status: 429, headers: { 'x-ratelimit-remaining': String(rl.remaining) } },
+      { ok: false, error: rl.unavailable ? 'Download service is temporarily unavailable.' : 'Too many requests. Please slow down.' },
+      { status: rl.unavailable ? 503 : 429, headers: { 'x-ratelimit-remaining': String(rl.remaining) } },
     );
   }
 
   /* ── 2. Require an account (free: this only reads metadata) ──
      The credit is spent later, when the file is actually delivered by
      /api/proxy or /api/download/merge, so looking up formats costs nothing. */
-  const gate = await requireCredits({ cost: 0 });
-  if (!gate.ok) return gate.response;
-
   /* ── 3. Validate body ── */
   let body: z.infer<typeof BodySchema>;
   try {
@@ -116,19 +118,34 @@ export async function POST(req: Request) {
     );
   }
 
-  /* ── 5. Cache → resolve ── */
-  const cacheKey = `dl:v2:${tool.slug}:${await sha256(body.url)}`;
+  let sourceUrl = body.url;
+  if (tool.slug === 'youtube-video-downloader') {
+    const normalized = normalizeYouTubeVideoUrl(body.url);
+    if (!normalized.ok) {
+      return NextResponse.json<DownloadResult>({ ok: false, error: normalized.error }, { status: 400 });
+    }
+    sourceUrl = normalized.url;
+  }
 
-  const result = await cacheJson<DownloadResult>(cacheKey, 60 * 30, async () =>
-    dispatch(tool.slug, body.url),
+  const gate = await requireCredits({ cost: 0 });
+  if (!gate.ok) return gate.response;
+
+  /* ── 5. Cache → resolve ── */
+  const cacheKey = `dl:v3:${tool.slug}:${await sha256(sourceUrl)}`;
+
+  const result = await cacheJson<DownloadResult>(
+    cacheKey,
+    60 * 30,
+    async () => dispatch(tool.slug, sourceUrl),
+    (value) => value.ok,
   );
 
   /* ── 6. Persist one canonical metadata/tool operation ── */
   const operationId = await recordToolOperation(gate.userId, {
     platform: tool.platform,
     tool: tool.slug,
-    sourceUrl: body.url,
-    status: result.ok ? 'success' : 'failed',
+    sourceUrl,
+    status: result.ok ? 'pending' : 'failed',
     failureReason: result.ok ? null : result.error,
     idempotencyKey: requestIdempotencyKey(req),
     ipHash: await sha256(ip),

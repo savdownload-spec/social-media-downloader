@@ -34,9 +34,9 @@ _Last updated: final free-first pass — 48 → 56 active tools_
 
 ---
 
-## Can SavDown launch without a VPS? **YES.**
+## Can SavDown launch without a VPS?
 
-56 of 59 tools are fully active on Vercel + browser. The 3 VPS-required tools show a clear "unavailable" message until a VPS is deployed — no credits are charged.
+Not with server-delivered video downloads enabled. Vercel function responses are limited to 4.5 MB and writable `/tmp` storage is limited to 500 MB. The current merge/proxy routes therefore require an external media worker and durable/object delivery path for reliable public use. They fail before charging when a generated Vercel response exceeds the safe limit.
 
 ---
 
@@ -47,7 +47,7 @@ _Last updated: final free-first pass — 48 → 56 active tools_
 #### Downloaders (yt-dlp bundled in `bin/yt-dlp_linux`)
 | Tool | Slug | Status |
 |------|------|--------|
-| YouTube Video Downloader | `youtube-video-downloader` | ✅ ACTIVE |
+| YouTube Video Downloader | `youtube-video-downloader` | BLOCKED ON VERCEL FILE DELIVERY |
 | YouTube Shorts Downloader | `youtube-shorts-downloader` | ✅ ACTIVE |
 | YouTube Playlist Downloader | `youtube-playlist-downloader` | ✅ ACTIVE |
 | YouTube Thumbnail Downloader | `youtube-thumbnail-downloader` | ✅ ACTIVE |

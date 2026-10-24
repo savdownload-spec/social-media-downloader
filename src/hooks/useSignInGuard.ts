@@ -30,17 +30,18 @@ export type SignInGuard = {
   requireAuth: () => boolean;
   /** Render this next to your tool JSX — it mounts the modal portal. */
   SignInModal: React.ReactElement;
+  authLoading: boolean;
 };
 
-export function useSignInGuard(): SignInGuard {
+export function useSignInGuard(callbackUrl?: string): SignInGuard {
   const { status } = useSession();
   const [open, setOpen] = useState(false);
 
   const requireAuth = useCallback((): boolean => {
-    // 'loading' — session is still resolving. Optimistically allow the
-    // server call; if truly unauthenticated, the API returns 401 and
-    // the normal error path handles it.
-    if (status === 'authenticated' || status === 'loading') return true;
+    // Wait for the session result instead of racing an unauthenticated API
+    // request that cannot open the sign-in modal or preserve return state.
+    if (status === 'authenticated') return true;
+    if (status === 'loading') return false;
     setOpen(true);
     return false;
   }, [status]);
@@ -48,7 +49,8 @@ export function useSignInGuard(): SignInGuard {
   const SignInModal = createElement(SignInRequiredModal, {
     open,
     onClose: () => setOpen(false),
+    callbackUrl,
   });
 
-  return { requireAuth, SignInModal };
+  return { requireAuth, SignInModal, authLoading: status === 'loading' };
 }

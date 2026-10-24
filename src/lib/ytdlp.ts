@@ -61,11 +61,10 @@ export function needsImpersonation(url: string): boolean {
 }
 
 function proxyUrl(rawUrl: string, filename: string, extra?: { referer?: string; cookie?: string }): string {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   const params: Record<string, string> = { url: rawUrl, filename };
   if (extra?.referer) params.ref = extra.referer;
   if (extra?.cookie) params.cookie = extra.cookie;
-  return `${base}/api/proxy?${new URLSearchParams(params)}`;
+  return `/api/proxy?${new URLSearchParams(params)}`;
 }
 
 /**
@@ -76,8 +75,7 @@ function proxyUrl(rawUrl: string, filename: string, extra?: { referer?: string; 
  * raw video-only stream URL.
  */
 function mergeDownloadUrl(pageUrl: string, height: number, filename: string): string {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  return `${base}/api/download/merge?${new URLSearchParams({ url: pageUrl, height: String(height), filename })}`;
+  return `/api/download/merge?${new URLSearchParams({ url: pageUrl, height: String(height), filename })}`;
 }
 
 /* ─── core yt-dlp runner ─────────────────────────────────────── */
@@ -201,7 +199,6 @@ async function getFormatUrl(
 // what heights genuinely exist, never to hand back a raw (possibly silent)
 // stream URL directly.
 export const VIDEO_TIERS: { label: string; quality: string; selector: string }[] = [
-  { label: 'MP4 4320p (8K)', quality: '4320p', selector: 'bestvideo[height<=4320][ext=mp4]/bestvideo[height<=4320]' },
   { label: 'MP4 2160p (4K)', quality: '2160p', selector: 'bestvideo[height<=2160][ext=mp4]/bestvideo[height<=2160]' },
   { label: 'MP4 1440p',      quality: '1440p', selector: 'bestvideo[height<=1440][ext=mp4]/bestvideo[height<=1440]' },
   { label: 'MP4 1080p (HD)', quality: '1080p', selector: 'bestvideo[height<=1080][ext=mp4]/bestvideo[height<=1080]' },
@@ -323,9 +320,12 @@ export async function resolveWithYtdlp(
     } else {
       // Video mode: probe each quality tier in parallel (up to 3 at once)
       // We check in order from highest to lowest quality
-      const tierResults = await Promise.allSettled(
-        VIDEO_TIERS.map(tier => getFormatUrl(url, tier.selector)),
-      );
+      const tierResults: PromiseSettledResult<Awaited<ReturnType<typeof getFormatUrl>>>[] = [];
+      for (let i = 0; i < VIDEO_TIERS.length; i += 3) {
+        tierResults.push(...await Promise.allSettled(
+          VIDEO_TIERS.slice(i, i + 3).map(tier => getFormatUrl(url, tier.selector)),
+        ));
+      }
 
       let smallestRawStreamUrl = '';
       // A "height<=2160" selector silently falls back to the video's real

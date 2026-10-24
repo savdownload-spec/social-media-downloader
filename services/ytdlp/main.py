@@ -111,14 +111,12 @@ def build_result(entry: dict, tool: str, audio_only: bool) -> dict:
     author = entry.get("uploader") or entry.get("channel") or None
     duration = entry.get("duration")
     platform = entry.get("extractor_key") or tool
-    base_url = os.getenv("NEXT_PUBLIC_SITE_URL", "http://localhost:3000")
-
     raw_formats = entry.get("formats") or []
     formats = []
 
     def proxy(u: str, filename: str) -> str:
         from urllib.parse import urlencode
-        return f"{base_url}/api/proxy?{urlencode({'url': u, 'filename': filename})}"
+        return f"/api/proxy?{urlencode({'url': u, 'filename': filename})}"
 
     def safe_filename(s: str) -> str:
         import re
@@ -173,24 +171,6 @@ def build_result(entry: dict, tool: str, audio_only: bool) -> dict:
                 })
             if len(formats) >= 4:
                 break
-
-        best_audio = sorted(
-            [f for f in raw_formats if f.get("vcodec") == "none" and f.get("acodec") != "none"],
-            key=lambda f: f.get("abr") or 0,
-            reverse=True,
-        )
-        if best_audio:
-            f = best_audio[0]
-            dl = f.get("url", "")
-            formats.append({
-                "label": "MP3 audio",
-                "quality": f"{int(f.get('abr') or 0)} kbps" if f.get("abr") else "audio",
-                "extension": "mp3",
-                "size": fmt_bytes(f.get("filesize")),
-                "url": proxy(dl, f"{safe_filename(title)}.mp3") if dl else "#",
-                "hasAudio": True,
-                "hasVideo": False,
-            })
 
     if not formats and entry.get("url"):
         dl = entry["url"]

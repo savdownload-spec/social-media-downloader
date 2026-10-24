@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Download, Loader2, AlertCircle, Play, Check } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
@@ -9,6 +9,7 @@ import { CopyButton } from '@/components/ui/CopyButton';
 import { useToast } from '@/components/ui/Toast';
 import type { DownloadResult, DownloadFormat } from '@/types';
 import { useSignInGuard } from '@/hooks/useSignInGuard';
+import { normalizeYouTubeVideoUrl } from '@/lib/youtube-url';
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
@@ -91,7 +92,7 @@ export type ClientTool = {
 
 export function DownloaderForm({ tool }: { tool: ClientTool }) {
   const params = useSearchParams();
-  const { requireAuth, SignInModal } = useSignInGuard();
+  const pathname = usePathname();
   const [url, setUrl] = useState('');
   const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [error, setError] = useState('');
@@ -99,9 +100,15 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
   const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
   const [downloadPct, setDownloadPct] = useState<number | null>(null);
   const [downloadedBytes, setDownloadedBytes] = useState(0);
+  const submittingRef = useRef(false);
+  const downloadingRef = useRef(false);
   const { success, error: errorToast, warning } = useToast();
+  const callbackUrl = url.trim() ? `${pathname}?${new URLSearchParams({ url: url.trim() })}` : pathname;
+  const { requireAuth, SignInModal, authLoading } = useSignInGuard(callbackUrl);
 
   const handleDownload = useCallback(async (f: DownloadFormat) => {
+    if (downloadingRef.current) return;
+    downloadingRef.current = true;
     const key = f.label + f.quality;
     setDownloadingKey(key);
     setDownloadPct(0);
@@ -114,6 +121,7 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
     } catch (e) {
       errorToast('Download failed', e instanceof Error ? e.message : 'Please try again.');
     } finally {
+      downloadingRef.current = false;
       setDownloadingKey(null);
       setDownloadPct(null);
     }
@@ -123,19 +131,27 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
     const q = params.get('url');
     if (q) {
       setUrl(q);
-      void submit(q);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const submit = useCallback(async (input?: string) => {
-    const target = (input ?? url).trim();
+    if (submittingRef.current || authLoading) return;
+    let target = (input ?? url).trim();
     if (!target) {
       setError('Paste a link to get started.');
       setState('error');
       return;
     }
-    if (!new RegExp(tool.urlPattern, 'i').test(target)) {
+    if (tool.slug === 'youtube-video-downloader') {
+      const normalized = normalizeYouTubeVideoUrl(target);
+      if (!normalized.ok) {
+        setError(normalized.error);
+        setState('error');
+        return;
+      }
+      target = normalized.url;
+    } else if (!new RegExp(tool.urlPattern, 'i').test(target)) {
       setError(`That doesn't look like a valid ${tool.platform} URL.`);
       setState('error');
       return;
@@ -143,6 +159,7 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
 
     if (!requireAuth()) return;
 
+    submittingRef.current = true;
     setError('');
     setState('loading');
     setResult(null);
@@ -173,8 +190,10 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
       setError('Network error. Please try again.');
       setState('error');
       errorToast('Network error', 'Could not reach the server. Check your connection and try again.');
+    } finally {
+      submittingRef.current = false;
     }
-  }, [requireAuth, url, tool, success, errorToast, warning]);
+  }, [authLoading, requireAuth, url, tool, success, errorToast, warning]);
 
   return (
     <div className="w-full">
@@ -189,7 +208,7 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
             className="border-0 shadow-none focus:shadow-none focus:border-0 px-4 text-base"
             aria-label={`${tool.name} URL`}
           />
-          <Button size="lg" onClick={() => submit()} loading={state === 'loading'} className="shrink-0">
+          <Button size="lg" onClick={() => submit()} loading={state === 'loading'} disabled={authLoading} className="shrink-0">
             {state === 'loading' ? 'Fetching…' : <>Download <Download className="w-4 h-4" /></>}
           </Button>
         </div>
@@ -256,13 +275,12 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
                   {result.formats.map((f) => {
                     const key = f.label + f.quality;
                     const isDownloading = downloadingKey === key;
-                    const isOtherDownloading = downloadingKey !== null && !isDownloading;
                     const isDone = isDownloading && downloadPct === 100;
                     return (
                       <button
                         key={key}
                         onClick={() => handleDownload(f)}
-                        disabled={isOtherDownloading}
+                        disabled={downloadingKey !== null}
                         className="relative inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-text text-white hover:bg-text/90 dark:bg-primary dark:hover:bg-primary-hover text-sm font-medium active:scale-[0.98] transition-all overflow-hidden disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         {isDownloading && (

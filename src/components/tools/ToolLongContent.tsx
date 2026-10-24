@@ -4,11 +4,62 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { Section, SectionHeading } from '@/components/layout/Section';
-import { toolContent, type ToolLongContent } from '@/config/toolContent';
+import { toolContent } from '@/config/toolContent';
+import { ToolContentNav, type ToolContentNavItem } from './ToolContentNav';
 
 type ToolLongContentSectionProps = {
   slug: string;
 };
+
+const contentNavItems: ToolContentNavItem[] = [
+  { id: 'introduction', label: 'Introduction' },
+  { id: 'what-it-does', label: 'What It Does' },
+  { id: 'key-features', label: 'Key Features' },
+  { id: 'why-choose', label: 'Why Choose SavDown' },
+];
+
+const minorTitleWords = new Set([
+  'a', 'an', 'and', 'as', 'at', 'but', 'by', 'for', 'in', 'nor', 'of', 'on', 'or',
+  'per', 'the', 'to', 'via', 'vs', 'vs.',
+]);
+
+/** Title-cases display labels while leaving brands, acronyms, URLs, and notation intact. */
+function toDisplayTitle(value: string) {
+  const words = value.split(/(\s+)/);
+  const textWords = words.filter((word) => word.trim().length > 0);
+  let textIndex = 0;
+
+  return words.map((word) => {
+    if (!word.trim()) return word;
+
+    const index = textIndex++;
+    const isFirst = index === 0;
+    const isLast = index === textWords.length - 1;
+
+    if (
+      /[\d./@×]/.test(word)
+      || /[a-z][A-Z]/.test(word)
+      || /[A-Z]{2}/.test(word)
+    ) {
+      return word;
+    }
+
+    const letterGroups = word.match(/[A-Za-z]+(?:['’][A-Za-z]+)*/g);
+    const isMinorWord = letterGroups?.length === 1
+      && minorTitleWords.has(letterGroups[0].toLowerCase())
+      && !isFirst
+      && !isLast;
+
+    if (isMinorWord) {
+      return word.replace(letterGroups[0], letterGroups[0].toLowerCase());
+    }
+
+    return word.replace(/[A-Za-z]+(?:['’][A-Za-z]+)*/g, (part) => {
+      const normalized = part.toLowerCase();
+      return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+    });
+  }).join('');
+}
 
 /**
  * Renders the ~1,000+ word SEO content block for a tool, below the FAQ and
@@ -22,66 +73,43 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
   return (
     <>
       {/* Introduction + what it does */}
-      <Section variant="default" containerClassName="max-w-4xl">
-        <div className="grid lg:grid-cols-12 gap-10">
-          <div className="lg:col-span-5">
+      <Section variant="default" containerClassName="max-w-6xl">
+        <div className="grid items-start gap-10 lg:grid-cols-12 lg:gap-16">
+          <aside className="lg:sticky lg:top-24 lg:col-span-5">
             <p className="text-sm font-semibold uppercase tracking-wider text-gradient inline-block mb-3">
-              About this tool
+              About This Tool
             </p>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-text leading-[1.05]">
-              Everything you need to know.
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-text leading-[1.08]">
+              Everything You Need to Know.
             </h2>
-            <p className="mt-4 text-text-muted leading-relaxed">
+            <p className="mt-4 max-w-md text-base leading-7 text-text-muted">
               A complete guide to what this tool does, why people use it, and how to get the
               best results every time.
             </p>
-            <div className="mt-6 flex flex-col gap-3">
-              <a
-                href="#introduction"
-                className="text-sm font-medium text-primary hover:text-primary-hover transition-colors"
-              >
-                ↓ Introduction
-              </a>
-              <a
-                href="#what-it-does"
-                className="text-sm font-medium text-primary hover:text-primary-hover transition-colors"
-              >
-                ↓ What it does
-              </a>
-              <a
-                href="#key-features"
-                className="text-sm font-medium text-primary hover:text-primary-hover transition-colors"
-              >
-                ↓ Key features
-              </a>
-              <a
-                href="#why-choose"
-                className="text-sm font-medium text-primary hover:text-primary-hover transition-colors"
-              >
-                ↓ Why choose SavDown
-              </a>
-            </div>
-          </div>
-          <div className="lg:col-span-7 space-y-6">
-            <div id="introduction">
-              <h3 className="text-xl font-bold text-text tracking-tight">Introduction</h3>
-              <p className="mt-3 text-base text-text-muted leading-relaxed">
+            <ToolContentNav items={contentNavItems} />
+          </aside>
+          <article className="space-y-10 lg:col-span-7 lg:border-l lg:border-border-light lg:pl-12">
+            <div id="introduction" className="scroll-mt-28">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">01</p>
+              <h3 className="mt-2 text-2xl font-bold text-text tracking-tight">Introduction</h3>
+              <p className="mt-4 max-w-2xl text-base leading-8 text-text-muted">
                 {content.introduction}
               </p>
             </div>
-            <div id="what-it-does">
-              <h3 className="text-xl font-bold text-text tracking-tight">What this tool does</h3>
-              <p className="mt-3 text-base text-text-muted leading-relaxed">
+            <div id="what-it-does" className="scroll-mt-28 border-t border-border-light pt-10">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">02</p>
+              <h3 className="mt-2 text-2xl font-bold text-text tracking-tight">What This Tool Does</h3>
+              <p className="mt-4 max-w-2xl text-base leading-8 text-text-muted">
                 {content.whatItDoes}
               </p>
             </div>
-          </div>
+          </article>
         </div>
       </Section>
 
       {/* Key features */}
       <Section variant="white" containerClassName="max-w-6xl">
-        <div id="key-features" className="scroll-mt-24">
+        <div id="key-features" className="scroll-mt-28">
           <SectionHeading
             eyebrow="Key features"
             title={<>Built To <span className="text-gradient">Do The Job Right.</span></>}
@@ -97,7 +125,7 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
               <div className="w-11 h-11 rounded-xl bg-gradient-brand flex items-center justify-center shadow-glow-lg group-hover:scale-105 transition-transform">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
-              <h3 className="mt-4 text-base font-bold text-text tracking-tight">{f.title}</h3>
+              <h3 className="mt-4 text-base font-bold text-text tracking-tight">{toDisplayTitle(f.title)}</h3>
               <p className="mt-2 text-sm text-text-muted leading-relaxed">{f.description}</p>
             </div>
           ))}
@@ -120,7 +148,7 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
               <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-accent-light text-accent-hover">
                 <CheckCircle2 className="w-5 h-5" />
               </div>
-              <h3 className="mt-4 text-base font-bold text-text tracking-tight">{b.title}</h3>
+              <h3 className="mt-4 text-base font-bold text-text tracking-tight">{toDisplayTitle(b.title)}</h3>
               <p className="mt-2 text-sm text-text-muted leading-relaxed">{b.description}</p>
             </div>
           ))}
@@ -146,6 +174,65 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
             ))}
           </ul>
         </div>
+        {content.resources && (
+          <div className="mt-12 border-t border-border-light pt-12">
+            <div className="max-w-2xl">
+              <p className="text-sm font-semibold uppercase tracking-wider text-gradient inline-block mb-3">
+                Helpful Resources
+              </p>
+              <h3 className="text-2xl font-bold tracking-tight text-text">
+                YouTube Guides and Official References
+              </h3>
+              <p className="mt-4 text-base leading-7 text-text-muted">
+                {content.resources.introduction}
+              </p>
+            </div>
+
+            <div className="mt-8 grid gap-8 md:grid-cols-2">
+              <div>
+                <h4 className="text-sm font-bold text-text">SavDown Guides</h4>
+                <ul className="mt-4 space-y-4">
+                  {content.resources.guides.map((resource) => (
+                    <li key={resource.href}>
+                      <Link
+                        href={resource.href}
+                        className="group inline-flex items-center gap-1.5 font-semibold text-primary hover:text-primary-hover"
+                      >
+                        {resource.label}
+                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                      </Link>
+                      <p className="mt-1 text-sm leading-6 text-text-muted">{resource.description}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-bold text-text">Official YouTube Information</h4>
+                <ul className="mt-4 space-y-4">
+                  {content.resources.officialReferences.map((resource) => (
+                    <li key={resource.href}>
+                      <a
+                        href={resource.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group inline-flex items-center gap-1.5 font-semibold text-primary hover:text-primary-hover"
+                      >
+                        {resource.label}
+                        <ArrowRight className="h-4 w-4 -rotate-45 transition-transform group-hover:translate-x-0.5" />
+                      </a>
+                      <p className="mt-1 text-sm leading-6 text-text-muted">{resource.description}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <p className="mt-8 rounded-xl border border-border-light bg-surface px-4 py-3 text-xs leading-5 text-text-muted">
+              {content.resources.disclosure}
+            </p>
+          </div>
+        )}
       </Section>
 
       {/* Supported platforms */}
@@ -162,7 +249,7 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white dark:bg-card border border-border-light shadow-soft text-sm font-medium text-text-muted"
             >
               <CheckCircle2 className="w-3.5 h-3.5 text-accent" />
-              {p}
+              {toDisplayTitle(p)}
             </span>
           ))}
         </div>
@@ -185,7 +272,7 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
                 <span className="w-7 h-7 rounded-full bg-gradient-brand text-white text-xs font-bold flex items-center justify-center shadow-glow-lg">
                   {i + 1}
                 </span>
-                <h3 className="text-base font-bold text-text tracking-tight">{u.title}</h3>
+                <h3 className="text-base font-bold text-text tracking-tight">{toDisplayTitle(u.title)}</h3>
               </div>
               <p className="mt-3 text-sm text-text-muted leading-relaxed">{u.description}</p>
             </div>
@@ -215,7 +302,7 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
 
       {/* Why choose SavDown */}
       <Section variant="default" containerClassName="max-w-4xl">
-        <div id="why-choose" className="scroll-mt-24">
+        <div id="why-choose" className="scroll-mt-28">
           <SectionHeading
             eyebrow="Why choose SavDown"
             title={<>Why <span className="text-gradient">This Tool?</span></>}

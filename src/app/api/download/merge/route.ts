@@ -16,7 +16,7 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { randomUUID } from 'crypto';
-import { mkdtemp, readFile, rm } from 'fs/promises';
+import { mkdtemp, readFile, rm, stat } from 'fs/promises';
 import { tmpdir } from 'os';
 import path from 'path';
 import { NextResponse } from 'next/server';
@@ -25,6 +25,7 @@ import { requireCredits, costForHeight, requestIdempotencyKey } from '@/lib/cred
 import { getYtdlpBin, getFfmpegBin } from '@/lib/binaryPaths';
 import { isSupportedPlatformUrl } from '@/lib/security/remote-url';
 import { requireToolAvailable } from '@/lib/toolStatus';
+import { normalizeYouTubeVideoUrl } from '@/lib/youtube-url';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -40,9 +41,16 @@ const DOWNLOAD_TIMEOUT   = parseInt(process.env.YTDLP_TIMEOUT_MS || '45000', 10)
 
 export async function GET(req: Request) {
   const ip = getClientId(req);
-  const rl = await ratelimit(`dlmerge:${ip}`, { limit: 10, windowSeconds: 60 });
+  const rl = await ratelimit(`dlmerge:${ip}`, {
+    limit: 10,
+    windowSeconds: 60,
+    failClosed: process.env.NODE_ENV === 'production',
+  });
   if (!rl.success) {
-    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+    return NextResponse.json(
+      { error: rl.unavailable ? 'Download service is temporarily unavailable.' : 'Too many requests. Please slow down.' },
+      { status: rl.unavailable ? 503 : 429 },
+    );
   }
 
   const { searchParams } = new URL(req.url);
@@ -55,6 +63,9 @@ export async function GET(req: Request) {
 
   if (!pageUrl || !isSupportedPlatformUrl(pageUrl)) {
     return NextResponse.json({ error: 'Invalid or missing source URL.' }, { status: 400 });
+  }
+  if (tool === 'youtube-video-downloader' && !normalizeYouTubeVideoUrl(pageUrl).ok) {
+    return NextResponse.json({ error: 'Invalid YouTube video URL.' }, { status: 400 });
   }
   const height = heightRaw ? parseInt(heightRaw, 10) : NaN;
   if (!Number.isInteger(height) || height < 1 || height > 4320) {
@@ -110,6 +121,18 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: friendly }, { status: 502 });
     }
 
+    const outputSize = (await stat(outPath)).size;
+    const maxResponseBytes = process.env.VERCEL
+      ? 4 * 1024 * 1024
+      : parseInt(process.env.MAX_DOWNLOAD_BYTES || String(450 * 1024 * 1024), 10);
+    if (outputSize > maxResponseBytes) {
+      const reason = process.env.VERCEL
+        ? 'This file cannot be delivered from the current Vercel deployment. An external media delivery service is required.'
+        : 'The generated file exceeds the configured download size limit.';
+      await gate.fail({ ...activeOperation, failureCode: 'output_too_large', failureReason: reason });
+      return NextResponse.json({ error: reason }, { status: 413 });
+    }
+
     const buffer = await readFile(outPath);
     if (!(await gate.spend({
       ...activeOperation,
@@ -130,6 +153,10 @@ export async function GET(req: Request) {
         'Cache-Control':       'no-store',
       },
     });
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : 'Unexpected delivery failure.';
+    await gate.fail({ ...activeOperation, failureCode: 'delivery_failed', failureReason: reason }).catch(() => {});
+    return NextResponse.json({ error: 'The file could not be delivered. No credits were charged.' }, { status: 500 });
   } finally {
     await rm(dir, { recursive: true, force: true }).catch(() => {});
   }

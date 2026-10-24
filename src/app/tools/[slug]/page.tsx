@@ -38,7 +38,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const tool = toolsBySlug.get(params.slug);
   if (tool) {
     const badge = STATUS_BADGE[status];
-    const title = badge ? `${tool.name} ${badge}` : tool.name;
+    const baseTitle = tool.seoTitle ?? tool.name;
+    const title = badge ? `${baseTitle} ${badge}` : baseTitle;
     return buildMetadata({
       title,
       description: tool.description,

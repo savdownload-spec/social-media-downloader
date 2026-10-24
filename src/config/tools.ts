@@ -17,6 +17,7 @@ export type Tool = {
   slug: string;
   platform: Platform;
   name: string;
+  seoTitle?: string;
   shortName: string;
   headline: string;
   subheadline: string;
@@ -40,16 +41,17 @@ export const tools: Tool[] = [
     slug: 'youtube-video-downloader',
     platform: 'youtube',
     name: 'YouTube Video Downloader',
+    seoTitle: 'YouTube Video Downloader for MP4 up to 4K',
     shortName: 'YouTube Video',
-    headline: 'Save YouTube Videos In Stunning Quality.',
-    subheadline: 'Paste any YouTube link. Pick a format. Download in seconds.',
+    headline: 'Download YouTube Videos in MP4.',
+    subheadline: 'Paste an eligible YouTube link, choose an available format, and save it to your device.',
     description:
-      'Download YouTube videos in MP4 up to 4K. Fast, private, and free with no watermarks and free daily credits.',
-    keywords: ['youtube video downloader', 'youtube mp4', 'download youtube video', 'yt downloader'],
+      'Download eligible YouTube videos as MP4, with resolutions up to 4K when available from the source. No SavDown watermark or browser extension.',
+    keywords: ['youtube video downloader', 'youtube to mp4', 'download youtube video', '4k youtube downloader'],
     placeholder: 'https://youtube.com/watch?v=…',
-    urlPattern: /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/i,
+    urlPattern: /^https:\/\/(?:www\.|m\.|music\.)?(?:youtube\.com\/(?:watch\?[^#]*v=|shorts\/|embed\/)|youtu\.be\/)[A-Za-z0-9_-]{11}/i,
     outputKind: 'video',
-    supportedFormats: ['MP4 4K', 'MP4 1080p', 'MP4 720p', 'MP3'],
+    supportedFormats: ['MP4 4K', 'MP4 1080p', 'MP4 720p'],
     featured: true,
     trending: true,
     faq: [
@@ -63,7 +65,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Can I download a YouTube video as MP3 audio only?',
-        answer: 'Yes. Choose the MP3 option to extract the audio track at up to 320 kbps. This is ideal for music, podcasts, interviews, and lectures you want to listen to offline.',
+        answer: 'This tool produces MP4 video. For authorised audio extraction, use the dedicated YouTube to MP3 tool.',
       },
       {
         question: 'Do I need to install any software or browser extension?',
@@ -75,11 +77,11 @@ export const tools: Tool[] = [
       },
       {
         question: 'Will the video quality be lower than on YouTube?',
-        answer: 'No. SavDown routes the original stream directly to your device. The file you download is bit-for-bit identical to what YouTube serves, no re-encoding, no quality loss.',
+        answer: 'SavDown selects source video and audio streams and muxes them into an MP4. It does not intentionally re-encode them, but the available quality is limited by the source.',
       },
       {
         question: 'Can I download a YouTube playlist or multiple videos at once?',
-        answer: 'The YouTube Video Downloader processes one link at a time. For playlists, use our dedicated YouTube Playlist Downloader tool to batch-download an entire series in one go.',
+        answer: 'The YouTube Video Downloader processes one video link at a time. Playlist URLs are not supported by this tool, so process eligible videos individually using their direct video links.',
       },
       {
         question: 'How do I download a YouTube video on my iPhone or Android phone?',
@@ -91,15 +93,15 @@ export const tools: Tool[] = [
       },
       {
         question: 'How long does it take to download a YouTube video?',
-        answer: 'Most videos are ready in 3–10 seconds. Processing time depends on video length, chosen resolution, and your internet speed. A 1-hour 1080p video typically takes under 30 seconds to process.',
+        answer: 'Processing time varies with video length, selected resolution, platform response time, server load, and your connection. Large or high-resolution videos can take substantially longer.',
       },
       {
         question: 'Is it legal to download YouTube videos?',
-        answer: 'YouTube\'s Terms of Service restrict downloading outside of their official offline feature. However, downloading videos you own, have explicit permission to use, or that are licensed under Creative Commons is widely considered acceptable. Always respect copyright and the creator\'s rights.',
+        answer: 'YouTube\'s Terms restrict downloading unless the service permits it, YouTube and the relevant rights holder give permission, or applicable law allows it. YouTube provides official options for downloading your own uploads and, where available, offline viewing through YouTube Premium. Always confirm that you have the necessary rights and permission for your intended use.',
       },
       {
         question: 'What formats does SavDown support besides MP4?',
-        answer: 'Currently SavDown offers MP4 (up to 4K) and MP3 audio extraction. MP4 is the universally compatible format for video; MP3 works on every device and media player for audio-only use.',
+        answer: 'This tool offers MP4 up to 4K when available. Authorised audio-only downloads are handled by the separate YouTube to MP3 tool.',
       },
       {
         question: 'Can I download YouTube Shorts with this tool?',
@@ -107,7 +109,7 @@ export const tools: Tool[] = [
       },
       {
         question: 'Does SavDown store or log the videos I download?',
-        answer: 'No. SavDown never saves the video file on its servers. The stream is proxied directly to your browser and is discarded immediately after delivery. We do not log which videos you access.',
+        answer: 'Temporary media files are deleted after the response completes. SavDown records the source URL, operation status, and credit activity needed to run accounts, prevent duplicate charges, and diagnose failures.',
       },
       {
         question: 'Why is the 4K option missing for some videos?',
@@ -117,7 +119,7 @@ export const tools: Tool[] = [
     howTo: [
       { title: 'Copy The YouTube URL', body: 'Open the video on YouTube and copy the link from the address bar or Share menu.' },
       { title: 'Paste It Above', body: 'Paste the URL into SavDown. We\'ll detect the video automatically.' },
-      { title: 'Choose Your Format', body: 'Pick MP4 up to 4K or extract MP3 audio.' },
+      { title: 'Choose Your Quality', body: 'Pick an available MP4 resolution up to 4K.' },
       { title: 'Download', body: 'Your file is ready in seconds, direct to your device.' },
     ],
   },
