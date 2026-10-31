@@ -1,9 +1,10 @@
 /**
  * POST /api/tools/image/compress-batch
  *
- * Batch image compression endpoint.  Accepts multiple image files via
- * multipart/form-data and returns a JSON manifest with base64-encoded
- * compressed images plus per-file stats.
+ * Batch image compression endpoint. Accepts multiple image files via
+ * multipart/form-data and returns a compact binary manifest plus raw image
+ * bytes. This avoids the 33% base64
+ * expansion and oversized JSON payloads of the legacy response.
  *
  * Body (multipart/form-data):
  *   file[]   – one or more image files (field name "file", repeated)
@@ -12,12 +13,10 @@
  * Headers:
  *   Idempotency-Key  – required for per-file credit deduplication
  *
- * Response:
- *   { ok: true, completed, total, files: [...] }
+ * Response: application/vnd.savdown.image-batch
+ *   uint32be manifest byte length + UTF-8 JSON manifest + raw file bytes
  */
-import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 import { checkBatchLimit } from '@/lib/batchLimitGate';
 import { processImage, type OutputFormat } from '@/lib/imageService';
@@ -26,6 +25,8 @@ import {
   IMAGE_MAX_BATCH_BYTES,
   ALLOWED_IMAGE_TYPES,
 } from '@/lib/imageConfig';
+import { checkImageIpLimit, checkImageUserLimit } from '@/lib/imageRateLimit';
+import { requireToolAvailable } from '@/lib/toolStatus';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -61,17 +62,51 @@ type FileResult = {
   originalSize?: number;
   size?: number;
   mimeType?: string;
-  base64?: string;
+  width?: number;
+  height?: number;
+  buffer?: Buffer;
   error?: string;
 };
 
+function batchResponse(results: FileResult[], completed: number, total: number) {
+  let offset = 0;
+  const buffers: Buffer[] = [];
+  const files = results.map(({ buffer, ...fileResult }) => {
+    if (!buffer) return fileResult;
+    const entry = { ...fileResult, offset, length: buffer.length };
+    offset += buffer.length;
+    buffers.push(buffer);
+    return entry;
+  });
+  const manifest = Buffer.from(JSON.stringify({ ok: true, completed, total, files }), 'utf8');
+  const prefix = Buffer.allocUnsafe(4);
+  prefix.writeUInt32BE(manifest.length, 0);
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(prefix);
+      controller.enqueue(manifest);
+      for (const buffer of buffers) controller.enqueue(buffer);
+      controller.close();
+    },
+  });
+  return new NextResponse(stream, {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/vnd.savdown.image-batch',
+      'Content-Disposition': 'inline; filename="image-compression.batch"',
+      'X-Completed-Count': String(completed),
+      'X-Total-Count': String(total),
+      'Cache-Control': 'no-store',
+    },
+  });
+}
+
 export async function POST(req: Request) {
-  /* ── Rate limit ── */
-  const ip = getClientId(req);
-  const rl = await ratelimit(`img:${ip}`, { limit: 30, windowSeconds: 60 });
-  if (!rl.success) {
-    return NextResponse.json({ ok: false, error: 'Too many requests.' }, { status: 429 });
-  }
+  const ipLimited = await checkImageIpLimit(req, 'compress-batch', { limit: 8, windowSeconds: 60 });
+  if (ipLimited) return ipLimited;
+
+  const statusGate = await requireToolAvailable('image-compressor');
+  if (!statusGate.ok) return statusGate.response;
 
   /* ── Parse multipart ── */
   let formData: FormData;
@@ -89,6 +124,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: 'No files uploaded.' }, { status: 400 });
   }
 
+  const requestKey = requestIdempotencyKey(req);
+  if (!requestKey) {
+    return NextResponse.json({ ok: false, error: 'A valid Idempotency-Key header is required.' }, { status: 400 });
+  }
+
   const qualityRaw = parseInt((formData.get('quality') as string | null) ?? '80', 10);
   const quality = Number.isFinite(qualityRaw) ? Math.min(100, Math.max(10, qualityRaw)) : 80;
 
@@ -104,6 +144,11 @@ export async function POST(req: Request) {
     }
     const f = entry as File;
     const sourceName = f.name.replace(/[/\\?%*:|"<>]/g, '-') || `image-${i}`;
+
+    if (f.size === 0) {
+      results.push({ sourceName, name: sourceName, status: 'failed', error: 'The uploaded file is empty.' });
+      continue;
+    }
 
     if (f.size > IMAGE_MAX_FILE_BYTES) {
       results.push({
@@ -141,7 +186,7 @@ export async function POST(req: Request) {
   /* ── Credit preflight (charge for valid files only) ── */
   if (validFiles.length === 0) {
     // All files rejected pre-validation — return results without charging
-    return NextResponse.json({ ok: true, completed: 0, total: rawFiles.length, files: results });
+    return batchResponse(results, 0, rawFiles.length);
   }
 
   const totalCost = validFiles.length * JOB_COST.imageTool;
@@ -153,11 +198,14 @@ export async function POST(req: Request) {
   );
   if (batchLimitResponse) return batchLimitResponse;
 
-  const gate = await requireCredits({ cost: totalCost });
+  const gate = await requireCredits({
+    cost: totalCost,
+    request: req,
+    operation: { tool: 'image-compressor', platform: 'image', idempotencyKey: requestKey },
+  });
   if (!gate.ok) return gate.response;
-
-  /* ── Fallback batch ID for environments without idempotency header ── */
-  const fallbackBatchKey = `img-batch:${randomUUID()}`;
+  const userLimited = await checkImageUserLimit(gate.userId, 'compress-batch', { limit: 6, windowSeconds: 60 });
+  if (userLimited) return userLimited;
 
   /* ── Per-file processing ── */
   let completed = 0;
@@ -167,8 +215,8 @@ export async function POST(req: Request) {
     const outFormat = detectOutputFormat(mimeType);
     const outName = outputFilename(sourceName, mimeType);
 
-    const idempotencyKey = requestIdempotencyKey(req, String(i)) ?? `${fallbackBatchKey}:${i}`;
-    const batchId = requestIdempotencyKey(req) ?? fallbackBatchKey;
+    const idempotencyKey = requestIdempotencyKey(req, String(i))!;
+    const batchId = requestKey;
 
     let inputBuf: Buffer;
     try {
@@ -241,14 +289,11 @@ export async function POST(req: Request) {
       originalSize: result.originalSize,
       size: result.outputSize,
       mimeType: result.mimeType,
-      base64: result.buffer.toString('base64'),
+      width: result.width,
+      height: result.height,
+      buffer: result.buffer,
     });
   }
 
-  return NextResponse.json({
-    ok: true,
-    completed,
-    total: rawFiles.length,
-    files: results,
-  });
+  return batchResponse(results, completed, rawFiles.length);
 }

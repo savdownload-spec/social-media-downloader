@@ -36,6 +36,8 @@ import { useSignInGuard } from '@/hooks/useSignInGuard';
 import { useBatchLimit } from '@/hooks/useBatchLimit';
 import { BatchLimitHint, BatchLimitWarning } from '@/components/tools/BatchLimitGate';
 import { PLAN_LABEL } from '@/lib/batchLimits';
+import { IMAGE_ACCEPT, IMAGE_MAX_FILE_BYTES, isAllowedImageType } from '@/lib/imageConfig';
+import { decodeImageBatchPayload } from '@/lib/imageBatchPayload';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -48,8 +50,11 @@ interface CompressResult {
   originalSize?: number;
   size?: number;
   mimeType?: string;
-  base64?: string;
-  url?: string; // object URL created from base64 blob
+  width?: number;
+  height?: number;
+  offset?: number;
+  length?: number;
+  url?: string; // object URL created from the binary batch payload
   error?: string;
 }
 
@@ -62,11 +67,6 @@ function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1_048_576) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / 1_048_576).toFixed(2)} MB`;
-}
-
-function base64ToBlob(b64: string, mimeType: string): Blob {
-  const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-  return new Blob([bytes], { type: mimeType });
 }
 
 function deduplicateName(name: string, seen: Map<string, number>): string {
@@ -143,6 +143,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
   const { requireAuth, SignInModal } = useSignInGuard();
   const inputRef = useRef<HTMLInputElement>(null);
   const processingRef = useRef(false);
+  const requestKeyRef = useRef<string | null>(null);
 
   // Upload phase state
   const [files, setFiles] = useState<File[]>([]);
@@ -184,25 +185,24 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
   const filesOverHardMax = files.slice(hardBatchLimit);
   const isOverHardMax = files.length > hardBatchLimit;
 
-  // Files between the plan limit and hardBatchLimit: potentially credit-eligible.
-  const creditOverflowCount = Math.max(0, processableCount - batchLimit);
+  // Files between the plan limit and hardBatchLimit require enough credits to
+  // opt into the larger batch, but every successful output uses the configured
+  // per-image credit cost.
   const isOverPlanLimit = processableCount > batchLimit;
 
-  // Credits needed only for the overflow portion above the plan allowance.
+  // Exact maximum cost for this submission. Failed files are not charged.
   const confirmedCost =
-    imageToolCreditCost && creditOverflowCount > 0
-      ? creditOverflowCount * imageToolCreditCost
+    imageToolCreditCost && processableCount > 0
+      ? processableCount * imageToolCreditCost
       : 0;
 
-  // Whether the user has enough credits for the overflow portion.
-  // imageToolCreditCost !== null guard makes the invariant explicit: if the cost
-  // is unknown (cache not yet populated), we must not treat the user as covered.
-  const canAffordOverflow =
-    !isOverPlanLimit ||
-    (authenticated && imageToolCreditCost !== null && totalCredits !== null && totalCredits >= confirmedCost);
+  const canAffordBatch = authenticated && imageToolCreditCost !== null && totalCredits !== null && totalCredits >= confirmedCost;
+  const affordableCount = authenticated && imageToolCreditCost && totalCredits !== null
+    ? Math.floor(totalCredits / imageToolCreditCost)
+    : batchLimit;
 
-  // Processable with current credits/plan (what the compress button will actually send).
-  const processingLimit = canAffordOverflow ? processableCount : batchLimit;
+  // The button never submits more files than the server can authorize.
+  const processingLimit = Math.min(processableCount, affordableCount);
 
   // Unified "over limit" flag: any case where files cannot all be processed.
   const isOverLimit = files.length > processingLimit;
@@ -226,22 +226,24 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
       const arr = Array.from(incoming);
       if (!arr.length) return;
       setError('');
-      // Filter to image/* only (browser may pass others via drag)
-      const images = arr.filter((f) => f.type.startsWith('image/'));
+      const images = arr.filter((f) => isAllowedImageType(f.type) && f.size > 0 && f.size <= IMAGE_MAX_FILE_BYTES);
       if (images.length < arr.length) {
-        setError(`${arr.length - images.length} non-image file(s) were ignored.`);
+        setError(`${arr.length - images.length} unsupported, empty, or oversized file(s) were ignored.`);
       }
       setFiles((prev) => [...prev, ...images]);
+      requestKeyRef.current = null;
     },
     [],
   );
 
   const removeFile = useCallback((index: number) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
+    requestKeyRef.current = null;
   }, []);
 
   const removeExcess = useCallback(() => {
     setFiles((prev) => prev.slice(0, processingLimit));
+    requestKeyRef.current = null;
   }, [processingLimit]);
 
   // ---------------------------------------------------------------------------
@@ -254,7 +256,8 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
     if (!files.length) { setError('Add at least one image first.'); return; }
 
     const filesToProcess = files.slice(0, processingLimit);
-    const idempotencyKey = crypto.randomUUID();
+    const idempotencyKey = requestKeyRef.current ?? crypto.randomUUID();
+    requestKeyRef.current = idempotencyKey;
 
     processingRef.current = true;
     setLoading(true);
@@ -274,29 +277,30 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
         body: formData,
       });
 
-      let data: { ok: boolean; completed?: number; total?: number; files?: CompressResult[]; error?: string };
-      try {
-        data = await res.json();
-      } catch {
-        throw new Error(`Server error (${res.status}).`);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { error?: string };
+        const retryAfter = res.headers.get('Retry-After');
+        throw new Error(data.error ?? (res.status === 429 && retryAfter ? `Too many requests. Try again in ${retryAfter} seconds.` : `Request failed (${res.status}).`));
       }
 
-      if (!res.ok || !data.ok) {
-        throw new Error(data.error ?? `Request failed (${res.status}).`);
-      }
+      const payload = await res.arrayBuffer();
+      const { manifest: data, dataStart } = decodeImageBatchPayload<CompressResult>(payload);
 
       setProcessedCount(data.completed ?? 0);
 
-      // Build object URLs from base64
       const built: CompressResult[] = (data.files ?? []).map((item) => {
-        if (item.status === 'completed' && item.base64 && item.mimeType) {
-          const blob = base64ToBlob(item.base64, item.mimeType);
-          return { ...item, url: URL.createObjectURL(blob), base64: undefined };
+        if (item.status === 'completed' && item.mimeType && item.offset !== undefined && item.length !== undefined) {
+          const start = dataStart + item.offset;
+          const end = start + item.length;
+          if (start < dataStart || end > payload.byteLength) return { ...item, status: 'failed', error: 'The returned file data was incomplete.' };
+          const blob = new Blob([payload.slice(start, end)], { type: item.mimeType });
+          return { ...item, url: URL.createObjectURL(blob), offset: undefined, length: undefined };
         }
         return item;
       });
 
       setResults(built);
+      requestKeyRef.current = null;
 
       // Track which original files failed so user can retry
       const failedNames = new Set(
@@ -344,6 +348,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
     setError('');
     setProcessedCount(0);
     setTotalCount(0);
+    requestKeyRef.current = null;
     if (inputRef.current) inputRef.current.value = '';
   }, [results]);
 
@@ -426,7 +431,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
             <input
               ref={inputRef}
               type="file"
-              accept="image/*"
+              accept={IMAGE_ACCEPT}
               multiple
               className="hidden"
               onChange={(e) => addFiles(e.target.files)}
@@ -538,11 +543,11 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
               </ul>
 
               {/* Block C — Within hard max, over plan limit, credits sufficient */}
-              {!isOverHardMax && isOverPlanLimit && canAffordOverflow && authenticated && confirmedCost > 0 && totalCredits !== null && (
+              {!isOverHardMax && isOverPlanLimit && canAffordBatch && authenticated && confirmedCost > 0 && totalCredits !== null && (
                 <div role="status" className="rounded-2xl border border-primary/20 bg-primary-light p-4 text-sm text-text">
                   <p className="font-semibold">Your credits cover this larger batch</p>
                   <p className="mt-1 text-text-muted">
-                    Your {PLAN_LABEL[plan]} plan includes {batchLimit} image{batchLimit === 1 ? '' : 's'}. Processing all {processableCount} costs {confirmedCost} credit{confirmedCost === 1 ? '' : 's'} for the {creditOverflowCount} extra image{creditOverflowCount === 1 ? '' : 's'}. You have {totalCredits} — leaving {totalCredits - confirmedCost} after.
+                    Your {PLAN_LABEL[plan]} plan allows {batchLimit} image{batchLimit === 1 ? '' : 's'} per batch. Processing all {processableCount} costs up to {confirmedCost} credit{confirmedCost === 1 ? '' : 's'}; failed files are not charged. You have {totalCredits}, leaving {totalCredits - confirmedCost} after if every file succeeds.
                   </p>
                 </div>
               )}
@@ -570,19 +575,19 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
 
               {/* Block B — Within hard max, over plan limit, insufficient credits.
                   Only shown when cost and balance are both known (not during load or billing error). */}
-              {!isOverHardMax && isOverPlanLimit && !canAffordOverflow && authenticated && totalCredits !== null && imageToolCreditCost !== null && (
+              {!isOverHardMax && !canAffordBatch && authenticated && totalCredits !== null && imageToolCreditCost !== null && (
                 <div role="alert" className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200">
                   <p className="font-semibold">Not enough credits for this batch</p>
                   <p className="mt-1 text-amber-800 dark:text-amber-300">
-                    Your {PLAN_LABEL[plan]} plan includes {batchLimit} image{batchLimit === 1 ? '' : 's'}. Processing {processableCount} image{processableCount === 1 ? '' : 's'} needs {confirmedCost} credit{confirmedCost === 1 ? '' : 's'} for the {creditOverflowCount} extra image{creditOverflowCount === 1 ? '' : 's'}, but you only have {totalCredits ?? 0}.
+                    Processing {processableCount} image{processableCount === 1 ? '' : 's'} needs up to {confirmedCost} credit{confirmedCost === 1 ? '' : 's'}, but you have {totalCredits}. You can process {processingLimit} now; failed files are not charged.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={() => setFiles((p) => p.slice(0, batchLimit))}
+                      onClick={() => { setFiles((p) => p.slice(0, processingLimit)); requestKeyRef.current = null; }}
                       className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-200"
                     >
-                      Remove {creditOverflowCount} image{creditOverflowCount === 1 ? '' : 's'}
+                      Remove {files.length - processingLimit} image{files.length - processingLimit === 1 ? '' : 's'}
                     </button>
                     <Link href="/pricing" className="rounded-lg bg-gradient-brand px-3 py-1.5 text-xs font-semibold text-white">
                       Buy Credits Or Upgrade
@@ -633,7 +638,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
                   min={10}
                   max={100}
                   value={quality}
-                  onChange={(e) => setQuality(parseInt(e.target.value, 10))}
+                  onChange={(e) => { setQuality(parseInt(e.target.value, 10)); requestKeyRef.current = null; }}
                   className="mt-2 w-full accent-primary"
                 />
                 <p className="mt-1 text-[11px] text-text-subtle">
@@ -644,7 +649,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
               <Button
                 onClick={compress}
                 loading={loading}
-                disabled={!planReady || isOverHardMax}
+                disabled={!planReady || isOverHardMax || processingLimit === 0}
                 className="w-full"
                 size="lg"
               >

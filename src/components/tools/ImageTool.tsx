@@ -6,13 +6,15 @@
  *
  * Architecture: Frontend → /api/tools/image → imageService.ts → Sharp
  */
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Upload, Loader2, Download, AlertCircle, Image as ImageIcon, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 import type { FunctionalToolProps } from '@/config/functionalTools';
 import { useSignInGuard } from '@/hooks/useSignInGuard';
+import { IMAGE_ACCEPT, isAllowedImageType } from '@/lib/imageConfig';
+import { imageApiError } from '@/components/tools/image/ImageToolUI';
 
 type Op =
   | 'compress' | 'resize' | 'convert' | 'enhance'
@@ -32,6 +34,12 @@ const SLUG_TO_OP: Record<string, Op> = {
 };
 
 const MAX_BYTES = 25 * 1024 * 1024;
+
+const ACCEPT_BY_OP: Partial<Record<Op, string>> = {
+  'jpg-to-png': 'image/jpeg',
+  'png-to-jpg': 'image/png',
+  'heic-to-jpg': 'image/heic,image/heif',
+};
 
 function formatBytes(b: number): string {
   if (b < 1024) return `${b} B`;
@@ -58,8 +66,15 @@ export function ImageTool({ slug }: FunctionalToolProps) {
   const [resultName, setResultName]       = useState('');
   const [origSize, setOrigSize]           = useState(0);
   const [outSize, setOutSize]             = useState(0);
+  const [resultDimensions, setResultDimensions] = useState('');
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const operationKeyRef = useRef<string | null>(null);
+
+  useEffect(() => () => {
+    if (preview) URL.revokeObjectURL(preview);
+    if (resultUrl) URL.revokeObjectURL(resultUrl);
+  }, [preview, resultUrl]);
 
   /* Whether the quality slider should show for this op */
   const showQuality = ['compress', 'png-to-jpg', 'to-webp'].includes(op);
@@ -70,16 +85,28 @@ export function ImageTool({ slug }: FunctionalToolProps) {
 
   const handleFile = useCallback((f: File | null) => {
     setError('');
+    setResultDimensions('');
     setResultUrl(null);
     if (!f) { setFile(null); setPreview(null); return; }
     if (f.size > MAX_BYTES) {
+      setFile(null);
+      setPreview(null);
       setError('File too large. Maximum size is 25 MB.');
       errToast('File too large', 'Maximum image size is 25 MB.');
       return;
     }
+    const accepted = ACCEPT_BY_OP[op]?.split(',') ?? [];
+    if (!isAllowedImageType(f.type) || (accepted.length > 0 && !accepted.includes(f.type.toLowerCase()))) {
+      setFile(null);
+      setPreview(null);
+      const expected = op === 'jpg-to-png' ? 'a JPG image' : op === 'png-to-jpg' ? 'a PNG image' : op === 'heic-to-jpg' ? 'a HEIC image' : 'a supported image';
+      setError(`Please select ${expected}.`);
+      return;
+    }
     setFile(f);
     setPreview(URL.createObjectURL(f));
-  }, [errToast]);
+    operationKeyRef.current = null;
+  }, [errToast, op]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -96,15 +123,20 @@ export function ImageTool({ slug }: FunctionalToolProps) {
     setPreview(null);
     setResultUrl(null);
     setError('');
+    operationKeyRef.current = null;
     if (inputRef.current) inputRef.current.value = '';
   }, []);
 
   const process = useCallback(async () => {
-    if (!requireAuth()) return;
     if (!file) {
       setError('Please upload an image first.');
       return;
     }
+    if (showSize && !width && !height) {
+      setError('Enter a width, a height, or both.');
+      return;
+    }
+    if (!requireAuth()) return;
     setLoading(true);
     setError('');
 
@@ -119,13 +151,13 @@ export function ImageTool({ slug }: FunctionalToolProps) {
       }
       if (showFormat) fd.append('format', format);
 
-      const res = await fetch('/api/tools/image', { method: 'POST', headers: { 'Idempotency-Key': `image:${crypto.randomUUID()}` }, body: fd });
+      const operationKey = operationKeyRef.current ?? `image:${crypto.randomUUID()}`;
+      operationKeyRef.current = operationKey;
+      const res = await fetch('/api/tools/image', { method: 'POST', headers: { 'Idempotency-Key': operationKey }, body: fd });
 
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        const msg = (data as { error?: string }).error || `Request failed (${res.status}).`;
+        const msg = await imageApiError(res, `Request failed (${res.status}).`);
         setError(msg);
-        setLoading(false);
         return;
       }
 
@@ -143,6 +175,10 @@ export function ImageTool({ slug }: FunctionalToolProps) {
       setResultName(name);
       setOrigSize(oSize);
       setOutSize(nSize);
+      const outputWidth = res.headers.get('X-Output-Width');
+      const outputHeight = res.headers.get('X-Output-Height');
+      setResultDimensions(outputWidth && outputHeight ? `${outputWidth}×${outputHeight}` : '');
+      operationKeyRef.current = null;
       success('Image ready', 'Your processed image is ready to download.');
     } catch {
       setError('Network error. Please try again.');
@@ -169,7 +205,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
             preview ? 'border-primary/40 bg-white dark:bg-card' : 'border-border bg-white dark:bg-card hover:border-primary/40 hover:bg-primary-light',
           )}
         >
-          <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onPick} />
+          <input ref={inputRef} type="file" accept={ACCEPT_BY_OP[op] ?? IMAGE_ACCEPT} className="hidden" onChange={onPick} />
 
           {preview ? (
             <div className="relative">
@@ -207,7 +243,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
               </div>
               <input
                 type="range" min={10} max={100} value={quality}
-                onChange={(e) => setQuality(parseInt(e.target.value))}
+                onChange={(e) => { setQuality(parseInt(e.target.value)); operationKeyRef.current = null; }}
                 className="w-full accent-primary"
               />
               <p className="mt-1 text-[11px] text-text-subtle">Lower = smaller file. 75–85 is visually lossless for most photos.</p>
@@ -221,7 +257,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
                 {(['png', 'jpeg', 'webp', 'avif', 'gif'] as Format[]).map((f) => (
                   <button
                     key={f}
-                    onClick={() => setFormat(f)}
+                    onClick={() => { setFormat(f); operationKeyRef.current = null; }}
                     className={cn(
                       'px-4 py-2 rounded-xl text-xs font-semibold uppercase transition-all',
                       format === f ? 'bg-primary text-white shadow-glow' : 'bg-surface text-text-muted hover:bg-primary-light',
@@ -240,7 +276,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
                 <label className="text-xs font-semibold text-text-subtle uppercase tracking-wider mb-1.5 block">Width (px)</label>
                 <input
                   type="number" min={1} value={width}
-                  onChange={(e) => setWidth(e.target.value)}
+                  onChange={(e) => { setWidth(e.target.value); operationKeyRef.current = null; }}
                   placeholder="auto"
                   className="w-full bg-white dark:bg-card border border-border rounded-xl px-4 py-2.5 text-text focus:outline-none focus:border-primary"
                 />
@@ -249,7 +285,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
                 <label className="text-xs font-semibold text-text-subtle uppercase tracking-wider mb-1.5 block">Height (px)</label>
                 <input
                   type="number" min={1} value={height}
-                  onChange={(e) => setHeight(e.target.value)}
+                  onChange={(e) => { setHeight(e.target.value); operationKeyRef.current = null; }}
                   placeholder="auto"
                   className="w-full bg-white dark:bg-card border border-border rounded-xl px-4 py-2.5 text-text focus:outline-none focus:border-primary"
                 />
@@ -290,6 +326,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
               <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                 <span className="text-text-muted">Original: <span className="font-mono text-text">{formatBytes(origSize)}</span></span>
                 <span className="text-text-muted">New: <span className="font-mono text-text">{formatBytes(outSize)}</span></span>
+                {resultDimensions && <span className="text-text-muted">Dimensions: <span className="font-mono text-text">{resultDimensions}</span></span>}
                 {origSize !== outSize && (
                   <span className={cn('font-semibold', smaller ? 'text-accent-hover' : 'text-amber-600')}>
                     {smaller ? '↓' : '↑'} {Math.abs(delta).toFixed(1)}%

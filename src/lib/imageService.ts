@@ -5,12 +5,13 @@
  * Architecture: API Route → imageService.ts → sharp
  */
 import sharp, { type FitEnum } from 'sharp';
+import { IMAGE_MAX_FILE_BYTES, IMAGE_MAX_PIXELS } from '@/lib/imageConfig';
 
 export type ImageOperation =
   | { op: 'compress';  quality?: number; format?: OutputFormat }
-  | { op: 'resize';    width?: number; height?: number; fit?: keyof FitEnum }
+  | { op: 'resize';    width?: number; height?: number; fit?: keyof FitEnum; format?: OutputFormat }
   | { op: 'convert';   format: OutputFormat }
-  | { op: 'enhance' }
+  | { op: 'enhance'; format?: OutputFormat }
   | { op: 'jpg-to-png' }
   | { op: 'png-to-jpg'; quality?: number }
   | { op: 'to-webp';   quality?: number }
@@ -25,12 +26,12 @@ export type ImageResult = {
   extension: string;
   originalSize: number;
   outputSize: number;
+  width: number;
+  height: number;
   compressionRatio?: string;
 };
 
 export type ImageError = { ok: false; error: string };
-
-const MAX_INPUT_BYTES = 25 * 1024 * 1024; // 25 MB
 
 function mimeFor(fmt: string): string {
   const map: Record<string, string> = {
@@ -44,6 +45,12 @@ function extFor(fmt: string): string {
   return fmt === 'jpeg' ? 'jpg' : fmt;
 }
 
+function isHeicBuffer(input: Buffer): boolean {
+  if (input.length < 12 || input.toString('ascii', 4, 8) !== 'ftyp') return false;
+  const brand = input.toString('ascii', 8, 12).toLowerCase();
+  return ['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'mif1', 'msf1'].includes(brand);
+}
+
 /**
  * Process an image buffer through the requested operation.
  */
@@ -51,12 +58,35 @@ export async function processImage(
   input: Buffer,
   operation: ImageOperation,
 ): Promise<ImageResult | ImageError> {
-  if (input.length > MAX_INPUT_BYTES) {
+  if (input.length > IMAGE_MAX_FILE_BYTES) {
     return { ok: false, error: `File too large. Maximum input size is 25 MB.` };
   }
 
   try {
-    let pipeline = sharp(input, { failOn: 'none' });
+    let source: ReturnType<typeof sharp>;
+    if (isHeicBuffer(input)) {
+      const { default: decodeHeic } = await import('heic-decode');
+      const decoded = await decodeHeic({ buffer: input });
+      if (!decoded.width || !decoded.height || decoded.width * decoded.height > IMAGE_MAX_PIXELS) {
+        return { ok: false, error: 'Image dimensions are too large. Maximum decoded size is 50 megapixels.' };
+      }
+      source = sharp(Buffer.from(decoded.data.buffer, decoded.data.byteOffset, decoded.data.byteLength), {
+        raw: { width: decoded.width, height: decoded.height, channels: 4 },
+        failOn: 'warning',
+        limitInputPixels: IMAGE_MAX_PIXELS,
+      });
+    } else {
+      source = sharp(input, { failOn: 'warning', animated: true, limitInputPixels: IMAGE_MAX_PIXELS });
+    }
+    const metadata = await source.metadata();
+    if (!metadata.width || !metadata.height) {
+      return { ok: false, error: 'Could not read image dimensions.' };
+    }
+    if (metadata.width * metadata.height > IMAGE_MAX_PIXELS) {
+      return { ok: false, error: 'Image dimensions are too large. Maximum decoded size is 50 megapixels.' };
+    }
+
+    let pipeline = source;
 
     // Auto-rotate based on EXIF orientation
     pipeline = pipeline.rotate();
@@ -77,7 +107,7 @@ export async function processImage(
 
       case 'resize': {
         const { width, height, fit = 'inside' } = operation;
-        outputFormat = 'jpeg';
+        outputFormat = operation.format ?? normalizeSharpFormat(metadata.format);
         outputBuffer = await pipeline
           .resize({
             width: width || undefined,
@@ -85,7 +115,7 @@ export async function processImage(
             fit: fit as keyof FitEnum,
             withoutEnlargement: true,
           })
-          .jpeg({ quality: 85 })
+          .toFormat(outputFormat as OutputFormat, ['jpeg', 'webp', 'avif'].includes(outputFormat) ? { quality: 85 } : {})
           .toBuffer();
         break;
       }
@@ -93,6 +123,7 @@ export async function processImage(
       case 'convert': {
         outputFormat = operation.format;
         const q = ['jpeg', 'webp', 'avif'].includes(outputFormat) ? { quality: 85 } : {};
+        if (outputFormat === 'jpeg') pipeline = pipeline.flatten({ background: '#ffffff' });
         outputBuffer = await pipeline
           .toFormat(outputFormat as OutputFormat, q)
           .toBuffer();
@@ -100,11 +131,12 @@ export async function processImage(
       }
 
       case 'enhance': {
-        outputFormat = 'jpeg';
+        outputFormat = operation.format ?? normalizeSharpFormat(metadata.format);
+        if (outputFormat === 'jpeg') pipeline = pipeline.flatten({ background: '#ffffff' });
         outputBuffer = await pipeline
           .modulate({ brightness: 1.05, saturation: 1.1 })
           .sharpen({ sigma: 0.8 })
-          .jpeg({ quality: 90 })
+          .toFormat(outputFormat as OutputFormat, ['jpeg', 'webp', 'avif'].includes(outputFormat) ? { quality: 90 } : {})
           .toBuffer();
         break;
       }
@@ -150,6 +182,7 @@ export async function processImage(
     const ratio = input.length > 0
       ? `${(((input.length - outputBuffer.length) / input.length) * 100).toFixed(1)}%`
       : undefined;
+    const outputMetadata = await sharp(outputBuffer, { animated: true }).metadata();
 
     return {
       ok: true,
@@ -158,15 +191,23 @@ export async function processImage(
       extension: extFor(outputFormat),
       originalSize: input.length,
       outputSize: outputBuffer.length,
+      width: outputMetadata.width ?? metadata.width,
+      height: outputMetadata.pageHeight ?? outputMetadata.height ?? metadata.height,
       compressionRatio: ratio,
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes('Input buffer contains unsupported image format')) {
+    if (msg.includes('Input buffer contains unsupported image format') || msg.includes('unsupported image format')) {
       return { ok: false, error: 'Unsupported image format. Please upload a JPG, PNG, WEBP, GIF, or HEIC file.' };
     }
     return { ok: false, error: `Image processing failed: ${msg.slice(0, 200)}` };
   }
+}
+
+function normalizeSharpFormat(format: string | undefined): OutputFormat {
+  if (format === 'jpg') return 'jpeg';
+  if (format === 'jpeg' || format === 'png' || format === 'webp' || format === 'gif' || format === 'avif') return format;
+  return 'png';
 }
 
 /**
