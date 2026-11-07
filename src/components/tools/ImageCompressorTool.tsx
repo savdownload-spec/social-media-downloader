@@ -192,7 +192,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
   // Processing phase state
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [processingPercent, setProcessingPercent] = useState<number | null>(null);
+  const [uploadPercent, setUploadPercent] = useState<number | null>(null);
   const [processedCount, setProcessedCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -303,7 +303,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
     processingRef.current = true;
     setLoading(true);
     setUploading(true);
-    setProcessingPercent(null);
+    setUploadPercent(null);
     setError('');
     setResults(null);
     setTotalCount(filesToProcess.length);
@@ -314,10 +314,27 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
       filesToProcess.forEach((f) => formData.append('file', f));
       formData.append('quality', String(quality));
 
-      const res = await fetch('/api/tools/image/compress-batch', {
-        method: 'POST',
-        headers: { 'Idempotency-Key': `image:${idempotencyKey}`, 'X-Progress-Stream': '1' },
-        body: formData,
+      const res = await new Promise<Response>((resolve, reject) => {
+        const request = new XMLHttpRequest();
+        request.open('POST', '/api/tools/image/compress-batch');
+        request.responseType = 'arraybuffer';
+        request.setRequestHeader('Idempotency-Key', `image:${idempotencyKey}`);
+        request.upload.onprogress = (event) => {
+          if (event.lengthComputable && event.total > 0) {
+            setUploadPercent(Math.min(99, Math.round(event.loaded / event.total * 100)));
+          }
+        };
+        request.upload.onload = () => { setUploadPercent(100); setUploading(false); };
+        request.onerror = () => reject(new Error('Network error while uploading images.'));
+        request.onabort = () => reject(new Error('Image upload was cancelled.'));
+        request.onload = () => {
+          if (!request.status) { reject(new Error('No response from the image processor.')); return; }
+          const headers = new Headers();
+          const retryAfter = request.getResponseHeader('Retry-After');
+          if (retryAfter) headers.set('Retry-After', retryAfter);
+          resolve(new Response(request.response, { status: request.status, headers }));
+        };
+        request.send(formData);
       });
 
       if (!res.ok) {
@@ -326,47 +343,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
         throw new Error(data.error ?? (res.status === 429 && retryAfter ? `Too many requests. Try again in ${retryAfter} seconds.` : `Request failed (${res.status}).`));
       }
 
-      setUploading(false);
-      if (!res.body) throw new Error('The image processor did not provide a progress stream.');
-      const reader = res.body.getReader();
-      let chunk = new Uint8Array(0);
-      let cursor = 0;
-      const readBytes = async (length: number): Promise<Uint8Array> => {
-        const bytes = new Uint8Array(length);
-        let copied = 0;
-        while (copied < length) {
-          if (cursor >= chunk.length) {
-            const next = await reader.read();
-            if (next.done) throw new Error('The progress stream ended before the result was complete.');
-            chunk = next.value;
-            cursor = 0;
-          }
-          const take = Math.min(length - copied, chunk.length - cursor);
-          bytes.set(chunk.subarray(cursor, cursor + take), copied);
-          cursor += take;
-          copied += take;
-        }
-        return bytes;
-      };
-      let payload: ArrayBuffer | null = null;
-      while (payload === null) {
-        const header = await readBytes(5);
-        const length = new DataView(header.buffer).getUint32(1, false);
-        if (length > 200 * 1024 * 1024) throw new Error('The image processor returned an oversized result.');
-        const body = await readBytes(length);
-        if (header[0] === 1) {
-          const update = JSON.parse(new TextDecoder().decode(body)) as { processed: number; total: number; completed: number };
-          if (update.total > 0) setProcessingPercent(Math.min(99, Math.round(update.processed / update.total * 100)));
-          setProcessedCount(update.completed);
-        } else if (header[0] === 2) {
-          payload = body.buffer as ArrayBuffer;
-        } else if (header[0] === 3) {
-          const failure = JSON.parse(new TextDecoder().decode(body)) as { error?: string };
-          throw new Error(failure.error || 'Compression failed.');
-        } else {
-          throw new Error('The image processor returned an unknown progress frame.');
-        }
-      }
+      const payload = await res.arrayBuffer();
       const { manifest: data, dataStart } = decodeImageBatchPayload<CompressResult>(payload);
 
       setProcessedCount(data.completed ?? 0);
@@ -382,10 +359,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
         return item;
       });
 
-      if (data.completed > 0) {
-        setProcessingPercent(100);
-        await new Promise((resolve) => setTimeout(resolve, 500));
-      }
+      await new Promise((resolve) => setTimeout(resolve, 350));
       setResults(built);
       requestKeyRef.current = null;
 
@@ -405,7 +379,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
       processingRef.current = false;
       setLoading(false);
       setUploading(false);
-      setProcessingPercent(null);
+      setUploadPercent(null);
     }
   }, [requireAuth, files, processingLimit, quality, errToast]);
 
@@ -764,7 +738,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
       )}
 
       {/* ── Processing phase ─────────────────────────────────────────────── */}
-      {loading && <ProcessingProgress stage={uploading ? `Uploading ${Math.min(files.length, processingLimit)} image${Math.min(files.length, processingLimit) === 1 ? '' : 's'}…` : processingPercent === 100 ? 'Preparing results…' : `Compressing ${Math.min(files.length, processingLimit)} image${Math.min(files.length, processingLimit) === 1 ? '' : 's'}…`} percent={uploading ? null : processingPercent} detail={!uploading && processedCount > 0 ? `${processedCount} of ${totalCount} complete` : undefined} />}
+      {loading && <ProcessingProgress stage={uploading ? `Uploading ${Math.min(files.length, processingLimit)} image${Math.min(files.length, processingLimit) === 1 ? '' : 's'}…` : `Processing ${Math.min(files.length, processingLimit)} image${Math.min(files.length, processingLimit) === 1 ? '' : 's'}…`} percent={uploadPercent} progressLabel={uploading ? undefined : 'Upload complete · Processing'} detail={!uploading ? 'Your upload is complete. Preparing the results…' : undefined} />}
 
       {/* ── Results phase ────────────────────────────────────────────────── */}
       {results && !loading && (
