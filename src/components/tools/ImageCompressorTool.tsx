@@ -153,6 +153,8 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
 
   // Processing phase state
   const [loading, setLoading] = useState(false);
+  const [uploadPercent, setUploadPercent] = useState<number | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [processedCount, setProcessedCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -262,6 +264,8 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
 
     processingRef.current = true;
     setLoading(true);
+    setUploading(true);
+    setUploadPercent(null);
     setError('');
     setResults(null);
     setTotalCount(filesToProcess.length);
@@ -272,10 +276,27 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
       filesToProcess.forEach((f) => formData.append('file', f));
       formData.append('quality', String(quality));
 
-      const res = await fetch('/api/tools/image/compress-batch', {
-        method: 'POST',
-        headers: { 'Idempotency-Key': `image:${idempotencyKey}` },
-        body: formData,
+      const res = await new Promise<Response>((resolve, reject) => {
+        const request = new XMLHttpRequest();
+        request.open('POST', '/api/tools/image/compress-batch');
+        request.responseType = 'arraybuffer';
+        request.setRequestHeader('Idempotency-Key', `image:${idempotencyKey}`);
+        request.upload.onprogress = (event) => {
+          if (event.lengthComputable && event.total > 0) {
+            setUploadPercent(Math.min(99, Math.round(event.loaded / event.total * 100)));
+          }
+        };
+        request.upload.onload = () => { setUploading(false); setUploadPercent(null); };
+        request.onerror = () => reject(new Error('Network error while uploading images.'));
+        request.onabort = () => reject(new Error('Image upload was cancelled.'));
+        request.onload = () => {
+          if (!request.status) { reject(new Error('No response from the image processor.')); return; }
+          const headers = new Headers();
+          const retryAfter = request.getResponseHeader('Retry-After');
+          if (retryAfter) headers.set('Retry-After', retryAfter);
+          resolve(new Response(request.response, { status: request.status, headers }));
+        };
+        request.send(formData);
       });
 
       if (!res.ok) {
@@ -318,6 +339,8 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
     } finally {
       processingRef.current = false;
       setLoading(false);
+      setUploading(false);
+      setUploadPercent(null);
     }
   }, [requireAuth, files, processingLimit, quality, errToast]);
 
@@ -676,7 +699,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
       )}
 
       {/* ── Processing phase ─────────────────────────────────────────────── */}
-      {loading && <ProcessingProgress stage={`Compressing ${Math.min(files.length, processingLimit)} image${Math.min(files.length, processingLimit) === 1 ? '' : 's'}…`} detail={processedCount > 0 ? `${processedCount} of ${totalCount} complete` : undefined} />}
+      {loading && <ProcessingProgress stage={uploading ? `Uploading ${Math.min(files.length, processingLimit)} image${Math.min(files.length, processingLimit) === 1 ? '' : 's'}…` : `Compressing ${Math.min(files.length, processingLimit)} image${Math.min(files.length, processingLimit) === 1 ? '' : 's'}…`} percent={uploading ? uploadPercent : null} detail={!uploading && processedCount > 0 ? `${processedCount} of ${totalCount} complete` : undefined} />}
 
       {/* ── Results phase ────────────────────────────────────────────────── */}
       {results && !loading && (
