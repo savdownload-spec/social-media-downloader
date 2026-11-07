@@ -8,6 +8,43 @@ export type RateLimitResult = {
   unavailable?: boolean;
 };
 
+type MemoryWindow = { count: number; expiresAt: number };
+const memoryWindows = new Map<string, MemoryWindow>();
+
+function memoryRateLimit(identifier: string, limit: number, windowSeconds: number): RateLimitResult {
+  const now = Date.now();
+  const existing = memoryWindows.get(identifier);
+  const entry = !existing || existing.expiresAt <= now
+    ? { count: 1, expiresAt: now + windowSeconds * 1000 }
+    : { ...existing, count: existing.count + 1 };
+  memoryWindows.set(identifier, entry);
+
+  // Keep long-lived instances bounded without a timer that can hold them open.
+  if (memoryWindows.size > 5_000) {
+    for (const [key, value] of memoryWindows) {
+      if (value.expiresAt <= now) memoryWindows.delete(key);
+    }
+    while (memoryWindows.size > 4_000) {
+      const oldestKey = memoryWindows.keys().next().value as string | undefined;
+      if (!oldestKey) break;
+      memoryWindows.delete(oldestKey);
+    }
+  }
+
+  return {
+    success: entry.count <= limit,
+    limit,
+    remaining: Math.max(0, limit - entry.count),
+    resetSeconds: Math.max(1, Math.ceil((entry.expiresAt - now) / 1000)),
+    unavailable: true,
+  };
+}
+
+/** Test-only reset for deterministic fallback-limit coverage. */
+export function resetMemoryRateLimitsForTests() {
+  memoryWindows.clear();
+}
+
 /** Standard headers for successful and rejected rate-limited responses. */
 export function rateLimitHeaders(result: RateLimitResult): Record<string, string> {
   const headers: Record<string, string> = {
@@ -26,7 +63,7 @@ export function rateLimitHeaders(result: RateLimitResult): Record<string, string
  */
 export async function ratelimit(
   identifier: string,
-  { limit = 20, windowSeconds = 60, failClosed = false }: { limit?: number; windowSeconds?: number; failClosed?: boolean } = {},
+  { limit = 20, windowSeconds = 60, failClosed = false, fallbackToMemory = false }: { limit?: number; windowSeconds?: number; failClosed?: boolean; fallbackToMemory?: boolean } = {},
 ): Promise<RateLimitResult> {
   const r = getRedis();
   const defaultResult: RateLimitResult = {
@@ -37,7 +74,7 @@ export async function ratelimit(
     unavailable: true,
   };
 
-  if (!r) return defaultResult;
+  if (!r) return fallbackToMemory ? memoryRateLimit(identifier, limit, windowSeconds) : defaultResult;
 
   const window = Math.floor(Date.now() / 1000 / windowSeconds);
   const key = `rl:${identifier}:${window}`;
@@ -52,7 +89,7 @@ export async function ratelimit(
       resetSeconds: windowSeconds - (Math.floor(Date.now() / 1000) % windowSeconds),
     };
   } catch {
-    return defaultResult;
+    return fallbackToMemory ? memoryRateLimit(identifier, limit, windowSeconds) : defaultResult;
   }
 }
 

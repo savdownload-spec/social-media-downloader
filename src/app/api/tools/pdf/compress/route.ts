@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { ratelimit, getClientId } from '@/lib/ratelimit';
+import { ratelimit, getClientId, rateLimitHeaders } from '@/lib/ratelimit';
 import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 import { compressPdf, type CompressionOptions } from '@/lib/pdfService';
 import { PDF_MAX_BATCH_BYTES } from '@/lib/pdfConfig';
@@ -11,8 +11,11 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
-  const rl = await ratelimit(`pdf:${getClientId(req)}`, { limit: 10, windowSeconds: 60 });
-  if (!rl.success) return NextResponse.json({ error: 'Too many requests. Please wait a minute and try again.' }, { status: 429 });
+  const rl = await ratelimit(`pdf:compress:ip:${getClientId(req)}`, { limit: 10, windowSeconds: 60, fallbackToMemory: true });
+  if (!rl.success) return NextResponse.json(
+    { error: `Too many requests. Try again in ${rl.resetSeconds} seconds.`, code: 'RATE_LIMITED', retryAfter: rl.resetSeconds },
+    { status: 429, headers: rateLimitHeaders(rl) },
+  );
 
   /* ── Tool status gate ── */
   const statusGate = await requireToolAvailable('compress-pdf');
@@ -31,6 +34,11 @@ export async function POST(req: Request) {
     if (files.reduce((sum, file) => sum + (file.size || 0), 0) > PDF_MAX_BATCH_BYTES) return NextResponse.json({ error: 'Combined file size exceeds the 150 MB batch limit.' }, { status: 413 });
     const gate = await requireCredits({ cost: files.length * JOB_COST.pdfTool });
     if (!gate.ok) return gate.response;
+    const userLimit = await ratelimit(`pdf:compress:user:${gate.userId}`, { limit: 8, windowSeconds: 60, fallbackToMemory: true });
+    if (!userLimit.success) return NextResponse.json(
+      { error: `Too many requests. Try again in ${userLimit.resetSeconds} seconds.`, code: 'RATE_LIMITED', retryAfter: userLimit.resetSeconds },
+      { status: 429, headers: rateLimitHeaders(userLimit) },
+    );
     const input = await readPdfUploadRefs(files); urls = input.urls;
 
     // Validate compression options before passing to service layer

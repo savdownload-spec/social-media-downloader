@@ -1,12 +1,19 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('./redis', () => ({ getRedis: () => null }));
-import { getClientId, ratelimit, rateLimitHeaders } from './ratelimit';
+import { getClientId, ratelimit, rateLimitHeaders, resetMemoryRateLimitsForTests } from './ratelimit';
 describe('rate limiter configuration', () => {
+  beforeEach(() => resetMemoryRateLimitsForTests());
   it('fails closed for newsletter when Redis is absent', async () => {
     expect((await ratelimit('newsletter', { failClosed: true })).success).toBe(false);
   });
   it('preserves default behavior for existing callers', async () => {
     expect((await ratelimit('existing')).success).toBe(true);
+  });
+  it('enforces a server-side fallback when Redis is unavailable', async () => {
+    expect((await ratelimit('fallback-test', { limit: 2, fallbackToMemory: true })).success).toBe(true);
+    expect((await ratelimit('fallback-test', { limit: 2, fallbackToMemory: true })).success).toBe(true);
+    const rejected = await ratelimit('fallback-test', { limit: 2, fallbackToMemory: true });
+    expect(rejected).toMatchObject({ success: false, remaining: 0, unavailable: true });
   });
   it('emits Retry-After only for rejected requests', () => {
     expect(rateLimitHeaders({ success: false, limit: 8, remaining: 0, resetSeconds: 17 })).toMatchObject({
