@@ -2,9 +2,10 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, Loader2, AlertCircle, Play, Check } from 'lucide-react';
+import { Download, AlertCircle, Play } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { ProcessingProgress } from '@/components/tools/ProcessingProgress';
 import { CopyButton } from '@/components/ui/CopyButton';
 import { useToast } from '@/components/ui/Toast';
 import type { DownloadResult, DownloadFormat } from '@/types';
@@ -63,8 +64,6 @@ async function downloadWithProgress(
     chunks.push(new Uint8Array(buf));
     received = buf.byteLength;
   }
-
-  onProgress(100, received);
 
   const blob = new Blob(chunks as BlobPart[]);
   const blobUrl = URL.createObjectURL(blob);
@@ -208,7 +207,7 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
             className="border-0 shadow-none focus:shadow-none focus:border-0 px-4 text-base"
             aria-label={`${tool.name} URL`}
           />
-          <Button size="lg" onClick={() => submit()} loading={state === 'loading'} disabled={authLoading} className="shrink-0">
+          <Button size="lg" onClick={() => submit()} disabled={authLoading || state === 'loading'} className="shrink-0">
             {state === 'loading' ? 'Fetching…' : <>Download <Download className="w-4 h-4" /></>}
           </Button>
         </div>
@@ -234,10 +233,9 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="mt-6 p-6 bg-white dark:bg-card border border-border rounded-2xl shadow-soft flex items-center gap-3 text-text-muted"
+            className="mt-6"
           >
-            <Loader2 className="w-5 h-5 animate-spin text-primary" />
-            <span className="text-sm">Analyzing your link…</span>
+            <ProcessingProgress stage="Analyzing your link…" className="w-full" />
           </motion.div>
         )}
 
@@ -275,7 +273,6 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
                   {result.formats.map((f) => {
                     const key = f.label + f.quality;
                     const isDownloading = downloadingKey === key;
-                    const isDone = isDownloading && downloadPct === 100;
                     return (
                       <button
                         key={key}
@@ -283,29 +280,15 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
                         disabled={downloadingKey !== null}
                         className="relative inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-text text-white hover:bg-text/90 dark:bg-primary dark:hover:bg-primary-hover text-sm font-medium active:scale-[0.98] transition-all overflow-hidden disabled:opacity-40 disabled:cursor-not-allowed"
                       >
-                        {isDownloading && (
-                          <span
-                            className="absolute inset-y-0 left-0 bg-primary/50 transition-[width] duration-200"
-                            style={{
-                              width: downloadPct !== null ? `${downloadPct}%` : '100%',
-                              ...(downloadPct === null ? { animation: 'pulse 1.4s ease-in-out infinite' } : {}),
-                            }}
-                          />
-                        )}
                         <span className="relative z-10 flex items-center gap-2">
-                          {isDownloading ? (
-                            isDone ? <Check className="w-3.5 h-3.5" /> : <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : (
-                            <Download className="w-3.5 h-3.5" />
-                          )}
-                          {isDownloading
-                            ? (downloadPct !== null ? `${downloadPct}%` : `${formatBytes(downloadedBytes)}…`)
-                            : f.label}
+                          {!isDownloading && <Download className="w-3.5 h-3.5" />}
+                          {isDownloading ? 'Downloading…' : f.label}
                           {!isDownloading && f.size && <span className="text-white/60 text-xs">· {f.size}</span>}
                         </span>
                       </button>
                     );
                   })}
+                  {downloadingKey && <ProcessingProgress stage={`Downloading ${tool.name}…`} percent={downloadPct} detail={downloadedBytes > 0 ? `${formatBytes(downloadedBytes)} received` : undefined} className="w-full" />}
                   {result.formats.length > 0 && (
                     <CopyButton
                       value={result.formats[0].url}

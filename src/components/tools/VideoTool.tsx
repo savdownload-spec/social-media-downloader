@@ -7,8 +7,9 @@
  * Architecture: Frontend → /api/tools/video → videoService.ts → FFmpeg
  */
 import { useCallback, useRef, useState } from 'react';
-import { Upload, Loader2, Download, AlertCircle, Film, X } from 'lucide-react';
+import { Upload, Download, AlertCircle, Film, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { ProcessingProgress } from '@/components/tools/ProcessingProgress';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 import type { FunctionalToolProps } from '@/config/functionalTools';
@@ -266,7 +267,7 @@ export function VideoTool({ slug }: FunctionalToolProps) {
             </div>
           )}
 
-          <Button onClick={process} loading={loading} className="w-full" size="lg">
+          <Button onClick={process} disabled={loading} className="w-full" size="lg">
             {loading ? 'Processing…' : <>Process Video <Film className="w-4 h-4" /></>}
           </Button>
         </div>
@@ -280,12 +281,7 @@ export function VideoTool({ slug }: FunctionalToolProps) {
       )}
 
       {/* Loading overlay */}
-      {loading && (
-        <div className="flex items-center justify-center gap-3 p-6 bg-white dark:bg-card border border-border rounded-2xl shadow-soft text-text-muted">
-          <Loader2 className="w-5 h-5 animate-spin text-primary" />
-          <span className="text-sm">Processing your video… this can take a moment.</span>
-        </div>
-      )}
+      {loading && <ProcessingProgress stage="Processing your video…" detail="This can take a moment. Please keep this page open." />}
 
       {/* Result */}
       {resultUrl && !loading && (

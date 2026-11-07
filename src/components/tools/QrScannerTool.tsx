@@ -5,7 +5,8 @@
  * Architecture: Frontend → /api/tools/qr/scan → jsqr + Sharp
  */
 import { useCallback, useRef, useState } from 'react';
-import { Upload, Loader2, AlertCircle, ScanLine, X, Copy, Check, ExternalLink } from 'lucide-react';
+import { Upload, AlertCircle, ScanLine, X, Copy, Check, ExternalLink } from 'lucide-react';
+import { ProcessingProgress } from '@/components/tools/ProcessingProgress';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 import type { FunctionalToolProps } from '@/config/functionalTools';
@@ -147,12 +148,13 @@ export function QrScannerTool(_props: FunctionalToolProps) {
           disabled={loading}
           className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all disabled:opacity-60"
         >
-          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ScanLine className="w-5 h-5" />}
+          {!loading && <ScanLine className="w-5 h-5" />}
           {loading ? 'Scanning…' : 'Scan QR Code'}
         </button>
       )}
 
       {/* Error */}
+      {loading && <ProcessingProgress stage="Scanning QR code…" />}
       {error && (
         <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-2xl text-sm text-red-700 dark:text-red-400">
           <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}

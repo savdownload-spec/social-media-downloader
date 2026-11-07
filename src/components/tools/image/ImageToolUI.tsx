@@ -1,7 +1,8 @@
 'use client';
 
 import { useRef, useState, type ReactNode } from 'react';
-import { AlertCircle, Loader2, Upload, X } from 'lucide-react';
+import { AlertCircle, Upload, X } from 'lucide-react';
+import { ProcessingProgress } from '@/components/tools/ProcessingProgress';
 import { cn } from '@/lib/utils';
 
 export function ImageUploadZone({
@@ -101,12 +102,7 @@ export function ImageToolError({ children }: { children: ReactNode }) {
 }
 
 export function ImageToolProgress({ children }: { children: ReactNode }) {
-  return (
-    <div role="status" aria-live="polite" className="flex items-center gap-3 rounded-2xl border border-border bg-white p-4 text-sm text-text-muted shadow-soft dark:bg-card">
-      <Loader2 className="h-5 w-5 shrink-0 animate-spin text-primary" />
-      <span>{children}</span>
-    </div>
-  );
+  return <ProcessingProgress stage={String(children)} />;
 }
 
 export async function imageApiError(response: Response, fallback: string): Promise<string> {

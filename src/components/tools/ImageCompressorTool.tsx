@@ -29,6 +29,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { ProcessingProgress } from '@/components/tools/ProcessingProgress';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 import type { FunctionalToolProps } from '@/config/functionalTools';
@@ -648,8 +649,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
 
               <Button
                 onClick={compress}
-                loading={loading}
-                disabled={!planReady || isOverHardMax || processingLimit === 0}
+                disabled={loading || !planReady || isOverHardMax || processingLimit === 0}
                 className="w-full"
                 size="lg"
               >
@@ -676,18 +676,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
       )}
 
       {/* ── Processing phase ─────────────────────────────────────────────── */}
-      {loading && (
-        <div
-          role="status"
-          className="flex items-center gap-3 rounded-2xl border border-border bg-white p-5 text-sm text-text-muted shadow-soft dark:bg-card"
-        >
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
-          <span>
-            Compressing {Math.min(files.length, processingLimit)} image{Math.min(files.length, processingLimit) === 1 ? '' : 's'}…
-            {processedCount > 0 && ` (${processedCount} of ${totalCount} done)`}
-          </span>
-        </div>
-      )}
+      {loading && <ProcessingProgress stage={`Compressing ${Math.min(files.length, processingLimit)} image${Math.min(files.length, processingLimit) === 1 ? '' : 's'}…`} detail={processedCount > 0 ? `${processedCount} of ${totalCount} complete` : undefined} />}
 
       {/* ── Results phase ────────────────────────────────────────────────── */}
       {results && !loading && (

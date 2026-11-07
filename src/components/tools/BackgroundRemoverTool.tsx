@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { AlertCircle, Download, ImageOff, Info, Loader2 } from 'lucide-react';
+import { AlertCircle, Download, ImageOff, Info } from 'lucide-react';
+import { ProcessingProgress } from '@/components/tools/ProcessingProgress';
 import { useSignInGuard } from '@/hooks/useSignInGuard';
-import { ImageToolError, ImageToolProgress, ImageUploadZone, imageApiError } from '@/components/tools/image/ImageToolUI';
+import { ImageToolError, ImageUploadZone, imageApiError } from '@/components/tools/image/ImageToolUI';
 
 type ProcessingState = 'idle' | 'authorizing' | 'loading-model' | 'processing' | 'done' | 'error';
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -18,7 +19,7 @@ export function BackgroundRemoverTool(_props: { slug: string }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [state, setState] = useState<ProcessingState>('idle');
-  const [progress, setProgress] = useState('');
+  const [modelPercent, setModelPercent] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const operationKeyRef = useRef<string | null>(null);
   const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
@@ -30,7 +31,7 @@ export function BackgroundRemoverTool(_props: { slug: string }) {
   }, [previewUrl, resultUrl]);
 
   function clear() {
-    setFile(null); setPreviewUrl(null); setResultUrl(null); setState('idle'); setProgress(''); setError(null);
+    setFile(null); setPreviewUrl(null); setResultUrl(null); setState('idle'); setModelPercent(null); setError(null);
     operationKeyRef.current = null;
   }
 
@@ -57,7 +58,7 @@ export function BackgroundRemoverTool(_props: { slug: string }) {
 
   async function handleRemove() {
     if (!file || !(await requireAuth())) return;
-    setState('authorizing'); setError(null); setProgress('');
+    setState('authorizing'); setError(null); setModelPercent(null);
     const operationKey = operationKeyRef.current ?? `background:${crypto.randomUUID()}`;
     operationKeyRef.current = operationKey;
 
@@ -72,19 +73,19 @@ export function BackgroundRemoverTool(_props: { slug: string }) {
       setError('Network error. Please check your connection and try again.'); setState('error'); return;
     }
 
-    setState('loading-model'); setProgress('Loading the background-removal model…');
+    setState('loading-model');
     try {
       const { removeBackground } = await import('@imgly/background-removal');
-      setState('processing'); setProgress('Removing background…');
+      setState('processing');
       const resultBlob = await removeBackground(file, {
         model: 'medium', output: { format: 'image/png' },
         progress: (_key: string, current: number, total: number) => {
-          if (total > 0) setProgress(`Processing: ${Math.round((current / total) * 100)}%`);
+          if (total > 0) setModelPercent((previous) => Math.max(previous ?? 0, Math.min(99, Math.round((current / total) * 100))));
         },
       });
       const completion = await postAction('complete', operationKey);
       if (!completion.ok) throw new Error(await imageApiError(completion, 'Could not record the completed operation.'));
-      setResultUrl(URL.createObjectURL(resultBlob)); setState('done'); setProgress('');
+      setResultUrl(URL.createObjectURL(resultBlob)); setState('done');
     } catch (caught) {
       void postAction('failed', operationKey).catch(() => undefined);
       setError(`Processing failed: ${caught instanceof Error ? caught.message : 'Background removal failed.'}`);
@@ -107,7 +108,7 @@ export function BackgroundRemoverTool(_props: { slug: string }) {
       {isMobile && <div className="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /><span>Processing may take 30+ seconds on mobile. Keep this tab open.</span></div>}
       <ImageUploadZone file={file} previewUrl={previewUrl} accept="image/jpeg,image/png,image/webp" hint="JPG · PNG · WebP, up to 10 MB" disabled={isProcessing} onSelect={handleFile} onClear={clear} />
       {error && <ImageToolError>{error}</ImageToolError>}
-      {isProcessing && progress && <ImageToolProgress>{progress}</ImageToolProgress>}
+      {isProcessing && <ProcessingProgress stage={state === 'authorizing' ? 'Authorizing…' : state === 'loading-model' ? 'Loading the model…' : modelPercent === null ? 'Removing background…' : 'Loading model assets…'} percent={state === 'processing' ? modelPercent : null} detail="Please keep this page open." />}
       {resultUrl && (
         <div className="space-y-3 rounded-2xl border border-border bg-white p-5 shadow-soft dark:bg-card">
           <p className="text-sm font-medium text-text">Result (transparent background PNG)</p>
@@ -121,7 +122,7 @@ export function BackgroundRemoverTool(_props: { slug: string }) {
       )}
       {!resultUrl ? (
         <button disabled={!file || isProcessing} onClick={handleRemove} className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">
-          {isProcessing ? <><Loader2 className="h-4 w-4 animate-spin" /> {state === 'authorizing' ? 'Authorizing…' : state === 'loading-model' ? 'Loading Model…' : 'Processing…'}</> : <><ImageOff className="h-4 w-4" /> Remove Background</>}
+          {isProcessing ? 'Processing…' : <><ImageOff className="h-4 w-4" /> Remove Background</>}
         </button>
       ) : <button onClick={clear} className="text-sm text-text-muted underline hover:text-text">Process Another Image</button>}
     </div>

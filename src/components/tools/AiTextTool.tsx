@@ -10,7 +10,8 @@
  * 1 SavCredit per generation. Rate-limited server-side.
  */
 import { useState } from 'react';
-import { Copy, Check, Sparkles, Loader2, AlertCircle } from 'lucide-react';
+import { Copy, Check, Sparkles, AlertCircle } from 'lucide-react';
+import { ProcessingProgress } from '@/components/tools/ProcessingProgress';
 import { useToast } from '@/components/ui/Toast';
 import type { FunctionalToolProps } from '@/config/functionalTools';
 
@@ -207,7 +208,7 @@ export function AiTextTool({ slug }: FunctionalToolProps) {
           className="inline-flex items-center gap-2 rounded-2xl bg-gradient-brand bg-[length:200%_200%] px-7 py-3.5 text-base font-semibold text-white shadow-glow-lg transition-all hover:bg-[position:100%_50%] disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.98]"
         >
           {loading
-            ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating…</>
+            ? 'Generating…'
             : <><Sparkles className="h-4 w-4" /> Generate</>
           }
         </button>
@@ -216,6 +217,7 @@ export function AiTextTool({ slug }: FunctionalToolProps) {
       </div>
 
       {/* Error */}
+      {loading && <ProcessingProgress stage="Generating text…" />}
       {errorMsg && (
         <div role="alert" className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 dark:bg-rose-500/10 dark:border-rose-500/20 p-4">
           <AlertCircle className="h-4 w-4 mt-0.5 shrink-0 text-rose-600 dark:text-rose-400" />

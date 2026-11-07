@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Download, Info, Loader2, Maximize2 } from 'lucide-react';
+import { Download, Info, Maximize2 } from 'lucide-react';
 import { useSignInGuard } from '@/hooks/useSignInGuard';
 import { ImageToolError, ImageToolProgress, ImageUploadZone, imageApiError } from '@/components/tools/image/ImageToolUI';
 
@@ -112,7 +112,7 @@ export function ImageUpscalerTool(_props: { slug: string }) {
           <button onClick={handleDownload} className="flex items-center gap-2 rounded-xl bg-gradient-brand px-5 py-2.5 text-sm font-semibold text-white shadow-glow"><Download className="h-4 w-4" /> Download PNG</button>
         </div>
       )}
-      {!resultUrl ? <button disabled={!file || isProcessing} onClick={handleUpscale} className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">{isProcessing ? <><Loader2 className="h-4 w-4 animate-spin" /> {state === 'authorizing' ? 'Authorizing…' : 'Upscaling…'}</> : <><Maximize2 className="h-4 w-4" /> Upscale {scale}×</>}</button> : <button onClick={clear} className="text-sm text-text-muted underline hover:text-text">Process Another Image</button>}
+      {!resultUrl ? <button disabled={!file || isProcessing} onClick={handleUpscale} className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">{isProcessing ? 'Processing…' : <><Maximize2 className="h-4 w-4" /> Upscale {scale}×</>}</button> : <button onClick={clear} className="text-sm text-text-muted underline hover:text-text">Process Another Image</button>}
     </div>
   );
 }

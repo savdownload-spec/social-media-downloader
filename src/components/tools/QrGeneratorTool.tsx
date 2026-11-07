@@ -8,7 +8,8 @@
  * download in the chosen format.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Loader2, Download, AlertCircle, QrCode } from 'lucide-react';
+import { Download, AlertCircle, QrCode } from 'lucide-react';
+import { ProcessingProgress } from '@/components/tools/ProcessingProgress';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
@@ -209,8 +210,7 @@ export function QrGeneratorTool(_props: FunctionalToolProps) {
         <div className="p-5 rounded-2xl border border-border bg-white dark:bg-card shadow-soft flex flex-col items-center justify-center min-h-[280px] md:order-2 order-1">
           {loading && !preview ? (
             <div className="flex flex-col items-center gap-3 text-text-muted">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
-              <span className="text-sm">Generating…</span>
+              <ProcessingProgress stage="Generating QR code…" />
             </div>
           ) : preview ? (
             // eslint-disable-next-line @next/next/no-img-element
