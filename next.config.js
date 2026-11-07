@@ -3,6 +3,22 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  // NextAuth v4 uses NEXTAUTH_URL to generate OAuth callbacks and redirects.
+  // Pin Production to the public domain, even if Vercel has a stale URL set.
+  // Preview and local development must retain their own origin for OAuth cookies.
+  env: process.env.VERCEL_ENV === 'production'
+    ? { NEXTAUTH_URL: 'https://getsavdown.com' }
+    : {},
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.getsavdown.com' }],
+        destination: 'https://getsavdown.com/:path*',
+        permanent: true,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '*.public.blob.vercel-storage.com' },

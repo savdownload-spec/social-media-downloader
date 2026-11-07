@@ -258,6 +258,9 @@ Admin role: any email listed in `ADMIN_EMAILS` (comma-separated) is auto-promote
 
 Sign-in flow: `/api/auth/signin` (NextAuth default) — customize the sign-in page in `src/lib/auth.ts` by setting `pages.signIn`.
 
+Production Google OAuth configuration, manual console changes, and the live review checklist:
+[SavDown authentication domain](docs/authentication-domain.md).
+
 ---
 
 ## Admin panel
