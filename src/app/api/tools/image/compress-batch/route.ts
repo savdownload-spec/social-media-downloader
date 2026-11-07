@@ -101,6 +101,20 @@ function batchResponse(results: FileResult[], completed: number, total: number) 
   });
 }
 
+function frameHeader(type: number, length: number): Uint8Array {
+  const header = new Uint8Array(5);
+  header[0] = type;
+  new DataView(header.buffer).setUint32(1, length, false);
+  return header;
+}
+
+function progressFrame(type: number, payload: Uint8Array): Uint8Array {
+  const frame = new Uint8Array(5 + payload.byteLength);
+  frame.set(frameHeader(type, payload.byteLength));
+  frame.set(payload, 5);
+  return frame;
+}
+
 export async function POST(req: Request) {
   const ipLimited = await checkImageIpLimit(req, 'compress-batch', { limit: 8, windowSeconds: 60 });
   if (ipLimited) return ipLimited;
@@ -186,7 +200,10 @@ export async function POST(req: Request) {
   /* ── Credit preflight (charge for valid files only) ── */
   if (validFiles.length === 0) {
     // All files rejected pre-validation — return results without charging
-    return batchResponse(results, 0, rawFiles.length);
+    const response = batchResponse(results, 0, rawFiles.length);
+    if (req.headers.get('X-Progress-Stream') !== '1') return response;
+    const payload = new Uint8Array(await response.arrayBuffer());
+    return new NextResponse(progressFrame(2, payload).buffer as ArrayBuffer, { headers: { 'Content-Type': 'application/vnd.savdown.image-batch-progress', 'Cache-Control': 'no-store' } });
   }
 
   const totalCost = validFiles.length * JOB_COST.imageTool;
@@ -208,7 +225,9 @@ export async function POST(req: Request) {
   if (userLimited) return userLimited;
 
   /* ── Per-file processing ── */
+  const processBatch = async (onProgress?: (processed: number, completed: number) => void) => {
   let completed = 0;
+  let processed = 0;
   for (const { file: f, index: i } of validFiles) {
     const sourceName = f.name.replace(/[/\\?%*:|"<>]/g, '-') || `image-${i}`;
     const mimeType = f.type.toLowerCase();
@@ -235,6 +254,7 @@ export async function POST(req: Request) {
         batchId,
         failureReason: 'Could not read file buffer.',
       });
+      onProgress?.(++processed, completed);
       continue;
     }
 
@@ -258,6 +278,7 @@ export async function POST(req: Request) {
         batchId,
         failureReason: result.error,
       });
+      onProgress?.(++processed, completed);
       continue;
     }
 
@@ -278,6 +299,7 @@ export async function POST(req: Request) {
         status: 'failed',
         error: 'Credit balance changed mid-batch. Please retry.',
       });
+      onProgress?.(++processed, completed);
       continue;
     }
 
@@ -293,7 +315,44 @@ export async function POST(req: Request) {
       height: result.height,
       buffer: result.buffer,
     });
+    onProgress?.(++processed, completed);
   }
 
   return batchResponse(results, completed, rawFiles.length);
+  };
+
+  if (req.headers.get('X-Progress-Stream') !== '1') return processBatch();
+
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      let closed = false;
+      const send = (type: number, data: unknown) => {
+        if (closed) return;
+        try {
+          controller.enqueue(progressFrame(type, new TextEncoder().encode(JSON.stringify(data))));
+        } catch {
+          closed = true;
+        }
+      };
+      send(1, { processed: 0, total: validFiles.length, completed: 0 });
+      void processBatch((processed, completed) => send(1, { processed, total: validFiles.length, completed }))
+        .then(async (response) => {
+          const payload = new Uint8Array(await response.arrayBuffer());
+          if (!closed) {
+            controller.enqueue(frameHeader(2, payload.byteLength));
+            controller.enqueue(payload);
+            controller.close();
+            closed = true;
+          }
+        })
+        .catch((error) => {
+          if (!closed) {
+            send(3, { error: error instanceof Error ? error.message : 'Compression failed.' });
+            controller.close();
+            closed = true;
+          }
+        });
+    },
+  });
+  return new NextResponse(stream, { headers: { 'Content-Type': 'application/vnd.savdown.image-batch-progress', 'Cache-Control': 'no-store, no-transform', 'X-Accel-Buffering': 'no' } });
 }

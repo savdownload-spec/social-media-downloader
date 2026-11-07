@@ -83,12 +83,50 @@ function deduplicateName(name: string, seen: Map<string, number>): string {
   return `${base}_${count}${ext}`;
 }
 
+function useAnimatedValue(target: number, duration = 850): number {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setValue(target);
+      return;
+    }
+    let frame = 0;
+    const started = performance.now();
+    const tick = (now: number) => {
+      const fraction = Math.min(1, (now - started) / duration);
+      setValue(target * (1 - Math.pow(1 - fraction, 3)));
+      if (fraction < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [target, duration]);
+  return value;
+}
+
+function CompressionSummaryStats({ original, compressed, saved, reduction }: { original: number; compressed: number; saved: number; reduction: number }) {
+  const animatedOriginal = useAnimatedValue(original);
+  const animatedCompressed = useAnimatedValue(compressed);
+  const animatedSaved = useAnimatedValue(saved);
+  const animatedReduction = useAnimatedValue(reduction);
+  return <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm sm:grid-cols-4">
+    <div><p className="text-xs text-text-muted">Original</p><p className="font-semibold tabular-nums text-text">{formatBytes(animatedOriginal)}</p></div>
+    <div><p className="text-xs text-text-muted">Compressed</p><p className="font-semibold tabular-nums text-text">{formatBytes(animatedCompressed)}</p></div>
+    <div><p className="text-xs text-text-muted">Saved</p><p className="font-semibold tabular-nums text-primary">{formatBytes(Math.max(0, animatedSaved))}</p></div>
+    <div><p className="text-xs text-text-muted">Reduction</p><p className={cn('font-semibold tabular-nums', reduction > 0 ? 'text-primary' : 'text-amber-600')}>{animatedReduction.toFixed(1)}%</p></div>
+  </div>;
+}
+
+function CompressionSummaryTitle({ succeeded, total }: { succeeded: number; total: number }) {
+  const animated = useAnimatedValue(succeeded);
+  return <h2 className="font-semibold text-text">Compression complete — <span className="tabular-nums">{Math.round(animated)}/{total}</span> succeeded</h2>;
+}
+
 // ---------------------------------------------------------------------------
 // Savings ring — SVG circle showing overall compression %
 // ---------------------------------------------------------------------------
 
 function SavingsRing({ pct }: { pct: number }) {
-  const clamped = Math.max(0, Math.min(100, pct));
+  const clamped = Math.max(0, Math.min(100, useAnimatedValue(pct)));
   const isPositive = pct > 0;
   return (
     <div className="relative flex h-24 w-24 items-center justify-center" aria-label={`${clamped.toFixed(1)}% space saved`}>
@@ -153,8 +191,8 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
 
   // Processing phase state
   const [loading, setLoading] = useState(false);
-  const [uploadPercent, setUploadPercent] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [processingPercent, setProcessingPercent] = useState<number | null>(null);
   const [processedCount, setProcessedCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -265,7 +303,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
     processingRef.current = true;
     setLoading(true);
     setUploading(true);
-    setUploadPercent(null);
+    setProcessingPercent(null);
     setError('');
     setResults(null);
     setTotalCount(filesToProcess.length);
@@ -276,27 +314,10 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
       filesToProcess.forEach((f) => formData.append('file', f));
       formData.append('quality', String(quality));
 
-      const res = await new Promise<Response>((resolve, reject) => {
-        const request = new XMLHttpRequest();
-        request.open('POST', '/api/tools/image/compress-batch');
-        request.responseType = 'arraybuffer';
-        request.setRequestHeader('Idempotency-Key', `image:${idempotencyKey}`);
-        request.upload.onprogress = (event) => {
-          if (event.lengthComputable && event.total > 0) {
-            setUploadPercent(Math.min(99, Math.round(event.loaded / event.total * 100)));
-          }
-        };
-        request.upload.onload = () => { setUploading(false); setUploadPercent(null); };
-        request.onerror = () => reject(new Error('Network error while uploading images.'));
-        request.onabort = () => reject(new Error('Image upload was cancelled.'));
-        request.onload = () => {
-          if (!request.status) { reject(new Error('No response from the image processor.')); return; }
-          const headers = new Headers();
-          const retryAfter = request.getResponseHeader('Retry-After');
-          if (retryAfter) headers.set('Retry-After', retryAfter);
-          resolve(new Response(request.response, { status: request.status, headers }));
-        };
-        request.send(formData);
+      const res = await fetch('/api/tools/image/compress-batch', {
+        method: 'POST',
+        headers: { 'Idempotency-Key': `image:${idempotencyKey}`, 'X-Progress-Stream': '1' },
+        body: formData,
       });
 
       if (!res.ok) {
@@ -305,7 +326,47 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
         throw new Error(data.error ?? (res.status === 429 && retryAfter ? `Too many requests. Try again in ${retryAfter} seconds.` : `Request failed (${res.status}).`));
       }
 
-      const payload = await res.arrayBuffer();
+      setUploading(false);
+      if (!res.body) throw new Error('The image processor did not provide a progress stream.');
+      const reader = res.body.getReader();
+      let chunk = new Uint8Array(0);
+      let cursor = 0;
+      const readBytes = async (length: number): Promise<Uint8Array> => {
+        const bytes = new Uint8Array(length);
+        let copied = 0;
+        while (copied < length) {
+          if (cursor >= chunk.length) {
+            const next = await reader.read();
+            if (next.done) throw new Error('The progress stream ended before the result was complete.');
+            chunk = next.value;
+            cursor = 0;
+          }
+          const take = Math.min(length - copied, chunk.length - cursor);
+          bytes.set(chunk.subarray(cursor, cursor + take), copied);
+          cursor += take;
+          copied += take;
+        }
+        return bytes;
+      };
+      let payload: ArrayBuffer | null = null;
+      while (payload === null) {
+        const header = await readBytes(5);
+        const length = new DataView(header.buffer).getUint32(1, false);
+        if (length > 200 * 1024 * 1024) throw new Error('The image processor returned an oversized result.');
+        const body = await readBytes(length);
+        if (header[0] === 1) {
+          const update = JSON.parse(new TextDecoder().decode(body)) as { processed: number; total: number; completed: number };
+          if (update.total > 0) setProcessingPercent(Math.min(99, Math.round(update.processed / update.total * 100)));
+          setProcessedCount(update.completed);
+        } else if (header[0] === 2) {
+          payload = body.buffer as ArrayBuffer;
+        } else if (header[0] === 3) {
+          const failure = JSON.parse(new TextDecoder().decode(body)) as { error?: string };
+          throw new Error(failure.error || 'Compression failed.');
+        } else {
+          throw new Error('The image processor returned an unknown progress frame.');
+        }
+      }
       const { manifest: data, dataStart } = decodeImageBatchPayload<CompressResult>(payload);
 
       setProcessedCount(data.completed ?? 0);
@@ -321,6 +382,10 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
         return item;
       });
 
+      if (data.completed > 0) {
+        setProcessingPercent(100);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
       setResults(built);
       requestKeyRef.current = null;
 
@@ -340,7 +405,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
       processingRef.current = false;
       setLoading(false);
       setUploading(false);
-      setUploadPercent(null);
+      setProcessingPercent(null);
     }
   }, [requireAuth, files, processingLimit, quality, errToast]);
 
@@ -699,7 +764,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
       )}
 
       {/* ── Processing phase ─────────────────────────────────────────────── */}
-      {loading && <ProcessingProgress stage={uploading ? `Uploading ${Math.min(files.length, processingLimit)} image${Math.min(files.length, processingLimit) === 1 ? '' : 's'}…` : `Compressing ${Math.min(files.length, processingLimit)} image${Math.min(files.length, processingLimit) === 1 ? '' : 's'}…`} percent={uploading ? uploadPercent : null} detail={!uploading && processedCount > 0 ? `${processedCount} of ${totalCount} complete` : undefined} />}
+      {loading && <ProcessingProgress stage={uploading ? `Uploading ${Math.min(files.length, processingLimit)} image${Math.min(files.length, processingLimit) === 1 ? '' : 's'}…` : processingPercent === 100 ? 'Preparing results…' : `Compressing ${Math.min(files.length, processingLimit)} image${Math.min(files.length, processingLimit) === 1 ? '' : 's'}…`} percent={uploading ? null : processingPercent} detail={!uploading && processedCount > 0 ? `${processedCount} of ${totalCount} complete` : undefined} />}
 
       {/* ── Results phase ────────────────────────────────────────────────── */}
       {results && !loading && (
@@ -716,30 +781,9 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
 
               {/* Stats grid */}
               <div className="flex-1 space-y-3">
-                <h2 className="font-semibold text-text">
-                  Compression complete — {successfulResults.length}/{results.length} succeeded
-                </h2>
+                <CompressionSummaryTitle succeeded={successfulResults.length} total={results.length} />
                 {successfulResults.length > 0 && totalOriginal > 0 && (
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm sm:grid-cols-4">
-                    <div>
-                      <p className="text-xs text-text-muted">Original</p>
-                      <p className="font-semibold text-text">{formatBytes(totalOriginal)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-text-muted">Compressed</p>
-                      <p className="font-semibold text-text">{formatBytes(totalCompressed)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-text-muted">Saved</p>
-                      <p className="font-semibold text-primary">{formatBytes(Math.max(0, totalSaved))}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-text-muted">Reduction</p>
-                      <p className={cn('font-semibold', overallPct > 0 ? 'text-primary' : 'text-amber-600')}>
-                        {overallPct.toFixed(1)}%
-                      </p>
-                    </div>
-                  </div>
+                  <CompressionSummaryStats original={totalOriginal} compressed={totalCompressed} saved={totalSaved} reduction={overallPct} />
                 )}
                 {failedResults.length > 0 && (
                   <p className="text-xs text-red-600 dark:text-red-400">
