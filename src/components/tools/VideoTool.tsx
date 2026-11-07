@@ -10,6 +10,7 @@ import { useCallback, useRef, useState } from 'react';
 import { Upload, Download, AlertCircle, Film, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ProcessingProgress } from '@/components/tools/ProcessingProgress';
+import { postFormWithUploadProgress } from '@/lib/postFormWithUploadProgress';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 import type { FunctionalToolProps } from '@/config/functionalTools';
@@ -47,6 +48,7 @@ export function VideoTool({ slug }: FunctionalToolProps) {
   const [bitrate, setBitrate] = useState<Bitrate>('192k');
   const [fps, setFps]         = useState(12);
   const [loading, setLoading] = useState(false);
+  const [uploadPercent, setUploadPercent] = useState<number | null>(null);
   const [error, setError]     = useState('');
 
   const [resultUrl, setResultUrl]   = useState<string | null>(null);
@@ -99,6 +101,7 @@ export function VideoTool({ slug }: FunctionalToolProps) {
       return;
     }
     setLoading(true);
+    setUploadPercent(null);
     setError('');
 
     try {
@@ -110,14 +113,10 @@ export function VideoTool({ slug }: FunctionalToolProps) {
       if (showBitrate) fd.append('bitrate', bitrate);
       if (showGifOpts) fd.append('fps', String(fps));
 
-      const res = await fetch('/api/tools/video', {
-        method: 'POST',
-        headers: {
-          'Idempotency-Key': `video:${crypto.randomUUID()}`,
-          'X-SavDown-Tool': slug,
-        },
-        body: fd,
-      });
+      const res = await postFormWithUploadProgress('/api/tools/video', fd, {
+        'Idempotency-Key': `video:${crypto.randomUUID()}`,
+        'X-SavDown-Tool': slug,
+      }, setUploadPercent);
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -146,6 +145,7 @@ export function VideoTool({ slug }: FunctionalToolProps) {
       errToast('Network error', 'Could not reach the server.');
     } finally {
       setLoading(false);
+      setUploadPercent(null);
     }
   }, [requireAuth, file, op, showFormat, showCrf, showBitrate, showGifOpts, format, crf, bitrate, fps, slug, success, errToast]);
 
@@ -281,7 +281,7 @@ export function VideoTool({ slug }: FunctionalToolProps) {
       )}
 
       {/* Loading overlay */}
-      {loading && <ProcessingProgress stage="Processing your video…" detail="This can take a moment. Please keep this page open." />}
+      {loading && <ProcessingProgress stage={uploadPercent === 100 ? 'Processing your video…' : 'Uploading your video…'} percent={uploadPercent} progressLabel={uploadPercent === 100 ? 'Upload complete · Processing' : undefined} detail="This can take a moment. Please keep this page open." />}
 
       {/* Result */}
       {resultUrl && !loading && (

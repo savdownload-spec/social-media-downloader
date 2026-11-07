@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Upload, Download, AlertCircle, Image as ImageIcon, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ProcessingProgress } from '@/components/tools/ProcessingProgress';
+import { postFormWithUploadProgress } from '@/lib/postFormWithUploadProgress';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 import type { FunctionalToolProps } from '@/config/functionalTools';
@@ -60,6 +61,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
   const [height, setHeight]   = useState<string>('');
   const [format, setFormat]   = useState<Format>('png');
   const [loading, setLoading] = useState(false);
+  const [uploadPercent, setUploadPercent] = useState<number | null>(null);
   const [error, setError]     = useState('');
 
   // Result
@@ -139,6 +141,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
     }
     if (!requireAuth()) return;
     setLoading(true);
+    setUploadPercent(null);
     setError('');
 
     try {
@@ -154,7 +157,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
 
       const operationKey = operationKeyRef.current ?? `image:${crypto.randomUUID()}`;
       operationKeyRef.current = operationKey;
-      const res = await fetch('/api/tools/image', { method: 'POST', headers: { 'Idempotency-Key': operationKey }, body: fd });
+      const res = await postFormWithUploadProgress('/api/tools/image', fd, { 'Idempotency-Key': operationKey }, setUploadPercent);
 
       if (!res.ok) {
         const msg = await imageApiError(res, `Request failed (${res.status}).`);
@@ -186,6 +189,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
       errToast('Network error', 'Could not reach the server.');
     } finally {
       setLoading(false);
+      setUploadPercent(null);
     }
   }, [requireAuth, file, op, showQuality, showSize, showFormat, quality, width, height, format, success, errToast]);
 
@@ -309,7 +313,7 @@ export function ImageTool({ slug }: FunctionalToolProps) {
       )}
 
       {/* Loading overlay */}
-      {loading && <ProcessingProgress stage="Processing your image…" detail="Please keep this page open." />}
+      {loading && <ProcessingProgress stage={uploadPercent === 100 ? 'Processing your image…' : 'Uploading your image…'} percent={uploadPercent} progressLabel={uploadPercent === 100 ? 'Upload complete · Processing' : undefined} detail="Please keep this page open." />}
 
       {/* Result */}
       {resultUrl && !loading && (

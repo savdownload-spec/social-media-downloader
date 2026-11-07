@@ -33,6 +33,7 @@ export function QrGeneratorTool(_props: FunctionalToolProps) {
 
   const [preview, setPreview] = useState<string | null>(null);  // data URL or raw svg
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [error, setError]     = useState('');
   const reqId = useRef(0);
 
@@ -87,6 +88,8 @@ export function QrGeneratorTool(_props: FunctionalToolProps) {
   const download = useCallback(async () => {
     if (!requireAuth()) return;
     if (!text.trim()) return;
+    if (downloading) return;
+    setDownloading(true);
     setError('');
     try {
       const res = await fetch('/api/tools/qr/generate', {
@@ -114,8 +117,10 @@ export function QrGeneratorTool(_props: FunctionalToolProps) {
       success('Downloaded', `qrcode.${ext} saved.`);
     } catch {
       setError('Network error. Please try again.');
+    } finally {
+      setDownloading(false);
     }
-  }, [requireAuth, text, format, size, margin, color, bgColor, ec, success]);
+  }, [requireAuth, text, format, size, margin, color, bgColor, ec, success, downloading]);
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-5">
@@ -201,18 +206,14 @@ export function QrGeneratorTool(_props: FunctionalToolProps) {
             </div>
           </div>
 
-          <Button onClick={download} disabled={!text.trim()} className="w-full" size="lg">
+          <Button onClick={download} disabled={!text.trim() || downloading} className="w-full" size="lg">
             <Download className="w-4 h-4" /> Download {format.toUpperCase()}
           </Button>
         </div>
 
         {/* Live preview */}
         <div className="p-5 rounded-2xl border border-border bg-white dark:bg-card shadow-soft flex flex-col items-center justify-center min-h-[280px] md:order-2 order-1">
-          {loading && !preview ? (
-            <div className="flex flex-col items-center gap-3 text-text-muted">
-              <ProcessingProgress stage="Generating QR code…" />
-            </div>
-          ) : preview ? (
+          {preview ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={preview} alt="QR code preview" className="max-w-full max-h-72 rounded-xl" />
           ) : (
@@ -223,6 +224,8 @@ export function QrGeneratorTool(_props: FunctionalToolProps) {
           )}
         </div>
       </div>
+
+      {(loading || downloading) && <ProcessingProgress stage={downloading ? 'Preparing QR download…' : 'Generating QR preview…'} />}
 
       {error && (
         <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-2xl text-sm text-red-700 dark:text-red-400">

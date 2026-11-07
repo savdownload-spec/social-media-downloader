@@ -7,6 +7,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { Upload, AlertCircle, ScanLine, X, Copy, Check, ExternalLink } from 'lucide-react';
 import { ProcessingProgress } from '@/components/tools/ProcessingProgress';
+import { postFormWithUploadProgress } from '@/lib/postFormWithUploadProgress';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 import type { FunctionalToolProps } from '@/config/functionalTools';
@@ -20,6 +21,7 @@ export function QrScannerTool(_props: FunctionalToolProps) {
   const [file, setFile]       = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [uploadPercent, setUploadPercent] = useState<number | null>(null);
   const [error, setError]     = useState('');
   const [data, setData]       = useState<string | null>(null);
   const [type, setType]       = useState<string>('');
@@ -61,13 +63,14 @@ export function QrScannerTool(_props: FunctionalToolProps) {
       return;
     }
     setLoading(true);
+    setUploadPercent(null);
     setError('');
 
     try {
       const fd = new FormData();
       fd.append('file', file);
 
-      const res = await fetch('/api/tools/qr/scan', { method: 'POST', headers: { 'Idempotency-Key': `qr-scan:${crypto.randomUUID()}` }, body: fd });
+      const res = await postFormWithUploadProgress('/api/tools/qr/scan', fd, { 'Idempotency-Key': `qr-scan:${crypto.randomUUID()}` }, setUploadPercent);
       const result = await res.json().catch(() => ({})) as { ok?: boolean; data?: string; type?: string; error?: string };
 
       if (!res.ok || !result.ok) {
@@ -85,6 +88,7 @@ export function QrScannerTool(_props: FunctionalToolProps) {
       errToast('Network error', 'Could not reach the server.');
     } finally {
       setLoading(false);
+      setUploadPercent(null);
     }
   }, [requireAuth, file, success, errToast]);
 
@@ -154,7 +158,7 @@ export function QrScannerTool(_props: FunctionalToolProps) {
       )}
 
       {/* Error */}
-      {loading && <ProcessingProgress stage="Scanning QR code…" />}
+      {loading && <ProcessingProgress stage={uploadPercent === 100 ? 'Scanning QR code…' : 'Uploading QR image…'} percent={uploadPercent} progressLabel={uploadPercent === 100 ? 'Upload complete · Processing' : undefined} />}
       {error && (
         <div className="flex items-center gap-2 p-4 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-2xl text-sm text-red-700 dark:text-red-400">
           <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}

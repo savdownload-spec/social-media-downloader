@@ -18,7 +18,6 @@ import {
   X,
   CheckCircle2,
   XCircle,
-  Loader2,
   ChevronDown,
   ChevronUp,
   Image as ImageIcon,
@@ -30,6 +29,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ProcessingProgress } from '@/components/tools/ProcessingProgress';
+import { postFormWithUploadProgress } from '@/lib/postFormWithUploadProgress';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 import type { FunctionalToolProps } from '@/config/functionalTools';
@@ -205,6 +205,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
 
   // ZIP generation state
   const [zipping, setZipping] = useState(false);
+  const [zipPercent, setZipPercent] = useState<number | null>(null);
 
   // Batch limit hook
   const {
@@ -314,27 +315,9 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
       filesToProcess.forEach((f) => formData.append('file', f));
       formData.append('quality', String(quality));
 
-      const res = await new Promise<Response>((resolve, reject) => {
-        const request = new XMLHttpRequest();
-        request.open('POST', '/api/tools/image/compress-batch');
-        request.responseType = 'arraybuffer';
-        request.setRequestHeader('Idempotency-Key', `image:${idempotencyKey}`);
-        request.upload.onprogress = (event) => {
-          if (event.lengthComputable && event.total > 0) {
-            setUploadPercent(Math.min(99, Math.round(event.loaded / event.total * 100)));
-          }
-        };
-        request.upload.onload = () => { setUploadPercent(100); setUploading(false); };
-        request.onerror = () => reject(new Error('Network error while uploading images.'));
-        request.onabort = () => reject(new Error('Image upload was cancelled.'));
-        request.onload = () => {
-          if (!request.status) { reject(new Error('No response from the image processor.')); return; }
-          const headers = new Headers();
-          const retryAfter = request.getResponseHeader('Retry-After');
-          if (retryAfter) headers.set('Retry-After', retryAfter);
-          resolve(new Response(request.response, { status: request.status, headers }));
-        };
-        request.send(formData);
+      const res = await postFormWithUploadProgress('/api/tools/image/compress-batch', formData, { 'Idempotency-Key': `image:${idempotencyKey}` }, (percent) => {
+        setUploadPercent(percent);
+        if (percent === 100) setUploading(false);
       });
 
       if (!res.ok) {
@@ -426,6 +409,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
     if (zipping) return;
 
     setZipping(true);
+    setZipPercent(null);
     try {
       const zip = new JSZip();
       const seen = new Map<string, number>();
@@ -434,7 +418,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
         const blob = await fetch(result.url!).then((r) => r.blob());
         zip.file(dedupedName, blob);
       }
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const zipBlob = await zip.generateAsync({ type: 'blob' }, (metadata) => setZipPercent(Math.min(99, Math.round(metadata.percent))));
       const url = URL.createObjectURL(zipBlob);
       const anchor = document.createElement('a');
       anchor.href = url;
@@ -446,6 +430,7 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
       errToast('ZIP failed', `${message} Individual downloads are still available.`);
     } finally {
       setZipping(false);
+      setZipPercent(null);
     }
   }, [results, zipping, errToast]);
 
@@ -787,15 +772,12 @@ export function ImageCompressorTool({ slug }: FunctionalToolProps) {
                   className="inline-flex items-center gap-2 rounded-xl bg-gradient-brand px-5 py-2.5 text-sm font-semibold text-white shadow-glow hover:opacity-90 disabled:opacity-60"
                   aria-busy={zipping}
                 >
-                  {zipping ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Archive className="h-4 w-4" />
-                  )}
+                  {!zipping && <Archive className="h-4 w-4" />}
                   {zipping ? 'Building ZIP…' : 'Download All As ZIP'}
                 </button>
               )}
             </div>
+            {zipping && <ProcessingProgress stage="Building your ZIP…" percent={zipPercent} className="mt-4" />}
           </div>
 
           {/* Per-file cards */}

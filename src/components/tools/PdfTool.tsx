@@ -5,6 +5,7 @@ import JSZip from 'jszip';
 import { AlertCircle, CheckCircle2, Download, FileArchive, FileText, Plus, RotateCcw, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ProcessingProgress } from '@/components/tools/ProcessingProgress';
+import { postFormWithUploadProgress } from '@/lib/postFormWithUploadProgress';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
 import type { FunctionalToolProps } from '@/config/functionalTools';
@@ -38,6 +39,9 @@ export function PdfTool({ slug }: FunctionalToolProps) {
   const processingRef = useRef(false);
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
+  const [uploadPercent, setUploadPercent] = useState<number | null>(null);
+  const [zipping, setZipping] = useState(false);
+  const [zipPercent, setZipPercent] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [results, setResults] = useState<ResultFile[] | null>(null);
   const [origSize, setOrigSize] = useState(0);
@@ -100,7 +104,7 @@ export function PdfTool({ slug }: FunctionalToolProps) {
     setFiles((current) => isMulti ? [...current, ...accepted] : accepted.slice(0, 1));
   }, [isMulti, label, totalSize, wantsImages, wantsWord]);
 
-  const reset = useCallback(() => { abortRef.current?.abort(); setFiles([]); setResults(null); setFailedFiles([]); setFailedInputs([]); setBatchCompleted(0); setBatchTotal(0); setUploadStatus(''); setError(''); setOrigSize(0); setOutSize(0); setPageCount(0); setRanges(''); if (inputRef.current) inputRef.current.value = ''; }, []);
+  const reset = useCallback(() => { abortRef.current?.abort(); setFiles([]); setResults(null); setFailedFiles([]); setFailedInputs([]); setBatchCompleted(0); setBatchTotal(0); setUploadStatus(''); setUploadPercent(null); setError(''); setOrigSize(0); setOutSize(0); setPageCount(0); setRanges(''); if (inputRef.current) inputRef.current.value = ''; }, []);
   const move = (index: number, direction: -1 | 1) => setFiles((current) => { const next = [...current]; const target = index + direction; if (target < 0 || target >= next.length) return current; [next[index], next[target]] = [next[target]!, next[index]!]; return next; });
   const removeAt = (index: number) => setFiles((current) => current.filter((_, item) => item !== index));
   /** Trim files back to the plan limit so the user can proceed without upgrading. */
@@ -114,10 +118,12 @@ export function PdfTool({ slug }: FunctionalToolProps) {
     if (op === 'split' && ['extract', 'ranges'].includes(splitMode) && !ranges.trim()) { setError('Enter at least one page or range.'); return; }
     const controller = new AbortController();
     processingRef.current = true;
-    setLoading(true); setError(''); setResults(null); abortRef.current = controller;
+    setLoading(true); setUploadPercent(0); setError(''); setResults(null); abortRef.current = controller;
     // Enforce the plan limit server-side as well; silently trim on the client
     // so the submit cannot race ahead if the user ignores the warning.
     const filesToProcess = files.slice(0, batchLimit);
+    const totalUploadBytes = Math.max(1, filesToProcess.reduce((sum, file) => sum + file.size, 0));
+    let uploadedBytes = 0;
     const uploadedUrls: string[] = [];
     try {
       let requestBody: BodyInit;
@@ -127,11 +133,14 @@ export function PdfTool({ slug }: FunctionalToolProps) {
         setUploadStatus(`Uploading ${index + 1}/${filesToProcess.length}: ${file.name}`);
         const formData = new FormData();
         formData.append('file', file);
-        const uploadResponse = await fetch('/api/tools/pdf/upload', { method: 'POST', body: formData, signal: controller.signal });
+        const uploadResponse = await postFormWithUploadProgress('/api/tools/pdf/upload', formData, {}, (percent) => {
+          setUploadPercent(Math.min(100, Math.round((uploadedBytes + file.size * percent / 100) / totalUploadBytes * 100)));
+        }, controller.signal);
         const uploadData = await uploadResponse.json().catch(() => ({})) as { url?: string; error?: string };
         if (!uploadResponse.ok || !uploadData.url) throw new Error(uploadData.error || `Upload failed (${uploadResponse.status}).`);
         uploaded.push({ url: uploadData.url, name: file.name, size: file.size });
         uploadedUrls.push(uploadData.url);
+        uploadedBytes += file.size;
       }
       setUploadStatus('Processing uploaded files…');
       const payload: Record<string, unknown> = { files: uploaded };
@@ -167,12 +176,26 @@ export function PdfTool({ slug }: FunctionalToolProps) {
     finally {
       if (abortRef.current === controller) abortRef.current = null;
       processingRef.current = false;
-      setLoading(false); setUploadStatus('');
+      setLoading(false); setUploadStatus(''); setUploadPercent(null);
     }
   }, [requireAuth, batchLimit, compression, everyN, files, maxPages, op, ranges, removeMetadata, separate, splitMode, success, targetMB, wantsWord]);
 
   const retryFailed = () => { if (!failedInputs.length) return; setFiles(failedInputs); setResults(null); setFailedFiles([]); setFailedInputs([]); setBatchCompleted(0); setBatchTotal(0); setError(''); };
-  const downloadZip = async () => { if (!results?.length) return; const zip = new JSZip(); await Promise.all(results.map(async (result) => zip.file(result.group ? `${result.group}/${result.name}` : result.name, await (await fetch(result.url)).blob()))); const blob = await zip.generateAsync({ type: 'blob' }); const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'savdown-pdf-results.zip'; anchor.click(); URL.revokeObjectURL(url); };
+  const downloadZip = async () => {
+    if (!results?.length || zipping) return;
+    setZipping(true); setZipPercent(null);
+    try {
+      const zip = new JSZip();
+      await Promise.all(results.map(async (result) => zip.file(result.group ? `${result.group}/${result.name}` : result.name, await (await fetch(result.url)).blob())));
+      const blob = await zip.generateAsync({ type: 'blob' }, (metadata) => setZipPercent(Math.min(99, Math.round(metadata.percent))));
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'savdown-pdf-results.zip'; anchor.click(); URL.revokeObjectURL(url);
+    } catch {
+      setError('Could not build the ZIP. Individual downloads are still available.');
+    } finally {
+      setZipping(false); setZipPercent(null);
+    }
+  };
   const reduction = origSize && outSize ? ((origSize - outSize) / origSize) * 100 : 0;
 
   return <div className="mx-auto w-full max-w-3xl space-y-5">
@@ -261,8 +284,8 @@ export function PdfTool({ slug }: FunctionalToolProps) {
     </div>}
 
     {error && <div role="alert" className="flex items-start gap-2 rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-red-700"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> <span>{error}</span></div>}
-    {loading && <ProcessingProgress stage={uploadStatus || `Processing ${Math.min(files.length, batchLimit)} PDF files sequentially…`} detail="Large documents may take a little longer." />}
+    {loading && <ProcessingProgress stage={uploadStatus || `Processing ${Math.min(files.length, batchLimit)} PDF files sequentially…`} percent={uploadPercent} progressLabel={uploadPercent === 100 ? 'Upload complete · Processing' : undefined} detail="Large documents may take a little longer." />}
 
-    {results && !loading && <div className="space-y-4 rounded-2xl border border-border bg-white p-5 shadow-soft dark:bg-card"><div className="flex items-start gap-3"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-light"><CheckCircle2 className="h-5 w-5 text-accent-hover" /></span><div><h2 className="font-semibold text-text">{batchTotal > 1 ? `Batch complete: ${batchCompleted}/${batchTotal}` : results.length > 1 ? `${results.length} files ready` : 'Your file is ready'}</h2><p className="text-sm text-text-muted">{pageCount ? `${pageCount} source pages · ` : ''}{results.length > 1 ? 'Download individually or as a ZIP.' : origSize && outSize ? `${formatBytes(origSize)} → ${formatBytes(outSize)} · ${reduction > 0 ? `${reduction.toFixed(1)}% smaller` : 'size preserved'}` : formatBytes(results[0]?.size || 0)}</p></div></div>{failedFiles.length > 0 && <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-700"><strong>{failedFiles.length} failed:</strong> {failedFiles.map((file) => `${file.sourceName} — ${file.error}`).join(' · ')}</div>}<ul className="space-y-2">{results.map((result) => <li key={result.name} className="flex items-center gap-3 rounded-xl bg-surface p-3"><FileText className="h-4 w-4 shrink-0 text-primary" /><span className="min-w-0 flex-1 truncate text-sm font-medium text-text">{result.name}</span><span className="hidden text-xs text-text-subtle sm:inline">{result.size ? formatBytes(result.size) : ''}</span><a href={result.url} download={result.name} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-gradient-brand px-3.5 py-2 text-xs font-semibold text-white"><Download className="h-3.5 w-3.5" /> Download</a></li>)}</ul><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={reset}><RotateCcw className="h-4 w-4" /> Process Another</Button>{failedInputs.length > 0 && <Button variant="outline" onClick={retryFailed}>Retry Failed Files</Button>}{results.length > 1 && <Button variant="outline" onClick={downloadZip}><FileArchive className="h-4 w-4" /> Download ZIP</Button>}</div></div>}
+    {results && !loading && <div className="space-y-4 rounded-2xl border border-border bg-white p-5 shadow-soft dark:bg-card"><div className="flex items-start gap-3"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent-light"><CheckCircle2 className="h-5 w-5 text-accent-hover" /></span><div><h2 className="font-semibold text-text">{batchTotal > 1 ? `Batch complete: ${batchCompleted}/${batchTotal}` : results.length > 1 ? `${results.length} files ready` : 'Your file is ready'}</h2><p className="text-sm text-text-muted">{pageCount ? `${pageCount} source pages · ` : ''}{results.length > 1 ? 'Download individually or as a ZIP.' : origSize && outSize ? `${formatBytes(origSize)} → ${formatBytes(outSize)} · ${reduction > 0 ? `${reduction.toFixed(1)}% smaller` : 'size preserved'}` : formatBytes(results[0]?.size || 0)}</p></div></div>{failedFiles.length > 0 && <div className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-700"><strong>{failedFiles.length} failed:</strong> {failedFiles.map((file) => `${file.sourceName} — ${file.error}`).join(' · ')}</div>}<ul className="space-y-2">{results.map((result) => <li key={result.name} className="flex items-center gap-3 rounded-xl bg-surface p-3"><FileText className="h-4 w-4 shrink-0 text-primary" /><span className="min-w-0 flex-1 truncate text-sm font-medium text-text">{result.name}</span><span className="hidden text-xs text-text-subtle sm:inline">{result.size ? formatBytes(result.size) : ''}</span><a href={result.url} download={result.name} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-gradient-brand px-3.5 py-2 text-xs font-semibold text-white"><Download className="h-3.5 w-3.5" /> Download</a></li>)}</ul><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={reset}><RotateCcw className="h-4 w-4" /> Process Another</Button>{failedInputs.length > 0 && <Button variant="outline" onClick={retryFailed}>Retry Failed Files</Button>}{results.length > 1 && <Button variant="outline" onClick={downloadZip} disabled={zipping}><FileArchive className="h-4 w-4" /> {zipping ? 'Building ZIP…' : 'Download ZIP'}</Button>}</div>{zipping && <ProcessingProgress stage="Building your ZIP…" percent={zipPercent} />}</div>}
   </div>;
 }
