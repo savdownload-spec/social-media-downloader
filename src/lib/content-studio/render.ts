@@ -8,7 +8,7 @@ const ALLOWED_TAGS = [
   'strong', 'em', 'u', 's', 'code', 'pre', 'sup', 'sub',
   'ul', 'ol', 'li', 'blockquote',
   'a', 'figure', 'figcaption', 'img',
-  'table', 'thead', 'tbody', 'tr', 'th', 'td',
+  'table', 'colgroup', 'col', 'thead', 'tbody', 'tr', 'th', 'td',
   'div', 'iframe',
 ];
 
@@ -20,8 +20,11 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
     div: ['class', 'data-callout', 'data-variant'],
     figure: ['data-figure-image', 'data-align'],
     iframe: ['src', 'width', 'height', 'frameborder', 'allow', 'allowfullscreen', 'title'],
-    th: ['colspan', 'rowspan'],
-    td: ['colspan', 'rowspan'],
+    table: ['style'],
+    col: ['style'],
+    th: ['colspan', 'rowspan', 'colwidth', 'style'],
+    td: ['colspan', 'rowspan', 'colwidth', 'style'],
+    ol: ['start'],
     code: ['class'],
     p: ['style'],
     li: ['style'],
@@ -34,6 +37,8 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
     '*': {
       'text-align': [/^(left|right|center|justify)$/],
     },
+    table: { width: [/^\d+(?:\.\d+)?px$/], 'min-width': [/^\d+(?:\.\d+)?px$/] },
+    col: { width: [/^\d+(?:\.\d+)?px$/], 'min-width': [/^\d+(?:\.\d+)?px$/] },
   },
   allowedIframeHostnames: ['www.youtube.com', 'www.youtube-nocookie.com'],
   allowedSchemes: ['http', 'https', 'mailto'],
@@ -67,9 +72,9 @@ export function renderContentJsonToHtml(doc: TiptapNode | null | undefined): str
     // generateHTML() doesn't add heading ids; inject them in document order —
     // analyzeContentJson() walks the same doc in the same order, so the Nth
     // heading tag here is always the Nth entry in `headings`.
-    const withIds = html.replace(/<h([1-6])>/g, (match, level: string) => {
+    const withIds = html.replace(/<h([1-6])(\s[^>]*)?>/g, (match, level: string, attributes = '') => {
       const heading = headings[index++];
-      return heading ? `<h${level} id="${heading.id}">` : match;
+      return heading ? `<h${level}${attributes} id="${heading.id}">` : match;
     });
     return sanitizeHtml(withIds, SANITIZE_OPTIONS);
   } catch {

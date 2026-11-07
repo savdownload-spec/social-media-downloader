@@ -253,9 +253,9 @@
   .prose-elegant strong { @apply text-text font-semibold; }
   .prose-elegant ul { @apply list-disc pl-6 space-y-2 text-text-muted mb-4; }
   .prose-elegant ol { @apply list-decimal pl-6 space-y-2 text-text-muted mb-4; }
-  .prose-elegant code { @apply bg-surface text-text px-1.5 py-0.5 rounded text-sm; }
+  .prose-elegant code { @apply bg-surface text-text px-1.5 py-0.5 rounded font-mono text-sm; }
   .prose-elegant pre { @apply bg-surface border border-border-light rounded-xl p-4 mb-4 overflow-x-auto; }
-  .prose-elegant pre code { @apply bg-transparent p-0; }
+  .prose-elegant pre code { @apply bg-transparent p-0 rounded-none; }
   .prose-elegant blockquote { @apply border-l-4 border-primary/30 bg-surface/60 pl-5 py-2 my-6 text-text-muted italic; }
   .prose-elegant hr { @apply my-8 border-border; }
   .prose-elegant sup, .prose-elegant sub { font-size: 0.72em; }

@@ -45,6 +45,16 @@ export const FigureImageNode = Node.create({
 
   parseHTML() {
     return [
+      // Legacy Markdown and pasted HTML use plain <img>, while new JSON
+      // documents use the same figureImage node for every image.
+      {
+        tag: 'img[src]',
+        getAttrs: (el) => ({
+          src: (el as HTMLElement).getAttribute('src') || '',
+          alt: (el as HTMLElement).getAttribute('alt') || '',
+          title: (el as HTMLElement).getAttribute('title') || '',
+        }),
+      },
       {
         tag: 'figure[data-figure-image]',
         getAttrs: (el) => {

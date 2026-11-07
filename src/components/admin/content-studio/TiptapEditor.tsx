@@ -1,12 +1,13 @@
 'use client';
 
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, useEditorState, EditorContent } from '@tiptap/react';
 import { getMarkRange } from '@tiptap/core';
+import type { SelectionBookmark } from '@tiptap/pm/state';
 import type { EditorView } from '@tiptap/pm/view';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { Markdown } from 'tiptap-markdown';
-import { useEffect, useImperativeHandle, useMemo, useRef, useState, forwardRef } from 'react';
+import { useEffect, useLayoutEffect, useImperativeHandle, useMemo, useRef, useState, forwardRef } from 'react';
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough, Code, Quote,
   List, ListOrdered, Link as LinkIcon, Unlink, ImageIcon, Table as TableIcon,
@@ -29,7 +30,7 @@ const CALLOUT_ICONS: Record<CalloutVariant, typeof Info> = {
   info: Info, warning: AlertTriangle, success: CheckCircle2, tip: Lightbulb,
 };
 
-const inputCls = 'w-full h-9 rounded-lg border border-border-light bg-white px-3 text-[13px] text-text focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all';
+const inputCls = 'w-full h-9 rounded-lg border border-border-light bg-card px-3 text-[13px] text-text focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all';
 const labelCls = 'block text-[11px] font-semibold text-text-muted uppercase tracking-wider mb-1.5';
 
 // ─── URL helpers ─────────────────────────────────────────────────────────────
@@ -93,15 +94,36 @@ function Divider() {
   return <span className="w-px h-6 bg-border-light mx-1 shrink-0" aria-hidden="true" />;
 }
 
+function usePopoverPosition(open: boolean, rootRef: React.RefObject<HTMLDivElement>, align: 'left' | 'right' = 'left') {
+  const [offset, setOffset] = useState(0);
+  useLayoutEffect(() => {
+    if (!open) return;
+    const update = () => {
+      const root = rootRef.current;
+      const popup = root?.querySelector<HTMLElement>('[role="menu"], [role="dialog"]');
+      if (!root || !popup) return;
+      const rect = root.getBoundingClientRect();
+      const left = align === 'right' ? rect.right - popup.offsetWidth : rect.left;
+      const clamped = Math.max(8, Math.min(left, window.innerWidth - popup.offsetWidth - 8));
+      setOffset(clamped - left);
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, [open, rootRef, align]);
+  return { transform: `translateX(${offset}px)` };
+}
+
 function ToolbarDropdown({ trigger, triggerLabel, triggerActive, items, align = 'left' }: {
   trigger: React.ReactNode;
   triggerLabel: string;
   triggerActive?: boolean;
-  items: { key: string; label: string; active?: boolean; icon?: React.ReactNode; onClick: () => void }[];
+  items: { key: string; label: string; active?: boolean; disabled?: boolean; icon?: React.ReactNode; onClick: () => void }[];
   align?: 'left' | 'right';
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const popupStyle = usePopoverPosition(open, rootRef, align);
 
   useEffect(() => {
     if (!open) return;
@@ -120,7 +142,19 @@ function ToolbarDropdown({ trigger, triggerLabel, triggerActive, items, align = 
   }, [open]);
 
   return (
-    <div ref={rootRef} className="relative shrink-0">
+    <div ref={rootRef} className="relative shrink-0" onKeyDown={(event) => {
+      if (!open) return;
+      const buttons = Array.from(rootRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)') ?? []);
+      const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        buttons[(index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length]?.focus();
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        setOpen(false);
+        rootRef.current?.querySelector('button')?.focus();
+      }
+    }}>
       <button
         type="button"
         title={triggerLabel}
@@ -140,9 +174,10 @@ function ToolbarDropdown({ trigger, triggerLabel, triggerActive, items, align = 
       {open && (
         <div
           role="menu"
+          style={popupStyle}
           aria-label={triggerLabel}
           className={cn(
-            'absolute top-10 z-20 bg-white border border-border-light rounded-lg shadow-soft-lg p-1 flex flex-col min-w-[168px]',
+            'absolute top-10 z-20 bg-card border border-border-light rounded-lg shadow-soft-lg p-1 flex flex-col min-w-[168px]',
             align === 'right' ? 'right-0' : 'left-0',
           )}
         >
@@ -151,11 +186,12 @@ function ToolbarDropdown({ trigger, triggerLabel, triggerActive, items, align = 
               key={item.key}
               type="button"
               role="menuitem"
+              disabled={item.disabled}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => { item.onClick(); setOpen(false); }}
               aria-current={item.active || undefined}
               className={cn(
-                'flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[12px] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+                'flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[12px] text-left disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
                 item.active ? 'bg-primary/[0.08] text-primary font-medium' : 'text-text hover:bg-surface',
               )}
             >
@@ -171,12 +207,16 @@ function ToolbarDropdown({ trigger, triggerLabel, triggerActive, items, align = 
 
 // ─── table insert ────────────────────────────────────────────────────────────
 
-function TableInsert({ onInsert, active }: { onInsert: (rows: number, cols: number, withHeaderRow: boolean) => void; active?: boolean }) {
+function TableInsert({ onInsert, onOpen, active, disabled }: {
+  onInsert: (rows: number, cols: number, withHeaderRow: boolean) => void;
+  onOpen: () => void; active?: boolean; disabled?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState(3);
   const [cols, setCols] = useState(3);
   const [header, setHeader] = useState(true);
   const rootRef = useRef<HTMLDivElement>(null);
+  const popupStyle = usePopoverPosition(open, rootRef);
 
   useEffect(() => {
     if (!open) return;
@@ -202,17 +242,18 @@ function TableInsert({ onInsert, active }: { onInsert: (rows: number, cols: numb
         aria-label="Insert Table"
         aria-haspopup="dialog"
         aria-expanded={open}
+        disabled={disabled}
         onMouseDown={(e) => e.preventDefault()}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => { if (!open) onOpen(); setOpen((v) => !v); }}
         className={cn(
-          'inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+          'inline-flex items-center justify-center w-9 h-9 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
           open || active ? 'bg-primary/[0.12] text-primary' : 'text-text-muted hover:bg-surface hover:text-text',
         )}
       >
         <TableIcon className="w-4 h-4" />
       </button>
       {open && (
-        <div role="dialog" aria-label="Insert table" className="absolute top-10 left-0 z-20 bg-white border border-border-light rounded-lg shadow-soft-lg p-3 w-56 space-y-3">
+        <div role="dialog" aria-label="Insert table" style={popupStyle} className="absolute top-10 left-0 z-20 bg-card border border-border-light rounded-lg shadow-soft-lg p-3 w-56 space-y-3">
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label htmlFor="table-rows" className={labelCls}>Rows</label>
@@ -222,7 +263,7 @@ function TableInsert({ onInsert, active }: { onInsert: (rows: number, cols: numb
                 min={1}
                 max={30}
                 value={rows}
-                onChange={(e) => setRows(Math.max(1, Math.min(30, Number(e.target.value) || 1)))}
+                onChange={(e) => setRows(Math.max(1, Math.min(30, Math.floor(Number(e.target.value)) || 1)))}
                 className={inputCls}
               />
             </div>
@@ -234,7 +275,7 @@ function TableInsert({ onInsert, active }: { onInsert: (rows: number, cols: numb
                 min={1}
                 max={12}
                 value={cols}
-                onChange={(e) => setCols(Math.max(1, Math.min(12, Number(e.target.value) || 1)))}
+                onChange={(e) => setCols(Math.max(1, Math.min(12, Math.floor(Number(e.target.value)) || 1)))}
                 className={inputCls}
               />
             </div>
@@ -315,7 +356,7 @@ export type TiptapEditorHandle = {
 export const TiptapEditor = forwardRef<TiptapEditorHandle, {
   initialContentJson?: TiptapNode | null;
   initialMarkdown?: string;
-  onChange: (json: TiptapNode) => void;
+  onChange: (json: TiptapNode, markdown: string) => void;
   onStats: (stats: EditorStats) => void;
 }>(function TiptapEditor({
   initialContentJson,
@@ -334,6 +375,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
   const [findOpen, setFindOpen] = useState(false);
   const [findTerm, setFindTerm] = useState('');
   const openLinkDialogRef = useRef<() => void>(() => {});
+  const dialogSelection = useRef<SelectionBookmark | null>(null);
 
   const extensions = useMemo(() => [
     ...getBaseExtensions(),
@@ -387,9 +429,17 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
     content: initialContentJson ?? initialMarkdown ?? '',
     immediatelyRender: false,
     editorProps,
+    onTransaction({ transaction }) {
+      // Keep dialog/upload targets attached to their original content while
+      // asynchronous work or other document transactions take place.
+      if (dialogSelection.current) {
+        dialogSelection.current = dialogSelection.current.map(transaction.mapping);
+      }
+    },
     onUpdate({ editor }) {
       const json = editor.getJSON() as TiptapNode;
-      onChange(json);
+      const storage = editor.storage as { markdown?: { getMarkdown: () => string } };
+      onChange(json, storage.markdown?.getMarkdown() ?? '');
       const analysis = analyzeContentJson(json);
       onStats({
         wordCount: analysis.wordCount,
@@ -401,6 +451,21 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
       });
     },
   });
+
+  // v3 useEditor does not subscribe the toolbar to transactions by default.
+  // Include selection/stored-mark/history/search-only transactions as well.
+  useEditorState({ editor, selector: ({ transactionNumber }) => transactionNumber });
+
+  function rememberSelection() {
+    if (editor) dialogSelection.current = editor.state.selection.getBookmark();
+  }
+
+  function restoreSelection() {
+    if (!editor || !dialogSelection.current) return;
+    const selection = dialogSelection.current.resolve(editor.state.doc);
+    dialogSelection.current = null;
+    editor.view.dispatch(editor.state.tr.setSelection(selection));
+  }
 
   // ── stats on mount ─────────────────────────────────────────────────────────
 
@@ -423,6 +488,10 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
 
   function openLinkDialog() {
     if (!editor) return;
+    // Populate the whole link at a caret or partial selection, preserving its
+    // destination and surrounding marks when only its attributes are edited.
+    if (editor.isActive('link')) editor.commands.extendMarkRange('link');
+    rememberSelection();
     const { from, to, empty } = editor.state.selection;
     const existing = editor.getAttributes('link') as { href?: string; target?: string | null; rel?: string | null };
     const editingExisting = !!existing.href;
@@ -458,13 +527,17 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
     const rel = linkDialog.nofollow ? 'noopener noreferrer nofollow' : 'noopener noreferrer';
     const target = linkDialog.newTab ? '_blank' : null;
     const linkMark = { type: 'link', attrs: { href, target, rel } };
+    restoreSelection();
+    const otherMarks = editor.state.selection.$from.marks()
+      .filter((mark) => mark.type.name !== 'link')
+      .map((mark) => mark.toJSON());
 
     if (linkDialog.editingExisting) {
       const range = getMarkRange(editor.state.selection.$from, editor.schema.marks.link);
       if (range && linkDialog.text && linkDialog.text !== linkDialog.originalText) {
         editor.chain().focus().insertContentAt(
           { from: range.from, to: range.to },
-          { type: 'text', text: linkDialog.text, marks: [linkMark] },
+          { type: 'text', text: linkDialog.text, marks: [...otherMarks, linkMark] },
         ).run();
       } else {
         editor.chain().focus().extendMarkRange('link').setLink({ href, target, rel }).run();
@@ -477,7 +550,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
       } else if (linkDialog.text && linkDialog.text !== linkDialog.originalText) {
         editor.chain().focus().insertContentAt(
           { from, to },
-          { type: 'text', text: linkDialog.text, marks: [linkMark] },
+          { type: 'text', text: linkDialog.text, marks: [...otherMarks, linkMark] },
         ).run();
       } else {
         editor.chain().focus().extendMarkRange('link').setLink({ href, target, rel }).run();
@@ -488,6 +561,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
 
   function unlinkSelection() {
     if (!editor) return;
+    if (linkDialog.open) restoreSelection();
     editor.chain().focus().extendMarkRange('link').unsetLink().run();
     setLinkDialog((d) => (d.open ? EMPTY_LINK_DIALOG : d));
   }
@@ -511,6 +585,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
 
   function openImageDialog() {
     if (!editor) return;
+    rememberSelection();
     const attrs = editor.getAttributes('figureImage') as Partial<ImageDialogState>;
     if (attrs.src) {
       setImageDialog({
@@ -549,10 +624,19 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
       href: normalizeUrl(imageDialog.href),
     };
     if (!attrs.src) return;
+    if (!isValidHref(attrs.src) || /^mailto:/i.test(attrs.src)) {
+      toastError('Invalid image URL', 'Enter an http(s) or relative image URL.');
+      return;
+    }
+    if (!attrs.alt) {
+      toastError('Alt text required', 'Describe the image before saving it.');
+      return;
+    }
     if (attrs.href && !isValidHref(attrs.href)) {
       toastError('Invalid image link', 'Enter a valid http(s) or relative URL for the image link.');
       return;
     }
+    restoreSelection();
     if (imageDialog.editing) {
       editor.chain().focus().updateFigureImage(attrs).run();
     } else {
@@ -563,6 +647,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
 
   function removeImage() {
     if (!editor) return;
+    restoreSelection();
     editor.chain().focus().deleteNode('figureImage').run();
     setImageDialog(EMPTY_IMAGE_DIALOG);
   }
@@ -584,6 +669,16 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
   function onFindTermChange(term: string) {
     setFindTerm(term);
     editor?.commands.setSearchTerm(term);
+  }
+
+  function applyYoutube() {
+    if (!editor) return;
+    restoreSelection();
+    if (!editor.chain().focus().setYoutubeVideo({ src: youtubeUrl.trim() }).run()) {
+      toastError('Invalid YouTube URL', 'Enter a supported YouTube video URL.');
+      return;
+    }
+    setYoutubeOpen(false);
   }
 
   const searchStorage = (editor?.storage as { contentSearch?: SearchStorage } | undefined)?.contentSearch;
@@ -620,16 +715,21 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
   const inTable = editor.isActive('table');
   const inLink = editor.isActive('link');
   const figureActive = !!editor.getAttributes('figureImage').src;
+  const tableDepth = Array.from({ length: editor.state.selection.$from.depth }, (_, i) => i + 1)
+    .find((depth) => editor.state.selection.$from.node(depth).type.name === 'table');
+  const firstRow = tableDepth ? editor.state.selection.$from.node(tableDepth).firstChild : null;
+  const hasHeaderRow = !!firstRow && Array.from({ length: firstRow.childCount }, (_, i) => firstRow.child(i))
+    .every((cell) => cell.type.name === 'tableHeader');
 
   return (
     // No overflow-hidden here: it would make this the sticky containing
     // block for the toolbar below, which breaks position: sticky against
     // the real page scroll (the toolbar would never appear to "stick").
     // Rounded corners are applied per-edge to the toolbar/content instead.
-    <div className="bg-white border border-border-light rounded-xl">
+    <div className="bg-card border border-border-light rounded-xl">
       {/* Toolbar */}
-      <div className="sticky top-14 z-[5] bg-white rounded-t-xl shadow-sm">
-        <div className="flex items-center gap-0.5 px-2 py-2 border-b border-border-light overflow-x-auto lg:flex-wrap lg:overflow-visible">
+      <div className="sticky top-14 z-[5] bg-card rounded-t-xl shadow-sm">
+        <div role="group" aria-label="Article formatting" className="flex flex-wrap items-center gap-0.5 px-2 py-2 border-b border-border-light">
           <ToolbarButton title="Undo (Ctrl+Z)" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}><Undo2 className="w-4 h-4" /></ToolbarButton>
           <ToolbarButton title="Redo (Ctrl+Shift+Z)" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}><Redo2 className="w-4 h-4" /></ToolbarButton>
           <Divider />
@@ -638,37 +738,38 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
             triggerActive={!!blockLevel}
             trigger={<span className="inline-flex items-center gap-1.5 text-[12px] font-medium min-w-[7.5rem]"><Type className="w-3.5 h-3.5 opacity-70" />{blockLabel}</span>}
             items={[
-              { key: 'p', label: 'Paragraph', active: !blockLevel, icon: <Type className="w-3.5 h-3.5" />, onClick: () => editor.chain().focus().setParagraph().run() },
+              { key: 'p', label: 'Paragraph', active: editor.isActive('paragraph'), disabled: !editor.can().setParagraph(), icon: <Type className="w-3.5 h-3.5" />, onClick: () => editor.chain().focus().setParagraph().run() },
               ...[2, 3, 4, 5, 6].map((level) => ({
                 key: `h${level}`,
                 label: `Heading ${level}`,
                 active: blockLevel === level,
+                disabled: !editor.can().setHeading({ level: level as 2 | 3 | 4 | 5 | 6 }),
                 icon: <span className="w-3.5 h-3.5 inline-flex items-center justify-center text-[9px] font-bold">H{level}</span>,
-                onClick: () => editor.chain().focus().toggleHeading({ level: level as 2 | 3 | 4 | 5 | 6 }).run(),
+                onClick: () => editor.chain().focus().setHeading({ level: level as 2 | 3 | 4 | 5 | 6 }).run(),
               })),
             ]}
           />
           <Divider />
-          <ToolbarButton title="Bold (Ctrl+B)" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}><Bold className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Italic (Ctrl+I)" active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Underline (Ctrl+U)" active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}><UnderlineIcon className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Strikethrough" active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}><Strikethrough className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Inline Code" active={editor.isActive('code')} onClick={() => editor.chain().focus().toggleCode().run()}><Code className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Superscript" active={editor.isActive('superscript')} onClick={() => editor.chain().focus().toggleSuperscript().run()}><span className="text-[11px] font-bold leading-none">x²</span></ToolbarButton>
-          <ToolbarButton title="Subscript" active={editor.isActive('subscript')} onClick={() => editor.chain().focus().toggleSubscript().run()}><span className="text-[11px] font-bold leading-none">x₂</span></ToolbarButton>
+          <ToolbarButton title="Bold (Ctrl+B)" active={editor.isActive('bold')} disabled={!editor.can().chain().toggleBold().run()} onClick={() => editor.chain().focus().toggleBold().run()}><Bold className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Italic (Ctrl+I)" active={editor.isActive('italic')} disabled={!editor.can().chain().toggleItalic().run()} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Underline (Ctrl+U)" active={editor.isActive('underline')} disabled={!editor.can().chain().toggleUnderline().run()} onClick={() => editor.chain().focus().toggleUnderline().run()}><UnderlineIcon className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Strikethrough" active={editor.isActive('strike')} disabled={!editor.can().chain().toggleStrike().run()} onClick={() => editor.chain().focus().toggleStrike().run()}><Strikethrough className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Inline Code (Ctrl+E)" active={editor.isActive('code')} disabled={!editor.can().chain().toggleCode().run()} onClick={() => editor.chain().focus().toggleCode().run()}><Code className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Superscript" active={editor.isActive('superscript')} disabled={!editor.can().chain().toggleSuperscript().run()} onClick={() => editor.chain().focus().toggleSuperscript().run()}><span className="text-[11px] font-bold leading-none">x²</span></ToolbarButton>
+          <ToolbarButton title="Subscript" active={editor.isActive('subscript')} disabled={!editor.can().chain().toggleSubscript().run()} onClick={() => editor.chain().focus().toggleSubscript().run()}><span className="text-[11px] font-bold leading-none">x₂</span></ToolbarButton>
           <Divider />
-          <ToolbarButton title="Bullet List" active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}><List className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Numbered List" active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Blockquote" active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Code Block" active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}><SquareCode className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Horizontal Rule" onClick={() => editor.chain().focus().setHorizontalRule().run()}><Minus className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Bullet List" active={editor.isActive('bulletList')} disabled={!editor.can().chain().toggleBulletList().run()} onClick={() => editor.chain().focus().toggleBulletList().run()}><List className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Numbered List" active={editor.isActive('orderedList')} disabled={!editor.can().chain().toggleOrderedList().run()} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Blockquote" active={editor.isActive('blockquote')} disabled={!editor.can().chain().toggleBlockquote().run()} onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Code Block" active={editor.isActive('codeBlock')} disabled={!editor.can().chain().toggleCodeBlock().run()} onClick={() => editor.chain().focus().toggleCodeBlock().run()}><SquareCode className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Horizontal Rule" disabled={!editor.can().chain().setHorizontalRule().run()} onClick={() => editor.chain().focus().setHorizontalRule().run()}><Minus className="w-4 h-4" /></ToolbarButton>
           <Divider />
-          <ToolbarButton title="Align Left" active={editor.isActive({ textAlign: 'left' })} onClick={() => editor.chain().focus().toggleTextAlign('left').run()}><AlignLeft className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Align Center" active={editor.isActive({ textAlign: 'center' })} onClick={() => editor.chain().focus().toggleTextAlign('center').run()}><AlignCenter className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Align Right" active={editor.isActive({ textAlign: 'right' })} onClick={() => editor.chain().focus().toggleTextAlign('right').run()}><AlignRight className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Justify" active={editor.isActive({ textAlign: 'justify' })} onClick={() => editor.chain().focus().toggleTextAlign('justify').run()}><AlignJustify className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Align Left" active={editor.isActive({ textAlign: 'left' }) || ((editor.isActive('paragraph') || !!blockLevel) && !editor.getAttributes(blockLevel ? 'heading' : 'paragraph').textAlign)} disabled={!editor.can().chain().setTextAlign('left').run()} onClick={() => editor.chain().focus().setTextAlign('left').run()}><AlignLeft className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Align Center" active={editor.isActive({ textAlign: 'center' })} disabled={!editor.can().chain().setTextAlign('center').run()} onClick={() => editor.chain().focus().setTextAlign('center').run()}><AlignCenter className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Align Right" active={editor.isActive({ textAlign: 'right' })} disabled={!editor.can().chain().setTextAlign('right').run()} onClick={() => editor.chain().focus().setTextAlign('right').run()}><AlignRight className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Justify" active={editor.isActive({ textAlign: 'justify' })} disabled={!editor.can().chain().setTextAlign('justify').run()} onClick={() => editor.chain().focus().setTextAlign('justify').run()}><AlignJustify className="w-4 h-4" /></ToolbarButton>
           <Divider />
-          <ToolbarButton title="Insert / Edit Link (Ctrl+K)" active={inLink} onClick={openLinkDialog}><LinkIcon className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Insert / Edit Link (Ctrl+K)" active={inLink} disabled={!editor.can().setLink({ href: 'https://example.com' })} onClick={openLinkDialog}><LinkIcon className="w-4 h-4" /></ToolbarButton>
           <ToolbarButton title="Remove Link" active={false} disabled={!inLink} onClick={unlinkSelection}><Unlink className="w-4 h-4" /></ToolbarButton>
           <ToolbarButton
             title={figureActive ? 'Edit Image' : 'Insert Image'}
@@ -678,27 +779,34 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
           >
             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
           </ToolbarButton>
-          <TableInsert active={inTable} onInsert={(r, c, h) => editor.chain().focus().insertTable({ rows: r, cols: c, withHeaderRow: h }).run()} />
+          <TableInsert active={inTable} disabled={inTable || !editor.can().insertTable()} onOpen={rememberSelection} onInsert={(r, c, h) => {
+            restoreSelection();
+            editor.chain().focus().insertTable({ rows: r, cols: c, withHeaderRow: h }).run();
+          }} />
           <ToolbarDropdown
             triggerLabel="More Formatting Options"
             trigger={<span className="inline-flex items-center gap-1 text-[12px] font-medium">More</span>}
             align="right"
             items={[
               { key: 'find', label: 'Find In Article…', icon: <Search className="w-3.5 h-3.5" />, onClick: toggleFind },
-              { key: 'youtube', label: 'YouTube Embed…', icon: <YoutubeIcon className="w-3.5 h-3.5" />, onClick: () => { setYoutubeUrl(''); setYoutubeOpen(true); } },
+              { key: 'youtube', label: 'YouTube Embed…', icon: <YoutubeIcon className="w-3.5 h-3.5" />, onClick: () => { rememberSelection(); setYoutubeUrl(''); setYoutubeOpen(true); } },
               ...CALLOUT_VARIANTS.map((v) => ({
                 key: `callout-${v.value}`,
                 label: `Callout: ${v.label}`,
                 active: editor.isActive('callout', { variant: v.value }),
+                disabled: !editor.isActive('callout') && !editor.can().setCallout(v.value),
                 icon: (() => { const Icon = CALLOUT_ICONS[v.value]; return <Icon className="w-3.5 h-3.5" />; })(),
-                onClick: () => editor.chain().focus().setCallout(v.value).run(),
+                onClick: () => editor.isActive('callout')
+                  ? editor.chain().focus().updateAttributes('callout', { variant: v.value }).run()
+                  : editor.chain().focus().setCallout(v.value).run(),
               })),
             ]}
           />
           <Divider />
           <ToolbarButton
             title="Clear Formatting"
-            onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
+            disabled={!editor.can().chain().unsetAllMarks().clearNodes().run()}
+            onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().resetAttributes('paragraph', ['textAlign']).resetAttributes('heading', ['textAlign']).run()}
           >
             <Eraser className="w-4 h-4" />
           </ToolbarButton>
@@ -707,16 +815,16 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
         {/* Contextual table controls */}
         {inTable && (
           <div className="flex flex-wrap items-center gap-1 px-2 py-1.5 border-b border-border-light bg-surface/40">
-            <ToolbarButton label="Row Above" onClick={() => editor.chain().focus().addRowBefore().run()} />
-            <ToolbarButton label="Row Below" onClick={() => editor.chain().focus().addRowAfter().run()} />
-            <ToolbarButton label="Column Left" onClick={() => editor.chain().focus().addColumnBefore().run()} />
-            <ToolbarButton label="Column Right" onClick={() => editor.chain().focus().addColumnAfter().run()} />
+            <ToolbarButton label="Row Above" disabled={!editor.can().chain().addRowBefore().run()} onClick={() => editor.chain().focus().addRowBefore().run()} />
+            <ToolbarButton label="Row Below" disabled={!editor.can().chain().addRowAfter().run()} onClick={() => editor.chain().focus().addRowAfter().run()} />
+            <ToolbarButton label="Column Left" disabled={!editor.can().chain().addColumnBefore().run()} onClick={() => editor.chain().focus().addColumnBefore().run()} />
+            <ToolbarButton label="Column Right" disabled={!editor.can().chain().addColumnAfter().run()} onClick={() => editor.chain().focus().addColumnAfter().run()} />
             <Divider />
-            <ToolbarButton label="Header Row" active={editor.isActive('tableHeader')} onClick={() => editor.chain().focus().toggleHeaderRow().run()} />
+            <ToolbarButton label="Header Row" active={hasHeaderRow} disabled={!editor.can().chain().toggleHeaderRow().run()} onClick={() => editor.chain().focus().toggleHeaderRow().run()} />
             <Divider />
-            <ToolbarButton label="Delete Row" onClick={() => editor.chain().focus().deleteRow().run()} />
-            <ToolbarButton label="Delete Column" onClick={() => editor.chain().focus().deleteColumn().run()} />
-            <ToolbarButton label="Delete Table" onClick={() => editor.chain().focus().deleteTable().run()} />
+            <ToolbarButton label="Delete Row" disabled={!editor.can().chain().deleteRow().run()} onClick={() => editor.chain().focus().deleteRow().run()} />
+            <ToolbarButton label="Delete Column" disabled={!editor.can().chain().deleteColumn().run()} onClick={() => editor.chain().focus().deleteColumn().run()} />
+            <ToolbarButton label="Delete Table" disabled={!editor.can().chain().deleteTable().run()} onClick={() => editor.chain().focus().deleteTable().run()} />
           </div>
         )}
 
@@ -725,6 +833,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border-light bg-surface/40">
             <Search className="w-3.5 h-3.5 text-text-subtle shrink-0" />
             <input
+              aria-label="Find in article"
               autoFocus
               value={findTerm}
               onChange={(e) => onFindTermChange(e.target.value)}
@@ -738,7 +847,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
                 }
               }}
               placeholder="Find in article…"
-              className="flex-1 min-w-0 h-8 rounded-lg border border-border-light bg-white px-3 text-[12.5px] text-text focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
+              className="flex-1 min-w-0 h-8 rounded-lg border border-border-light bg-card px-3 text-[12.5px] text-text focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
             />
             <span className="text-[11px] text-text-subtle tabular-nums shrink-0" aria-live="polite">
               {searchStorage?.total ? `${(searchStorage.currentIndex ?? 0) + 1}/${searchStorage.total}` : '0/0'}
@@ -771,7 +880,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
       {/* Link dialog */}
       <Modal
         open={linkDialog.open}
-        onClose={() => setLinkDialog(EMPTY_LINK_DIALOG)}
+        onClose={() => { restoreSelection(); setLinkDialog(EMPTY_LINK_DIALOG); }}
         title={linkDialog.editingExisting ? 'Edit link' : 'Insert link'}
         description={linkDialog.editingExisting ? 'Update the URL, text or behavior of this link.' : 'Add a hyperlink to the selected text, or type the link text to create a new one.'}
         size="sm"
@@ -782,7 +891,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
                 <Unlink className="w-3.5 h-3.5 mr-1" /> Remove Link
               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={() => setLinkDialog(EMPTY_LINK_DIALOG)}>Cancel</Button>
+            <Button variant="ghost" size="sm" onClick={() => { restoreSelection(); setLinkDialog(EMPTY_LINK_DIALOG); }}>Cancel</Button>
             <Button variant="primary" size="sm" onClick={applyLinkDialog}>
               {linkDialog.editingExisting ? 'Save Link' : 'Apply Link'}
             </Button>
@@ -846,7 +955,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
       {/* Image dialog */}
       <Modal
         open={imageDialog.open}
-        onClose={() => setImageDialog(EMPTY_IMAGE_DIALOG)}
+        onClose={() => { restoreSelection(); setImageDialog(EMPTY_IMAGE_DIALOG); }}
         title={imageDialog.editing ? 'Edit image' : 'Insert image'}
         description="Alt text is required for accessibility and SEO. Alignment and an optional link apply to the image."
         size="sm"
@@ -857,8 +966,8 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
                 Remove Image
               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={() => setImageDialog(EMPTY_IMAGE_DIALOG)}>Cancel</Button>
-            <Button variant="primary" size="sm" onClick={applyImageDialog} disabled={!imageDialog.src.trim()}>
+            <Button variant="ghost" size="sm" onClick={() => { restoreSelection(); setImageDialog(EMPTY_IMAGE_DIALOG); }}>Cancel</Button>
+            <Button variant="primary" size="sm" onClick={applyImageDialog} disabled={!imageDialog.src.trim() || !imageDialog.alt.trim() || uploading}>
               {imageDialog.editing ? 'Save Changes' : 'Insert Image'}
             </Button>
           </>
@@ -938,17 +1047,13 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
       {/* YouTube embed dialog */}
       <Modal
         open={youtubeOpen}
-        onClose={() => setYoutubeOpen(false)}
+        onClose={() => { restoreSelection(); setYoutubeOpen(false); }}
         title="Embed YouTube video"
         size="sm"
         footer={
           <>
-            <Button variant="ghost" size="sm" onClick={() => setYoutubeOpen(false)}>Cancel</Button>
-            <Button variant="primary" size="sm" onClick={() => {
-              const url = youtubeUrl.trim();
-              if (url) editor?.commands.setYoutubeVideo({ src: url });
-              setYoutubeOpen(false);
-            }} disabled={!youtubeUrl.trim()}>
+            <Button variant="ghost" size="sm" onClick={() => { restoreSelection(); setYoutubeOpen(false); }}>Cancel</Button>
+            <Button variant="primary" size="sm" onClick={applyYoutube} disabled={!youtubeUrl.trim()}>
               Embed Video
             </Button>
           </>
@@ -956,9 +1061,10 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
       >
         <input
           autoFocus
+          aria-label="YouTube video URL"
           value={youtubeUrl}
           onChange={(e) => setYoutubeUrl(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') { const url = youtubeUrl.trim(); if (url) editor?.commands.setYoutubeVideo({ src: url }); setYoutubeOpen(false); } }}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyYoutube(); } }}
           placeholder="https://www.youtube.com/watch?v=…"
           className={inputCls}
         />

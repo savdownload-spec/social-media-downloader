@@ -65,6 +65,8 @@ export function ContentStudioShell({
 }) {
   const [form, setForm] = useState<StudioForm>(() => initialPost ? postToForm(initialPost) : EMPTY_STUDIO_FORM);
   const [postId, setPostId] = useState<string | null>(initialPost?.id ?? null);
+  const postIdRef = useRef(initialPost?.id ?? null);
+  const saveQueue = useRef<Promise<unknown>>(Promise.resolve());
   const [wasPublished] = useState(!!initialPost?.published);
   const [saving, setSaving] = useState(false);
   const [discarding, setDiscarding] = useState(false);
@@ -83,15 +85,16 @@ export function ContentStudioShell({
   // state-update → re-render → new prop reference → infinite loop.
   // Passing stable references via useCallback/setStats (already stable)
   // eliminates that trigger on the parent side.
-  const onEditorChange = useCallback((json: TiptapNode) => {
-    setField('contentJson', json);
-  }, [setField]);
+  const onEditorChange = useCallback((json: TiptapNode, markdown: string) => {
+    // Both representations must describe the same autosave snapshot.
+    setForm((prev) => ({ ...prev, contentJson: json, content: markdown }));
+  }, []);
 
   const buildPayload = useCallback((f: StudioForm, publishOverride?: boolean) => ({
     title: f.title,
     slug: f.slug,
     excerpt: f.excerpt || undefined,
-    content: editorHandle.current?.getMarkdown() || f.content || ' ',
+    content: f.content || ' ',
     contentJson: f.contentJson,
     author: f.author,
     tagsJson: f.tagsJson,
@@ -121,19 +124,32 @@ export function ContentStudioShell({
     scheduledAt: f.scheduledAt ? new Date(f.scheduledAt).toISOString() : null,
   }), [stats.readingTimeMinutes]);
 
-  const persist = useCallback(async (f: StudioForm, opts?: { publishOverride?: boolean; changeSummary?: string }) => {
+  const persist = useCallback((f: StudioForm, opts?: { publishOverride?: boolean; changeSummary?: string }) => {
     const payload = { ...buildPayload(f, opts?.publishOverride), changeSummary: opts?.changeSummary };
-    const url = postId ? `/api/admin/content/${postId}` : '/api/admin/content';
-    const method = postId ? 'PATCH' : 'POST';
-    const res = await fetch(url, { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
-    const data = await res.json().catch(() => null);
-    if (!data?.ok) throw new Error(data?.error || 'Save failed');
-    if (!postId && data.data?.id) setPostId(data.data.id);
-    return data.data;
-  }, [postId, buildPayload]);
+    // Serialize manual saves and autosaves, including the first draft POST.
+    // A late response must not overwrite a more recent content snapshot.
+    const task = saveQueue.current.catch(() => undefined).then(async () => {
+      const id = postIdRef.current;
+      const url = id ? `/api/admin/content/${id}` : '/api/admin/content';
+      const method = id ? 'PATCH' : 'POST';
+      const res = await fetch(url, { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await res.json().catch(() => null);
+      if (!data?.ok) throw new Error(data?.error || 'Save failed');
+      if (!id && data.data?.id) {
+        postIdRef.current = data.data.id;
+        setPostId(data.data.id);
+      }
+      return data.data;
+    });
+    saveQueue.current = task;
+    return task;
+  }, [buildPayload]);
 
   const autosaveEnabled = !!form.title && !!form.slug;
   const { status: autosaveStatus, retry: retryAutosave } = useAutosave(form, async (snapshot) => {
+    // An in-flight save can outlive this snapshot's debounce window. The
+    // current form has its own timer; never enqueue an obsolete snapshot.
+    if (snapshot !== form) return;
     await persist(snapshot, { changeSummary: 'Autosave' });
   }, { enabled: autosaveEnabled });
 

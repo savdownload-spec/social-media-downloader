@@ -15,21 +15,29 @@ export function useAutosave<T>(value: T, onSave: (value: T) => Promise<void>, op
   const lastSaved = useRef<string>('');
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savingRef = useRef(false);
+  const onSaveRef = useRef(onSave);
+  onSaveRef.current = onSave;
+  const pending = useRef<{ value: T } | null>(null);
 
   const runSave = useCallback(async (snapshot: T) => {
+    pending.current = { value: snapshot };
     if (savingRef.current) return;
     savingRef.current = true;
     setStatus('saving');
     try {
-      await onSave(snapshot);
-      lastSaved.current = JSON.stringify(snapshot);
+      while (pending.current) {
+        const next = pending.current.value;
+        pending.current = null;
+        await onSaveRef.current(next);
+        lastSaved.current = JSON.stringify(next);
+      }
       setStatus('saved');
     } catch {
       setStatus('error');
     } finally {
       savingRef.current = false;
     }
-  }, [onSave]);
+  }, []);
 
   useEffect(() => {
     if (!enabled) return;
