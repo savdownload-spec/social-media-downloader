@@ -49,7 +49,8 @@ self.addEventListener('activate', (event) => {
       .keys()
       .then((keys) => Promise.all(
         keys
-          .filter((key) => !CURRENT_CACHES.includes(key))
+          // Model chunks have their own integrity-checked cache lifecycle.
+          .filter((key) => /\bsavdown-(?:shell|runtime)-/.test(key) && !CURRENT_CACHES.includes(key))
           .map((key) => caches.delete(key)),
       ))
       .then(() => self.clients.claim()),

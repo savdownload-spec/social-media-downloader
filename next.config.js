@@ -19,6 +19,18 @@ const nextConfig = {
   async headers() {
     return [
       {
+        source: '/background-removal/isnet-fp16-v1/:asset*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      ...[
+        ['bin', 'application/octet-stream'],
+        ['wasm', 'application/wasm'],
+        ['mjs', 'text/javascript; charset=utf-8'],
+      ].map(([extension, contentType]) => ({
+        source: `/background-removal/isnet-fp16-v1/:file*.${extension}`,
+        headers: [{ key: 'Content-Type', value: contentType }],
+      })),
+      {
         source: '/:path*',
         headers: [
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
@@ -44,7 +56,7 @@ const nextConfig = {
     ];
   },
   webpack(config, { isServer }) {
-    // @imgly/background-removal ships onnxruntime-web .mjs files containing
+    // onnxruntime-web ships .mjs files containing
     // native ESM `import.meta`. Next.js 14 webpack defaults to treating .mjs
     // as CommonJS, causing Terser to fail on import.meta during minification.
     // Marking these files as javascript/esm fixes the build.
@@ -53,7 +65,7 @@ const nextConfig = {
       resolve: { fullySpecified: false },
       type: 'javascript/esm',
     });
-    // Server-side: exclude browser-only @imgly/onnxruntime packages so
+    // Server-side: exclude browser-only onnxruntime packages so
     // webpack never pulls their WASM binaries into the SSR bundle.
     if (isServer) {
       const orig = Array.isArray(config.externals)
@@ -64,8 +76,7 @@ const nextConfig = {
         ({ request }, callback) => {
           if (
             request &&
-            (request.startsWith('@imgly/background-removal') ||
-              request.startsWith('onnxruntime-web'))
+            request.startsWith('onnxruntime-web')
           ) {
             return callback(null, `commonjs ${request}`);
           }
@@ -81,12 +92,11 @@ const nextConfig = {
     // - pdfkit: reads AFM font files via computed path; bundling breaks it
     // - ffmpeg-static: dynamic platform/arch detection; bundling breaks path
     // - mammoth: dynamic file-system paths for .docx parsing
-    // - @imgly/background-removal + onnxruntime-web: browser-only ESM packages
+    // - onnxruntime-web: browser-only ESM package
     serverComponentsExternalPackages: [
       'pdfkit',
       'ffmpeg-static',
       'mammoth',
-      '@imgly/background-removal',
       'onnxruntime-web',
       'onnxruntime-node',
       'undici',
