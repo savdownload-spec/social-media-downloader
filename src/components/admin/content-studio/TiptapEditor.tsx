@@ -351,6 +351,7 @@ export type EditorStats = {
 export type TiptapEditorHandle = {
   insertLinkAtCursor: (url: string, text: string) => void;
   getMarkdown: () => string;
+  getSnapshot: () => Promise<{ json: TiptapNode; markdown: string } | null>;
 };
 
 export const TiptapEditor = forwardRef<TiptapEditorHandle, {
@@ -358,11 +359,13 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
   initialMarkdown?: string;
   onChange: (json: TiptapNode, markdown: string) => void;
   onStats: (stats: EditorStats) => void;
+  onSourceModeChange: (active: boolean) => void;
 }>(function TiptapEditor({
   initialContentJson,
   initialMarkdown,
   onChange,
   onStats,
+  onSourceModeChange,
 }, ref) {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -374,6 +377,14 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [findOpen, setFindOpen] = useState(false);
   const [findTerm, setFindTerm] = useState('');
+  const [sourceMode, setSourceMode] = useState(false);
+  const [sourceText, setSourceText] = useState('');
+  const [applyingSource, setApplyingSource] = useState(false);
+  const sourceModeRef = useRef(false);
+  const sourceTextRef = useRef('');
+  const appliedSourceRef = useRef<string | null>(null);
+  const sourceRequest = useRef<Promise<void> | null>(null);
+  const sourceSelection = useRef<SelectionBookmark | null>(null);
   const openLinkDialogRef = useRef<() => void>(() => {});
   const dialogSelection = useRef<SelectionBookmark | null>(null);
 
@@ -434,6 +445,9 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
       // asynchronous work or other document transactions take place.
       if (dialogSelection.current) {
         dialogSelection.current = dialogSelection.current.map(transaction.mapping);
+      }
+      if (sourceSelection.current) {
+        sourceSelection.current = sourceSelection.current.map(transaction.mapping);
       }
     },
     onUpdate({ editor }) {
@@ -681,6 +695,82 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
     setYoutubeOpen(false);
   }
 
+  function readSnapshot() {
+    if (!editor || editor.isDestroyed) return null;
+    const storage = editor.storage as { markdown?: { getMarkdown: () => string } };
+    return { json: editor.getJSON() as TiptapNode, markdown: storage.markdown?.getMarkdown() ?? '' };
+  }
+
+  async function syncSource() {
+    if (!editor || editor.isDestroyed || !sourceModeRef.current) return;
+    if (sourceRequest.current) return sourceRequest.current;
+    if (sourceTextRef.current === appliedSourceRef.current) return;
+    const submitted = sourceTextRef.current;
+    const originalDoc = editor.state.doc;
+    setApplyingSource(true);
+    const task = (async () => {
+      const response = await fetch('/api/admin/content/render', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ format: 'html', content: submitted }),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.ok) throw new Error(result?.error || 'Could not apply HTML source.');
+      if (editor.isDestroyed) throw new Error('The editor has closed.');
+      if (sourceTextRef.current !== submitted || !editor.state.doc.eq(originalDoc)) {
+        throw new Error('The content changed during conversion. Please try again.');
+      }
+      // JSON bypasses the HTML-disabled Markdown parser. Source replacements
+      // remain regular, undoable transactions in the existing editor.
+      if (!editor.chain().insertContentAt({ from: 0, to: editor.state.doc.content.size }, result.data.document.content).run()) {
+        throw new Error('Could not apply this HTML to the article.');
+      }
+      appliedSourceRef.current = submitted;
+    })();
+    sourceRequest.current = task;
+    try { await task; }
+    finally { sourceRequest.current = null; setApplyingSource(false); }
+  }
+
+  async function toggleSource() {
+    if (!editor || applyingSource) return;
+    if (!sourceModeRef.current) {
+      sourceSelection.current = editor.state.selection.getBookmark();
+      // Recover literal article markup only through this explicit source toggle.
+      // Code examples retain their normal literal representation.
+      const raw = editor.getText({ blockSeparator: '\n\n' });
+      let literalHtml = true;
+      editor.state.doc.forEach((node) => {
+        if (node.type.name !== 'paragraph') literalHtml = false;
+        node.forEach((child) => {
+          if (!child.isText || child.marks.some((mark) => mark.type.name === 'code')) literalHtml = false;
+        });
+      });
+      const recoverHtml = literalHtml && /^\s*<(?:h[1-6]|p|div|section|article|table|ul|ol)\b/i.test(raw);
+      const source = recoverHtml ? raw : editor.getHTML();
+      sourceTextRef.current = source;
+      appliedSourceRef.current = recoverHtml ? null : source;
+      setSourceText(source);
+      sourceModeRef.current = true;
+      setSourceMode(true);
+      editor.setEditable(false, false);
+      onSourceModeChange(true);
+      return;
+    }
+    try {
+      await syncSource();
+      sourceModeRef.current = false;
+      setSourceMode(false);
+      editor.setEditable(true, false);
+      onSourceModeChange(false);
+      if (sourceSelection.current) {
+        editor.view.dispatch(editor.state.tr.setSelection(sourceSelection.current.resolve(editor.state.doc)));
+      }
+      editor.commands.focus();
+    } catch (error) {
+      toastError('Could not show formatted content', error instanceof Error ? error.message : 'Please try again.');
+    }
+  }
+
   const searchStorage = (editor?.storage as { contentSearch?: SearchStorage } | undefined)?.contentSearch;
 
   // ── block type helpers ─────────────────────────────────────────────────────
@@ -689,8 +779,12 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
   const blockLabel = blockLevel ? `Heading ${blockLevel}` : 'Paragraph';
 
   useImperativeHandle(ref, () => ({
+    async getSnapshot() {
+      await syncSource();
+      return readSnapshot();
+    },
     insertLinkAtCursor(url: string, text: string) {
-      if (!editor) return;
+      if (!editor || sourceModeRef.current) return;
       editor.chain().focus().insertContent({
         type: 'text',
         text,
@@ -702,7 +796,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
       const storage = editor.storage as { markdown?: { getMarkdown: () => string } };
       return storage.markdown?.getMarkdown() ?? '';
     },
-  }), [editor]);
+  }));
 
   if (!editor) {
     return (
@@ -720,6 +814,12 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
   const firstRow = tableDepth ? editor.state.selection.$from.node(tableDepth).firstChild : null;
   const hasHeaderRow = !!firstRow && Array.from({ length: firstRow.childCount }, (_, i) => firstRow.child(i))
     .every((cell) => cell.type.name === 'tableHeader');
+  let hasHtmlSource = false;
+  editor.state.doc.descendants((node) => {
+    if (node.type.name === 'codeBlock') return false;
+    if (node.isText && !node.marks.some((mark) => mark.type.name === 'code') &&
+      /<(?:h[1-6]|p|div|section|article|table|ul|ol)\b[^>]*>/i.test(node.text ?? '')) hasHtmlSource = true;
+  });
 
   return (
     // No overflow-hidden here: it would make this the sticky containing
@@ -730,6 +830,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
       {/* Toolbar */}
       <div className="sticky top-14 z-[5] bg-card rounded-t-xl shadow-sm">
         <div role="group" aria-label="Article formatting" className="flex flex-wrap items-center gap-0.5 px-2 py-2 border-b border-border-light">
+          <fieldset disabled={sourceMode} className="contents">
           <ToolbarButton title="Undo (Ctrl+Z)" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}><Undo2 className="w-4 h-4" /></ToolbarButton>
           <ToolbarButton title="Redo (Ctrl+Shift+Z)" onClick={() => editor.chain().focus().redo().run()} disabled={!editor.can().redo()}><Redo2 className="w-4 h-4" /></ToolbarButton>
           <Divider />
@@ -754,7 +855,11 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
           <ToolbarButton title="Italic (Ctrl+I)" active={editor.isActive('italic')} disabled={!editor.can().chain().toggleItalic().run()} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic className="w-4 h-4" /></ToolbarButton>
           <ToolbarButton title="Underline (Ctrl+U)" active={editor.isActive('underline')} disabled={!editor.can().chain().toggleUnderline().run()} onClick={() => editor.chain().focus().toggleUnderline().run()}><UnderlineIcon className="w-4 h-4" /></ToolbarButton>
           <ToolbarButton title="Strikethrough" active={editor.isActive('strike')} disabled={!editor.can().chain().toggleStrike().run()} onClick={() => editor.chain().focus().toggleStrike().run()}><Strikethrough className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Inline Code (Ctrl+E)" active={editor.isActive('code')} disabled={!editor.can().chain().toggleCode().run()} onClick={() => editor.chain().focus().toggleCode().run()}><Code className="w-4 h-4" /></ToolbarButton>
+          </fieldset>
+          <ToolbarButton title={sourceMode ? 'Show formatted text' : 'Edit HTML source'} active={sourceMode} disabled={applyingSource} onClick={toggleSource}>
+            {applyingSource ? <Loader2 className="w-4 h-4 animate-spin" /> : <Code className="w-4 h-4" />}
+          </ToolbarButton>
+          <fieldset disabled={sourceMode} className="contents">
           <ToolbarButton title="Superscript" active={editor.isActive('superscript')} disabled={!editor.can().chain().toggleSuperscript().run()} onClick={() => editor.chain().focus().toggleSuperscript().run()}><span className="text-[11px] font-bold leading-none">x²</span></ToolbarButton>
           <ToolbarButton title="Subscript" active={editor.isActive('subscript')} disabled={!editor.can().chain().toggleSubscript().run()} onClick={() => editor.chain().focus().toggleSubscript().run()}><span className="text-[11px] font-bold leading-none">x₂</span></ToolbarButton>
           <Divider />
@@ -788,6 +893,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
             trigger={<span className="inline-flex items-center gap-1 text-[12px] font-medium">More</span>}
             align="right"
             items={[
+              { key: 'inline-code', label: 'Inline code (Ctrl+E)', active: editor.isActive('code'), disabled: !editor.can().toggleCode(), icon: <Code className="w-3.5 h-3.5" />, onClick: () => editor.chain().focus().toggleCode().run() },
               { key: 'find', label: 'Find In Article…', icon: <Search className="w-3.5 h-3.5" />, onClick: toggleFind },
               { key: 'youtube', label: 'YouTube Embed…', icon: <YoutubeIcon className="w-3.5 h-3.5" />, onClick: () => { rememberSelection(); setYoutubeUrl(''); setYoutubeOpen(true); } },
               ...CALLOUT_VARIANTS.map((v) => ({
@@ -810,10 +916,11 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
           >
             <Eraser className="w-4 h-4" />
           </ToolbarButton>
+          </fieldset>
         </div>
 
         {/* Contextual table controls */}
-        {inTable && (
+        {inTable && !sourceMode && (
           <div className="flex flex-wrap items-center gap-1 px-2 py-1.5 border-b border-border-light bg-surface/40">
             <ToolbarButton label="Row Above" disabled={!editor.can().chain().addRowBefore().run()} onClick={() => editor.chain().focus().addRowBefore().run()} />
             <ToolbarButton label="Row Below" disabled={!editor.can().chain().addRowAfter().run()} onClick={() => editor.chain().focus().addRowAfter().run()} />
@@ -829,7 +936,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
         )}
 
         {/* Find bar */}
-        {findOpen && (
+        {findOpen && !sourceMode && (
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border-light bg-surface/40">
             <Search className="w-3.5 h-3.5 text-text-subtle shrink-0" />
             <input
@@ -859,7 +966,19 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
         )}
       </div>
 
-      <EditorContent editor={editor} />
+      {hasHtmlSource && !sourceMode && <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-light bg-surface px-4 py-2 text-xs text-text-muted">
+        <span>This article contains HTML as text. Switch to source and back to apply its formatting.</span>
+        <Button variant="outline" size="sm" onClick={toggleSource}>Edit HTML source</Button>
+      </div>}
+      {sourceMode && <div className="p-4">
+        <label htmlFor="article-html-source" className={labelCls}>HTML source</label>
+        <p className="mb-3 text-xs text-text-muted">Switch back, save or preview to apply your HTML changes.</p>
+        <textarea id="article-html-source" autoFocus value={sourceText} disabled={applyingSource} spellCheck={false} rows={20} maxLength={500_000}
+          onChange={(event) => { sourceTextRef.current = event.target.value; setSourceText(event.target.value); }}
+          className="w-full min-h-[420px] rounded-lg border border-border-light bg-card p-3 font-mono text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
+      </div>}
+      <div className={sourceMode ? 'hidden' : undefined}><EditorContent editor={editor} /></div>
 
       {/* Hidden file inputs */}
       <input

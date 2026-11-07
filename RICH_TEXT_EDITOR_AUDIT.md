@@ -95,3 +95,48 @@ Tiptap design. JSON remains the authoritative rich representation; the existing
 HTML-disabled Markdown compatibility export cannot represent every rich mark,
 table attribute, embed or custom node. Previously stripped content cannot be
 recovered automatically. Changes are uncommitted and awaiting review.
+
+## Follow-up: formatted text / HTML source toggle and current-draft Preview
+
+The screenshot shows article HTML source (`<h3>`, `<p>` and `<a>`). The user's
+follow-up clarifies that the highlighted `</>` control must switch between
+formatted text and editable HTML source. Previously it only applied Tiptap's
+inline Code mark, which intentionally displays literal text. The Markdown
+parser also has HTML disabled, so plain HTML pasted into it stays escaped.
+
+The highlighted button now toggles between the existing visual editor and an
+HTML source textarea. Entering source mode reads the editor HTML; returning
+applies edits through server-side sanitization and the same Tiptap schema. A
+normal document transaction keeps source edits undoable. Unedited round trips
+preserve the original JSON without reparsing it. A document stored as ordinary
+paragraphs of literal HTML can be repaired by entering source mode and toggling
+back. Actual inline-code examples and code blocks retain their literal meaning.
+Inline Code formatting remains available under More and through Ctrl/Cmd+E.
+
+Save, Publish, Schedule and Preview await pending HTML conversion and read a
+matched JSON/Markdown snapshot. Background autosave pauses while editing source;
+source changes apply on toggle, explicit save or preview. Failed conversion
+keeps the source buffer available and prevents saving stale content. Other
+visual formatting controls are disabled in source mode. Unsupported custom
+styles and scripts are removed; no sanitization was disabled.
+
+The previous Preview button opened the published URL, so it could show stale
+content or fail for an unpublished draft. Preview now reads the current editor
+snapshot and shows a modal using the same sanitized public HTML renderer and
+prose styles. Preview itself does not save or publish the article. The renderer
+now explicitly uses the package's server entry point.
+
+Follow-up files:
+
+- `src/components/admin/content-studio/TiptapEditor.tsx`
+- `src/components/admin/content-studio/ContentStudioShell.tsx`
+- `src/lib/content-studio/render.ts`
+- `src/app/api/admin/content/render/route.ts` (new)
+- `RICH_TEXT_EDITOR_AUDIT.md`
+
+Source and diff reviewed; no local tests, build or browser verification run,
+per the original workflow. Existing literal-HTML articles need the explicit
+source toggle and saving before the published page changes. Custom HTML/CSS
+outside the article schema and script execution remain unsupported. Source
+textarea undo is local to that view; applied source edits enter Tiptap history.
+Changes remain uncommitted and unpushed for review.

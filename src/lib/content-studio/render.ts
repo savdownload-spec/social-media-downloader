@@ -1,4 +1,4 @@
-import { generateHTML } from '@tiptap/html';
+import { generateHTML, generateJSON } from '@tiptap/html/server';
 import sanitizeHtml from 'sanitize-html';
 import { getBaseExtensions } from './tiptapExtensions';
 import { analyzeContentJson, type TiptapNode } from './contentText';
@@ -57,6 +57,12 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
     },
   },
 };
+
+/** Explicit HTML import: sanitize before parsing into the existing schema. */
+export function importArticleHtml(html: string): TiptapNode {
+  const safeHtml = sanitizeHtml(html, SANITIZE_OPTIONS);
+  return generateJSON(safeHtml, getBaseExtensions()) as TiptapNode;
+}
 
 /**
  * Renders a Tiptap JSON document to sanitized HTML for the public site.

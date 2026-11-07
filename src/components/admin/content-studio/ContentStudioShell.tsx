@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Save, Eye, CalendarClock, Send, Check, RefreshCw, AlertCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toast';
 import { useConfirm } from '@/components/ui/ConfirmProvider';
 import { StatusBadge } from '../AdminUI';
@@ -70,6 +71,9 @@ export function ContentStudioShell({
   const [wasPublished] = useState(!!initialPost?.published);
   const [saving, setSaving] = useState(false);
   const [discarding, setDiscarding] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [preview, setPreview] = useState<{ title: string; html: string } | null>(null);
+  const [sourceMode, setSourceMode] = useState(false);
   const [stats, setStats] = useState<EditorStats>({ wordCount: 0, charCount: 0, readingTimeMinutes: 1, headingCount: 0, imageCount: 0, linkCount: 0 });
   const editorHandle = useRef<TiptapEditorHandle>(null);
   const { success, error: toastError } = useToast();
@@ -145,7 +149,7 @@ export function ContentStudioShell({
     return task;
   }, [buildPayload]);
 
-  const autosaveEnabled = !!form.title && !!form.slug;
+  const autosaveEnabled = !!form.title && !!form.slug && !sourceMode;
   const { status: autosaveStatus, retry: retryAutosave } = useAutosave(form, async (snapshot) => {
     // An in-flight save can outlive this snapshot's debounce window. The
     // current form has its own timer; never enqueue an obsolete snapshot.
@@ -168,7 +172,7 @@ export function ContentStudioShell({
     if (!(await handleSlugGuard())) return;
     setSaving(true);
     try {
-      await persist(form, { publishOverride: false, changeSummary: 'Manual save (draft)' });
+      await persist(await currentFormSnapshot(), { publishOverride: false, changeSummary: 'Manual save (draft)' });
       success('Draft saved');
       onSaved();
     } catch (e) {
@@ -180,7 +184,7 @@ export function ContentStudioShell({
     if (!(await handleSlugGuard())) return;
     setSaving(true);
     try {
-      await persist(form, { publishOverride: true, changeSummary: 'Published' });
+      await persist(await currentFormSnapshot(), { publishOverride: true, changeSummary: 'Published' });
       setField('published', true);
       success('Post published');
       onSaved();
@@ -194,7 +198,7 @@ export function ContentStudioShell({
     if (!(await handleSlugGuard())) return;
     setSaving(true);
     try {
-      await persist(form, { publishOverride: false, changeSummary: 'Scheduled' });
+      await persist(await currentFormSnapshot(), { publishOverride: false, changeSummary: 'Scheduled' });
       success(`Scheduled for ${new Date(form.scheduledAt).toLocaleString()}`);
       onSaved();
     } catch (e) {
@@ -202,9 +206,30 @@ export function ContentStudioShell({
     } finally { setSaving(false); }
   }
 
-  function handlePreview() {
-    if (!form.slug) return;
-    window.open(`/blog/${form.slug}`, '_blank', 'noopener,noreferrer');
+  async function currentFormSnapshot(): Promise<StudioForm> {
+    const snapshot = await editorHandle.current?.getSnapshot();
+    if (!snapshot) throw new Error('The editor is still loading. Please try again.');
+    return { ...form, contentJson: snapshot.json, content: snapshot.markdown };
+  }
+
+  async function handlePreview() {
+    if (previewLoading) return;
+    const title = form.title;
+    setPreviewLoading(true);
+    try {
+      const snapshot = await currentFormSnapshot();
+      const response = await fetch('/api/admin/content/render', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ format: 'json', content: snapshot.contentJson }),
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.ok) throw new Error(result?.error || 'Preview failed.');
+      setPreview({ title, html: result.data.html });
+    } catch (error) {
+      toastError('Could not preview article', error instanceof Error ? error.message : 'Please try again.');
+    } finally {
+      setPreviewLoading(false);
+    }
   }
 
   async function handleDiscard() {
@@ -267,7 +292,7 @@ export function ContentStudioShell({
         <Button variant="ghost" size="sm" onClick={handleDiscard} loading={discarding} className="text-rose-600 hover:bg-rose-50">
           <Trash2 className="w-3.5 h-3.5 mr-1" /> Discard
         </Button>
-        <Button variant="outline" size="sm" onClick={handlePreview} disabled={!form.slug}>
+        <Button variant="outline" size="sm" onClick={handlePreview} loading={previewLoading}>
           <Eye className="w-3.5 h-3.5 mr-1" /> Preview
         </Button>
         <Button variant="secondary" size="sm" onClick={handleSaveDraft} loading={saving} disabled={!form.title || !form.slug}>
@@ -290,9 +315,17 @@ export function ContentStudioShell({
               initialMarkdown={!form.contentJson ? form.content : undefined}
               onChange={onEditorChange}
               onStats={setStats}
+              onSourceModeChange={setSourceMode}
             />
 
             <StatsBar stats={stats} />
+            <Modal open={!!preview} onClose={() => setPreview(null)} title="Article preview"
+              description="Current draft, shown with the published article formatting." size="lg">
+              {preview && <article>
+                <h1 className="mb-8 text-3xl font-semibold text-text">{preview.title || 'Untitled article'}</h1>
+                <div className="prose-elegant" dangerouslySetInnerHTML={{ __html: preview.html }} />
+              </article>}
+            </Modal>
           </div>
 
           {/* SEO sidebar */}
