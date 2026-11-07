@@ -9,16 +9,10 @@ const nextConfig = {
   env: process.env.VERCEL_ENV === 'production'
     ? { NEXTAUTH_URL: 'https://getsavdown.com' }
     : {},
-  async redirects() {
-    return [
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: 'www.getsavdown.com' }],
-        destination: 'https://getsavdown.com/:path*',
-        permanent: true,
-      },
-    ];
-  },
+  // Vercel Settings > Domains owns host redirects and HTTP -> HTTPS.
+  // getsavdown.com must serve Production (no redirect); www redirects to it.
+  // Do not duplicate domain redirects here: an opposing Vercel domain rule
+  // runs before Next.js and previously created a root <-> www 308 loop.
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '*.public.blob.vercel-storage.com' },

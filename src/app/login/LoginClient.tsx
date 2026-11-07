@@ -53,6 +53,10 @@ function LoginClientInner() {
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
   const callbackUrl = getSafeDestination(searchParams.get('callbackUrl'));
+  const suspended = searchParams.get('suspended') === '1';
+  // Match the server guards: an invalidated JWT still has a user object,
+  // but no user ID. A suspended workspace session must stay on this page.
+  const shouldRedirect = status === 'authenticated' && Boolean(session?.user?.id) && !suspended;
   const autoGoogle = searchParams.get('google') === '1';
   const autoGoogleStarted = useRef(false);
   const { success, error: errorToast } = useToast();
@@ -66,8 +70,8 @@ function LoginClientInner() {
   const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (status === 'authenticated' && session?.user) router.replace(callbackUrl);
-  }, [callbackUrl, router, session, status]);
+    if (shouldRedirect) router.replace(callbackUrl);
+  }, [callbackUrl, router, shouldRedirect]);
 
   const switchTab = (next: Tab) => {
     setTab(next);
@@ -100,6 +104,7 @@ function LoginClientInner() {
   useEffect(() => {
     if (
       !autoGoogle ||
+      suspended ||
       status !== 'unauthenticated' ||
       searchParams.get('error') ||
       autoGoogleStarted.current
@@ -108,7 +113,7 @@ function LoginClientInner() {
     void handleGoogle();
   // The ref ensures this only initiates once even if auth state updates.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoGoogle, callbackUrl, status]);
+  }, [autoGoogle, callbackUrl, status, suspended]);
 
   const handleSignIn = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -161,7 +166,7 @@ function LoginClientInner() {
     finally { setLoading(false); }
   };
 
-  if (status === 'loading' || (status === 'authenticated' && session?.user)) {
+  if (status === 'loading' || shouldRedirect) {
     return <Section variant="white" className="py-16"><Container><div className="mx-auto max-w-md rounded-[28px] border border-border/70 bg-white/90 dark:bg-card/90 px-6 py-16 text-center shadow-soft"><div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-light text-primary"><LockKeyhole className="h-5 w-5" /></div><p className="text-sm font-semibold text-text">Checking your account</p><p className="mt-2 text-sm text-text-muted">Just a moment while we prepare your account.</p></div></Container></Section>;
   }
 
@@ -176,7 +181,7 @@ function LoginClientInner() {
         <div className="relative mx-auto max-w-[456px]">
           <div className="mb-8 text-center"><div className="flex items-center justify-center transition-transform hover:scale-[1.02]"><Logo height={40} /></div><div className="mt-4 inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary-light/60 px-3 py-1.5 text-xs font-semibold text-primary"><ShieldCheck className="h-3.5 w-3.5" /> Secure member access</div><h1 className="mt-5 text-3xl font-bold tracking-tight text-text md:text-4xl">{isSignIn && 'Welcome back'}{isSignUp && 'Create your account'}{isForgot && 'Reset your password'}</h1><p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-text-muted">{isSignIn && 'Sign in to access your account, reviews and SavDown features.'}{isSignUp && 'Join SavDown to keep your account, reviews and saved features in one place.'}{isForgot && 'Enter your email and we will help you get back into your account.'}</p></div>
           <div className="rounded-[28px] border border-border/70 bg-white/95 dark:bg-card/95 p-5 shadow-[0_24px_70px_-32px_rgba(43,25,91,0.45)] backdrop-blur sm:p-8"><div className="mb-6 flex items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{isForgot ? 'Account recovery' : 'Account access'}</p><p className="mt-1 text-sm text-text-muted">Fast, private and built for SavDown.</p></div><div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-surface text-primary sm:flex"><LockKeyhole className="h-4 w-4" /></div></div>
-            {authError && <div role="alert" className="mb-5 rounded-2xl border border-rose-200 dark:border-rose-500/25 bg-rose-50 dark:bg-rose-500/10 px-4 py-3 text-sm leading-5 text-rose-700 dark:text-rose-400">{authError}</div>}
+            {(authError || suspended) && <div role="alert" className="mb-5 rounded-2xl border border-rose-200 dark:border-rose-500/25 bg-rose-50 dark:bg-rose-500/10 px-4 py-3 text-sm leading-5 text-rose-700 dark:text-rose-400">{authError || 'Your account is suspended. Contact support for help accessing your workspace.'}</div>}
             {isSignIn && <><button type="button" onClick={handleGoogle} disabled={loading} className="flex w-full items-center justify-center gap-3 rounded-2xl border border-border bg-white dark:bg-card px-4 py-3.5 text-sm font-semibold text-text shadow-[0_5px_16px_-10px_rgba(18,12,43,0.35)] transition-all hover:border-primary/30 hover:bg-surface hover:shadow-soft active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-60"><GoogleIcon /> Continue With Google</button><Divider label="or continue with email" /><form className="space-y-5" onSubmit={handleSignIn}><div><label htmlFor="signin-email" className="mb-2 block text-sm font-semibold text-text">Email</label><Input id="signin-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" autoComplete="email" required /></div><PasswordField label="Password" value={password} onChange={setPassword} placeholder="Enter your password" autoComplete="current-password" /><div className="flex items-center justify-end"><button type="button" onClick={() => switchTab('forgot')} className="text-sm font-semibold text-primary transition-colors hover:text-primary/75 hover:underline">Forgot Password?</button></div><Button type="submit" size="lg" disabled={!email || !password} loading={loading} className="w-full">Sign In <ArrowRight className="h-4 w-4" /></Button></form><p className="mt-6 text-center text-sm text-text-muted">Don&apos;t have an account? <button type="button" onClick={() => switchTab('signup')} className="font-semibold text-primary hover:underline">Create Account</button></p></>}
             {isSignUp && <><button type="button" onClick={handleGoogle} disabled={loading} className="flex w-full items-center justify-center gap-3 rounded-2xl border border-border bg-white dark:bg-card px-4 py-3.5 text-sm font-semibold text-text shadow-[0_5px_16px_-10px_rgba(18,12,43,0.35)] transition-all hover:border-primary/30 hover:bg-surface hover:shadow-soft active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-60"><GoogleIcon /> Continue With Google</button><Divider label="or create with email" /><form className="space-y-5" onSubmit={handleSignUp}><div><label htmlFor="signup-name" className="mb-2 block text-sm font-semibold text-text">Name</label><Input id="signup-name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Your name" autoComplete="name" required /></div><div><label htmlFor="signup-email" className="mb-2 block text-sm font-semibold text-text">Email</label><Input id="signup-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" autoComplete="email" required /></div><PasswordField label="Password" value={password} onChange={setPassword} placeholder="At least 8 characters" autoComplete="new-password" /><p className="-mt-2 text-xs leading-5 text-text-subtle">Use at least 8 characters with a letter and a number.</p><Button type="submit" size="lg" disabled={!name || !email || !password} loading={loading} className="w-full">Create Account <ArrowRight className="h-4 w-4" /></Button></form><p className="mt-6 text-center text-sm text-text-muted">Already have an account? <button type="button" onClick={() => switchTab('signin')} className="font-semibold text-primary hover:underline">Sign In</button></p></>}
             {isForgot && <><>{resetSent ? <div className="rounded-2xl border border-emerald-200 dark:border-emerald-500/25 bg-emerald-50 dark:bg-emerald-500/10 p-4 text-sm leading-6 text-emerald-700 dark:text-emerald-400"><p className="font-semibold text-emerald-800 dark:text-emerald-300">Check your inbox</p><p className="mt-1">If an account exists for that email, we sent a password reset link.</p>{devResetLink && <Link href={devResetLink} className="mt-3 inline-flex font-semibold underline underline-offset-2">Open reset link</Link>}</div> : <form className="space-y-5" onSubmit={handleForgot}><div><label htmlFor="forgot-email" className="mb-2 block text-sm font-semibold text-text">Email</label><Input id="forgot-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" autoComplete="email" required /></div><Button type="submit" size="lg" disabled={!email} loading={loading} className="w-full">Send Reset Link <ArrowRight className="h-4 w-4" /></Button></form>}</><button type="button" onClick={() => switchTab('signin')} className="mx-auto mt-6 flex items-center gap-2 text-sm font-semibold text-primary hover:underline"><ArrowLeft className="h-4 w-4" /> Back To Sign In</button></>}
