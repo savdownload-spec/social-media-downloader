@@ -24,11 +24,12 @@ export default async function AdminUserPage({ params }: { params: { id: string }
     },
   });
   if (!user) notFound();
+  const { password: _password, passwordChangedAt: _passwordChangedAt, ...safeUser } = user;
 
   return (
     <AdminUserDetail
       user={{
-        ...user,
+        ...safeUser,
         createdAt: user.createdAt.toISOString(),
         updatedAt: user.updatedAt.toISOString(),
         emailVerified: user.emailVerified?.toISOString() ?? null,

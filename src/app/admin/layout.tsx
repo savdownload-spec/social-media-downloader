@@ -6,7 +6,7 @@ import { AdminShell } from '@/components/admin/AdminShell';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) redirect('/login');
+  if (!session?.user?.id) redirect('/login?callbackUrl=%2Fadmin');
 
   // Always re-read the role from the DB on every admin page load.
   // The JWT role claim is stamped at sign-in and can be up to 30 days stale —

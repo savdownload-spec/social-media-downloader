@@ -143,14 +143,19 @@ export function AdminSettingsClient() {
     const otherSettings = Object.fromEntries(
       Object.entries(settings).filter(([key]) => key !== 'maintenance_mode'),
     );
-    const res = await fetch('/api/admin/settings', {
-      method: 'PUT', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(otherSettings),
-    });
-    const d = await res.json().catch(() => null);
-    if (d?.ok) success('Settings saved');
-    else err('Save failed', d?.error);
-    setSaving(false);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(otherSettings),
+      });
+      const d = await res.json().catch(() => null);
+      if (!res.ok || !d?.ok) throw new Error(d?.error || 'The server could not save settings.');
+      success('Settings saved');
+    } catch (cause) {
+      err('Save failed', cause instanceof Error ? cause.message : undefined);
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (error) return <AdminPage><PageHeader title="Settings" /><ErrorState message="Failed to load settings." /></AdminPage>;

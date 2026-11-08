@@ -79,18 +79,11 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const pricing = await getPricingConfig();
-  // Keep the supplied tag verbatim in the head's opening HTML. Rendering the
-  // async script as JSX lets React hoist it away from its inline initializer.
-  const headHtml = `<script async src="https://www.googletagmanager.com/gtm.js?id=GTM-5SX8RKCS"></script>
-<script>
+  const googleTagInit = `
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-</script>
-<script>${THEME_INIT_SCRIPT}</script>
-<script type="application/ld+json">${jsonLd({
-    '@graph': [organizationSchema(), websiteSchema()],
-  }).__html}</script>`;
+`;
 
   return (
     // suppressHydrationWarning: the blocking script below mutates this
@@ -99,8 +92,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     // only silences the (harmless, expected) mismatch React would otherwise
     // warn about on this one node.
     <html lang="en" className={jakarta.variable} suppressHydrationWarning>
-      {/* Next.js also inserts managed metadata and resource hints into head. */}
-      <head suppressHydrationWarning dangerouslySetInnerHTML={{ __html: headHtml }} />
+      {/* Keep head framework-managed: replacing its innerHTML can remove
+          Next.js stylesheet links during client rendering/recovery. */}
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: googleTagInit }} />
+        <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-5SX8RKCS" />
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={jsonLd({ '@graph': [organizationSchema(), websiteSchema()] })}
+        />
+      </head>
       <body className="font-sans bg-surface text-text antialiased">
         <Providers>
           <PricingProvider value={pricing}>

@@ -104,14 +104,20 @@ export function AdminToolsClient() {
 
   async function updateStatus(slug: string, status: string) {
     setSaving(slug);
-    const res = await fetch(`/api/admin/tools/${slug}`, {
-      method: 'PATCH', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ status }),
-    });
-    const d = await res.json().catch(() => null);
-    if (d?.ok) { success('Tool status updated'); setTools((prev) => prev.map((t) => t.slug === slug ? { ...t, status: d.data?.status ?? status } : t)); }
-    else err('Failed to update status', d?.error);
-    setSaving(null);
+    try {
+      const res = await fetch(`/api/admin/tools/${slug}`, {
+        method: 'PATCH', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      const d = await res.json().catch(() => null);
+      if (!res.ok || !d?.ok) throw new Error(d?.error || 'The server could not save the status.');
+      success('Tool status updated');
+      setTools((prev) => prev.map((t) => t.slug === slug ? { ...t, status: d.data.status, updatedAt: d.data.updatedAt } : t));
+    } catch (cause) {
+      err('Failed to update status', cause instanceof Error ? cause.message : undefined);
+    } finally {
+      setSaving(null);
+    }
   }
 
   function openBatchEditor(tool: Tool) {
@@ -128,8 +134,12 @@ export function AdminToolsClient() {
   }
 
   async function saveBatchLimits(slug: string) {
-    setSaving(slug);
     const codeDefaults = getToolBatchLimits(slug, null);
+    if (Object.values(batchEdits).some((raw) => raw.trim() !== '' && (!/^\d+$/.test(raw) || !Number.isSafeInteger(Number(raw)) || Number(raw) < 1))) {
+      err('Invalid batch limit', 'Enter a positive whole number, or leave blank to use the default.');
+      return;
+    }
+    setSaving(slug);
     const parseField = (key: keyof typeof codeDefaults, raw: string): number | null => {
       const n = parseInt(raw, 10);
       if (!Number.isFinite(n) || n < 1) return null;
@@ -144,19 +154,21 @@ export function AdminToolsClient() {
       batchLimitLifetime: parseField('lifetime', batchEdits.batchLimitLifetime ?? ''),
     };
 
-    const res = await fetch(`/api/admin/tools/${slug}`, {
-      method: 'PATCH', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    const d = await res.json().catch(() => null);
-    if (d?.ok) {
+    try {
+      const res = await fetch(`/api/admin/tools/${slug}`, {
+        method: 'PATCH', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const d = await res.json().catch(() => null);
+      if (!res.ok || !d?.ok) throw new Error(d?.error || 'The server could not save the batch limits.');
       success('Batch limits saved');
-      setTools((prev) => prev.map((t) => t.slug === slug ? { ...t, ...payload, updatedAt: d.data?.updatedAt ?? t.updatedAt } : t));
+      setTools((prev) => prev.map((t) => t.slug === slug ? { ...t, ...payload, updatedAt: d.data.updatedAt } : t));
       setExpanded(null);
-    } else {
-      err('Failed to save batch limits', d?.error);
+    } catch (cause) {
+      err('Failed to save batch limits', cause instanceof Error ? cause.message : undefined);
+    } finally {
+      setSaving(null);
     }
-    setSaving(null);
   }
 
   function resetBatchLimits(slug: string) {

@@ -18,6 +18,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/reviews': 'Reviews',
   '/admin/support': 'Support',
   '/admin/tools': 'Tools',
+  '/admin/ai-image': 'AI Image Generator',
   '/admin/usage': 'Usage',
   '/admin/credits': 'Credits',
   '/admin/subscriptions': 'Subscriptions',
@@ -28,6 +29,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/comments': 'Comments',
   '/admin/reports': 'Reports',
   '/admin/audit': 'Audit Log',
+  '/admin/backups': 'Backup & Restore',
   '/admin/settings': 'Settings',
 };
 
@@ -43,6 +45,8 @@ const QUICK_LINKS: SearchResult[] = [
   { type: 'page', label: 'Users', href: '/admin/users', sub: 'User Management' },
   { type: 'page', label: 'Reviews', href: '/admin/reviews', sub: 'User Management' },
   { type: 'page', label: 'Tools', href: '/admin/tools', sub: 'Product' },
+  { type: 'page', label: 'AI Image Generator', href: '/admin/ai-image', sub: 'Product' },
+  { type: 'page', label: 'Backup & Restore', href: '/admin/backups', sub: 'System' },
   { type: 'page', label: 'Content', href: '/admin/content', sub: 'Content Management' },
   { type: 'page', label: 'Comments', href: '/admin/comments', sub: 'Content Management' },
   { type: 'page', label: 'Settings', href: '/admin/settings', sub: 'System' },

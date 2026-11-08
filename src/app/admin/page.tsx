@@ -1,4 +1,5 @@
 import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { buildMetadata } from '@/lib/seo';
@@ -18,6 +19,10 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);
+  // Layouts and pages can render concurrently. Authorize before this page's
+  // queries and stale-operation reconciliation, not only in the layout.
+  if (!session?.user?.id) redirect('/login?callbackUrl=%2Fadmin');
+  if (session.user.role !== 'ADMIN') redirect('/');
 
   const now = new Date();
   const today = resolveAdminDateRange('1', now).start;

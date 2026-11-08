@@ -86,5 +86,10 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     }
     await writeAuditLog({ adminId: actor.id, adminEmail: actor.email, action: 'support.update', targetType: 'SupportConversation', targetId: params.id, detail: update });
     return ok(updated);
-  } catch (error) { const message = error instanceof z.ZodError ? error.errors[0]?.message : 'Invalid support update.'; return fail(message || 'Invalid support update.'); }
+  } catch (error) {
+    if (error instanceof z.ZodError) return fail(error.errors[0]?.message || 'Invalid support update.');
+    if (error instanceof SyntaxError) return fail('Invalid request body.');
+    console.error('Admin support update failed', { conversationId: params.id, adminId: actor.id, error });
+    return fail('Unable to update the support conversation.', 500);
+  }
 }

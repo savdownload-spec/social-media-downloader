@@ -39,15 +39,20 @@ export function AdminAiImageClient() {
   async function save() {
     if (!config) return;
     setSaving(true);
-    const res = await fetch('/api/admin/ai-image', {
-      method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(config),
-    });
-    const d = await res.json().catch(() => null);
-    if (d?.ok) success('AI Image Generator settings saved.');
-    else err('Save failed', d?.error);
-    setSaving(false);
+    try {
+      const res = await fetch('/api/admin/ai-image', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(config),
+      });
+      const d = await res.json().catch(() => null);
+      if (!res.ok || !d?.ok) throw new Error(d?.error || 'The server could not save AI Image Generator settings.');
+      success('AI Image Generator settings saved.');
+    } catch (cause) {
+      err('Save failed', cause instanceof Error ? cause.message : undefined);
+    } finally {
+      setSaving(false);
+    }
   }
 
   function patch(next: Partial<AiImageConfig>) {

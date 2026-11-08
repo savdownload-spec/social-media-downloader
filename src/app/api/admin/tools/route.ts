@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { catalog } from '@/config/catalog';
+import { PRIVATE_NO_STORE_HEADERS } from '@/lib/admin-auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,24 +13,7 @@ export async function GET(_req: NextRequest) {
   const session = await getServerSession(authOptions);
   if ((session?.user as { role?: string })?.role !== 'ADMIN') return forbidden();
 
-  // Ensure all catalog tools have a ToolConfig row
-  const existingSlugs = await prisma.toolConfig.findMany({ select: { slug: true } });
-  const slugSet = new Set(existingSlugs.map((t) => t.slug));
-  const missing = catalog.filter((t) => !slugSet.has(t.slug));
-  if (missing.length) {
-    await prisma.toolConfig.createMany({
-      data: missing.map((t) => ({
-        slug: t.slug,
-        name: t.name,
-        category: t.group,
-        status: 'LIVE',
-        creditCost: 0,
-        freeLimit: 0,
-      })),
-      skipDuplicates: true,
-    });
-  }
-
+  // Viewing Admin must never provision or change public tool configuration.
   const configs = await prisma.toolConfig.findMany({ orderBy: { name: 'asc' } });
 
   // Admin status totals must reflect the operation ledger at request time.
@@ -58,5 +41,5 @@ export async function GET(_req: NextRequest) {
     usageInProgress: usageMap[c.slug]?.inProgress ?? 0,
   }));
 
-  return NextResponse.json({ ok: true, data: { tools } });
+  return NextResponse.json({ ok: true, data: { tools } }, { headers: PRIVATE_NO_STORE_HEADERS });
 }

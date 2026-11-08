@@ -35,7 +35,7 @@ export async function GET() {
   const stored = await prisma.adminSetting.findMany();
   const result = { ...DEFAULT_SETTINGS };
   for (const s of stored) {
-    if (s.key !== 'pricing_config') result[s.key] = s.value;
+    if (Object.hasOwn(DEFAULT_SETTINGS, s.key)) result[s.key] = s.value;
   }
   return NextResponse.json({ ok: true, data: result }, { headers: PRIVATE_NO_STORE_HEADERS });
 }
@@ -91,16 +91,16 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Estimated USD value per SavCredit must be greater than 0 and no more than 1.' }, { status: 400 });
   }
 
-  // Upsert each setting
-  await Promise.all(
-    Object.entries(parsed.data).map(([key, value]) =>
-      key !== 'pricing_config' && key !== MAINTENANCE_SETTING_KEY
-        ? prisma.adminSetting.upsert({ where: { key }, update: { value }, create: { key, value } })
-        : Promise.resolve()
-    )
-  );
+  // Only this form's settings belong to this write. Other AdminSetting rows
+  // (AI configuration, provider settings, pricing) have their own editors.
+  const settings = Object.fromEntries(Object.entries(parsed.data).filter(
+    ([key]) => Object.hasOwn(DEFAULT_SETTINGS, key) && key !== MAINTENANCE_SETTING_KEY,
+  ));
+  await prisma.$transaction(Object.entries(settings).map(([key, value]) =>
+    prisma.adminSetting.upsert({ where: { key }, update: { value }, create: { key, value } }),
+  ));
 
-  await writeAuditLog({ adminId: admin.id!, adminEmail: admin.email!, action: 'settings.update', detail: parsed.data as Record<string, unknown> });
+  await writeAuditLog({ adminId: admin.id!, adminEmail: admin.email!, action: 'settings.update', detail: settings });
 
-  return NextResponse.json({ ok: true, data: parsed.data }, { headers: PRIVATE_NO_STORE_HEADERS });
+  return NextResponse.json({ ok: true, data: settings }, { headers: PRIVATE_NO_STORE_HEADERS });
 }

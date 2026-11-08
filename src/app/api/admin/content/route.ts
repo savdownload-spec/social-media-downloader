@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
     { excerpt: { contains: search, mode: 'insensitive' } },
     { category: { contains: search, mode: 'insensitive' } },
   ];
-  if (attention === 'needsAttention') where.OR = [...(where.OR as unknown[] ?? []), { seoScore: { lt: 60 } }, { seoScore: null }];
+  if (attention === 'needsAttention') where.AND = [{ OR: [{ seoScore: { lt: 60 } }, { seoScore: null }] }];
   if (attention === 'goodSeo') where.seoScore = { gte: 80 };
   if (attention === 'missingMetaDescription') where.AND = [{ metaDescription: null }, { excerpt: null }];
   if (attention === 'missingFeaturedImage') where.coverImage = null;
@@ -95,6 +95,7 @@ export async function GET(req: NextRequest) {
     title: true,
     excerpt: true,
     content: true,
+    contentJson: true,
     author: true,
     tagsJson: true,
     category: true,
@@ -167,7 +168,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       data: {
-        posts: paged.map(({ contentJson: _contentJson, ...post }) => serialize(post)),
+        posts: paged.map(serialize),
         total,
         page,
         totalPages: Math.ceil(total / pageSize),

@@ -17,6 +17,7 @@ const RUNTIME_CACHE = 'savdown-runtime-v2';
 const CURRENT_CACHES = [SHELL_CACHE, RUNTIME_CACHE];
 
 const OFFLINE_URL = '/offline.html';
+const isAdminPath = (pathname) => pathname === '/admin' || pathname.startsWith('/admin/');
 
 // Only 2xx same-origin responses may enter a cache. Caching 404/500/error
 // pages silently poisons every future request for that URL — this is exactly
@@ -53,6 +54,17 @@ self.addEventListener('activate', (event) => {
           .filter((key) => /\bsavdown-(?:shell|runtime)-/.test(key) && !CURRENT_CACHES.includes(key))
           .map((key) => caches.delete(key)),
       ))
+      // Older workers cached authenticated Admin HTML. Remove only those
+      // entries; public offline pages/assets keep their existing lifecycle.
+      .then(async () => {
+        for (const name of await caches.keys()) {
+          if (!/^savdown-(?:shell|runtime)-/.test(name)) continue;
+          const cache = await caches.open(name);
+          const requests = await cache.keys();
+          await Promise.all(requests.filter((request) => isAdminPath(new URL(request.url).pathname))
+            .map((request) => cache.delete(request)));
+        }
+      })
       .then(() => self.clients.claim()),
   );
 });
@@ -67,7 +79,7 @@ self.addEventListener('fetch', (event) => {
 
   // Always hit the network for API routes and cross-origin requests (proxied
   // media, third-party assets) — never cache these.
-  if (url.origin !== self.location.origin || url.pathname.startsWith('/api/')) {
+  if (url.origin !== self.location.origin || url.pathname.startsWith('/api/') || isAdminPath(url.pathname)) {
     return;
   }
 

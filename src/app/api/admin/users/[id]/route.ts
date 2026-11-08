@@ -183,12 +183,13 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   const merged = summary
     ? { ...user, plan: summary.plan, planCredits: summary.planCredits, purchasedCredits: summary.purchasedCredits, planCreditsResetAt: summary.planCreditsResetAt }
     : user;
+  const { password: _password, passwordChangedAt: _passwordChangedAt, ...safeUser } = merged;
 
   // Serialize dates to ISO strings for the client component
   return NextResponse.json({
     ok: true,
     data: {
-      ...merged,
+      ...safeUser,
       createdAt: merged.createdAt.toISOString(),
       updatedAt: merged.updatedAt.toISOString(),
       emailVerified: merged.emailVerified?.toISOString() ?? null,
