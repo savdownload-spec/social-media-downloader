@@ -143,7 +143,11 @@ export function defineGuide(name: keyof typeof toolGuideEndings, source: GuideSo
     featureIntroduction: source.settings,
     inputHeading: source.mode === 'download' ? 'Supported Links and Source Restrictions' : 'Supported Inputs and Compatibility',
     inputIntroduction: source.limits,
-    reassurance: cards([['Your controls', source.settings], ['Processing and privacy', summaries[source.mode][1]], ['Usage requirements', summaries[source.mode][0]]),
+    reassurance: cards([
+      ['Your controls', source.settings],
+      ['Processing and privacy', summaries[source.mode][1]],
+      ['Usage requirements', summaries[source.mode][0]],
+    ]),
     ctaHref: source.mode === 'unavailable' ? '#related-tools' : '#tool-interface',
     ctaLabel: source.mode === 'unavailable' ? 'Explore Live Tools' : 'Try It Now',
     resources: {
