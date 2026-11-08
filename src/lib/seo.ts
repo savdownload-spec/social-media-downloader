@@ -54,7 +54,7 @@ export function buildMetadata({
       images: [{
         url: ogImage,
         secureUrl: ogImage,
-        type: 'image/png',
+        type: 'image/jpeg',
         width: siteConfig.ogImageWidth,
         height: siteConfig.ogImageHeight,
         alt: siteConfig.ogImageAlt,

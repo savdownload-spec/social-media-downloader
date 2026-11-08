@@ -5,10 +5,10 @@ export const siteConfig = {
     'SavDown is a fast, free video downloader for YouTube, TikTok, Instagram, Facebook, Pinterest, and X. No watermarks, free daily credits, with AI-powered tools on the way.',
   // Public SEO URLs must never inherit a preview deployment or auth origin.
   url: 'https://getsavdown.com',
-  ogImage: '/og-image.png',
-  ogImageWidth: 1731,
-  ogImageHeight: 909,
-  ogImageAlt: 'SavDown — Download Videos, Images & More, with purple video, image, and audio icons.',
+  ogImage: '/og-image.jpg',
+  ogImageWidth: 1200,
+  ogImageHeight: 630,
+  ogImageAlt: 'SavDown — Download Videos, Images & More. Explore Free Tools, with purple video, image, and audio icons.',
   footerDescription:
     'SavDown is the fast, private way to save videos, reels, and thumbnails from the platforms you use every day. No watermarks, no clutter, free daily credits.',
   social: [

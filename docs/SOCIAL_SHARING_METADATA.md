@@ -10,21 +10,23 @@ The public SEO origin is fixed at `https://getsavdown.com`, independent of auth,
 
 ## Official image
 
-- Public URL after deployment: https://getsavdown.com/og-image.png
-- Source: the existing `OG Tag.png` file in Downloads, visually matched to the supplied attachment.
-- Original format: PNG; expected HTTP Content-Type: `image/png`.
-- Actual dimensions read from the file: **1731 × 909**.
-- Size: **1,502,000 bytes**.
-- Source and public copy SHA-256: `26597C133A3732B3B6565A690F02B98D27648CAB46208644B078993690ADECBA`.
-- Alt text: `SavDown — Download Videos, Images & More, with purple video, image, and audio icons.`
+Updated to the replacement image supplied on November 8, 2026. It includes the "Explore Free Tools" call to action and is under 1 MB. The previous PNG asset was removed; all metadata now references the new JPEG URL.
 
-The file was copied byte for byte. No cropping, resizing, compression, regeneration, or UI insertion was performed. OG image metadata includes the absolute URL, identical secure URL, PNG type, measured width/height, and alt text. Twitter includes the same absolute URL and alt text. Blog cover images and article schema image fields remain unchanged; social cards use the official PNG.
+- Public URL after deployment: https://getsavdown.com/og-image.jpg
+- Source: the existing `OG-Tag.jpg` file in Downloads, visually matched to the supplied attachment.
+- Original format: JPEG; expected HTTP Content-Type: `image/jpeg`.
+- Actual dimensions read from the file: **1200 × 630**.
+- Size: **79,658 bytes**.
+- Source and public copy SHA-256: `09EBE850FB8C8C629C9FF84A1BCE4D768D7A2E9C416792F5CBEDB66B977A6F2D`.
+- Alt text: `SavDown — Download Videos, Images & More. Explore Free Tools, with purple video, image, and audio icons.`
+
+The file was copied byte for byte. No cropping, resizing, compression, regeneration, or UI insertion was performed. OG image metadata includes the absolute URL, identical secure URL, JPEG type, measured width/height, and alt text. Twitter includes the same absolute URL and alt text. Blog cover images and article schema image fields remain unchanged; social cards use the official JPEG.
 
 The image is a normal public static asset. The existing middleware excludes file paths and does not require authentication for it; no image route, redirect, or image optimizer was introduced. Production HTTP status, Content-Type, and external crawler access must be confirmed after deployment.
 
 ## Files changed for this task
 
-- `public/og-image.png`: unchanged official image.
+- `public/og-image.jpg`: unchanged official image.
 - `src/config/site.ts`: fixed public origin and official image configuration; removed unverified Twitter metadata handle.
 - `src/lib/seo.ts`: complete shared OG/Twitter metadata and canonical normalization.
 - `src/app/layout.tsx`: shared default metadata for the homepage and site.
@@ -36,7 +38,7 @@ The image is a normal public static asset. The existing middleware excludes file
 - `src/app/maintenance/page.tsx`: accurate maintenance metadata while retaining noindex/nofollow/nocache.
 - `docs/SOCIAL_SHARING_METADATA.md`: implementation report and deployment checklist.
 
-Unrelated pre-existing changes were preserved. No local tests, build, lint, type-check, dev server, or browser test procedures were run. No commit, push, merge, PR, or deployment was performed.
+Unrelated pre-existing changes were preserved. No local tests, build, lint, type-check, dev server, or browser test procedures were run. The initial implementation was committed and pushed as `29de047`. The user also authorized committing and pushing the replacement-image update; production verification remains pending deployment.
 
 ## Coverage and metadata sources
 
@@ -67,9 +69,9 @@ Login, password reset, and maintenance remain non-indexable. Account, workspace,
 
 ## Live verification after deployment
 
-Deploy these changes to the production site serving `getsavdown.com`. No new environment variable or database migration is required. Existing auth environment settings are unaffected. Ensure the production domain serves directly over HTTPS and that hosting protection or firewall rules permit anonymous social crawlers to access public pages and `/og-image.png`.
+Deploy these changes to the production site serving `getsavdown.com`. No new environment variable or database migration is required. Existing auth environment settings are unaffected. Ensure the production domain serves directly over HTTPS and that hosting protection or firewall rules permit anonymous social crawlers to access public pages and `/og-image.jpg`.
 
-1. Open https://getsavdown.com/og-image.png directly. In browser Network tools confirm **HTTP 200**, **Content-Type: image/png**, **no redirect**, and **1731 × 909** dimensions. It must load while signed out.
+1. Open https://getsavdown.com/og-image.jpg directly. In browser Network tools confirm **HTTP 200**, **Content-Type: image/jpeg**, **no redirect**, and **1200 × 630** dimensions. It must load while signed out.
 2. Open the URLs below and use **View Page Source** to inspect the initial HTML. Confirm one canonical link and one consistent set of OG/Twitter fields. The canonical and `og:url` should equal the submitted clean page URL unless an explicit editorial canonical exists.
 3. Check https://getsavdown.com/sitemap.xml and https://getsavdown.com/robots.txt for the official HTTPS domain.
 
@@ -85,7 +87,7 @@ Representative URLs and expected metadata (assuming the YouTube tool is LIVE):
 | https://getsavdown.com/blog | Blog \| SavDown | Downloader guides, creator workflows, format tips, and practical answers for everyday media tasks from SavDown. |
 | https://getsavdown.com/blog/how-to-download-youtube-videos-in-hd-quality | How to Download YouTube Videos in HD Quality (2026) \| SavDown | Learn how to download YouTube videos in HD — what 720p/1080p really means, step-by-step instructions, and fixes for blurry or failed downloads. |
 
-For every row and every platform, the expected image is **https://getsavdown.com/og-image.png**. Published editorial changes can update blog text; configured tool-status badges can update tool titles.
+For every row and every platform, the expected image is **https://getsavdown.com/og-image.jpg**. Published editorial changes can update blog text; configured tool-status badges can update tool titles.
 
 Additional category samples:
 
@@ -98,11 +100,11 @@ https://getsavdown.com/tools/qr-code-generator
 
 Use each representative URL with these platform checks:
 
-- **Facebook Sharing Debugger:** https://developers.facebook.com/tools/debug/ — paste the page URL, select Debug, then Scrape Again after deployment. Compare the fetched title, description, canonical/OG URL, and PNG with the table.
+- **Facebook Sharing Debugger:** https://developers.facebook.com/tools/debug/ — paste the page URL, select Debug, then Scrape Again after deployment. Compare the fetched title, description, canonical/OG URL, and JPEG with the table.
 - **LinkedIn Post Inspector:** https://www.linkedin.com/post-inspector/ — paste the same page URL and select Inspect. Compare the reported metadata and image with the same row.
-- **X Card Validator, where available:** https://cards-dev.twitter.com/validator — submit the same URL. If it is unavailable or does not provide a visual preview for your account, paste the URL into the X composer and wait for the card. Expect `summary_large_image`, the row's title/description, and the official PNG. The canonical remains in the page source even if the card does not show it.
-- **WhatsApp:** paste a clean page URL into a chat with yourself and wait for the preview before sending. Expect the row's title and official PNG; compare description where the client displays it. Inspect canonical/OG URL in page source if the client hides it.
-- **Telegram:** paste the same clean URL into Saved Messages with link previews enabled and wait for the card. Expect the same metadata and PNG. If an old preview persists, request a refresh through Telegram's `@WebpageBot` where available and try again.
+- **X Card Validator, where available:** https://cards-dev.twitter.com/validator — submit the same URL. If it is unavailable or does not provide a visual preview for your account, paste the URL into the X composer and wait for the card. Expect `summary_large_image`, the row's title/description, and the official JPEG. The canonical remains in the page source even if the card does not show it.
+- **WhatsApp:** paste a clean page URL into a chat with yourself and wait for the preview before sending. Expect the row's title and official JPEG; compare description where the client displays it. Inspect canonical/OG URL in page source if the client hides it.
+- **Telegram:** paste the same clean URL into Saved Messages with link previews enabled and wait for the card. Expect the same metadata and JPEG. If an old preview persists, request a refresh through Telegram's `@WebpageBot` where available and try again.
 - **Instagram, Discord, Slack, and other OG consumers:** use the same clean public URLs wherever that product supports link previews. The page supplies the same metadata; the client controls whether it displays a card, description, or cropped thumbnail. Instagram placements do not all display website preview cards.
 
 These are expected results from the implementation, not a claim that production or platform previews have already passed. Platforms may cache old previews and may omit descriptions or crop their displayed thumbnail; the underlying supplied image remains unchanged.
