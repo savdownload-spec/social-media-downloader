@@ -10,6 +10,7 @@ import { DownloaderForm } from '@/components/tools/DownloaderForm';
 import { downloaderPerks } from '@/components/tools/toolPerks';
 import { functionalToolContent } from '@/config/functionalToolContent';
 import { ToolStatusOverlay } from '@/components/tools/ToolStatusOverlay';
+import { getToolGuide } from '@/config/toolGuides';
 
 /** Status values that block the live tool UI. */
 const BLOCKED_STATUSES = new Set(['COMING_SOON', 'MAINTENANCE', 'DISABLED']);
@@ -75,18 +76,19 @@ export function resolveWorkspaceToolPage(slug: string, status?: string): ReactEl
   }
   const tool = toolsBySlug.get(slug);
   if (tool) {
+    const guide = getToolGuide(slug);
     const entry = getCatalogTool(slug);
     if (!entry) return null;
     return (
       <WorkspaceToolShell
         tool={entry}
         content={{
-          tagline: tool.subheadline,
-          about: tool.description,
-          features: downloaderPerks,
-          howTo: tool.howTo.slice(0, 4),
-          faq: tool.faq.slice(0, 4),
-          supportedFormats: tool.supportedFormats,
+          tagline: guide?.description ?? tool.subheadline,
+          about: guide?.introduction ?? tool.description,
+          features: guide ? guide.trust.map((item, index) => ({ icon: downloaderPerks[index % downloaderPerks.length].icon, title: item.title, body: item.description })) : downloaderPerks,
+          howTo: (guide?.howTo ?? tool.howTo).slice(0, 4),
+          faq: (guide?.faq ?? tool.faq).slice(0, 4),
+          supportedFormats: guide?.formats ?? tool.supportedFormats,
         }}
       >
         <DownloaderForm
@@ -112,7 +114,7 @@ export function resolveWorkspaceToolPage(slug: string, status?: string): ReactEl
         <WorkspaceToolShell
           tool={entry}
           content={{
-            about: entry.description,
+            about: getToolGuide(slug)?.introduction ?? entry.description,
             howTo: extra?.howTo,
             faq: extra?.faq?.slice(0, 4),
           }}

@@ -1,3 +1,5 @@
+import { getToolGuide, type ToolPageSlug } from './toolGuides';
+
 /**
  * Central tool registry.
  * Each tool page pulls its config, SEO, and rendering from here so we don't
@@ -14,7 +16,7 @@ export type Platform =
   | 'ai';
 
 export type Tool = {
-  slug: string;
+  slug: ToolPageSlug;
   platform: Platform;
   name: string;
   seoTitle?: string;
@@ -33,7 +35,7 @@ export type Tool = {
   howTo: { title: string; body: string }[];
 };
 
-export const tools: Tool[] = [
+const downloaderDefinitions: Tool[] = [
   /* ─────────────────────────────────────────────────────────────────
      1. YouTube Video Downloader
   ───────────────────────────────────────────────────────────────── */
@@ -1457,7 +1459,23 @@ export const tools: Tool[] = [
     ],
   },
 ];
-export const toolsBySlug = new Map(tools.map((t) => [t.slug, t]));
+/** All consumers, including search and support, see the audited public copy.
+ * Processing identifiers, validation patterns and flags are kept intact. */
+export const tools: Tool[] = downloaderDefinitions.map((tool) => {
+  const guide = getToolGuide(tool.slug);
+  return guide ? {
+    ...tool,
+    seoTitle: `${tool.name} Online`,
+    headline: tool.name,
+    description: guide.description,
+    subheadline: guide.description,
+    supportedFormats: guide.formats,
+    howTo: guide.howTo,
+    faq: guide.faq,
+  } : tool;
+});
+
+export const toolsBySlug = new Map<string, Tool>(tools.map((t) => [t.slug, t]));
 export const toolsByPlatform = tools.reduce<Record<Platform, Tool[]>>(
   (acc, t) => {
     (acc[t.platform] ||= []).push(t);

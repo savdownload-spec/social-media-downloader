@@ -3,11 +3,12 @@ import { siteConfig } from '@/config/site';
 import { tools } from '@/config/tools';
 import { catalog } from '@/config/catalog';
 import { getPublicBlogPosts } from '@/lib/blog';
+import { getToolPageStatuses, isLiveToolPage } from '@/lib/toolPageAvailability';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteConfig.url;
   const now = new Date();
-  const posts = await getPublicBlogPosts();
+  const [posts, toolStatuses] = await Promise.all([getPublicBlogPosts(), getToolPageStatuses()]);
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${base}/`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
@@ -28,7 +29,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const toolSlugs = new Set<string>(catalog.map((tool) => tool.slug));
   for (const tool of tools) toolSlugs.add(tool.slug);
-  const toolRoutes: MetadataRoute.Sitemap = Array.from(toolSlugs, (slug) => ({
+  const toolRoutes: MetadataRoute.Sitemap = Array.from(toolSlugs).filter((slug) => isLiveToolPage(slug, toolStatuses)).map((slug) => ({
     url: `${base}/tools/${slug}`,
     lastModified: now,
     changeFrequency: 'weekly',

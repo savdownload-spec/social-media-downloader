@@ -5,10 +5,14 @@ import {
 } from 'lucide-react';
 import { Section, SectionHeading } from '@/components/layout/Section';
 import { toolContent } from '@/config/toolContent';
+import { getToolGuide } from '@/config/toolGuides';
+import type { ToolGuide } from '@/config/toolGuide';
+import { getPublicBlogPosts } from '@/lib/blog';
 import { ToolContentNav, type ToolContentNavItem } from './ToolContentNav';
 
 type ToolLongContentSectionProps = {
   slug: string;
+  guide?: ToolGuide;
 };
 
 const contentNavItems: ToolContentNavItem[] = [
@@ -62,14 +66,18 @@ function toDisplayTitle(value: string) {
 }
 
 /**
- * Renders the ~1,000+ word SEO content block for a tool, below the FAQ and
- * supported-formats sections. If no content is configured for the slug, the
- * component renders nothing (silent no-op).
+ * Render the approved master composition with independently authored content.
+ * The master retains its original copy and navigation; other guides supply
+ * capability-specific headings, resources, policy cards and anchored CTAs.
  */
-export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
-  const content = toolContent[slug];
-  if (!content) return null;
-
+export async function ToolLongContentSection({ slug, guide = getToolGuide(slug) }: ToolLongContentSectionProps) {
+  const configured = guide ?? toolContent[slug];
+  if (!configured) return null;
+  const articles = guide ? (await getPublicBlogPosts()).filter((post) => post.toolSlug === slug && !post.noIndex).slice(0, 3) : [];
+  const content = articles.length && configured.resources ? {
+    ...configured,
+    resources: { ...configured.resources, guides: articles.map((post) => ({ label: post.title, href: `/blog/${post.slug}`, description: post.excerpt })) },
+  } : configured;
   return (
     <>
       {/* Introduction + what it does */}
@@ -86,7 +94,17 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
               A complete guide to what this tool does, why people use it, and how to get the
               best results every time.
             </p>
-            <ToolContentNav items={contentNavItems} />
+            <ToolContentNav items={guide ? [
+              ...contentNavItems.slice(0, 3),
+              { id: 'benefits', label: 'Benefits' },
+              { id: 'best-practices', label: 'Best Practices' },
+              { id: 'helpful-resources', label: 'Helpful Resources' },
+              { id: 'supported-inputs', label: 'Supported Inputs' },
+              { id: 'use-cases', label: 'Common Use Cases' },
+              { id: 'tips-and-tricks', label: 'Tips & Tricks' },
+              ...contentNavItems.slice(3),
+              { id: 'conclusion', label: 'Conclusion' },
+            ] : contentNavItems} />
           </aside>
           <article className="space-y-10 lg:col-span-7 lg:border-l lg:border-border-light lg:pl-12">
             <div id="introduction" className="scroll-mt-28">
@@ -112,8 +130,8 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
         <div id="key-features" className="scroll-mt-28">
           <SectionHeading
             eyebrow="Key features"
-            title={<>Built To <span className="text-gradient">Do The Job Right.</span></>}
-            description="Every feature exists because someone needed it, and every one of them ships by default, free."
+            title={guide ? <span className="text-gradient">{guide.featureHeading}</span> : <>Built To <span className="text-gradient">Do The Job Right.</span></>}
+            description={guide?.featureIntroduction ?? 'Every feature exists because someone needed it, and every one of them ships by default, free.'}
           />
         </div>
         <div className="mt-14 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -133,7 +151,7 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
       </Section>
 
       {/* Benefits */}
-      <Section variant="muted" containerClassName="max-w-6xl">
+      <Section id={guide ? 'benefits' : undefined} className="scroll-mt-28" variant="muted" containerClassName="max-w-6xl">
         <SectionHeading
           eyebrow="Benefits"
           title={<>Why People <span className="text-gradient">Actually Use It.</span></>}
@@ -156,7 +174,7 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
       </Section>
 
       {/* Best practices */}
-      <Section variant="white" containerClassName="max-w-4xl">
+      <Section id={guide ? 'best-practices' : undefined} className="scroll-mt-28" variant="white" containerClassName="max-w-4xl">
         <SectionHeading
           eyebrow="Best practices"
           title={<>Use It <span className="text-gradient">The Right Way.</span></>}
@@ -175,13 +193,13 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
           </ul>
         </div>
         {content.resources && (
-          <div className="mt-12 border-t border-border-light pt-12">
+          <div id={guide ? 'helpful-resources' : undefined} className="mt-12 border-t border-border-light pt-12 scroll-mt-28">
             <div className="max-w-2xl">
               <p className="text-sm font-semibold uppercase tracking-wider text-gradient inline-block mb-3">
                 Helpful Resources
               </p>
               <h3 className="text-2xl font-bold tracking-tight text-text">
-                YouTube Guides and Official References
+                {guide ? 'Guides and Official References' : 'YouTube Guides and Official References'}
               </h3>
               <p className="mt-4 text-base leading-7 text-text-muted">
                 {content.resources.introduction}
@@ -190,8 +208,17 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
 
             <div className="mt-8 grid gap-8 md:grid-cols-2">
               <div>
-                <h4 className="text-sm font-bold text-text">SavDown Guides</h4>
+                <h4 className="text-sm font-bold text-text">{guide && !content.resources.guides.length ? 'SavDown Service Information' : 'SavDown Guides'}</h4>
                 <ul className="mt-4 space-y-4">
+                  {guide && !content.resources.guides.length && [
+                    { href: '/privacy', label: 'SavDown Privacy Policy', description: 'Review account data, site analytics and service privacy information.' },
+                    { href: '/pricing', label: 'SavDown Plans and Credits', description: 'Review current account allowances and credit options.' },
+                  ].map((resource) => (
+                    <li key={resource.href}>
+                      <Link href={resource.href} className="inline-flex items-center gap-1.5 font-semibold text-primary hover:text-primary-hover">{resource.label}<ArrowRight className="h-4 w-4" /></Link>
+                      <p className="mt-1 text-sm leading-6 text-text-muted">{resource.description}</p>
+                    </li>
+                  ))}
                   {content.resources.guides.map((resource) => (
                     <li key={resource.href}>
                       <Link
@@ -208,7 +235,7 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
               </div>
 
               <div>
-                <h4 className="text-sm font-bold text-text">Official YouTube Information</h4>
+                <h4 className="text-sm font-bold text-text">{guide ? 'Official Documentation' : 'Official YouTube Information'}</h4>
                 <ul className="mt-4 space-y-4">
                   {content.resources.officialReferences.map((resource) => (
                     <li key={resource.href}>
@@ -236,11 +263,11 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
       </Section>
 
       {/* Supported platforms */}
-      <Section variant="default" containerClassName="max-w-4xl">
+      <Section id={guide ? 'supported-inputs' : undefined} className="scroll-mt-28" variant="default" containerClassName="max-w-4xl">
         <SectionHeading
-          eyebrow="Supported platforms"
-          title={<>Works With <span className="text-gradient">Every URL Format.</span></>}
-          description="If the platform publishes a public link to the content, this tool can save it."
+          eyebrow={guide ? 'Supported inputs' : 'Supported platforms'}
+          title={guide ? <span className="text-gradient">{guide.inputHeading}</span> : <>Works With <span className="text-gradient">Every URL Format.</span></>}
+          description={guide?.inputIntroduction ?? 'If the platform publishes a public link to the content, this tool can save it.'}
         />
         <div className="mt-12 flex flex-wrap justify-center gap-2.5">
           {content.supportedPlatforms.map((p) => (
@@ -249,18 +276,18 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-white dark:bg-card border border-border-light shadow-soft text-sm font-medium text-text-muted"
             >
               <CheckCircle2 className="w-3.5 h-3.5 text-accent" />
-              {toDisplayTitle(p)}
+              {guide ? p : toDisplayTitle(p)}
             </span>
           ))}
         </div>
       </Section>
 
       {/* Common use cases */}
-      <Section variant="tinted" containerClassName="max-w-6xl">
+      <Section id={guide ? 'use-cases' : undefined} className="scroll-mt-28" variant="tinted" containerClassName="max-w-6xl">
         <SectionHeading
           eyebrow="Common use cases"
           title={<>Built For <span className="text-gradient">Real Workflows.</span></>}
-          description="How creators, students, marketers, and researchers use this tool in practice."
+          description={guide ? 'Practical applications of the inputs, controls and outputs described above.' : 'How creators, students, marketers, and researchers use this tool in practice.'}
         />
         <div className="mt-14 grid sm:grid-cols-2 gap-5">
           {content.commonUseCases.map((u, i) => (
@@ -281,7 +308,7 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
       </Section>
 
       {/* Tips and tricks */}
-      <Section variant="white" containerClassName="max-w-4xl">
+      <Section id={guide ? 'tips-and-tricks' : undefined} className="scroll-mt-28" variant="white" containerClassName="max-w-4xl">
         <SectionHeading
           eyebrow="Tips & tricks"
           title={<>Power-User <span className="text-gradient">Tips.</span></>}
@@ -314,7 +341,16 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
             <p className="text-base md:text-lg text-ink-muted leading-relaxed">
               {content.whyChoose}
             </p>
-            <div className="mt-8 grid sm:grid-cols-3 gap-4">
+            {guide ? <div className="mt-8 grid sm:grid-cols-3 gap-4">
+              {guide.reassurance.map((item, index) => {
+                const Icon = [Zap, Shield, Users][index % 3];
+                return <div key={item.title} className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                  <Icon className="w-5 h-5 text-gradient-light mb-2" />
+                  <h3 className="text-sm font-bold">{item.title}</h3>
+                  <p className="mt-1 text-xs text-ink-muted leading-relaxed">{item.description}</p>
+                </div>;
+              })}
+            </div> : <div className="mt-8 grid sm:grid-cols-3 gap-4">
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
                 <Zap className="w-5 h-5 text-gradient-light mb-2" />
                 <h4 className="text-sm font-bold">Fast</h4>
@@ -330,13 +366,13 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
                 <h4 className="text-sm font-bold">Free</h4>
                 <p className="mt-1 text-xs text-ink-muted leading-relaxed">No signup, no watermarks, no daily caps.</p>
               </div>
-            </div>
+            </div>}
           </div>
         </div>
       </Section>
 
       {/* Conclusion */}
-      <Section variant="white" containerClassName="max-w-3xl">
+      <Section id={guide ? 'conclusion' : undefined} className="scroll-mt-28" variant="white" containerClassName="max-w-3xl">
         <div className="text-center">
           <p className="text-sm font-semibold uppercase tracking-wider text-gradient inline-block mb-3">
             Conclusion
@@ -349,10 +385,10 @@ export function ToolLongContentSection({ slug }: ToolLongContentSectionProps) {
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
-              href="#"
+              href={guide?.ctaHref ?? '#'}
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
             >
-              Try It Now <ArrowRight className="w-5 h-5" />
+              {guide?.ctaLabel ?? 'Try It Now'} <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
               href="/tools"

@@ -20,6 +20,7 @@ import { catalog } from '@/config/catalog';
 import { toolsBySlug } from '@/config/tools';
 import { functionalToolContent } from '@/config/functionalToolContent';
 import { toolContent } from '@/config/toolContent';
+import { getToolGuide } from '@/config/toolGuides';
 import { blogPosts } from '@/config/blog';
 import { DEFAULT_PRICING } from '@/config/pricing';
 import { homeFaqs } from '@/config/faqs';
@@ -67,7 +68,7 @@ function buildToolDocuments(): SearchDocument[] {
     const guideContent = toolContent[slug];
 
     // Collect formats and platforms
-    const formats: string[] = downloaderTool?.supportedFormats ?? [];
+    const formats: string[] = getToolGuide(slug)?.formats ?? downloaderTool?.supportedFormats ?? [];
     const platforms: string[] = downloaderTool?.platform ? [downloaderTool.platform] : [];
 
     // Collect keywords from all sources

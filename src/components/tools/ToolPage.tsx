@@ -1,6 +1,5 @@
-﻿import Link from 'next/link';
 import { Suspense } from 'react';
-import { CheckCircle2, ChevronRight, Zap } from 'lucide-react';
+import { CheckCircle2, Zap } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { Section, SectionHeading } from '@/components/layout/Section';
 import { FAQSection } from '@/components/ui/FAQSection';
@@ -9,12 +8,17 @@ import { ShareButton } from '@/components/ui/ShareButton';
 import { DownloaderForm } from './DownloaderForm';
 import { ToolLongContentSection } from './ToolLongContent';
 import { downloaderPerks as perks } from './toolPerks';
-import { getCatalogTool, fallbackIcon, catalog } from '@/config/catalog';
+import { getCatalogTool, fallbackIcon } from '@/config/catalog';
 import type { Tool } from '@/config/tools';
 import { jsonLd, faqSchema, softwareAppSchema, breadcrumbSchema, howToSchema } from '@/lib/seo';
 import { siteConfig } from '@/config/site';
+import { requireToolGuide } from '@/config/toolGuides';
+import { RelatedToolSection } from './RelatedToolSection';
 
 export function ToolPageView({ tool }: { tool: Tool }) {
+  const guide = tool.slug === 'youtube-video-downloader' ? undefined : requireToolGuide(tool.slug);
+  const pageContent = guide ? { ...tool, description: guide.description, faq: guide.faq, howTo: guide.howTo, supportedFormats: guide.formats } : tool;
+  const pagePerks = guide ? guide.trust.map((item, index) => ({ icon: perks[index % perks.length].icon, title: item.title, body: item.description })) : perks;
   const url = `${siteConfig.url}/tools/${tool.slug}`;
   const meta = getCatalogTool(tool.slug);
   const group = meta?.group ?? 'Downloaders';
@@ -28,16 +32,16 @@ export function ToolPageView({ tool }: { tool: Tool }) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLd(
-          softwareAppSchema({ name: tool.name, description: tool.description, url }),
+          { ...softwareAppSchema({ name: tool.name, description: pageContent.description, url }), ...(guide ? { offers: undefined, operatingSystem: 'Web browser' } : {}) },
         )}
       />
-      <script
+      {!guide && <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLd(faqSchema(tool.faq))}
-      />
+      />}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={jsonLd(howToSchema(`How to use ${tool.name}`, tool.howTo))}
+        dangerouslySetInnerHTML={jsonLd(howToSchema(`How to use ${tool.name}`, pageContent.howTo))}
       />
       <script
         type="application/ld+json"
@@ -75,19 +79,19 @@ export function ToolPageView({ tool }: { tool: Tool }) {
             </span>
             <div className="mt-5 flex items-center justify-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-light text-xs font-semibold text-accent-hover">
-                <Zap className="w-3.5 h-3.5" /> Free tool, no signup
+                <Zap className="w-3.5 h-3.5" /> {guide ? 'Account-based credits' : 'Free tool, no signup'}
               </span>
               <ShareButton url={url} />
             </div>
             <h1 className="mt-5 type-page-title text-text">
-              {tool.headline}
+              {guide ? tool.name : tool.headline}
             </h1>
             <p className="mt-5 type-body-large text-text-muted">
-              {tool.subheadline}
+              {guide?.description ?? tool.subheadline}
             </p>
           </div>
 
-          <div className="mt-10 max-w-2xl mx-auto text-left">
+          <div id={guide ? 'tool-interface' : undefined} className="mt-10 max-w-2xl mx-auto text-left scroll-mt-28">
             <Suspense fallback={<div className="h-16 bg-white dark:bg-card border border-border rounded-3xl shadow-soft-xl animate-pulse" />}>
               <DownloaderForm
                 tool={{
@@ -102,7 +106,7 @@ export function ToolPageView({ tool }: { tool: Tool }) {
           </div>
 
           <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
-            {perks.map((p) => (
+            {pagePerks.map((p) => (
               <div key={p.title} className="flex flex-col items-center text-center gap-2 p-6 bg-white/70 dark:bg-card/70 backdrop-blur border border-border-light rounded-2xl shadow-soft">
                 <div className="w-11 h-11 rounded-xl bg-gradient-brand flex items-center justify-center shadow-glow-lg">
                   <p.icon className="w-5 h-5 text-white" />
@@ -121,12 +125,12 @@ export function ToolPageView({ tool }: { tool: Tool }) {
           eyebrow="How it works"
           title={
             <>
-              Done In <span className="text-gradient">{tool.howTo.length} Simple Steps.</span>
+              Done In <span className="text-gradient">{pageContent.howTo.length} Simple Steps.</span>
             </>
           }
         />
         <div className="mt-14 flex flex-wrap justify-center gap-4">
-          {tool.howTo.map((step, i) => (
+          {pageContent.howTo.map((step, i) => (
             <div
               key={step.title}
               className="group w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(25%-0.75rem)] min-w-[200px] max-w-xs p-6 bg-white dark:bg-card border border-border rounded-2xl shadow-soft hover:shadow-soft-lg hover:-translate-y-1 transition-all duration-300"
@@ -147,10 +151,10 @@ export function ToolPageView({ tool }: { tool: Tool }) {
       <Section variant="default">
         <SectionHeading
           eyebrow="Supported formats"
-          title={<>Pick Your <span className="text-gradient">Quality.</span></>}
+          title={guide ? <>Review <span className="text-gradient">Available Outputs.</span></> : <>Pick Your <span className="text-gradient">Quality.</span></>}
         />
         <div className="mt-12 flex flex-wrap justify-center gap-3">
-          {tool.supportedFormats.map((f) => (
+          {pageContent.supportedFormats.map((f) => (
             <div
               key={f}
               className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white dark:bg-card border border-border shadow-soft hover:border-primary/40 hover:shadow-soft-md transition-all"
@@ -163,59 +167,12 @@ export function ToolPageView({ tool }: { tool: Tool }) {
       </Section>
 
       {/* FAQ */}
-      <FAQSection items={tool.faq} variant="white" />
+      <FAQSection items={pageContent.faq} variant="white" />
 
       {/* ── Similar Tools (related downloads in the same group) ── */}
-      {(() => {
-        const meta = getCatalogTool(tool.slug);
-        if (!meta) return null;
-        const youtubeVideoRelatedSlugs = [
-          'youtube-shorts-downloader',
-          'youtube-thumbnail-downloader',
-          'youtube-to-mp3',
-        ];
-        const related = tool.slug === 'youtube-video-downloader'
-          ? youtubeVideoRelatedSlugs
-              .map((slug) => getCatalogTool(slug))
-              .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry))
-          : catalog
-              .filter((t) => t.group === meta.group && t.slug !== tool.slug)
-              .slice(0, 6);
-        if (related.length === 0) return null;
-        return (
-          <Section variant="default">
-            <SectionHeading
-              eyebrow={`More ${meta.group === 'Downloaders' ? 'downloaders' : `${meta.group.toLowerCase()} tools`}`}
-              title={<>Try <span className="text-gradient">Another Tool.</span></>}
-              description="More from the same category, every tool on SavDown is free, no signup, no watermarks."
-            />
-            <div className="mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {related.map((r) => {
-                const RIcon = r.icon;
-                return (
-                  <Link
-                    key={r.slug}
-                    href={`/tools/${r.slug}`}
-                    className="group flex flex-col h-full bg-white dark:bg-card border border-border rounded-2xl p-7 shadow-soft hover:shadow-soft-lg hover:-translate-y-1 hover:border-primary/30 transition-all duration-300"
-                  >
-                    <div className="flex items-start justify-between">
-                      <span className={`w-12 h-12 rounded-xl ${r.tile} flex items-center justify-center group-hover:scale-105 transition-transform`}>
-                        <RIcon className="w-6 h-6" />
-                      </span>
-                      <ChevronRight className="w-5 h-5 text-text-subtle opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-                    </div>
-                    <h3 className="mt-5 font-bold text-text group-hover:text-primary transition-colors">{r.name}</h3>
-                    <p className="mt-2 text-sm text-text-muted leading-relaxed">{r.description}</p>
-                  </Link>
-                );
-              })}
-            </div>
-          </Section>
-        );
-      })()}
+      <RelatedToolSection slug={tool.slug} />
 
-      {/* ── Long-form SEO content (~1,000+ words) ─────────────── */}
-      <ToolLongContentSection slug={tool.slug} />
+      <ToolLongContentSection slug={tool.slug} guide={guide} />
     </>
   );
 }

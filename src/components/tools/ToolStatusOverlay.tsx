@@ -1,10 +1,9 @@
 import Link from 'next/link';
-import { Clock, Wrench, XCircle, ArrowRight, ArrowUpRight } from 'lucide-react';
+import { Clock, Wrench, XCircle, ArrowRight } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
-import { Section, SectionHeading } from '@/components/layout/Section';
-import { Reveal } from '@/components/ui/Reveal';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
-import { catalog, type CatalogTool } from '@/config/catalog';
+import type { CatalogTool } from '@/config/catalog';
+import { RelatedToolSection } from './RelatedToolSection';
 
 interface ToolStatusOverlayProps {
   status: string;
@@ -19,10 +18,6 @@ interface ToolStatusOverlayProps {
  * so visitors can still find useful tools.
  */
 export function ToolStatusOverlay({ status, toolName, tool }: ToolStatusOverlayProps) {
-  const related = tool
-    ? catalog.filter((t) => t.group === tool.group && t.slug !== tool.slug).slice(0, 6)
-    : [];
-
   const groupLabel = tool
     ? tool.group === 'Downloaders'
       ? 'Social Media Downloaders'
@@ -85,7 +80,7 @@ export function ToolStatusOverlay({ status, toolName, tool }: ToolStatusOverlayP
           </Container>
         </section>
 
-        <RelatedTools related={related} group={tool?.group} />
+        {tool && <RelatedToolSection slug={tool.slug} />}
       </>
     );
   }
@@ -132,7 +127,7 @@ export function ToolStatusOverlay({ status, toolName, tool }: ToolStatusOverlayP
           </Container>
         </section>
 
-        <RelatedTools related={related} group={tool?.group} />
+        {tool && <RelatedToolSection slug={tool.slug} />}
       </>
     );
   }
@@ -178,38 +173,8 @@ export function ToolStatusOverlay({ status, toolName, tool }: ToolStatusOverlayP
         </Container>
       </section>
 
-      <RelatedTools related={related} group={tool?.group} />
+      {tool && <RelatedToolSection slug={tool.slug} />}
     </>
   );
 }
 
-function RelatedTools({ related, group }: { related: CatalogTool[]; group?: string }) {
-  if (related.length === 0) return null;
-  return (
-    <Section variant="white">
-      <SectionHeading
-        eyebrow={group ? `More ${group} tools` : 'More tools'}
-        title={<>Ready To Use <span className="text-gradient">Right Now.</span></>}
-      />
-      <div className="mt-14 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {related.map((r) => (
-          <Reveal key={r.slug}>
-            <Link
-              href={`/tools/${r.slug}`}
-              className="group flex flex-col h-full bg-white dark:bg-card border border-border rounded-2xl p-7 shadow-soft hover:shadow-soft-lg hover:-translate-y-1 hover:border-primary/30 transition-all duration-300"
-            >
-              <div className="flex items-start justify-between">
-                <span className={`w-12 h-12 rounded-xl ${r.tile} flex items-center justify-center group-hover:scale-105 transition-transform`}>
-                  <r.icon className="w-6 h-6" />
-                </span>
-                <ArrowUpRight className="w-5 h-5 text-text-subtle opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-              </div>
-              <h3 className="mt-5 font-bold text-text group-hover:text-primary transition-colors">{r.name}</h3>
-              <p className="mt-2 text-sm text-text-muted leading-relaxed">{r.description}</p>
-            </Link>
-          </Reveal>
-        ))}
-      </div>
-    </Section>
-  );
-}

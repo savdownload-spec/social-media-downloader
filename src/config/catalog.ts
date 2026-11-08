@@ -10,11 +10,12 @@ import {
 } from 'lucide-react';
 import { toolsBySlug } from '@/config/tools';
 import { getFunctionalTool } from '@/config/functionalTools';
+import { getToolGuide, type ToolPageSlug } from '@/config/toolGuides';
 
 export type ToolGroup = 'Downloaders' | 'Image' | 'Video' | 'PDF' | 'AI' | 'SEO' | 'Utility';
 
 export type CatalogTool = {
-  slug: string;
+  slug: ToolPageSlug;
   name: string;
   group: ToolGroup;
   description: string;
@@ -136,7 +137,7 @@ export const catalog: CatalogTool[] = [
   ...aiTools,
   ...seoTools,
   ...utilityTools,
-];
+].map((tool) => ({ ...tool, description: getToolGuide(tool.slug)?.description ?? tool.description }));
 
 export const HOMEPAGE_DESKTOP_LIMIT = 32;
 export const HOMEPAGE_MOBILE_LIMIT = 10;
@@ -164,7 +165,7 @@ export function groupFromSlug(slug: string): ToolGroup | undefined {
   return toolGroups.find((g) => g.toLowerCase() === slug.toLowerCase());
 }
 
-export const catalogBySlug = new Map(catalog.map((t) => [t.slug, t]));
+export const catalogBySlug = new Map<string, CatalogTool>(catalog.map((t) => [t.slug, t]));
 
 export function getCatalogTool(slug: string): CatalogTool | undefined {
   return catalogBySlug.get(slug);

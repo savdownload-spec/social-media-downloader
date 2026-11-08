@@ -5,6 +5,7 @@ import { isFunctionalTool } from '@/config/functionalTools';
 import { resolveToolPage } from '@/components/tools/resolveToolPage';
 import { buildMetadata } from '@/lib/seo';
 import { prisma } from '@/lib/prisma';
+import { getToolGuide } from '@/config/toolGuides';
 
 // This route used generateStaticParams() + dynamicParams = false to try to
 // prerender every tool page at build time, but it only ever returned
@@ -34,17 +35,19 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     select: { status: true },
   }).catch(() => null);
   const status = config?.status ?? 'LIVE';
+  const guide = getToolGuide(params.slug);
 
   const tool = toolsBySlug.get(params.slug);
   if (tool) {
     const badge = STATUS_BADGE[status];
-    const baseTitle = tool.seoTitle ?? tool.name;
+    const baseTitle = guide ? `${tool.name} Online` : tool.seoTitle ?? tool.name;
     const title = badge ? `${baseTitle} ${badge}` : baseTitle;
     return buildMetadata({
       title,
-      description: tool.description,
+      description: guide?.description ?? tool.description,
       path: `/tools/${tool.slug}`,
       keywords: tool.keywords,
+      noIndex: Boolean(STATUS_BADGE[status]),
     });
   }
   const entry = getCatalogTool(params.slug);
@@ -58,13 +61,14 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     } else if (!isFunctionalTool(params.slug)) {
       title = `${entry.name} (Coming Soon)`;
     } else {
-      title = entry.name;
+      title = `${entry.name} Online`;
     }
     return buildMetadata({
       title,
-      description: entry.description,
+      description: guide?.description ?? entry.description,
       path: `/tools/${entry.slug}`,
       keywords: entry.keywords,
+      noIndex: Boolean(STATUS_BADGE[status]) || !isFunctionalTool(params.slug),
     });
   }
   return {};
