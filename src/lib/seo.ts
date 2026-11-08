@@ -5,35 +5,33 @@ type SeoInput = {
   title: string;
   description: string;
   path?: string;
-  image?: string;
   keywords?: string[];
   noIndex?: boolean;
   noFollow?: boolean;
-  type?: 'website' | 'article';
-  publishedTime?: string;
-  modifiedTime?: string;
   author?: string;
 };
 
-function absoluteUrl(value: string) {
-  return value.startsWith('http') ? value : `${siteConfig.url}${value}`;
+export function canonicalUrl(value: string) {
+  const url = new URL(value, `${siteConfig.url}/`);
+  if (['savdown.com', 'www.savdown.com', 'www.getsavdown.com', 'getsavdown.com'].includes(url.hostname)) {
+    url.protocol = 'https:';
+    url.host = new URL(siteConfig.url).host;
+  }
+  return url.toString();
 }
 
 export function buildMetadata({
   title,
   description,
   path = '/',
-  image,
   keywords = [],
   noIndex = false,
   noFollow = false,
-  type = 'website',
-  publishedTime,
-  modifiedTime,
   author,
 }: SeoInput): Metadata {
-  const url = absoluteUrl(path);
-  const ogImage = absoluteUrl(image ?? '/og-default.svg');
+  const url = canonicalUrl(path);
+  const ogImage = `${siteConfig.url}${siteConfig.ogImage}`;
+  const socialTitle = title.includes(siteConfig.name) ? title : `${title} | ${siteConfig.name}`;
   const authors = author ? [{ name: author }] : [{ name: siteConfig.name }];
 
   return {
@@ -47,20 +45,26 @@ export function buildMetadata({
     // can additionally nofollow an otherwise-indexable page.
     robots: { index: !noIndex, follow: noFollow ? false : !noIndex },
     openGraph: {
-      type,
+      type: 'website',
       url,
-      title,
+      title: socialTitle,
       description,
       siteName: siteConfig.name,
-      images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
-      ...(type === 'article' ? { publishedTime, modifiedTime, authors: authors.map((entry) => entry.name) } : {}),
+      locale: 'en_US',
+      images: [{
+        url: ogImage,
+        secureUrl: ogImage,
+        type: 'image/png',
+        width: siteConfig.ogImageWidth,
+        height: siteConfig.ogImageHeight,
+        alt: siteConfig.ogImageAlt,
+      }],
     },
     twitter: {
       card: 'summary_large_image',
-      title,
+      title: socialTitle,
       description,
-      images: [ogImage],
-      creator: siteConfig.twitterHandle,
+      images: [{ url: ogImage, alt: siteConfig.ogImageAlt }],
     },
     authors,
   };

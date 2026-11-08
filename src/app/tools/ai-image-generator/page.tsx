@@ -1,23 +1,16 @@
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, Check, Image as ImageIcon, Layers3, ShieldCheck, Sparkles, WandSparkles, Zap } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { Section, SectionHeading } from '@/components/layout/Section';
 import { AIImageGenerator } from '@/components/tools/AIImageGenerator';
 import { siteConfig } from '@/config/site';
+import { buildMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata = buildMetadata({
   title: 'AI Image Generator Online | Create Images From Text',
   description: 'Create original images from a text prompt with SavDown AI Image Generator. Choose your ratio, quality, and number of images, then download your results.',
-  alternates: { canonical: `${siteConfig.url}/tools/ai-image-generator` },
-  openGraph: {
-    type: 'website',
-    url: `${siteConfig.url}/tools/ai-image-generator`,
-    title: 'AI Image Generator Online | SavDown',
-    description: 'Create images from your ideas with a fast, simple AI image generator built into SavDown.',
-    siteName: siteConfig.name,
-  },
-};
+  path: '/tools/ai-image-generator',
+});
 
 const faq = [
   ['What is an AI image generator?', 'An AI image generator turns a written description into an original image. Describe the subject, mood, style, and composition you want, and SavDown creates a downloadable result.'],

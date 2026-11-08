@@ -17,7 +17,7 @@ import { getPricingConfig } from '@/lib/pricing-server';
 import { SupportChat } from '@/components/support/SupportChat';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { THEME_INIT_SCRIPT } from '@/lib/theme/theme-init-script';
-import { jsonLd, organizationSchema, websiteSchema } from '@/lib/seo';
+import { buildMetadata, jsonLd, organizationSchema, websiteSchema } from '@/lib/seo';
 import { Analytics } from '@vercel/analytics/next';
 
 const jakarta = Plus_Jakarta_Sans({
@@ -32,16 +32,13 @@ export function generateMetadata(): Metadata {
   const description = 'Fast, free, and easy-to-use tools for downloading content from social media platforms';
 
   return {
-    metadataBase: new URL(siteConfig.url),
+    ...buildMetadata({ title, description, path: '/' }),
     title: {
       default: title,
       template: `%s | ${siteConfig.name}`,
     },
     description,
     keywords: [...siteConfig.keywords],
-    alternates: {
-      canonical: siteConfig.url,
-    },
     // Suppresses Chrome's own native "Translate this page?" prompt, which
     // otherwise pops up on top of our own language dropdown once the
     // Google Website Translator widget swaps the visible text, Google's
@@ -49,20 +46,6 @@ export function generateMetadata(): Metadata {
     // than relying on the browser's automatic offer.
     other: {
       google: 'notranslate',
-    },
-    openGraph: {
-      type: 'website',
-      url: siteConfig.url,
-      title,
-      description,
-      siteName: siteConfig.name,
-      images: [{ url: siteConfig.ogImage, width: 1200, height: 630 }],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      creator: siteConfig.twitterHandle,
     },
     robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
     manifest: '/manifest.webmanifest',

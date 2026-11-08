@@ -1,12 +1,17 @@
 import type { Metadata } from 'next';
 import { Clock3, ShieldCheck, Wrench } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
+import { buildMetadata } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Under Maintenance | SavDown',
-  description: 'SavDown is temporarily unavailable while scheduled maintenance is completed.',
+  ...buildMetadata({
+    title: 'Under Maintenance | SavDown',
+    description: 'SavDown is temporarily unavailable while scheduled maintenance is completed.',
+    path: '/maintenance',
+    noIndex: true,
+  }),
   robots: { index: false, follow: false, nocache: true },
 };
 

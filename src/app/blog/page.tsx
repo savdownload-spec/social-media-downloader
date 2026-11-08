@@ -1,6 +1,13 @@
 import { Container } from '@/components/layout/Container';
 import { BlogListingClient } from '@/components/blog/BlogListingClient';
 import { getPublicBlogPosts } from '@/lib/blog';
+import { buildMetadata } from '@/lib/seo';
+
+export const metadata = buildMetadata({
+  title: 'Blog',
+  description: 'Downloader guides, creator workflows, format tips, and practical answers for everyday media tasks from SavDown.',
+  path: '/blog',
+});
 
 export const dynamic = 'force-dynamic';
 

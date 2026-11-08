@@ -9,7 +9,7 @@ import { BlogPostBody, getHeadingsForPost } from '@/components/blog/BlogPostBody
 import { BlogShare } from '@/components/blog/BlogShare';
 import { BlogSidebar } from '@/components/blog/BlogSidebar';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
-import { buildMetadata, breadcrumbSchema, jsonLd } from '@/lib/seo';
+import { buildMetadata, breadcrumbSchema, canonicalUrl as resolveCanonicalUrl, jsonLd } from '@/lib/seo';
 import { buildFaqSchema, buildHowToSchema } from '@/lib/content-studio/schema';
 import { getPublicBlogPost, getPublicBlogPosts } from '@/lib/blog';
 import { formatDate } from '@/lib/utils';
@@ -29,7 +29,7 @@ function relatedTo(post: Post, candidates: Awaited<ReturnType<typeof getPublicBl
 export async function generateMetadata({ params }: Props) {
   const post = await getPublicBlogPost(params.slug);
   if (!post) return {};
-  return buildMetadata({ title: post.seoTitle, description: post.metaDescription, path: post.canonicalUrl || `/blog/${post.slug}`, keywords: [post.primaryKeyword, ...post.secondaryKeywords, ...post.tags], image: post.ogImage || post.coverImage, type: 'article', publishedTime: post.publishedAt, modifiedTime: post.updatedAt, noIndex: post.noIndex, noFollow: post.noFollow });
+  return buildMetadata({ title: post.seoTitle || post.title, description: post.metaDescription || post.excerpt, path: post.canonicalUrl || `/blog/${post.slug}`, keywords: [post.primaryKeyword, ...post.secondaryKeywords, ...post.tags], noIndex: post.noIndex, noFollow: post.noFollow });
 }
 
 export default async function BlogPostPage({ params }: Props) {
@@ -39,7 +39,7 @@ export default async function BlogPostPage({ params }: Props) {
   const headings = getHeadingsForPost(post);
   const categories = Array.from(new Set(allPosts.map((item) => item.category)));
   const canonicalPath = post.canonicalUrl || `/blog/${post.slug}`;
-  const canonicalUrl = canonicalPath.startsWith('http') ? canonicalPath : `${siteConfig.url}${canonicalPath}`;
+  const canonicalUrl = resolveCanonicalUrl(canonicalPath);
   const image = post.ogImage || `${siteConfig.url}${post.coverImage}`;
   const categoryPath = `/blog?category=${encodeURIComponent(post.category)}`;
   const articleSchema = { '@type': post.schemaType || 'BlogPosting', headline: post.title, description: post.metaDescription, author: { '@type': 'Organization', name: post.author }, datePublished: post.publishedAt, ...(post.updatedAt ? { dateModified: post.updatedAt } : {}), image, keywords: [post.primaryKeyword, ...post.secondaryKeywords, ...post.tags].join(', '), publisher: { '@type': 'Organization', name: siteConfig.name, url: siteConfig.url }, mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalUrl } };
