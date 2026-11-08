@@ -1,0 +1,33 @@
+{
+  "basePath": "/upscaler/esrgan-slim-1.0.0-tf4.11.0/",
+  "files": {
+    "x2/model.json": {
+      "size": 12336,
+      "sha256": "8efb488c2caed0196a6163e3f06798f9245e92623ffd50654a26c372e09150ea"
+    },
+    "x2/group1-shard1of1.bin": {
+      "size": 888300,
+      "sha256": "5cb464ae4d390ce0a771afd5feaf60fbfcdb18ab48a56db98cdf6b88202369de"
+    },
+    "x4/model.json": {
+      "size": 12336,
+      "sha256": "3a2eaa642232567e7d2a2e7638c9704f42f63f355fc656c18aa78bf2da1d903d"
+    },
+    "x4/group1-shard1of1.bin": {
+      "size": 933804,
+      "sha256": "82637daaf3ba024df5e9da2389e8992e7a6e8a992ba6268ce6bc490c92e9516e"
+    },
+    "tfjs-backend-wasm.wasm": {
+      "size": 311123,
+      "sha256": "70a5d516060464e5269f01c74bac1772d6b8ab6cb612acf16b5cdaf61f78d892"
+    },
+    "tfjs-backend-wasm-simd.wasm": {
+      "size": 424594,
+      "sha256": "77ebb28a6d34f371dbbf2086b7f2de8994acd8ea5a3cf1fa24d2c26c840cac7b"
+    },
+    "tfjs-backend-wasm-threaded-simd.wasm": {
+      "size": 435643,
+      "sha256": "c052228d4bef185c27bbe59a9e029570c78bbb9f08b3cb46b597851650373de2"
+    }
+  }
+}

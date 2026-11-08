@@ -28,6 +28,8 @@ const nextConfig = {
   },
   async headers() {
     return [
+      { source: '/upscaler/esrgan-slim-1.0.0-tf4.11.0/:asset*', headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },
+      { source: '/upscaler/esrgan-slim-1.0.0-tf4.11.0/:file*.wasm', headers: [{ key: 'Content-Type', value: 'application/wasm' }] },
       {
         source: '/background-removal/isnet-fp16-v1/:asset*',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
@@ -86,7 +88,7 @@ const nextConfig = {
         ({ request }, callback) => {
           if (
             request &&
-            request.startsWith('onnxruntime-web')
+            (request.startsWith('onnxruntime-web') || request.startsWith('@tensorflow/'))
           ) {
             return callback(null, `commonjs ${request}`);
           }

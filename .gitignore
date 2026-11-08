@@ -50,3 +50,6 @@ prisma/migrations/dev.db*
 public/background-removal/isnet-fp16-v1/*.bin
 public/background-removal/isnet-fp16-v1/*.wasm
 public/background-removal/isnet-fp16-v1/*.mjs
+
+# Verified upscaler assets generated from pinned npm packages.
+public/upscaler/

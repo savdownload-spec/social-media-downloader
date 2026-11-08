@@ -68,7 +68,7 @@ const downloaders: CatalogTool[] = [
 
 const imageTools: CatalogTool[] = [
   { slug: 'background-remover', name: 'Background Remover', group: 'Image', description: 'Remove the background from any image in one click.', icon: Eraser, tile: TILE.violet, keywords: ['background remover', 'remove background from image', 'bg remover free'] },
-  { slug: 'image-upscaler', name: 'Image Upscaler', group: 'Image', description: 'Resize images up to 4× with high-quality browser scaling.', icon: Maximize2, tile: TILE.sky },
+  { slug: 'image-upscaler', name: 'Image Upscaler', group: 'Image', description: 'Enhance images with free local 2× and 4× AI upscaling.', icon: Maximize2, tile: TILE.sky },
   { slug: 'image-enhancer', name: 'Image Enhancer', group: 'Image', description: 'Sharpen, brighten, and enhance photos automatically.', icon: Wand2, tile: TILE.fuchsia },
   { slug: 'image-compressor', name: 'Image Compressor', group: 'Image', description: 'Shrink image file size while keeping quality.', icon: Minimize2, tile: TILE.emerald, keywords: ['image compressor', 'compress image online', 'reduce image size'] },
   { slug: 'image-resizer', name: 'Image Resizer', group: 'Image', description: 'Resize images to any dimension in seconds.', icon: Scaling, tile: TILE.blue, keywords: ['image resizer', 'resize image online', 'change image dimensions'] },
