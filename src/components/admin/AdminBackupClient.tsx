@@ -30,6 +30,7 @@ export function AdminBackupClient() {
   const [creating, setCreating] = useState(false);
   const [progress, setProgress] = useState({ value: 0, message: '' });
   const [completed, setCompleted] = useState<HistoryItem | null>(null);
+  const [backupWarnings, setBackupWarnings] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [previewing, setPreviewing] = useState(false);
@@ -60,12 +61,13 @@ export function AdminBackupClient() {
 
   function toggleCategory(id: BackupCategory) {
     setCompleted(null);
+    setBackupWarnings([]);
     setSelected((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id]);
   }
 
   async function createBackup() {
     if (!selected.length) return;
-    setCreating(true); setCompleted(null); setProgress({ value: 1, message: 'Starting…' });
+    setCreating(true); setCompleted(null); setBackupWarnings([]); setProgress({ value: 1, message: 'Starting…' });
     try {
       const response = await fetch('/api/admin/backups', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ categories: selected }) });
       if (!response.ok || !response.body) {
@@ -84,6 +86,7 @@ export function AdminBackupClient() {
           if (event.phase === 'error') throw new Error(event.message);
           setProgress({ value: event.progress ?? 0, message: event.message ?? '' });
           if (event.backup) setCompleted(event.backup);
+          if (event.warnings) setBackupWarnings(event.warnings as string[]);
         }
         if (chunk.done) break;
       }
@@ -143,11 +146,11 @@ export function AdminBackupClient() {
       <PageHeader title="Backup & Restore" description="Create portable, checksum-verified archives and restore without overwriting existing data." />
 
       <div className="space-y-6">
-        <SectionCard title="Create backup" subtitle="Complete website backup or choose only the data you need">
+        <SectionCard title="Create backup" subtitle="Complete SavDown Data Backup — or choose specific categories">
           <div className="p-5 space-y-5">
-            <button type="button" onClick={() => setSelected(ALL_BACKUP_CATEGORIES)} className={cn('w-full rounded-xl border p-4 text-left transition-colors flex items-start gap-3', allSelected ? 'border-primary/40 bg-primary/[0.05]' : 'border-border-light hover:border-border')}>
+            <button type="button" onClick={() => { setSelected(ALL_BACKUP_CATEGORIES); setBackupWarnings([]); setCompleted(null); }} className={cn('w-full rounded-xl border p-4 text-left transition-colors flex items-start gap-3', allSelected ? 'border-primary/40 bg-primary/[0.05]' : 'border-border-light hover:border-border')}>
               <span className={cn('mt-0.5 h-9 w-9 rounded-lg flex items-center justify-center', allSelected ? 'bg-primary text-white' : 'bg-surface text-text-muted')}><DatabaseBackup className="h-4.5 w-4.5" /></span>
-              <span className="min-w-0"><span className="flex items-center gap-2 text-sm font-semibold text-text">Complete website backup {allSelected && <Check className="h-4 w-4 text-primary" />}</span><span className="mt-1 block text-[12px] text-text-muted">Select every supported database category and all managed uploads. Secrets and authentication credentials are always excluded.</span></span>
+              <span className="min-w-0"><span className="flex items-center gap-2 text-sm font-semibold text-text">Complete SavDown Data Backup {allSelected && <Check className="h-4 w-4 text-primary" />}</span><span className="mt-1 block text-[12px] text-text-muted">Select every supported database category and all managed media uploads. Source code, credentials, temp files, and expired processing outputs are always excluded.</span></span>
             </button>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -170,7 +173,8 @@ export function AdminBackupClient() {
 
             <div className="rounded-lg bg-surface/70 px-4 py-3 text-[12px] text-text-muted"><span className="font-semibold text-text">Included:</span> {selectedSummary || 'Nothing selected'}</div>
             {creating && <div aria-live="polite"><div className="flex justify-between text-[12px] text-text-muted mb-1.5"><span>{progress.message}</span><span>{progress.value}%</span></div><div className="h-2 rounded-full bg-surface overflow-hidden"><div className="h-full bg-primary transition-all duration-300" style={{ width: `${progress.value}%` }} /></div></div>}
-            {completed && <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><span className="flex items-center gap-2 text-[13px] font-medium text-emerald-800"><CheckCircle2 className="h-4 w-4" /> Backup complete · {bytes(completed.size)}</span><a href={`/api/admin/backups/${completed.id}/download`} className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-700 px-3 py-2 text-[12px] font-semibold text-white hover:bg-emerald-800"><Download className="h-3.5 w-3.5" /> Download ZIP</a></div>}
+            {completed && backupWarnings.length > 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] text-amber-900"><p className="font-semibold mb-1">Backup completed with warnings ({backupWarnings.length})</p><ul className="list-disc list-inside space-y-0.5">{backupWarnings.map((warning, index) => <li key={index}>{warning}</li>)}</ul></div>}
+            {completed && <div className={cn('rounded-xl border px-4 py-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between', backupWarnings.length > 0 ? 'border-amber-200 bg-amber-50' : 'border-emerald-200 bg-emerald-50')}><span className={cn('flex items-center gap-2 text-[13px] font-medium', backupWarnings.length > 0 ? 'text-amber-800' : 'text-emerald-800')}><CheckCircle2 className="h-4 w-4" /> Backup complete · {bytes(completed.size)} · {Object.values(completed.recordCounts).reduce((a, b) => a + b, 0).toLocaleString()} records · {completed.fileCount} files</span><a href={`/api/admin/backups/${completed.id}/download`} className={cn('inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-[12px] font-semibold text-white', backupWarnings.length > 0 ? 'bg-amber-700 hover:bg-amber-800' : 'bg-emerald-700 hover:bg-emerald-800')}><Download className="h-3.5 w-3.5" /> Download ZIP</a></div>}
             <Button onClick={createBackup} disabled={!selected.length} loading={creating} size="sm"><Archive className="h-4 w-4" /> Create Backup</Button>
           </div>
         </SectionCard>
@@ -200,7 +204,7 @@ export function AdminBackupClient() {
         </SectionCard>
 
         <SectionCard title="Backup history" subtitle="Stored archives remain downloadable only through an authenticated Admin endpoint" actions={<button onClick={() => void loadHistory()} className="p-1.5 rounded-lg text-text-muted hover:bg-surface" aria-label="Refresh history"><RefreshCw className={cn('h-4 w-4', historyLoading && 'animate-spin')} /></button>}>
-          {historyLoading && !history.length ? <div className="py-12 flex justify-center"><LoaderCircle className="h-5 w-5 animate-spin text-primary" /></div> : !history.length ? <EmptyState icon={HardDrive} title="No backups yet" message="Completed backups and automatic recovery points will appear here." /> : <div className="divide-y divide-border-light">{history.map((item) => <div key={item.id} className="px-5 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><div className="flex items-center gap-2"><FileArchive className="h-4 w-4 text-primary shrink-0" /><p className="text-[13px] font-semibold text-text truncate">{item.fileName}</p>{item.type === 'recovery' && <span className="rounded bg-amber-50 text-amber-700 px-1.5 py-0.5 text-[10px] font-semibold">Recovery point</span>}</div><p className="text-[11px] text-text-muted mt-1 ml-6">{dateTime(item.createdAt)} · {bytes(item.size)} · {item.categories.length} categories · {item.fileCount} files</p></div><div className="flex items-center gap-2 ml-6 sm:ml-0"><a href={`/api/admin/backups/${item.id}/download`} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border-light bg-white px-3 text-[12px] font-medium text-text hover:bg-surface"><Download className="h-3.5 w-3.5" /> Download</a><button onClick={() => void deleteItem(item)} className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-rose-600 hover:bg-rose-50" aria-label={`Delete ${item.fileName}`}><Trash2 className="h-3.5 w-3.5" /></button></div></div>)}</div>}
+          {historyLoading && !history.length ? <div className="py-12 flex justify-center"><LoaderCircle className="h-5 w-5 animate-spin text-primary" /></div> : !history.length ? <EmptyState icon={HardDrive} title="No backups yet" message="Completed backups and automatic recovery points will appear here." /> : <div className="divide-y divide-border-light">{history.map((item) => <div key={item.id} className="px-5 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><div className="flex items-center gap-2"><FileArchive className="h-4 w-4 text-primary shrink-0" /><p className="text-[13px] font-semibold text-text truncate">{item.fileName}</p>{item.type === 'recovery' && <span className="rounded bg-amber-50 text-amber-700 px-1.5 py-0.5 text-[10px] font-semibold">Recovery point</span>}</div><p className="text-[11px] text-text-muted mt-1 ml-6">{dateTime(item.createdAt)} · {bytes(item.size)} · {item.categories.length} categories · {Object.values(item.recordCounts).reduce((a, b) => a + b, 0).toLocaleString()} records · {item.fileCount} files</p></div><div className="flex items-center gap-2 ml-6 sm:ml-0"><a href={`/api/admin/backups/${item.id}/download`} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border-light bg-white px-3 text-[12px] font-medium text-text hover:bg-surface"><Download className="h-3.5 w-3.5" /> Download</a><button onClick={() => void deleteItem(item)} className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-rose-600 hover:bg-rose-50" aria-label={`Delete ${item.fileName}`}><Trash2 className="h-3.5 w-3.5" /></button></div></div>)}</div>}
         </SectionCard>
       </div>
     </AdminPage>

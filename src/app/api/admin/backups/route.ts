@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
           targetType: 'Backup', targetId: id,
           detail: { categories, recordCounts: built.manifest.recordCounts, fileCount: built.manifest.fileCount, size: built.buffer.length },
         });
-        controller.enqueue(line({ phase: 'done', message: 'Backup ready to download', progress: 100, backup: { ...metadata, downloadUrl: `/api/admin/backups/${id}/download` } }));
+        controller.enqueue(line({ phase: 'done', message: 'Backup ready to download', progress: 100, backup: { ...metadata, downloadUrl: `/api/admin/backups/${id}/download` }, warnings: built.warnings }));
       } catch (error) {
         // Do not log Blob URLs, SDK request details, tokens, or archive data.
         console.error('Admin backup failed', error instanceof Error ? error.name : 'BackupError');

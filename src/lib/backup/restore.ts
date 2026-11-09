@@ -51,6 +51,8 @@ const manifestSchema = z.object({
   })).max(MAX_FILES),
   exclusions: z.array(z.string()).max(100),
   limits: z.object({ maxArchiveBytes: z.number(), maxUncompressedBytes: z.number(), maxRowsPerModel: z.number() }),
+  // warnings is optional for forward-compatibility: older archives without this field are still valid.
+  warnings: z.array(z.string()).max(500).optional(),
 });
 
 export type ValidatedArchive = {
@@ -174,6 +176,37 @@ const ALLOWED_FIELDS: Record<string, string[]> = {
 
 const DATE_FIELDS = new Set(['emailVerified', 'planCreditsResetAt', 'publishedAt', 'scheduledAt', 'reportedAt', 'approvedAt', 'moderatedAt', 'currentPeriodEnd', 'paidAt', 'refundedAt', 'lastMessageAt', 'customerLastReadAt', 'adminLastReadAt', 'resolvedAt', 'subscribedAt', 'completedAt', 'qualifiedAt', 'rewardedAt', 'expiresAt', 'createdAt', 'updatedAt']);
 
+// IMPORT_ORDER — FK-safe restoration sequence.
+// Each entry is [exportFileName, prismaModelName].
+//
+// Dependency rationale (must-come-before relationships):
+//  1. users            — root of nearly every FK (userId)
+//  2. posts            — parent of postRevisions
+//  3. postRevisions    — child of posts (postId)
+//  4. pricingSettings  — standalone AdminSetting row (key='pricing_config'), no deps
+//  5. adminSettings    — other AdminSetting rows, no deps
+//  6. toolConfigs      — standalone, no deps
+//  7. contactMessages  — standalone, no deps
+//  8. supportConversations — parent of supportMessages (conversationId)
+//  9. supportMessages  — child of supportConversations; parent of supportAttachments (messageId)
+// 10. supportAttachments — child of supportMessages
+// 11. newsletterSubscribers — standalone, no deps
+// 12. affiliates       — parent of referrals (affiliateId)
+// 13. referrals        — child of affiliates; FK referralId on creditTransactions (SetNull)
+//                         → must come before creditTransactions (position 17)
+// 14. downloads        — FK operationId on creditTransactions (SetNull)
+//                         → must come before creditTransactions (position 17)
+//                         FK operationId on aiImageGenerations (SetNull)
+//                         → must come before aiImageGenerations (position 19)
+// 15. payments         — FK paymentId on creditTransactions (SetNull)
+//                         → must come before creditTransactions (position 17)
+// 16. subscriptions    — no FK into creditTransactions; placed here for logical grouping
+// 17. creditTransactions — depends on referrals (13), downloads (14), payments (15) ✓
+// 18. creditAllocations — FK spendTransactionId → creditTransactions (position 17) ✓
+// 19. aiImageGenerations — FK operationId → downloads (position 14) ✓
+// 20. analyticsEvents  — standalone, no deps
+// 21. reviews          — no deps (userId FK uses SetNull via Prisma skipDuplicates)
+// 22. blogComments     — no deps (userId FK uses SetNull via Prisma skipDuplicates)
 const IMPORT_ORDER: Array<[string, string]> = [
   ['users', 'user'], ['posts', 'post'], ['postRevisions', 'postRevision'],
   ['pricingSettings', 'adminSetting'], ['adminSettings', 'adminSetting'], ['toolConfigs', 'toolConfig'],

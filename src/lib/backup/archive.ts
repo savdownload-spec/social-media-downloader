@@ -33,9 +33,10 @@ export type BackupManifest = {
   media: Array<{ originalUrl: string; archivePath: string; storagePath: string; contentType: string; size: number }>;
   exclusions: string[];
   limits: { maxArchiveBytes: number; maxUncompressedBytes: number; maxRowsPerModel: number };
+  warnings: string[];
 };
 
-export type BuiltBackup = { buffer: Buffer; manifest: BackupManifest; fileName: string };
+export type BuiltBackup = { buffer: Buffer; manifest: BackupManifest; fileName: string; warnings: string[] };
 
 const delegate = (name: string) => (prisma as unknown as Record<string, Delegate>)[name];
 const safeFilePart = (value: string) => value.replace(/[^a-zA-Z0-9._/-]/g, '_').replace(/\.\./g, '_');
@@ -275,11 +276,20 @@ export async function buildBackup(options: {
 
   progress('media', 'Collecting managed media and attachments…', 40);
   const mediaIndex: BackupManifest['media'] = [];
+  const buildWarnings: string[] = [];
   let mediaBytes = 0;
   const sources = await collectMediaSources(data, categories.has('media'));
   for (const [index, source] of sources.entries()) {
-    const buffer = await source.load().catch((error) => { throw new Error(`Media backup failed for ${source.originalUrl}: ${error instanceof Error ? error.message : 'unavailable'}`); });
-    if (buffer.length > MAX_MEDIA_FILE_BYTES) throw new Error(`Managed media ${source.storagePath} exceeds the 10 MB per-file backup limit.`);
+    const buffer = await source.load().catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : 'unavailable';
+      buildWarnings.push(`Media file skipped (${source.storagePath}): ${message}`);
+      return null;
+    });
+    if (!buffer) continue;
+    if (buffer.length > MAX_MEDIA_FILE_BYTES) {
+      buildWarnings.push(`Media file skipped — exceeds 10 MB per-file limit: ${source.storagePath}`);
+      continue;
+    }
     mediaBytes += buffer.length;
     if (mediaBytes > MAX_MEDIA_TOTAL_BYTES) throw new Error('Selected media exceeds the 30 MB serverless backup limit. Create smaller category backups or archive media externally.');
     const archivePath = `media/uploads/${String(index + 1).padStart(5, '0')}-${path.basename(safeFilePart(source.storagePath))}`;
@@ -300,6 +310,7 @@ export async function buildBackup(options: {
     createdBy: options.createdBy, type: options.type ?? 'backup', selectedCategories: selected,
     recordCounts, fileCount: 0, media: mediaIndex, exclusions: BACKUP_EXCLUSIONS,
     limits: { maxArchiveBytes: MAX_ARCHIVE_BYTES, maxUncompressedBytes: MAX_UNCOMPRESSED_BYTES, maxRowsPerModel: MAX_ROWS_PER_MODEL },
+    warnings: buildWarnings,
   };
   add('README.md', portableReadme(manifest));
   add('manifest.json', JSON.stringify(manifest, null, 2));
@@ -325,5 +336,5 @@ export async function buildBackup(options: {
   const date = createdAt.slice(0, 10);
   const suffix = options.type === 'recovery' ? '-recovery' : '';
   progress('storing', 'Saving backup to protected history…', 90);
-  return { buffer, manifest, fileName: `savdown-backup-${date}${suffix}.zip` };
+  return { buffer, manifest, fileName: `savdown-backup-${date}${suffix}.zip`, warnings: buildWarnings };
 }
