@@ -19,6 +19,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { THEME_INIT_SCRIPT } from '@/lib/theme/theme-init-script';
 import { buildMetadata, jsonLd, organizationSchema, websiteSchema } from '@/lib/seo';
 import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -129,6 +130,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </PricingProvider>
         </Providers>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
