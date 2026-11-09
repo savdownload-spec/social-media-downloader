@@ -12,12 +12,12 @@ export const siteConfig = {
   footerDescription:
     'SavDown is the fast, private way to save videos, reels, and thumbnails from the platforms you use every day. No watermarks, no clutter, free daily credits.',
   social: [
-    { label: 'Facebook', href: 'https://www.facebook.com/profile.php?id=61592887680787', icon: 'facebook' },
-    { label: 'Instagram', href: 'https://www.instagram.com/savdownload/?hl=en', icon: 'instagram' },
-    { label: 'X (Twitter)', href: 'https://x.com/SavDownload', icon: 'x' },
-    { label: 'Pinterest', href: 'https://www.pinterest.com/savdownload/_profile/', icon: 'pinterest' },
-    { label: 'LinkedIn', href: 'https://www.linkedin.com/company/savdown/', icon: 'linkedin' },
-    { label: 'Reddit', href: 'https://www.reddit.com/user/SavDownload/', icon: 'reddit' },
+    { label: 'Visit SavDownload on Facebook', href: 'https://www.facebook.com/profile.php?id=61592887680787', icon: 'facebook' },
+    { label: 'Visit SavDownload on Instagram', href: 'https://www.instagram.com/savdownload/?hl=en', icon: 'instagram' },
+    { label: 'Visit SavDownload on X', href: 'https://x.com/SavDownload', icon: 'x' },
+    { label: 'Visit SavDownload on Pinterest', href: 'https://www.pinterest.com/savdownload/_profile/', icon: 'pinterest' },
+    { label: 'Visit SavDownload on LinkedIn', href: 'https://www.linkedin.com/company/savdown/', icon: 'linkedin' },
+    { label: 'Visit SavDownload on Reddit', href: 'https://www.reddit.com/user/SavDownload/', icon: 'reddit' },
   ],
   keywords: [
     'social media downloader',

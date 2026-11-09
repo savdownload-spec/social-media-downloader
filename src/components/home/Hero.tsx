@@ -1,26 +1,11 @@
-'use client';
-
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 import { ArrowRight, Check, Database, ShieldCheck, Star, Sparkles, Users } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
 import { HeroToolkit } from '@/components/home/HeroToolkit';
 import { UniversalUrlInput } from '@/components/home/UniversalUrlInput';
+import { LiveRating } from '@/components/home/LiveRating';
 
 export function Hero() {
-  const [liveRating, setLiveRating] = useState<number | null>(null);
-
-  useEffect(() => {
-    fetch('/api/reviews?limit=1')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.ok && data.data.averageRating != null) {
-          setLiveRating(data.data.averageRating);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
   const trustBadges = [
     "Unlimited Downloads",
     "No Ads",
@@ -54,7 +39,7 @@ export function Hero() {
       iconBg: 'bg-sky-50 dark:bg-sky-500/15',
     },
     {
-      value: liveRating != null ? liveRating.toFixed(1) : '4.9',
+      value: null,
       label: "Rating",
       detail: 'Loved by the community',
       icon: Star,
@@ -90,7 +75,7 @@ export function Hero() {
           </h1>
 
           <p className="mt-6 type-body-large text-text-muted max-w-xl mx-auto">
-            {"Fast, free, and easy-to-use tools for downloading content from social media platforms"}
+            {"SavDown is a free social media downloader that lets you save videos, reels, thumbnails, and images from YouTube, TikTok, Instagram, Facebook, Pinterest, and X. Paste a link, pick your format, and download in seconds. No software to install, no signup required, and no watermarks on your files."}
           </p>
 
           <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -154,8 +139,8 @@ export function Hero() {
                     </div>
                     <div>
                       <dd className="inline-flex items-center gap-1 text-2xl font-bold tracking-tight text-gradient font-display md:text-3xl">
-                        {s.value}
-                        {s.star && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 md:h-4 md:w-4" />}
+                        {s.value === null ? <LiveRating /> : s.value}
+                        {s.star && s.value !== null && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 md:h-4 md:w-4" />}
                       </dd>
                       <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.13em] text-text-muted">{s.label}</p>
                       <p className="mt-1 text-xs text-text-subtle">{s.detail}</p>

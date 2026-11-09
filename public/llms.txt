@@ -1,0 +1,55 @@
+# SavDown
+
+> SavDown is a free web-based tool for downloading videos, images, and audio from social media platforms. It works entirely in the browser with no software installation, no signup required, and no watermarks on downloaded content.
+
+SavDown lets you paste a public link from YouTube, TikTok, Instagram, Facebook, Pinterest, or X (Twitter) and download the media in your preferred format. Beyond social media downloading, the site offers a growing collection of utility tools including image compression, format conversion, background removal, AI image upscaling, PDF merging and splitting, QR code generation and scanning, and more.
+
+The platform is designed for creators, educators, and everyday users who need a fast, private way to save and convert media. Files are processed without being stored on SavDown's servers, and the service is free with daily credits.
+
+## Key Features
+
+- Download videos, reels, shorts, and thumbnails from major social platforms
+- Convert video to MP3 audio
+- Download Instagram photos and profile pictures
+- Image tools: compress, resize, convert, remove background, upscale with AI
+- PDF tools: merge, split, compress, convert to/from JPG, convert to/from Word
+- QR code generator and scanner
+- AI image generation and AI text tools
+- SEO tools including meta tag generators and open graph inspectors
+- No signup required for free tools
+- No watermarks on downloaded content
+- Works on desktop and mobile in modern browsers
+
+## Important Links
+
+- [Homepage](https://getsavdown.com/)
+- [All Tools](https://getsavdown.com/tools)
+- [Pricing](https://getsavdown.com/pricing)
+- [Blog](https://getsavdown.com/blog)
+- [FAQ](https://getsavdown.com/faq)
+- [About Us](https://getsavdown.com/about)
+- [Contact Us](https://getsavdown.com/contact)
+- [Customer Reviews](https://getsavdown.com/reviews)
+- [Affiliate Program](https://getsavdown.com/affiliates)
+
+## Supported Downloaders
+
+- [YouTube Video Downloader](https://getsavdown.com/tools/youtube-video-downloader)
+- [YouTube Shorts Downloader](https://getsavdown.com/tools/youtube-shorts-downloader)
+- [YouTube Playlist Downloader](https://getsavdown.com/tools/youtube-playlist-downloader)
+- [YouTube to MP3](https://getsavdown.com/tools/youtube-to-mp3)
+- [YouTube Thumbnail Downloader](https://getsavdown.com/tools/youtube-thumbnail-downloader)
+- [TikTok Video Downloader](https://getsavdown.com/tools/tiktok-video-downloader)
+- [TikTok to MP3](https://getsavdown.com/tools/tiktok-to-mp3)
+- [Instagram Reels Downloader](https://getsavdown.com/tools/instagram-reels-downloader)
+- [Instagram Photo Downloader](https://getsavdown.com/tools/instagram-photo-downloader)
+- [Facebook Video Downloader](https://getsavdown.com/tools/facebook-video-downloader)
+- [Facebook Reels Downloader](https://getsavdown.com/tools/facebook-reels-downloader)
+- [Pinterest Video Downloader](https://getsavdown.com/tools/pinterest-video-downloader)
+- [Pinterest Image Downloader](https://getsavdown.com/tools/pinterest-image-downloader)
+- [X (Twitter) Video Downloader](https://getsavdown.com/tools/x-video-downloader)
+
+## Contact
+
+- Contact form: https://getsavdown.com/contact
+- Support is available through the in-app chat widget
