@@ -89,7 +89,7 @@ function TocItem({ heading, activeId, depth = 0, expanded, onToggle, mode }: Toc
         <a
           href={`#${heading.id}`}
           onClick={(e) => { e.preventDefault(); scrollToId(heading.id); }}
-          className={`toc-item flex-1 flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm leading-5 transition-colors min-h-[36px]
+          className={`toc-item flex-1 flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm leading-5 transition-colors min-h-[44px]
             ${isActive
               ? 'border-l-2 pl-1.5 font-medium'
               : 'border-l-2 pl-1.5 border-transparent text-text-muted hover:bg-primary-light hover:text-primary'
@@ -103,7 +103,7 @@ function TocItem({ heading, activeId, depth = 0, expanded, onToggle, mode }: Toc
           <button
             type="button"
             onClick={handleCopy}
-            className="shrink-0 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity text-text-muted hover:text-primary"
+            className="shrink-0 p-1 min-h-[44px] min-w-[44px] flex items-center justify-center rounded opacity-0 group-hover:opacity-100 transition-opacity text-text-muted hover:text-primary"
             aria-label={`Copy link to "${heading.title}"`}
             title={copied ? 'Copied!' : 'Copy link'}
           >
@@ -122,7 +122,7 @@ function TocItem({ heading, activeId, depth = 0, expanded, onToggle, mode }: Toc
           <button
             type="button"
             onClick={onToggle}
-            className="shrink-0 p-1 rounded text-text-muted hover:text-primary transition-colors"
+            className="shrink-0 p-1 min-h-[44px] min-w-[44px] flex items-center justify-center rounded text-text-muted hover:text-primary transition-colors"
             aria-label={expanded ? 'Collapse section' : 'Expand section'}
             aria-expanded={expanded}
           >

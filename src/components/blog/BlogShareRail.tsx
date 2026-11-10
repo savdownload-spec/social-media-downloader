@@ -53,7 +53,7 @@ export function BlogShareRail({ title }: BlogShareRailProps) {
           key={btn.label}
           type="button"
           onClick={btn.onClick}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-white dark:bg-card text-text-muted shadow-soft transition-colors hover:border-primary/30 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white dark:bg-card text-text-muted shadow-soft transition-colors hover:border-primary/30 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2"
           style={{ outlineColor: 'rgb(var(--primary) / 0.5)' }}
           aria-label={btn.label}
           title={btn.label}

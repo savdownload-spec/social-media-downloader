@@ -180,7 +180,7 @@ export function BlogShare({ title, description }: BlogShareProps) {
       <button
         type="button"
         onClick={copy}
-        className="inline-flex h-9 min-w-[44px] items-center gap-1.5 rounded-full border border-border bg-white dark:bg-card px-3 text-xs font-semibold text-text-muted transition-colors hover:border-primary/30 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2"
+        className="inline-flex h-9 min-h-[44px] min-w-[44px] items-center gap-1.5 rounded-full border border-border bg-white dark:bg-card px-3 text-xs font-semibold text-text-muted transition-colors hover:border-primary/30 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2"
         style={{ outlineColor: 'rgb(var(--primary) / 0.5)' }}
         aria-label="Copy article link"
         aria-live="polite"
