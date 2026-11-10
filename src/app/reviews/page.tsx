@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
-import { buildMetadata } from '@/lib/seo';
+import { buildMetadata, jsonLd, breadcrumbSchema } from '@/lib/seo';
+import { siteConfig } from '@/config/site';
 
 export const metadata: Metadata = buildMetadata({
   title: 'Reviews',
@@ -14,5 +15,16 @@ export default function ReviewsPage({
 }: {
   searchParams: { review?: string; filter?: string };
 }) {
-  return <ReviewsClient searchParams={searchParams} />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={jsonLd(breadcrumbSchema([
+          { name: 'Home', url: siteConfig.url },
+          { name: 'Reviews', url: `${siteConfig.url}/reviews` },
+        ]))}
+      />
+      <ReviewsClient searchParams={searchParams} />
+    </>
+  );
 }

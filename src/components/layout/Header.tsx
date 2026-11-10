@@ -13,7 +13,8 @@ import { MobileNav } from './MobileNav';
 import { useInstallPwa } from '@/components/pwa/InstallProvider';
 
 export function Header() {
-  const [mobileOpen, setMobileOpen] = useState(false);  const { canInstall, openSheet } = useInstallPwa();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const { canInstall, openSheet } = useInstallPwa();
   const { data: session } = useSession();
   const accountHref = session ? '/account' : '/login';
 
@@ -37,16 +38,16 @@ export function Header() {
           <LanguageSelector variant="header" />
           <Link
             href={accountHref}
-            aria-label={session ? 'Account' : 'Log In'}
+            aria-label={session ? 'Go to your account' : 'Log in to your account'}
             title={session ? 'Account' : 'Log In'}
             className="w-10 h-10 rounded-full overflow-hidden border border-transparent hover:border-border flex items-center justify-center transition-colors shrink-0"
           >
             {session?.user?.image ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={session.user.image} alt="" className="w-full h-full object-cover" />
+              <img src={session.user.image} alt="" width={40} height={40} className="w-full h-full object-cover" />
             ) : (
               <span className="w-full h-full rounded-full hover:bg-primary-light flex items-center justify-center transition-colors">
-                <User className="w-4 h-4 text-text-muted" />
+                <User className="w-4 h-4 text-text-muted" aria-hidden="true" />
               </span>
             )}
           </Link>
@@ -66,7 +67,7 @@ export function Header() {
             aria-label={"Search"}
             className="w-10 h-10 rounded-full hover:bg-primary-light flex items-center justify-center transition-colors"
           >
-            <Search className="w-4 h-4 text-text-muted" />
+            <Search className="w-4 h-4 text-text-muted" aria-hidden="true" />
           </Link>
           <Link
             href={session ? '/workspace' : '/#tools'}
@@ -116,9 +117,9 @@ export function Header() {
                   <Link href={accountHref} onClick={() => setMobileOpen(false)} className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text">
                     {session?.user?.image ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={session.user.image} alt="" className="w-4 h-4 rounded-full object-cover border border-border" />
+                      <img src={session.user.image} alt="" width={16} height={16} className="w-4 h-4 rounded-full object-cover border border-border" />
                     ) : (
-                      <User className="w-4 h-4" />
+                      <User className="w-4 h-4" aria-hidden="true" />
                     )} {session ? 'Account' : 'Log In'}
                   </Link>
                 </div>
