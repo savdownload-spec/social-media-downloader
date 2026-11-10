@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { blogPosts, type BlogPost } from '@/config/blog';
+import { estimateReadingTime } from '@/lib/reading-time';
 
 function parseJsonArray(value: string | null | undefined): string[] {
   if (!value) return [];
@@ -50,11 +51,25 @@ function normalizeDbPost(post: {
   schemaType?: string | null;
   faqJson?: string | null;
   howToJson?: string | null;
+  // Author profile relation — optional for backward compat
+  blogAuthor?: {
+    id: string;
+    name: string;
+    slug: string;
+    profileImage: string | null;
+    role: string;
+    shortBio: string | null;
+    socialsJson: string;
+  } | null;
 }): BlogPost {
   const tags = parseJsonArray(post.tagsJson);
   const secondaryKeywords = parseJsonArray(post.secondaryKeywordsJson);
   const publishedAt = (post.publishedAt ?? post.updatedAt).toISOString().slice(0, 10);
-  const readingTime = post.readingTimeMinutes ? `${post.readingTimeMinutes} min read` : '5 min read';
+  const readingTime = post.readingTimeMinutes
+    ? `${post.readingTimeMinutes} min read`
+    : post.content
+    ? estimateReadingTime(post.content).label
+    : '5 min read';
 
   return {
     slug: post.slug,
@@ -86,6 +101,17 @@ function normalizeDbPost(post: {
     schemaType: post.schemaType || undefined,
     faqItems: parseFaqOrHowTo(post.faqJson),
     howToSteps: parseFaqOrHowTo(post.howToJson),
+    authorProfile: post.blogAuthor
+      ? {
+          id: post.blogAuthor.id,
+          name: post.blogAuthor.name,
+          slug: post.blogAuthor.slug,
+          profileImage: post.blogAuthor.profileImage,
+          role: post.blogAuthor.role,
+          shortBio: post.blogAuthor.shortBio,
+          socialsJson: post.blogAuthor.socialsJson,
+        }
+      : undefined,
   };
 }
 
@@ -137,6 +163,17 @@ export async function getPublicBlogPosts(): Promise<BlogPost[]> {
         schemaType: true,
         faqJson: true,
         howToJson: true,
+        blogAuthor: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            profileImage: true,
+            role: true,
+            shortBio: true,
+            socialsJson: true,
+          },
+        },
       },
     });
 

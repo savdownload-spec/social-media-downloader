@@ -4,11 +4,16 @@ import { tools } from '@/config/tools';
 import { catalog } from '@/config/catalog';
 import { getPublicBlogPosts } from '@/lib/blog';
 import { getToolPageStatuses, isLiveToolPage } from '@/lib/toolPageAvailability';
+import { prisma } from '@/lib/prisma';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteConfig.url;
   const now = new Date();
-  const [posts, toolStatuses] = await Promise.all([getPublicBlogPosts(), getToolPageStatuses()]);
+  const [posts, toolStatuses, authors] = await Promise.all([
+    getPublicBlogPosts(),
+    getToolPageStatuses(),
+    prisma.blogAuthor.findMany({ select: { slug: true, updatedAt: true } }).catch(() => []),
+  ]);
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${base}/`, lastModified: now, changeFrequency: 'daily', priority: 1.0 },
@@ -43,5 +48,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...toolRoutes, ...postRoutes];
+  const authorRoutes: MetadataRoute.Sitemap = authors.map((author) => ({
+    url: `${base}/blog/author/${author.slug}`,
+    lastModified: author.updatedAt,
+    changeFrequency: 'monthly' as const,
+    priority: 0.5,
+  }));
+
+  return [...staticRoutes, ...toolRoutes, ...postRoutes, ...authorRoutes];
 }

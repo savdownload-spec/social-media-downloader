@@ -370,9 +370,53 @@ model Post {
 
   revisions PostRevision[]
 
+  // ── Author profile relation ──────────────────────────────────────────────
+  // The original `author` String field is preserved for backward compat.
+  // `authorId` is nullable so all existing posts remain valid.
+  authorId   String?
+  blogAuthor BlogAuthor? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
   @@index([published, publishedAt])
+  @@index([authorId])
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Blog Author Profiles
+// ─────────────────────────────────────────────────────────────────────────────
+
+model BlogAuthor {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  profileImage String?
+  role         String   @default("Author")
+  shortBio     String?
+  extendedBio  String?  @db.Text
+  expertiseJson String  @default("[]")
+  website      String?
+  socialsJson  String   @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  posts Post[]
+
+  @@index([slug])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Article Feedback
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ArticleFeedback {
+  id        String   @id @default(cuid())
+  postSlug  String
+  helpful   Boolean
+  ipHash    String?
+  createdAt DateTime @default(now())
+
+  @@index([postSlug, helpful])
+  @@index([createdAt])
+}
 model PostRevision {
   id            String   @id @default(cuid())
   postId        String

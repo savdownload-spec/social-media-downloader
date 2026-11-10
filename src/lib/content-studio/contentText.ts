@@ -3,6 +3,7 @@
  * client-side (live editor stats) and server-side (SEO/readability scoring
  * on save), so the numbers shown while writing match what gets persisted.
  */
+import { estimateReadingTime } from '@/lib/reading-time';
 
 export type TiptapNode = {
   type?: string;
@@ -87,11 +88,16 @@ export function analyzeContentJson(doc: TiptapNode | null | undefined) {
     ? plainText.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter(Boolean)
     : [];
 
+  const { minutes: readingTimeMinutes } = estimateReadingTime(plainText, {
+    images: images.length,
+    codeBlocks: 0, // code blocks counted separately via HTML render; plain text has none
+  });
+
   return {
     plainText,
     wordCount: words.length,
     charCount: plainText.length,
-    readingTimeMinutes: Math.max(1, Math.round(words.length / 225)),
+    readingTimeMinutes,
     headings,
     images,
     links,

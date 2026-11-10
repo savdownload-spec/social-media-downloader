@@ -4,23 +4,18 @@ import type { BlogPost } from '@/config/blog';
 import type { BlogHeading } from '@/components/blog/BlogPostBody';
 import { BlogAdSlot } from '@/components/blog/BlogAdSlot';
 import { BlogPromoCard } from '@/components/blog/BlogPromoCard';
+import { TableOfContents } from '@/components/blog/TableOfContents';
 
 export function BlogSidebar({ post, headings, categories }: { post: BlogPost; headings: BlogHeading[]; categories: string[] }) {
   return (
     <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
       {headings.length >= 3 && (
-        <nav aria-label="Table of contents" className="rounded-2xl border border-border bg-white dark:bg-card p-5 shadow-soft">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary"><ListTree className="h-4 w-4" /> In this guide</div>
-          <ol className="mt-4 space-y-1.5">
-            {headings.map((heading, index) => (
-              <li key={heading.id}>
-                <a href={`#${heading.id}`} className={`group flex gap-2 rounded-lg px-2 py-1.5 text-sm leading-5 text-text-muted transition-colors hover:bg-primary-light hover:text-primary ${heading.level === 3 ? 'pl-6 text-[13px]' : ''}`}>
-                  <span className="shrink-0 font-semibold text-primary/75">{String(index + 1).padStart(2, '0')}</span><span>{heading.title}</span>
-                </a>
-              </li>
-            ))}
-          </ol>
-        </nav>
+        <div className="rounded-2xl border border-border bg-white dark:bg-card p-5 shadow-soft">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-primary mb-4">
+            <ListTree className="h-4 w-4" aria-hidden="true" /> In this guide
+          </div>
+          <TableOfContents headings={headings} mode="desktop" />
+        </div>
       )}
       <div className="rounded-2xl border border-border bg-white dark:bg-card p-5 shadow-soft">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Explore topics</p>

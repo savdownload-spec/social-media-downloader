@@ -35,6 +35,7 @@ export type StudioForm = {
   ogTitle: string;
   ogDescription: string;
   scheduledAt: string;
+  authorId: string;
 };
 
 export const EMPTY_STUDIO_FORM: StudioForm = {
@@ -48,6 +49,7 @@ export const EMPTY_STUDIO_FORM: StudioForm = {
   noIndex: false, noFollow: false, metaRobotsAdvanced: '', breadcrumbTitle: '',
   schemaType: 'BlogPosting', faqJson: '[]', howToJson: '[]',
   ogTitle: '', ogDescription: '', scheduledAt: '',
+  authorId: '',
 };
 
 export function parseArray(json: string): string[] {

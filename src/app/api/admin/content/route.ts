@@ -47,6 +47,7 @@ const postFields = {
   ogTitle: z.string().optional(),
   ogDescription: z.string().optional(),
   scheduledAt: z.coerce.date().optional().nullable(),
+  authorId: z.string().optional().nullable(),
 };
 
 export async function GET(req: NextRequest) {
@@ -128,6 +129,7 @@ export async function GET(req: NextRequest) {
     seoScore: true,
     readabilityScore: true,
     wordCount: true,
+    authorId: true,
   } as const;
 
   function countLinks(content: unknown) {

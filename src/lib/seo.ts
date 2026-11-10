@@ -9,6 +9,11 @@ type SeoInput = {
   noIndex?: boolean;
   noFollow?: boolean;
   author?: string;
+  // Article-specific metadata
+  type?: 'website' | 'article';
+  image?: string;
+  publishedTime?: string;
+  modifiedTime?: string;
 };
 
 export function canonicalUrl(value: string) {
@@ -28,11 +33,32 @@ export function buildMetadata({
   noIndex = false,
   noFollow = false,
   author,
+  type = 'website',
+  image,
+  publishedTime,
+  modifiedTime,
 }: SeoInput): Metadata {
   const url = canonicalUrl(path);
-  const ogImage = `${siteConfig.url}${siteConfig.ogImage}`;
+  const ogImageUrl = image ? (image.startsWith('http') ? image : `${siteConfig.url}${image}`) : `${siteConfig.url}${siteConfig.ogImage}`;
+  const ogImage = ogImageUrl;
   const socialTitle = title.includes(siteConfig.name) ? title : `${title} | ${siteConfig.name}`;
   const authors = author ? [{ name: author }] : [{ name: siteConfig.name }];
+
+  const openGraphBase = {
+    url,
+    title: socialTitle,
+    description,
+    siteName: siteConfig.name,
+    locale: 'en_US',
+    images: [{
+      url: ogImage,
+      secureUrl: ogImage,
+      type: 'image/jpeg' as const,
+      width: siteConfig.ogImageWidth,
+      height: siteConfig.ogImageHeight,
+      alt: siteConfig.ogImageAlt,
+    }],
+  };
 
   return {
     title,
@@ -44,22 +70,18 @@ export function buildMetadata({
     // existing caller (none of which pass noFollow); an explicit noFollow
     // can additionally nofollow an otherwise-indexable page.
     robots: { index: !noIndex, follow: noFollow ? false : !noIndex },
-    openGraph: {
-      type: 'website',
-      url,
-      title: socialTitle,
-      description,
-      siteName: siteConfig.name,
-      locale: 'en_US',
-      images: [{
-        url: ogImage,
-        secureUrl: ogImage,
-        type: 'image/jpeg',
-        width: siteConfig.ogImageWidth,
-        height: siteConfig.ogImageHeight,
-        alt: siteConfig.ogImageAlt,
-      }],
-    },
+    openGraph: type === 'article'
+      ? {
+          ...openGraphBase,
+          type: 'article',
+          ...(publishedTime ? { publishedTime } : {}),
+          ...(modifiedTime ? { modifiedTime } : {}),
+          authors: author ? [author] : [],
+        }
+      : {
+          ...openGraphBase,
+          type: 'website',
+        },
     twitter: {
       card: 'summary_large_image',
       title: socialTitle,

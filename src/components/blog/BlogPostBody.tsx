@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { BlogPost } from '@/config/blog';
 import { BlogAdSlot } from '@/components/blog/BlogAdSlot';
+import { TableOfContents } from '@/components/blog/TableOfContents';
 import { renderContentJsonToHtml } from '@/lib/content-studio/render';
 import { analyzeContentJson, type TiptapNode } from '@/lib/content-studio/contentText';
 
@@ -120,24 +121,22 @@ export function BlogPostBody({ post }: { post: BlogPost }) {
   return (
     <div>
       {headings.length >= 3 && (
-        <nav aria-label="Article contents" className="mb-10 rounded-2xl border border-border bg-surface/70 p-5 lg:hidden">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">In this guide</p>
-          <ol className="mt-4 grid gap-2">
-            {headings.map((heading, index) => (
-              <li key={heading.id}>
-                <a href={`#${heading.id}`} className={`flex gap-3 rounded-lg px-2 py-1.5 text-sm leading-5 text-text-muted transition-colors hover:bg-white dark:hover:bg-card-hover hover:text-primary ${heading.level >= 3 ? 'pl-8' : ''}`}>
-                  <span className="font-semibold text-primary">{String(index + 1).padStart(2, '0')}</span>
-                  <span>{heading.title}</span>
-                </a>
-              </li>
-            ))}
-          </ol>
-        </nav>
+        <details className="mb-10 rounded-2xl border border-border bg-surface/70 p-5 lg:hidden">
+          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.18em] text-text-muted list-none flex items-center justify-between gap-2">
+            On This Page
+            <svg className="h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </summary>
+          <div className="mt-4">
+            <TableOfContents headings={headings} mode="mobile" />
+          </div>
+        </details>
       )}
       {usingRichEditor ? (
-        <div className="prose-elegant" dangerouslySetInnerHTML={{ __html: renderContentJsonToHtml(post.contentJson as TiptapNode) }} />
+        <div className="prose-elegant blog-article-content" dangerouslySetInnerHTML={{ __html: renderContentJsonToHtml(post.contentJson as TiptapNode) }} />
       ) : (
-        <div className="prose-elegant">{renderContent(post.content, headings as { title: string; id: string; level: 2 | 3 }[])}</div>
+        <div className="prose-elegant blog-article-content">{renderContent(post.content, headings as { title: string; id: string; level: 2 | 3 }[])}</div>
       )}
       <BlogAdSlot slot="IN_ARTICLE_AD" className="my-10" />
     </div>

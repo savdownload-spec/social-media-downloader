@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Save, Eye, CalendarClock, Send, Check, RefreshCw, AlertCircle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -31,6 +31,7 @@ export type AdminPost = {
   ogTitle?: string | null; ogDescription?: string | null;
   scheduledAt?: string | null; seoScore?: number | null; readabilityScore?: number | null;
   wordCount?: number | null; internalLinks?: number | null; externalLinks?: number | null;
+  authorId?: string | null;
 };
 
 export function postToForm(post: AdminPost): StudioForm {
@@ -50,6 +51,7 @@ export function postToForm(post: AdminPost): StudioForm {
     schemaType: post.schemaType || 'BlogPosting', faqJson: post.faqJson || '[]', howToJson: post.howToJson || '[]',
     ogTitle: post.ogTitle ?? '', ogDescription: post.ogDescription ?? '',
     scheduledAt: post.scheduledAt ? post.scheduledAt.slice(0, 16) : '',
+    authorId: post.authorId ?? '',
   };
 }
 
@@ -126,6 +128,7 @@ export function ContentStudioShell({
     ogTitle: f.ogTitle || undefined,
     ogDescription: f.ogDescription || undefined,
     scheduledAt: f.scheduledAt ? new Date(f.scheduledAt).toISOString() : null,
+    authorId: f.authorId || undefined,
   }), [stats.readingTimeMinutes]);
 
   const persist = useCallback((f: StudioForm, opts?: { publishOverride?: boolean; changeSummary?: string }) => {
@@ -377,6 +380,15 @@ function ArticleHeaderFields({ form, setField, onScheduleClick, scheduling }: {
   onScheduleClick: () => void;
   scheduling: boolean;
 }) {
+  const [authors, setAuthors] = useState<{ id: string; name: string; slug: string }[]>([]);
+
+  useEffect(() => {
+    fetch('/api/admin/authors')
+      .then((r) => r.json())
+      .then((d) => { if (d.ok) setAuthors(d.data); })
+      .catch(() => undefined);
+  }, []);
+
   return (
     <div className="bg-white border border-border-light rounded-xl p-4 lg:p-5 space-y-4">
       <input
@@ -398,7 +410,20 @@ function ArticleHeaderFields({ form, setField, onScheduleClick, scheduling }: {
         className="w-full text-[13px] text-text bg-surface/50 rounded-lg p-3 border-0 outline-none placeholder:text-text-subtle resize-none"
       />
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Field label="Author"><input value={form.author} onChange={(e) => setField('author', e.target.value)} className={miniField} /></Field>
+        <Field label="Author (display name)"><input value={form.author} onChange={(e) => setField('author', e.target.value)} className={miniField} /></Field>
+        <Field label="Author Profile">
+          <select
+            value={form.authorId}
+            onChange={(e) => setField('authorId', e.target.value)}
+            className={cn(miniField, 'pr-6')}
+            aria-label="Assign author profile"
+          >
+            <option value="">— None —</option>
+            {authors.map((a) => (
+              <option key={a.id} value={a.id}>{a.name}</option>
+            ))}
+          </select>
+        </Field>
         <Field label="Category"><input value={form.category} onChange={(e) => setField('category', e.target.value)} className={miniField} /></Field>
         <Field label="Tags (JSON)"><input value={form.tagsJson} onChange={(e) => setField('tagsJson', e.target.value)} className={cn(miniField, 'font-mono text-[11px]')} /></Field>
         <Field label="Tool Slug (CTA)"><input value={form.toolSlug} onChange={(e) => setField('toolSlug', e.target.value)} className={cn(miniField, 'font-mono text-[11px]')} /></Field>

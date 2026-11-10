@@ -282,8 +282,127 @@
   .prose-elegant [data-callout][data-variant="tip"] { @apply border-violet-200 bg-violet-50/70 text-violet-950; }
   .prose-elegant [data-callout][data-variant="warning"] { @apply border-amber-200 bg-amber-50/70 text-amber-950; }
   .prose-elegant [data-callout][data-variant="success"] { @apply border-emerald-200 bg-emerald-50/70 text-emerald-950; }
+  .prose-elegant [data-callout][data-variant="important"] { @apply border-red-200 bg-red-50/70 text-red-950; }
 
-  /* ── Content Studio editor chrome (ProseMirror internals) ── */
+  /* ─── Phase B: Premium table styling ──────────────────────────────────── */
+  .prose-elegant .tableWrapper,
+  .blog-article-content .tableWrapper { @apply overflow-x-auto rounded-xl border border-border mb-6; }
+  .prose-elegant table,
+  .blog-article-content table { @apply w-full border-collapse text-sm; min-width: 100%; }
+  .prose-elegant th,
+  .blog-article-content th { background: rgb(var(--primary) / 0.1); color: rgb(var(--primary)); @apply border border-border px-4 py-3 text-left font-semibold text-sm; }
+  .prose-elegant td,
+  .blog-article-content td { @apply border border-border px-4 py-3 text-text-muted; }
+  .prose-elegant tr:nth-child(even) td,
+  .blog-article-content tr:nth-child(even) td { background: rgb(var(--surface)); }
+
+  /* ─── Phase B: Callout icon prefix ─────────────────────────────────────── */
+  .prose-elegant [data-callout] .callout-icon,
+  .blog-article-content [data-callout] .callout-icon { @apply inline-flex shrink-0 mr-2 align-middle; }
+
+  /* ─── Phase B: Checklist (task list) ───────────────────────────────────── */
+  .prose-elegant ul[data-type="taskList"],
+  .blog-article-content ul[data-type="taskList"] { @apply list-none pl-0 space-y-2 mb-4; }
+  .prose-elegant li[data-type="taskItem"],
+  .blog-article-content li[data-type="taskItem"] { @apply flex items-start gap-2; }
+  .prose-elegant li[data-type="taskItem"] > label,
+  .blog-article-content li[data-type="taskItem"] > label { @apply flex items-center gap-2 cursor-pointer; }
+  .prose-elegant li[data-type="taskItem"] input[type="checkbox"],
+  .blog-article-content li[data-type="taskItem"] input[type="checkbox"] {
+    @apply shrink-0 mt-0.5 rounded;
+    width: 1rem; height: 1rem;
+    accent-color: rgb(var(--primary));
+  }
+
+  /* ─── Phase B: Key Takeaways block ─────────────────────────────────────── */
+  .prose-elegant [data-key-takeaways],
+  .blog-article-content [data-key-takeaways] {
+    @apply rounded-xl border-2 p-5 my-6;
+    border-color: rgb(var(--primary) / 0.3);
+    background: rgb(var(--primary) / 0.05);
+  }
+  .prose-elegant [data-key-takeaways]::before,
+  .blog-article-content [data-key-takeaways]::before {
+    content: "✦ Key Takeaways";
+    @apply block text-xs font-bold uppercase tracking-widest mb-3;
+    color: rgb(var(--primary));
+  }
+  .prose-elegant [data-key-takeaways] ul,
+  .blog-article-content [data-key-takeaways] ul { @apply space-y-1.5 mb-0 list-none pl-0; }
+  .prose-elegant [data-key-takeaways] li,
+  .blog-article-content [data-key-takeaways] li { @apply flex items-start gap-2 text-text; }
+  .prose-elegant [data-key-takeaways] li::before,
+  .blog-article-content [data-key-takeaways] li::before {
+    content: "✓"; @apply shrink-0 font-bold text-sm mt-0.5; color: rgb(var(--primary));
+  }
+
+  /* ─── Phase B: Steps block ──────────────────────────────────────────────── */
+  .prose-elegant ol[data-steps],
+  .blog-article-content ol[data-steps] {
+    @apply list-none pl-0 space-y-6 mb-6;
+    counter-reset: steps;
+  }
+  .prose-elegant li[data-step],
+  .blog-article-content li[data-step] {
+    @apply pl-14 relative;
+    counter-increment: steps;
+  }
+  .prose-elegant li[data-step]::before,
+  .blog-article-content li[data-step]::before {
+    content: counter(steps);
+    @apply absolute left-0 top-0 flex items-center justify-center w-9 h-9 rounded-full font-bold text-sm text-white;
+    background: rgb(var(--primary));
+  }
+
+  /* ─── Phase B: Scroll margin for headings ──────────────────────────────── */
+  .prose-elegant h2, .prose-elegant h3, .prose-elegant h4,
+  .blog-article-content h2, .blog-article-content h3, .blog-article-content h4 {
+    scroll-margin-top: 5rem;
+  }
+
+  /* ─── Phase B: Blockquote brand accent ─────────────────────────────────── */
+  .prose-elegant blockquote,
+  .blog-article-content blockquote {
+    border-left-color: rgb(var(--primary));
+    @apply border-l-4 bg-surface/60 pl-5 py-2 my-6 text-text-muted not-italic;
+  }
+
+  /* ─── Phase C: Blog content link styling ───────────────────────────────── */
+  .blog-article-content a {
+    color: rgb(var(--primary));
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+  .blog-article-content a:hover {
+    color: rgb(var(--primary-hover));
+    text-decoration: none;
+  }
+  .blog-article-content a:visited {
+    color: rgb(var(--primary));
+    text-decoration: none;
+  }
+  .blog-article-content a:active {
+    text-decoration: none;
+  }
+  .blog-article-content a:focus-visible {
+    outline: 2px solid rgb(var(--primary) / 0.6);
+    outline-offset: 2px;
+    text-decoration: none;
+    border-radius: 2px;
+  }
+
+  /* ─── Phase L: Tag contrast fix ────────────────────────────────────────── */
+  .blog-tag-pill { @apply rounded-full bg-primary-light px-3 py-1.5 text-xs font-medium text-text; }
+
+  /* ─── Phase L: Reduced-motion for animated blog components ────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    .reading-progress-bar { transition: none !important; }
+    .sticky-article-header { transition: none !important; }
+    .back-to-top-btn { transition: none !important; }
+    .toc-item { transition: none !important; }
+  }
+
+  /* ─── Content Studio editor chrome (ProseMirror internals) ── */
   .ProseMirror p.is-editor-empty:first-child::before {
     content: attr(data-placeholder);
     @apply text-text-subtle float-left h-0 pointer-events-none;

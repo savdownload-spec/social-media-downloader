@@ -35,6 +35,16 @@ export type BlogPost = {
   schemaType?: string;
   faqItems?: { question: string; answer: string }[];
   howToSteps?: { title: string; description: string; image?: string }[];
+  // Author profile — optional so the static catalog and older DB posts remain valid
+  authorProfile?: {
+    id: string;
+    name: string;
+    slug: string;
+    profileImage?: string | null;
+    role: string;
+    shortBio?: string | null;
+    socialsJson?: string;
+  };
 };
 
 export const blogPosts: BlogPost[] = [

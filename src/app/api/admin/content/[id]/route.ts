@@ -47,6 +47,7 @@ const updateSchema = z.object({
   ogDescription: z.string().optional(),
   scheduledAt: z.coerce.date().optional().nullable(),
   changeSummary: z.string().optional(),
+  authorId: z.string().optional().nullable(),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
