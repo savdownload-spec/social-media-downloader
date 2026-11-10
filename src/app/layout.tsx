@@ -21,6 +21,7 @@ import { buildMetadata, jsonLd, organizationSchema, websiteSchema } from '@/lib/
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { GoogleTagManager } from '@/components/analytics/GoogleTagManager';
+import Script from 'next/script';
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -125,6 +126,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </Providers>
         {/* GoogleTagManager: loads GTM afterInteractive to avoid blocking FCP/LCP */}
         <GoogleTagManager id="GTM-5SX8RKCS" />
+        {/* Ahrefs Web Analytics: loads afterInteractive to avoid blocking FCP/LCP */}
+        <Script
+          id="ahrefs-analytics"
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key="Y4hjtZYrkSQE4nUigWpKbg"
+          strategy="afterInteractive"
+        />
         <Analytics />
         <SpeedInsights />
       </body>
