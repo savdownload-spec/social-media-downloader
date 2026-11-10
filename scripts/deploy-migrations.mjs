@@ -101,8 +101,48 @@ async function prepareBaselineIfNeeded() {
   runPrisma(['migrate', 'resolve', '--applied', BASELINE]);
 }
 
+async function resolveFailedAndEnsureBaseline() {
+  // Step 1: Check whether _prisma_migrations table exists at all.
+  const [{ tableExists }] = await prisma.$queryRaw`
+    SELECT to_regclass('_prisma_migrations') IS NOT NULL AS "tableExists"
+  `;
+
+  if (!tableExists) {
+    // Table absent → prepareBaselineIfNeeded will handle this case; nothing to do here.
+    return;
+  }
+
+  // Step 2: Clear any failed (P3009) migration records so migrate deploy can proceed.
+  // A migration is "failed" if it has applied_steps_count > 0 but no finished_at.
+  const failed = await prisma.$queryRaw`
+    SELECT migration_name AS "migrationName"
+    FROM "_prisma_migrations"
+    WHERE finished_at IS NULL
+      AND applied_steps_count > 0
+  `;
+  for (const { migrationName } of failed) {
+    console.log(`Clearing failed migration record: ${migrationName}`);
+    runPrisma(['migrate', 'resolve', '--rolled-back', migrationName]);
+  }
+
+  // Step 3: If 0_init was just rolled-back (or was never recorded), re-record it
+  // as applied so migrate deploy doesn't try to re-run the full init SQL against
+  // an already-populated database.
+  const baselineRows = await prisma.$queryRaw`
+    SELECT migration_name AS "migrationName"
+    FROM "_prisma_migrations"
+    WHERE migration_name = ${BASELINE}
+      AND finished_at IS NOT NULL
+  `;
+  if (baselineRows.length === 0) {
+    console.log(`0_init not recorded as successfully applied; resolving as --applied.`);
+    runPrisma(['migrate', 'resolve', '--applied', BASELINE]);
+  }
+}
+
 try {
   assertSameDatabaseTarget();
+  await resolveFailedAndEnsureBaseline();
   await prepareBaselineIfNeeded();
 } finally {
   await prisma.$disconnect();
