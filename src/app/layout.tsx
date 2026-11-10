@@ -19,6 +19,8 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { THEME_INIT_SCRIPT } from '@/lib/theme/theme-init-script';
 import { buildMetadata, jsonLd, organizationSchema, websiteSchema } from '@/lib/seo';
 import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import { GoogleTagManager } from '@/components/analytics/GoogleTagManager';
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -79,11 +81,6 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const pricing = await getPricingConfig();
-  const googleTagInit = `
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-`;
 
   return (
     // suppressHydrationWarning: the blocking script below mutates this
@@ -95,8 +92,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       {/* Keep head framework-managed: replacing its innerHTML can remove
           Next.js stylesheet links during client rendering/recovery. */}
       <head>
-        <script dangerouslySetInnerHTML={{ __html: googleTagInit }} />
-        <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-5SX8RKCS" />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <script
           type="application/ld+json"
@@ -128,7 +123,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </LanguageProvider>
           </PricingProvider>
         </Providers>
+        {/* GoogleTagManager: loads GTM afterInteractive to avoid blocking FCP/LCP */}
+        <GoogleTagManager id="GTM-5SX8RKCS" />
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
