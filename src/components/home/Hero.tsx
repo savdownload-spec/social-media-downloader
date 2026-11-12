@@ -60,7 +60,7 @@ export function Hero() {
       </div>
 
       <Container className="relative pt-20 pb-24 md:pt-28 md:pb-28">
-        <div className="reveal text-center">
+        <div className="reveal text-center max-w-3xl mx-auto">
           <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/70 dark:bg-card/70 backdrop-blur border border-border text-xs font-medium text-text-muted shadow-soft">
             <span className="flex items-center gap-0.5 text-amber-400">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -74,7 +74,7 @@ export function Hero() {
             {"Download Videos, Images & More"}
           </h1>
 
-          <p className="mt-6 type-body-large text-text-muted max-w-xl mx-auto">
+          <p className="mt-6 type-body-large text-text-muted">
             {"SavDown is a free social media downloader that lets you save videos, reels, thumbnails, and images from YouTube, TikTok, Instagram, Facebook, Pinterest, and X. Paste a link, pick your format, and download in seconds. No software to install, no signup required, and no watermarks on your files."}
           </p>
 
