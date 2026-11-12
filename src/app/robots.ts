@@ -22,6 +22,15 @@ const publicRule = (userAgent: string) => ({
 });
 
 export default function robots(): MetadataRoute.Robots {
+  // Block all crawlers on Preview and Development environments.
+  // VERCEL_ENV is set by Vercel: 'production' | 'preview' | 'development'.
+  // Locally (no VERCEL_ENV), also block to avoid indexing localhost.
+  if (process.env.VERCEL_ENV !== 'production') {
+    return {
+      rules: [{ userAgent: '*', disallow: '/' }],
+    };
+  }
+
   return {
     rules: [
       // Wildcard baseline — must come first so specific rules below can
