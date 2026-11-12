@@ -60,7 +60,7 @@ export function Hero() {
       </div>
 
       <Container className="relative pt-20 pb-24 md:pt-28 md:pb-28">
-        <div className="reveal text-center max-w-3xl mx-auto">
+        <div className="reveal text-center">
           <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/70 dark:bg-card/70 backdrop-blur border border-border text-xs font-medium text-text-muted shadow-soft">
             <span className="flex items-center gap-0.5 text-amber-400">
               {Array.from({ length: 5 }).map((_, i) => (
