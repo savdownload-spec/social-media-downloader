@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  Archive, Check, CheckCircle2, DatabaseBackup, Download, FileArchive, HardDrive,
+  Archive, CalendarClock, Check, CheckCircle2, CloudDownload, DatabaseBackup, Download, FileArchive, HardDrive,
   LoaderCircle, RefreshCw, RotateCcw, ShieldCheck, Trash2, Upload, XCircle,
 } from 'lucide-react';
 import { AdminPage, EmptyState, PageHeader, SectionCard } from './AdminUI';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
-import { ALL_BACKUP_CATEGORIES, BACKUP_CATEGORIES, type BackupCategory } from '@/lib/backup/catalog';
+import { ALL_BACKUP_CATEGORIES, AUTO_BACKUP_RETENTION_DAYS, AUTO_BACKUP_SCHEDULE_LABEL, BACKUP_CATEGORIES, type BackupCategory } from '@/lib/backup/catalog';
 import type { BackupHistoryItem } from '@/lib/backup/storage';
 
 type HistoryItem = BackupHistoryItem & { downloadUrl?: string };
@@ -28,6 +28,7 @@ export function AdminBackupClient() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [autoRunning, setAutoRunning] = useState(false);
   const [progress, setProgress] = useState({ value: 0, message: '' });
   const [completed, setCompleted] = useState<HistoryItem | null>(null);
   const [backupWarnings, setBackupWarnings] = useState<string[]>([]);
@@ -58,6 +59,7 @@ export function AdminBackupClient() {
   useEffect(() => { void loadHistory(); }, [loadHistory]);
 
   const selectedSummary = useMemo(() => BACKUP_CATEGORIES.filter((item) => selected.includes(item.id)).map((item) => item.label).join(', '), [selected]);
+  const latestAuto = useMemo(() => history.find((item) => item.type === 'automatic'), [history]);
 
   function toggleCategory(id: BackupCategory) {
     setCompleted(null);
@@ -94,6 +96,19 @@ export function AdminBackupClient() {
       await loadHistory();
     } catch (cause) { error('Backup failed', cause instanceof Error ? cause.message : undefined); setProgress({ value: 0, message: '' }); }
     finally { setCreating(false); }
+  }
+
+  async function runAutoBackup() {
+    setAutoRunning(true);
+    try {
+      const response = await fetch('/api/admin/backups/auto', { method: 'POST' });
+      const json = await response.json().catch(() => null);
+      if (!response.ok || !json?.ok) throw new Error(json?.error || 'Automatic backup could not be created.');
+      if (json.data.skipped) success('Today\'s automatic backup is ready', 'The single daily ZIP is available below.');
+      else success('Automatic backup created', `Today's single ZIP is ready${json.data.pruned ? `; ${json.data.pruned} older automatic file(s) removed` : ''}.`);
+      await loadHistory();
+    } catch (cause) { error('Automatic backup failed', cause instanceof Error ? cause.message : undefined); }
+    finally { setAutoRunning(false); }
   }
 
   async function deleteItem(item: HistoryItem) {
@@ -146,6 +161,31 @@ export function AdminBackupClient() {
       <PageHeader title="Backup & Restore" description="Create portable, checksum-verified archives and restore without overwriting existing data." />
 
       <div className="space-y-6">
+        <SectionCard title="Automatic daily backup" subtitle={`One full ZIP per day · ${AUTO_BACKUP_SCHEDULE_LABEL}`}>
+          <div className="p-5 space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/[0.08] text-primary"><CalendarClock className="h-4.5 w-4.5" /></span>
+                <div>
+                  <p className="text-[13px] font-semibold text-text">Daily auto-backup is on</p>
+                  <p className="mt-1 max-w-2xl text-[12px] leading-5 text-text-muted">The complete SavDown backup runs once a day and produces exactly one downloadable ZIP. Creating it again on the same day returns today&apos;s existing ZIP instead of a duplicate. Manual and recovery backups are never removed by this schedule.</p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" onClick={runAutoBackup} disabled={autoRunning} loading={autoRunning}><CloudDownload className="h-4 w-4" /> Create today's backup now</Button>
+            </div>
+            {historyLoading && !latestAuto ? <div className="flex items-center gap-2 rounded-xl border border-border-light bg-surface/50 px-4 py-3 text-[12px] text-text-muted"><LoaderCircle className="h-4 w-4 animate-spin text-primary" /> Checking the latest automatic backup…</div> : latestAuto ? (
+              <div className="flex flex-col gap-3 rounded-xl border border-border-light bg-surface/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2"><FileArchive className="h-4 w-4 shrink-0 text-primary" /><p className="truncate text-[13px] font-semibold text-text">{latestAuto.fileName}</p><span className="rounded bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700">Latest</span></div>
+                  <p className="mt-1 text-[11px] text-text-muted">{dateTime(latestAuto.createdAt)} · {bytes(latestAuto.size)} · {Object.values(latestAuto.recordCounts).reduce((a, b) => a + b, 0).toLocaleString()} records · {latestAuto.fileCount} files</p>
+                </div>
+                <a href={latestAuto.downloadUrl ?? `/api/admin/backups/${latestAuto.id}/download`} className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-[12px] font-semibold text-white hover:bg-primary-hover"><Download className="h-3.5 w-3.5" /> Download latest ZIP</a>
+              </div>
+            ) : <div className="rounded-xl border border-dashed border-border px-4 py-4 text-[12px] text-text-muted">No automatic backup has been created yet. The first scheduled run will create it, or use “Create today's backup now”.</div>}
+            <p className="text-[11px] text-text-muted">Keeps the newest {AUTO_BACKUP_RETENTION_DAYS} daily automatic ZIPs. Older automatic files are pruned; manual and recovery backups stay until you delete them.</p>
+          </div>
+        </SectionCard>
+
         <SectionCard title="Create backup" subtitle="Complete SavDown Data Backup — or choose specific categories">
           <div className="p-5 space-y-5">
             <button type="button" onClick={() => { setSelected(ALL_BACKUP_CATEGORIES); setBackupWarnings([]); setCompleted(null); }} className={cn('w-full rounded-xl border p-4 text-left transition-colors flex items-start gap-3', allSelected ? 'border-primary/40 bg-primary/[0.05]' : 'border-border-light hover:border-border')}>
@@ -204,7 +244,7 @@ export function AdminBackupClient() {
         </SectionCard>
 
         <SectionCard title="Backup history" subtitle="Stored archives remain downloadable only through an authenticated Admin endpoint" actions={<button onClick={() => void loadHistory()} className="p-1.5 rounded-lg text-text-muted hover:bg-surface" aria-label="Refresh history"><RefreshCw className={cn('h-4 w-4', historyLoading && 'animate-spin')} /></button>}>
-          {historyLoading && !history.length ? <div className="py-12 flex justify-center"><LoaderCircle className="h-5 w-5 animate-spin text-primary" /></div> : !history.length ? <EmptyState icon={HardDrive} title="No backups yet" message="Completed backups and automatic recovery points will appear here." /> : <div className="divide-y divide-border-light">{history.map((item) => <div key={item.id} className="px-5 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><div className="flex items-center gap-2"><FileArchive className="h-4 w-4 text-primary shrink-0" /><p className="text-[13px] font-semibold text-text truncate">{item.fileName}</p>{item.type === 'recovery' && <span className="rounded bg-amber-50 text-amber-700 px-1.5 py-0.5 text-[10px] font-semibold">Recovery point</span>}</div><p className="text-[11px] text-text-muted mt-1 ml-6">{dateTime(item.createdAt)} · {bytes(item.size)} · {item.categories.length} categories · {Object.values(item.recordCounts).reduce((a, b) => a + b, 0).toLocaleString()} records · {item.fileCount} files</p></div><div className="flex items-center gap-2 ml-6 sm:ml-0"><a href={`/api/admin/backups/${item.id}/download`} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border-light bg-white px-3 text-[12px] font-medium text-text hover:bg-surface"><Download className="h-3.5 w-3.5" /> Download</a><button onClick={() => void deleteItem(item)} className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-rose-600 hover:bg-rose-50" aria-label={`Delete ${item.fileName}`}><Trash2 className="h-3.5 w-3.5" /></button></div></div>)}</div>}
+          {historyLoading && !history.length ? <div className="py-12 flex justify-center"><LoaderCircle className="h-5 w-5 animate-spin text-primary" /></div> : !history.length ? <EmptyState icon={HardDrive} title="No backups yet" message="Completed backups and automatic recovery points will appear here." /> : <div className="divide-y divide-border-light">{history.map((item) => <div key={item.id} className="px-5 py-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><div className="flex items-center gap-2"><FileArchive className="h-4 w-4 text-primary shrink-0" /><p className="text-[13px] font-semibold text-text truncate">{item.fileName}</p>{item.type === 'recovery' && <span className="rounded bg-amber-50 text-amber-700 px-1.5 py-0.5 text-[10px] font-semibold">Recovery point</span>}{item.type === 'automatic' && <span className="rounded bg-sky-50 text-sky-700 px-1.5 py-0.5 text-[10px] font-semibold">Auto backup</span>}</div><p className="text-[11px] text-text-muted mt-1 ml-6">{dateTime(item.createdAt)} · {bytes(item.size)} · {item.categories.length} categories · {Object.values(item.recordCounts).reduce((a, b) => a + b, 0).toLocaleString()} records · {item.fileCount} files</p></div><div className="flex items-center gap-2 ml-6 sm:ml-0"><a href={`/api/admin/backups/${item.id}/download`} className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border-light bg-white px-3 text-[12px] font-medium text-text hover:bg-surface"><Download className="h-3.5 w-3.5" /> Download</a><button onClick={() => void deleteItem(item)} className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium text-rose-600 hover:bg-rose-50" aria-label={`Delete ${item.fileName}`}><Trash2 className="h-3.5 w-3.5" /></button></div></div>)}</div>}
         </SectionCard>
       </div>
     </AdminPage>

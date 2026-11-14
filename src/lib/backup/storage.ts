@@ -4,7 +4,7 @@ import { del, get, list, put } from '@vercel/blob';
 
 export type BackupHistoryItem = {
   id: string;
-  type: 'backup' | 'recovery';
+  type: 'backup' | 'recovery' | 'automatic';
   fileName: string;
   size: number;
   createdAt: string;

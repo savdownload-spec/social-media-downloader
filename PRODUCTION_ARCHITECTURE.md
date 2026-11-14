@@ -219,7 +219,7 @@ Not with server-delivered video downloads enabled. Vercel function responses are
 | `NEXTAUTH_SECRET` | NextAuth signing secret |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob |
 | `BACKUP_BLOB_READ_WRITE_TOKEN` or `BACKUP_BLOB_STORE_ID` | Dedicated **private** Vercel Blob store for Admin backups (token recommended; store ID uses Vercel OIDC) |
-| `CRON_SECRET` | PDF cleanup cron |
+| `CRON_SECRET` | PDF cleanup cron and daily automatic backup cron (`/api/admin/backups/auto`) |
 
 ### Payments (Safepay)
 `SAFEPAY_SECRET_KEY`, `SAFEPAY_MERCHANT_API_KEY`, `SAFEPAY_WEBHOOK_SECRET`
