@@ -55,7 +55,18 @@ function requireBackupBlobAuth(): BackupBlobAuth {
 }
 
 export function assertBackupStorageConfigured(): void {
-  if (process.env.VERCEL && !backupBlobAuth()) throw new BackupStorageConfigurationError();
+  if (!process.env.VERCEL) return;
+  const auth = backupBlobAuth();
+  if (!auth) throw new BackupStorageConfigurationError();
+  // A manually added VERCEL_OIDC_TOKEN shadows the one Vercel injects; when it
+  // is not JWT-shaped (e.g. a pasted public key) the Blob SDK fails deep inside
+  // its OIDC exchange with a cryptic header error, so fail here with the fix.
+  const oidc = process.env.VERCEL_OIDC_TOKEN?.trim();
+  if (auth.storeId && oidc && !/^[\w-]+\.[\w-]+\.[\w-]+$/.test(oidc)) {
+    throw new BackupStorageConfigurationError(
+      'VERCEL_OIDC_TOKEN is set but is not a valid OIDC token (it looks like a public key). Delete the VERCEL_OIDC_TOKEN environment variable in Vercel (Production and Preview) so Vercel can inject its own, then redeploy.',
+    );
+  }
 }
 
 export async function storeBackup(id: string, fileName: string, buffer: Buffer, metadata: BackupHistoryItem) {
