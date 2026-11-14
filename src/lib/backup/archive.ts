@@ -63,6 +63,8 @@ async function collectData(categories: Set<BackupCategory>) {
   if (categories.has('content')) {
     data.posts = await rows('post');
     data.postRevisions = await rows('postRevision');
+    data.blogAuthors = await rows('blogAuthor');
+    data.authorSlugRedirect = await rows('authorSlugRedirect');
   }
   if (categories.has('users')) {
     data.users = await rows('user', { select: {
@@ -174,15 +176,28 @@ async function walk(directory: string): Promise<string[]> {
 
 type MediaSource = { originalUrl: string; storagePath: string; contentType: string; load: () => Promise<Buffer> };
 
-async function collectMediaSources(data: Record<string, JsonRecord[]>, includeAll: boolean): Promise<MediaSource[]> {
+function usablePublicBlobToken(): string | undefined {
+  const token = process.env.BLOB_READ_WRITE_TOKEN?.trim();
+  // A pasted public key or multi-line value is not a token; sending it as a
+  // Bearer header throws, so only token-shaped values are used.
+  if (token && !/-----BEGIN/.test(token) && !/\s/.test(token)) return token;
+  return undefined;
+}
+
+async function collectMediaSources(data: Record<string, JsonRecord[]>, includeAll: boolean): Promise<{ sources: MediaSource[]; warnings: string[] }> {
   const byUrl = new Map<string, MediaSource>();
+  const warnings: string[] = [];
   const references = discoverReferencedMedia(data);
 
-  if (process.env.BLOB_READ_WRITE_TOKEN && includeAll) {
+  const publicToken = usablePublicBlobToken();
+  if (process.env.BLOB_READ_WRITE_TOKEN?.trim() && !publicToken) {
+    warnings.push('BLOB_READ_WRITE_TOKEN is not a valid token, so unreferenced remote media was skipped. Referenced media is still included; fix the token to include every stored file.');
+  }
+  if (publicToken && includeAll) {
     for (const prefix of ['blog/', 'avatars/']) {
       let cursor: string | undefined;
       do {
-        const page = await list({ prefix, cursor, limit: 1000 });
+        const page = await list({ prefix, cursor, limit: 1000, token: publicToken });
         for (const blob of page.blobs) {
           byUrl.set(blob.url, {
             originalUrl: blob.url,
@@ -223,7 +238,7 @@ async function collectMediaSources(data: Record<string, JsonRecord[]>, includeAl
     }
   }
 
-  if (includeAll && !process.env.BLOB_READ_WRITE_TOKEN) {
+  if (includeAll && !publicToken) {
     for (const root of ['public/images/blog/uploads', 'public/images/avatars']) {
       for (const diskPath of await walk(path.join(process.cwd(), ...root.split('/')))) {
         const info = await stat(diskPath);
@@ -237,7 +252,7 @@ async function collectMediaSources(data: Record<string, JsonRecord[]>, includeAl
     }
   }
 
-  return [...byUrl.values()];
+  return { sources: [...byUrl.values()], warnings };
 }
 
 function portableReadme(manifest: BackupManifest) {
@@ -278,7 +293,8 @@ export async function buildBackup(options: {
   const mediaIndex: BackupManifest['media'] = [];
   const buildWarnings: string[] = [];
   let mediaBytes = 0;
-  const sources = await collectMediaSources(data, categories.has('media'));
+  const { sources, warnings: mediaWarnings } = await collectMediaSources(data, categories.has('media'));
+  buildWarnings.push(...mediaWarnings);
   for (const [index, source] of sources.entries()) {
     const buffer = await source.load().catch((error: unknown) => {
       const message = error instanceof Error ? error.message : 'unavailable';

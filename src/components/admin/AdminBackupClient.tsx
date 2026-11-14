@@ -105,7 +105,10 @@ export function AdminBackupClient() {
       const json = await response.json().catch(() => null);
       if (!response.ok || !json?.ok) throw new Error(json?.error || 'Automatic backup could not be created.');
       if (json.data.skipped) success('Today\'s automatic backup is ready', 'The single daily ZIP is available below.');
-      else success('Automatic backup created', `Today's single ZIP is ready${json.data.pruned ? `; ${json.data.pruned} older automatic file(s) removed` : ''}.`);
+      else {
+        const warnings = (json.data.warnings ?? []) as string[];
+        success('Automatic backup created', `Today's single ZIP is ready${json.data.pruned ? `; ${json.data.pruned} older automatic file(s) removed` : ''}${warnings.length ? `. Note: ${warnings[0]}` : ''}.`);
+      }
       await loadHistory();
     } catch (cause) { error('Automatic backup failed', cause instanceof Error ? cause.message : undefined); }
     finally { setAutoRunning(false); }
