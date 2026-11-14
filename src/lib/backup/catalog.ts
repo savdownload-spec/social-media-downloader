@@ -1,7 +1,7 @@
 export const BACKUP_FORMAT_VERSION = 1;
 
 /** Automatic backups run once per day and keep one ZIP per UTC date. */
-export const AUTO_BACKUP_RETENTION_DAYS = 30;
+export const AUTO_BACKUP_RETENTION_DAYS = 3;
 export const AUTO_BACKUP_SCHEDULE = '0 4 * * *';
 export const AUTO_BACKUP_SCHEDULE_LABEL = 'Daily at 04:00 UTC';
 

@@ -334,7 +334,8 @@ export async function buildBackup(options: {
   const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 6 } });
   if (buffer.length > MAX_ARCHIVE_BYTES) throw new Error('Compressed backup exceeds the 50 MB serverless limit. Create smaller selective backups.');
   const date = createdAt.slice(0, 10);
+  const time = createdAt.slice(11, 19).replace(/:/g, '');
   const suffix = options.type === 'recovery' ? '-recovery' : '';
   progress('storing', 'Saving backup to protected history…', 90);
-  return { buffer, manifest, fileName: `savdown-backup-${date}${suffix}.zip`, warnings: buildWarnings };
+  return { buffer, manifest, fileName: `savdown-backup-${date}-${time}${suffix}.zip`, warnings: buildWarnings };
 }
