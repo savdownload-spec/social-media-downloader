@@ -60,6 +60,8 @@ function normalizeDbPost(post: {
     role: string;
     shortBio: string | null;
     socialsJson: string;
+    published: boolean;
+    isSample: boolean;
   } | null;
 }): BlogPost {
   const tags = parseJsonArray(post.tagsJson);
@@ -110,6 +112,8 @@ function normalizeDbPost(post: {
           role: post.blogAuthor.role,
           shortBio: post.blogAuthor.shortBio,
           socialsJson: post.blogAuthor.socialsJson,
+          published: post.blogAuthor.published,
+          isSample: post.blogAuthor.isSample,
         }
       : undefined,
   };
@@ -133,56 +137,93 @@ export async function getPublicBlogPosts(): Promise<BlogPost[]> {
       })
       .catch(() => undefined);
 
-    const published = await prisma.post.findMany({
-      where: { published: true },
-      orderBy: [{ publishedAt: 'desc' }, { updatedAt: 'desc' }],
-      select: {
-        slug: true,
-        title: true,
-        excerpt: true,
-        content: true,
-        coverImage: true,
-        author: true,
-        tagsJson: true,
-        category: true,
-        coverAlt: true,
-        ogImage: true,
-        primaryKeyword: true,
-        secondaryKeywordsJson: true,
-        canonicalUrl: true,
-        toolSlug: true,
-        readingTimeMinutes: true,
-        publishedAt: true,
-        updatedAt: true,
-        contentJson: true,
-        seoTitle: true,
-        metaDescription: true,
-        noIndex: true,
-        noFollow: true,
-        breadcrumbTitle: true,
-        schemaType: true,
-        faqJson: true,
-        howToJson: true,
-        blogAuthor: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            profileImage: true,
-            role: true,
-            shortBio: true,
-            socialsJson: true,
+    const [published, publishedAuthors] = await Promise.all([
+      prisma.post.findMany({
+        where: { published: true },
+        orderBy: [{ publishedAt: 'desc' }, { updatedAt: 'desc' }],
+        select: {
+          slug: true,
+          title: true,
+          excerpt: true,
+          content: true,
+          coverImage: true,
+          author: true,
+          tagsJson: true,
+          category: true,
+          coverAlt: true,
+          ogImage: true,
+          primaryKeyword: true,
+          secondaryKeywordsJson: true,
+          canonicalUrl: true,
+          toolSlug: true,
+          readingTimeMinutes: true,
+          publishedAt: true,
+          updatedAt: true,
+          contentJson: true,
+          seoTitle: true,
+          metaDescription: true,
+          noIndex: true,
+          noFollow: true,
+          breadcrumbTitle: true,
+          schemaType: true,
+          faqJson: true,
+          howToJson: true,
+          blogAuthor: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              profileImage: true,
+              role: true,
+              shortBio: true,
+              socialsJson: true,
+              published: true,
+              isSample: true,
+            },
           },
         },
-      },
-    });
+      }),
+      prisma.blogAuthor.findMany({
+        where: { published: true },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          profileImage: true,
+          role: true,
+          shortBio: true,
+          socialsJson: true,
+          isSample: true,
+        },
+      }),
+    ]);
 
     const dbPosts = published.map(normalizeDbPost);
     const dbBySlug = new Map(dbPosts.map((post) => [post.slug, post]));
     const merged = blogPosts.map((post) => dbBySlug.get(post.slug) ?? post);
     const dbOnly = dbPosts.filter((post) => !blogPosts.some((staticPost) => staticPost.slug === post.slug));
 
-    return [...merged, ...dbOnly].sort(
+    // Static catalog posts (and legacy rows) only carry a display-name string.
+    // Attach a profile by exact name when it is unambiguous, so those articles
+    // link to the same managed author page as relation-backed posts.
+    const nameCounts = new Map<string, number>();
+    for (const author of publishedAuthors) {
+      const key = author.name.trim().toLowerCase();
+      nameCounts.set(key, (nameCounts.get(key) ?? 0) + 1);
+    }
+    const authorByName = new Map<string, NonNullable<BlogPost['authorProfile']>>();
+    for (const author of publishedAuthors) {
+      const key = author.name.trim().toLowerCase();
+      if (nameCounts.get(key) !== 1) continue;
+      authorByName.set(key, { ...author, published: true });
+    }
+    const withProfiles = [...merged, ...dbOnly].map((post) => {
+      if (post.authorProfile) return post;
+      const profile = authorByName.get(post.author.trim().toLowerCase());
+      return profile ? { ...post, authorProfile: profile } : post;
+    });
+
+    return withProfiles.sort(
       (a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt),
     );
   } catch {

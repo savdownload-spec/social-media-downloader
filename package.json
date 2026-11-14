@@ -17,6 +17,7 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:authors": "tsx scripts/seed-author-samples.ts",
     "stripe:setup": "tsx scripts/setup-stripe.ts",
     "stripe:verify": "tsx scripts/setup-stripe.ts --verify",
     "test": "vitest run",

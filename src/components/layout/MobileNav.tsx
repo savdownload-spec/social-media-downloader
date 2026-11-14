@@ -23,6 +23,7 @@ const SECTION_LABELS: Record<SectionId, string> = {
 const RESOURCE_CONFIG = [
   { key: 'faq',     icon: HelpCircle, href: '/faq',     color: 'text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-500/15'   },
   { key: 'blog',    icon: BookOpen,   href: '/blog',    color: 'text-sky-600 bg-sky-50 dark:text-sky-400 dark:bg-sky-500/15'         },
+  { key: 'authors', icon: Users,      href: '/authors', color: 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-500/15' },
   { key: 'search',  icon: Search,     href: '/search',  color: 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/15' },
   { key: 'privacy', icon: Shield,     href: '/privacy', color: 'text-slate-600 bg-slate-100 dark:text-slate-300 dark:bg-slate-500/15'    },
   { key: 'terms',   icon: FileText,   href: '/terms',   color: 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-500/15'   },
@@ -31,6 +32,7 @@ const RESOURCE_CONFIG = [
 
 const ABOUT_CONFIG = [
   { key: 'about',      icon: Info,     href: '/about',      color: 'text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-500/15'   },
+  { key: 'authors',    icon: Users,    href: '/authors',    color: 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-500/15' },
   { key: 'contact',    icon: Mail,     href: '/contact',    color: 'text-sky-600 bg-sky-50 dark:text-sky-400 dark:bg-sky-500/15'         },
   { key: 'pricing',    icon: Sparkles, href: '/pricing',    color: 'text-fuchsia-600 bg-fuchsia-50 dark:text-fuchsia-400 dark:bg-fuchsia-500/15' },
   { key: 'affiliates', icon: Coins,    href: '/affiliates', color: 'text-amber-600 bg-amber-50 dark:text-warning dark:bg-amber-500/15'     },
@@ -209,7 +211,7 @@ export function MobileNav({ close }: { close: () => void }) {  const config = u
                           <span className={`w-7 h-7 rounded-lg shrink-0 flex items-center justify-center ${color}`}>
                             <RIcon className="w-3.5 h-3.5" />
                           </span>
-                          <span className="text-sm font-medium text-text">{({ faq: 'FAQ', blog: 'Blog & Guides', search: 'Search Tools', privacy: 'Privacy Policy', terms: 'Terms', cookies: 'Cookies' } as const)[key]}</span>
+                          <span className="text-sm font-medium text-text">{({ faq: 'FAQ', blog: 'Blog & Guides', authors: 'Our Authors', search: 'Search Tools', privacy: 'Privacy Policy', terms: 'Terms', cookies: 'Cookies' } as const)[key]}</span>
                         </Link>
                       ))}
                     </div>
@@ -223,7 +225,7 @@ export function MobileNav({ close }: { close: () => void }) {  const config = u
                           <span className={`w-7 h-7 rounded-lg shrink-0 flex items-center justify-center ${color}`}>
                             <AIcon className="w-3.5 h-3.5" />
                           </span>
-                          <span className="text-sm font-medium text-text">{({ about: 'About Us', contact: 'Contact', pricing: 'Pricing', careers: 'Careers', affiliates: 'Affiliates' } as const)[key]}</span>
+                          <span className="text-sm font-medium text-text">{({ about: 'About Us', authors: 'Our Authors', contact: 'Contact', pricing: 'Pricing', careers: 'Careers', affiliates: 'Affiliates' } as const)[key]}</span>
                         </Link>
                       ))}
                     </div>

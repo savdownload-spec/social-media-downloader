@@ -92,8 +92,8 @@ export default async function BlogPostPage({ params }: Props) {
     author: {
       '@type': 'Person',
       name: post.authorProfile?.name || post.author,
-      ...(post.authorProfile
-        ? { url: `${siteConfig.url}/blog/author/${post.authorProfile.slug}` }
+      ...(post.authorProfile && post.authorProfile.published !== false
+        ? { url: `${siteConfig.url}/authors/${post.authorProfile.slug}` }
         : {}),
     },
     datePublished: post.publishedAt,
@@ -168,9 +168,9 @@ export default async function BlogPostPage({ params }: Props) {
 
           {/* Author + meta row */}
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-text-muted">
-            {post.authorProfile ? (
+            {post.authorProfile && post.authorProfile.published !== false ? (
               <Link
-                href={`/blog/author/${post.authorProfile.slug}`}
+                href={`/authors/${post.authorProfile.slug}`}
                 className="inline-flex items-center gap-1.5 hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 rounded"
                 style={{ outlineColor: 'rgb(var(--primary) / 0.5)' }}
               >

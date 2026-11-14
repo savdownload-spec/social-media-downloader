@@ -378,6 +378,7 @@ function BlogPanel({ close }: { close: () => void }) {
 const RESOURCE_LINK_CONFIG = [
   { key: 'faq',     icon: HelpCircle,    href: '/faq',    color: 'text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-500/15'  },
   { key: 'blog',    icon: BookOpen,      href: '/blog',   color: 'text-sky-600 bg-sky-50 dark:text-sky-400 dark:bg-sky-500/15'        },
+  { key: 'authors', icon: Users,         href: '/authors', color: 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-500/15' },
   { key: 'search',  icon: Search,        href: '/search',  color: 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/15'},
   { key: 'contact', icon: MessageCircle, href: '/contact', color: 'text-pink-600 bg-pink-50 dark:text-pink-400 dark:bg-pink-500/15'      },
   { key: 'privacy', icon: Shield,        href: '/privacy', color: 'text-slate-600 bg-slate-100 dark:text-slate-300 dark:bg-slate-500/15'   },
@@ -395,7 +396,7 @@ function ResourcesPanel({ close }: { close: () => void }) {
       <div className="grid grid-cols-3 gap-3">
         {RESOURCE_LINK_CONFIG.map((r) => {
           const RIcon = r.icon;
-          const link = ({"faq":["FAQ","Quick answers to common questions."],"blog":["Blog & Guides","How-to articles and platform tips."],"search":["Search Tools","Find exactly the tool you need fast."],"contact":["Contact Us","Reach the team, we reply quickly."],"privacy":["Privacy Policy","How we handle your data."],"terms":["Terms of Service","Platform guidelines and usage rules."]} as Record<string, [string, string]>)[r.key];
+          const link = ({"faq":["FAQ","Quick answers to common questions."],"blog":["Blog & Guides","How-to articles and platform tips."],"authors":["Our Authors","Meet the writers behind our guides."],"search":["Search Tools","Find exactly the tool you need fast."],"contact":["Contact Us","Reach the team, we reply quickly."],"privacy":["Privacy Policy","How we handle your data."],"terms":["Terms of Service","Platform guidelines and usage rules."]} as Record<string, [string, string]>)[r.key];
           return (
             <Link key={r.href} href={r.href} onClick={close}
               className="group flex flex-col gap-3 p-4 rounded-2xl border border-border bg-white dark:bg-card hover:border-primary/20 hover:shadow-soft transition-all">
@@ -430,6 +431,7 @@ function ResourcesPanel({ close }: { close: () => void }) {
 ═══════════════════════════════════════════════════════════ */
 const ABOUT_LINK_CONFIG = [
   { key: 'about',      icon: Info,      href: '/about',      color: 'text-violet-600 bg-violet-50 dark:text-violet-400 dark:bg-violet-500/15'   },
+  { key: 'authors',    icon: Users,     href: '/authors',    color: 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-500/15' },
   { key: 'contact',    icon: Mail,      href: '/contact',    color: 'text-sky-600 bg-sky-50 dark:text-sky-400 dark:bg-sky-500/15'         },
   { key: 'pricing',    icon: Sparkles,  href: '/pricing',    color: 'text-fuchsia-600 bg-fuchsia-50 dark:text-fuchsia-400 dark:bg-fuchsia-500/15' },
   { key: 'affiliates', icon: Coins,     href: '/affiliates', color: 'text-amber-600 bg-amber-50 dark:text-warning dark:bg-amber-500/15'     },
@@ -457,7 +459,7 @@ function AboutPanel({ close }: { close: () => void }) {
       <div className="grid grid-cols-3 gap-3">
         {ABOUT_LINK_CONFIG.map((a) => {
           const AIcon = a.icon;
-          const link = ({"about":["About Us","Our story, mission, and values."],"contact":["Contact","Support, partnerships, and press."],"pricing":["Pricing","Free tier, Pro plan, and credit packs."],"privacy":["Privacy Policy","We never sell your data."],"terms":["Terms","Usage rules and platform guidelines."],"careers":["Careers","We're hiring, come build the future."],"affiliates":["Affiliates","Earn by sharing SavDown."]} as Record<string, [string, string]>)[a.key];
+          const link = ({"about":["About Us","Our story, mission, and values."],"authors":["Our Authors","Meet the people behind SavDown."],"contact":["Contact","Support, partnerships, and press."],"pricing":["Pricing","Free tier, Pro plan, and credit packs."],"privacy":["Privacy Policy","We never sell your data."],"terms":["Terms","Usage rules and platform guidelines."],"careers":["Careers","We're hiring, come build the future."],"affiliates":["Affiliates","Earn by sharing SavDown."]} as Record<string, [string, string]>)[a.key];
           return (
             <Link key={a.key} href={a.href} onClick={close}
               className="group flex flex-col gap-3 p-4 rounded-2xl border border-border bg-white dark:bg-card hover:border-primary/20 hover:shadow-soft transition-all">

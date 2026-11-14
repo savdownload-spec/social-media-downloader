@@ -151,6 +151,8 @@ export async function validateBackupArchive(buffer: Buffer): Promise<ValidatedAr
 const ALLOWED_FIELDS: Record<string, string[]> = {
   users: ['id', 'name', 'email', 'emailVerified', 'image', 'role', 'jobTitle', 'company', 'bio', 'themePreference', 'createdAt', 'updatedAt'],
   posts: ['id', 'slug', 'title', 'excerpt', 'content', 'coverImage', 'author', 'tagsJson', 'category', 'coverAlt', 'ogImage', 'primaryKeyword', 'secondaryKeywordsJson', 'canonicalUrl', 'toolSlug', 'readingTimeMinutes', 'published', 'publishedAt', 'createdAt', 'updatedAt', 'contentJson', 'seoTitle', 'metaDescription', 'focusKeyphrase', 'synonymsJson', 'noIndex', 'noFollow', 'metaRobotsAdvanced', 'breadcrumbTitle', 'schemaType', 'faqJson', 'howToJson', 'ogTitle', 'ogDescription', 'scheduledAt', 'seoScore', 'readabilityScore', 'wordCount'],
+  blogAuthors: ['id', 'name', 'slug', 'email', 'profileImage', 'role', 'shortBio', 'extendedBio', 'expertiseJson', 'website', 'socialsJson', 'published', 'isSample', 'createdAt', 'updatedAt'],
+  authorSlugRedirect: ['oldSlug', 'authorId', 'createdAt'],
   postRevisions: ['id', 'postId', 'snapshotJson', 'changeSummary', 'authorId', 'authorEmail', 'createdAt'],
   pricingSettings: ['key', 'value', 'updatedAt'], adminSettings: ['key', 'value', 'updatedAt'],
   toolConfigs: ['id', 'slug', 'name', 'category', 'status', 'creditCost', 'freeLimit', 'batchLimitFree', 'batchLimitPro', 'batchLimitMax', 'batchLimitLifetime', 'updatedAt', 'createdAt'],
@@ -181,34 +183,37 @@ const DATE_FIELDS = new Set(['emailVerified', 'planCreditsResetAt', 'publishedAt
 //
 // Dependency rationale (must-come-before relationships):
 //  1. users            — root of nearly every FK (userId)
-//  2. posts            — parent of postRevisions
-//  3. postRevisions    — child of posts (postId)
-//  4. pricingSettings  — standalone AdminSetting row (key='pricing_config'), no deps
-//  5. adminSettings    — other AdminSetting rows, no deps
-//  6. toolConfigs      — standalone, no deps
-//  7. contactMessages  — standalone, no deps
-//  8. supportConversations — parent of supportMessages (conversationId)
-//  9. supportMessages  — child of supportConversations; parent of supportAttachments (messageId)
-// 10. supportAttachments — child of supportMessages
-// 11. newsletterSubscribers — standalone, no deps
-// 12. affiliates       — parent of referrals (affiliateId)
-// 13. referrals        — child of affiliates; FK referralId on creditTransactions (SetNull)
-//                         → must come before creditTransactions (position 17)
-// 14. downloads        — FK operationId on creditTransactions (SetNull)
-//                         → must come before creditTransactions (position 17)
+//  2. blogAuthors      — parent of authorSlugRedirect; optional authorId on posts
+//  3. authorSlugRedirect — child of blogAuthors (authorId)
+//  4. posts            — parent of postRevisions
+//  5. postRevisions    — child of posts (postId)
+//  6. pricingSettings  — standalone AdminSetting row (key='pricing_config'), no deps
+//  7. adminSettings    — other AdminSetting rows, no deps
+//  8. toolConfigs      — standalone, no deps
+//  9. contactMessages  — standalone, no deps
+// 10. supportConversations — parent of supportMessages (conversationId)
+// 11. supportMessages  — child of supportConversations; parent of supportAttachments (messageId)
+// 12. supportAttachments — child of supportMessages
+// 13. newsletterSubscribers — standalone, no deps
+// 14. affiliates       — parent of referrals (affiliateId)
+// 15. referrals        — child of affiliates; FK referralId on creditTransactions (SetNull)
+//                         → must come before creditTransactions (position 19)
+// 16. downloads        — FK operationId on creditTransactions (SetNull)
+//                         → must come before creditTransactions (position 19)
 //                         FK operationId on aiImageGenerations (SetNull)
-//                         → must come before aiImageGenerations (position 19)
-// 15. payments         — FK paymentId on creditTransactions (SetNull)
-//                         → must come before creditTransactions (position 17)
-// 16. subscriptions    — no FK into creditTransactions; placed here for logical grouping
-// 17. creditTransactions — depends on referrals (13), downloads (14), payments (15) ✓
-// 18. creditAllocations — FK spendTransactionId → creditTransactions (position 17) ✓
-// 19. aiImageGenerations — FK operationId → downloads (position 14) ✓
-// 20. analyticsEvents  — standalone, no deps
-// 21. reviews          — no deps (userId FK uses SetNull via Prisma skipDuplicates)
-// 22. blogComments     — no deps (userId FK uses SetNull via Prisma skipDuplicates)
+//                         → must come before aiImageGenerations (position 21)
+// 17. payments         — FK paymentId on creditTransactions (SetNull)
+//                         → must come before creditTransactions (position 19)
+// 18. subscriptions    — no FK into creditTransactions; placed here for logical grouping
+// 19. creditTransactions — depends on referrals (15), downloads (16), payments (17) ✓
+// 20. creditAllocations — FK spendTransactionId → creditTransactions (position 19) ✓
+// 21. aiImageGenerations — FK operationId → downloads (16) ✓
+// 22. analyticsEvents  — standalone, no deps
+// 23. reviews          — no deps (userId FK uses SetNull via Prisma skipDuplicates)
+// 24. blogComments     — no deps (userId FK uses SetNull via Prisma skipDuplicates)
 const IMPORT_ORDER: Array<[string, string]> = [
-  ['users', 'user'], ['posts', 'post'], ['postRevisions', 'postRevision'],
+  ['users', 'user'], ['blogAuthors', 'blogAuthor'], ['authorSlugRedirect', 'authorSlugRedirect'],
+  ['posts', 'post'], ['postRevisions', 'postRevision'],
   ['pricingSettings', 'adminSetting'], ['adminSettings', 'adminSetting'], ['toolConfigs', 'toolConfig'],
   ['contactMessages', 'contactMessage'], ['supportConversations', 'supportConversation'], ['supportMessages', 'supportMessage'], ['supportAttachments', 'supportAttachment'],
   ['newsletterSubscribers', 'newsletterSubscriber'], ['affiliates', 'affiliate'], ['referrals', 'referral'],

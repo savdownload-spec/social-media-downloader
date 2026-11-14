@@ -44,6 +44,9 @@ export type BlogPost = {
     role: string;
     shortBio?: string | null;
     socialsJson?: string;
+    /** False hides the profile link while keeping the article's display name. */
+    published?: boolean;
+    isSample?: boolean;
   };
 };
 
