@@ -171,7 +171,7 @@ export function AdminBackupClient() {
                   <p className="mt-1 max-w-2xl text-[12px] leading-5 text-text-muted">The complete SavDown backup runs once a day and produces exactly one downloadable ZIP. Creating it again on the same day returns today&apos;s existing ZIP instead of a duplicate. Manual and recovery backups are never removed by this schedule.</p>
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={runAutoBackup} disabled={autoRunning} loading={autoRunning}><CloudDownload className="h-4 w-4" /> Create today's backup now</Button>
+              <Button variant="outline" size="sm" onClick={runAutoBackup} disabled={autoRunning} loading={autoRunning}><CloudDownload className="h-4 w-4" /> Create today&apos;s backup now</Button>
             </div>
             {historyLoading && !latestAuto ? <div className="flex items-center gap-2 rounded-xl border border-border-light bg-surface/50 px-4 py-3 text-[12px] text-text-muted"><LoaderCircle className="h-4 w-4 animate-spin text-primary" /> Checking the latest automatic backup…</div> : latestAuto ? (
               <div className="flex flex-col gap-3 rounded-xl border border-border-light bg-surface/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -181,7 +181,7 @@ export function AdminBackupClient() {
                 </div>
                 <a href={latestAuto.downloadUrl ?? `/api/admin/backups/${latestAuto.id}/download`} className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-[12px] font-semibold text-white hover:bg-primary-hover"><Download className="h-3.5 w-3.5" /> Download latest ZIP</a>
               </div>
-            ) : <div className="rounded-xl border border-dashed border-border px-4 py-4 text-[12px] text-text-muted">No automatic backup has been created yet. The first scheduled run will create it, or use “Create today's backup now”.</div>}
+            ) : <div className="rounded-xl border border-dashed border-border px-4 py-4 text-[12px] text-text-muted">No automatic backup has been created yet. The first scheduled run will create it, or use “Create today&apos;s backup now”.</div>}
             <p className="text-[11px] text-text-muted">Keeps the newest {AUTO_BACKUP_RETENTION_DAYS} daily automatic ZIPs. Older automatic files are pruned; manual and recovery backups stay until you delete them.</p>
           </div>
         </SectionCard>
