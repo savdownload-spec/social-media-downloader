@@ -31,7 +31,10 @@ export class BackupStorageConfigurationError extends Error {
 
 function backupBlobAuth(): BackupBlobAuth | null {
   const token = process.env.BACKUP_BLOB_READ_WRITE_TOKEN?.trim();
-  if (token) return { token };
+  // A mis-pasted or rotated credential can hold a PEM block instead of a
+  // token; sending it as a Bearer header throws, so only accept token-shaped
+  // values and fall back to the store ID (OIDC).
+  if (token && !/-----BEGIN/.test(token) && !/\s/.test(token)) return { token };
   const storeId = process.env.BACKUP_BLOB_STORE_ID?.trim();
   if (storeId) return { storeId };
   return null;
