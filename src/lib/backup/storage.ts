@@ -23,8 +23,8 @@ const BACKUP_STORAGE_SETUP_ERROR =
   'Secure backup storage is not configured. Create a separate Vercel Blob store with Private access, set BACKUP_BLOB_READ_WRITE_TOKEN (recommended) or BACKUP_BLOB_STORE_ID for that store in Production and Preview, then redeploy. The public BLOB_READ_WRITE_TOKEN cannot store backups.';
 
 export class BackupStorageConfigurationError extends Error {
-  constructor() {
-    super(BACKUP_STORAGE_SETUP_ERROR);
+  constructor(message?: string) {
+    super(message ?? BACKUP_STORAGE_SETUP_ERROR);
     this.name = 'BackupStorageConfigurationError';
   }
 }
