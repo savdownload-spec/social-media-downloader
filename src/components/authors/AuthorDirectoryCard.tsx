@@ -22,16 +22,19 @@ export function AuthorDirectoryCard({
         className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-brand-soft opacity-60 transition-opacity duration-300 group-hover:opacity-100 dark:bg-none dark:bg-primary/10"
       />
 
+      {/* Stretched link: keeps the whole card clickable without nesting the
+          social anchors inside another anchor. */}
+      <Link
+        href={`/authors/${author.slug}`}
+        aria-label={`View ${author.name}'s profile`}
+        className="absolute inset-0 z-10 rounded-3xl outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+      />
+
       <div className="relative flex items-start gap-4">
         <AuthorAvatar author={author} size="lg" priority={priority} />
         <div className="min-w-0 pt-1">
           <h2 className="font-display text-xl font-semibold leading-snug tracking-tight text-text">
-            <Link
-              href={`/authors/${author.slug}`}
-              className="rounded-sm outline-none after:absolute after:inset-0 after:z-0 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
-            >
-              {author.name}
-            </Link>
+            {author.name}
           </h2>
           <p className="mt-1 text-sm font-medium text-primary">{author.role}</p>
           {author.isSample && (
@@ -74,7 +77,7 @@ export function AuthorDirectoryCard({
               <FileText className="h-3.5 w-3.5" aria-hidden="true" />
               {articleLabel}
             </span>
-            <div className="relative z-10">
+            <div className="relative z-20">
               <AuthorSocialLinks
                 name={author.name}
                 socials={author.socials}
