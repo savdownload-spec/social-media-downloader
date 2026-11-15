@@ -47,7 +47,6 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       description: guide?.description ?? tool.description,
       path: `/tools/${tool.slug}`,
       keywords: tool.keywords,
-      noIndex: Boolean(STATUS_BADGE[status]),
     });
   }
   const entry = getCatalogTool(params.slug);
@@ -68,7 +67,6 @@ export async function generateMetadata({ params }: { params: { slug: string } })
       description: guide?.description ?? entry.description,
       path: `/tools/${entry.slug}`,
       keywords: entry.keywords,
-      noIndex: Boolean(STATUS_BADGE[status]) || !isFunctionalTool(params.slug),
     });
   }
   return {};
