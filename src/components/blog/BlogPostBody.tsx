@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { ChevronDown, ListTree } from 'lucide-react';
 import type { BlogPost } from '@/config/blog';
 import { BlogAdSlot } from '@/components/blog/BlogAdSlot';
 import { TableOfContents } from '@/components/blog/TableOfContents';
@@ -120,15 +121,19 @@ export function BlogPostBody({ post }: { post: BlogPost }) {
   const usingRichEditor = !!post.contentJson;
   return (
     <div>
-      {headings.length >= 3 && (
-        <details className="mb-10 rounded-2xl border border-border bg-surface/70 p-5 lg:hidden">
-          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.18em] text-text-muted list-none flex items-center justify-between gap-2">
-            On This Page
-            <svg className="h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
+      {headings.length >= 2 && (
+        <details className="group mb-9 overflow-hidden rounded-2xl border border-border bg-white shadow-soft lg:hidden dark:bg-card">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 text-sm font-semibold text-text marker:content-none focus-visible:outline-2 focus-visible:outline-offset-2 [&::-webkit-details-marker]:hidden">
+            <span className="inline-flex items-center gap-2">
+              <ListTree className="h-4 w-4 text-primary" aria-hidden="true" />
+              On this page
+            </span>
+            <ChevronDown
+              className="h-4 w-4 text-text-muted transition-transform duration-200 group-open:rotate-180"
+              aria-hidden="true"
+            />
           </summary>
-          <div className="mt-4">
+          <div className="border-t border-border/70 px-3 py-3">
             <TableOfContents headings={headings} mode="mobile" />
           </div>
         </details>
@@ -138,7 +143,11 @@ export function BlogPostBody({ post }: { post: BlogPost }) {
       ) : (
         <div className="prose-elegant blog-article-content">{renderContent(post.content, headings as { title: string; id: string; level: 2 | 3 }[])}</div>
       )}
-      <BlogAdSlot slot="IN_ARTICLE_AD" className="my-10" />
+      {/* Render the in-article placement only when a real ad unit is configured;
+          an unconfigured slot would otherwise leave a blank block in the article. */}
+      {process.env.NEXT_PUBLIC_ADSENSE_CLIENT && process.env.NEXT_PUBLIC_ADSENSE_IN_ARTICLE_SLOT && (
+        <BlogAdSlot slot="IN_ARTICLE_AD" slotId={process.env.NEXT_PUBLIC_ADSENSE_IN_ARTICLE_SLOT} className="my-10" />
+      )}
     </div>
   );
 }

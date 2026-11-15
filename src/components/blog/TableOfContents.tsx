@@ -1,47 +1,19 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { BlogHeading } from '@/components/blog/BlogPostBody';
 
-type TocHeading = BlogHeading & { children?: BlogHeading[] };
-
-function buildTree(headings: BlogHeading[]): TocHeading[] {
-  const tree: TocHeading[] = [];
-  let currentH2: TocHeading | null = null;
-  let currentH3: TocHeading | null = null;
-
-  for (const h of headings) {
-    if (h.level === 2) {
-      currentH2 = { ...h, children: [] };
-      currentH3 = null;
-      tree.push(currentH2);
-    } else if (h.level === 3) {
-      if (currentH2) {
-        currentH3 = { ...h, children: [] };
-        currentH2.children = currentH2.children ?? [];
-        currentH2.children.push(currentH3);
-      } else {
-        // Orphan H3 — promote to top level
-        currentH3 = { ...h, children: [] };
-        tree.push(currentH3);
-      }
-    } else if (h.level === 4) {
-      if (currentH3) {
-        currentH3.children = currentH3.children ?? [];
-        currentH3.children.push({ ...h });
-      } else if (currentH2) {
-        currentH2.children = currentH2.children ?? [];
-        currentH2.children.push({ ...h });
-      }
-    }
-  }
-  return tree;
-}
+// Matches the site header height plus breathing room so headings never land
+// underneath the sticky navigation when a TOC link is activated.
+const SCROLL_OFFSET = 96;
 
 function scrollToId(id: string) {
   const el = document.getElementById(id);
   if (!el) return;
-  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const top = el.getBoundingClientRect().top + window.scrollY - SCROLL_OFFSET;
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.scrollTo({ top, behavior: prefersReduced ? 'auto' : 'smooth' });
+  window.history.replaceState(null, '', `#${id}`);
 }
 
 async function copyLink(id: string) {
@@ -49,7 +21,6 @@ async function copyLink(id: string) {
   try {
     await navigator.clipboard.writeText(url);
   } catch {
-    // Fallback: create a temporary input
     const input = document.createElement('input');
     input.value = url;
     document.body.appendChild(input);
@@ -59,18 +30,22 @@ async function copyLink(id: string) {
   }
 }
 
+// Flat list of section headings — no nested sub-items and no expand controls.
+// Posts that only use H3 for sections still get their headings listed.
+function topLevelHeadings(headings: BlogHeading[]): BlogHeading[] {
+  return headings.some((h) => h.level === 2)
+    ? headings.filter((h) => h.level === 2)
+    : headings;
+}
+
 type TocItemProps = {
-  heading: TocHeading;
+  heading: BlogHeading;
   activeId: string;
-  depth?: number;
-  expanded: boolean;
-  onToggle: () => void;
   mode?: 'desktop' | 'mobile';
 };
 
-function TocItem({ heading, activeId, depth = 0, expanded, onToggle, mode }: TocItemProps) {
+function TocItem({ heading, activeId, mode }: TocItemProps) {
   const isActive = activeId === heading.id;
-  const hasChildren = (heading.children?.length ?? 0) > 0;
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async (e: React.MouseEvent) => {
@@ -81,29 +56,27 @@ function TocItem({ heading, activeId, depth = 0, expanded, onToggle, mode }: Toc
     setTimeout(() => setCopied(false), 1500);
   };
 
-  const indentClass = depth === 1 ? 'pl-4' : depth === 2 ? 'pl-8' : '';
-
   return (
     <li>
-      <div className={`group flex items-center gap-1 ${indentClass}`}>
+      <div className="group flex items-center gap-1">
         <a
           href={`#${heading.id}`}
           onClick={(e) => { e.preventDefault(); scrollToId(heading.id); }}
-          className={`toc-item flex-1 flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm leading-5 transition-colors min-h-[44px]
-            ${isActive
-              ? 'border-l-2 pl-1.5 font-medium'
-              : 'border-l-2 pl-1.5 border-transparent text-text-muted hover:bg-primary-light hover:text-primary'
-            }`}
-          style={isActive ? { borderColor: 'rgb(var(--primary))', color: 'rgb(var(--primary))' } : {}}
+          className={`toc-item -ml-px flex min-h-[38px] flex-1 items-center rounded-r-lg border-l-2 py-2 pl-3.5 pr-2 text-[13px] leading-snug transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${
+            isActive
+              ? 'border-primary bg-gradient-to-r from-primary/[0.08] to-transparent font-semibold text-primary'
+              : 'border-transparent text-text-muted hover:border-border hover:bg-surface/80 hover:text-text'
+          }`}
+          style={{ outlineColor: 'rgb(var(--primary) / 0.5)' }}
           aria-current={isActive ? 'location' : undefined}
         >
           <span className="line-clamp-2">{heading.title}</span>
         </a>
-        {!hasChildren && mode === 'desktop' && (
+        {mode === 'desktop' && (
           <button
             type="button"
             onClick={handleCopy}
-            className="shrink-0 p-1 min-h-[44px] min-w-[44px] flex items-center justify-center rounded opacity-0 group-hover:opacity-100 transition-opacity text-text-muted hover:text-primary"
+            className="flex min-h-[32px] min-w-[32px] shrink-0 items-center justify-center rounded-lg text-text-subtle opacity-0 transition-opacity hover:text-primary focus-visible:opacity-100 group-hover:opacity-100"
             aria-label={`Copy link to "${heading.title}"`}
             title={copied ? 'Copied!' : 'Copy link'}
           >
@@ -118,38 +91,7 @@ function TocItem({ heading, activeId, depth = 0, expanded, onToggle, mode }: Toc
             )}
           </button>
         )}
-        {hasChildren && (
-          <button
-            type="button"
-            onClick={onToggle}
-            className="shrink-0 p-1 min-h-[44px] min-w-[44px] flex items-center justify-center rounded text-text-muted hover:text-primary transition-colors"
-            aria-label={expanded ? 'Collapse section' : 'Expand section'}
-            aria-expanded={expanded}
-          >
-            <svg
-              className={`h-3.5 w-3.5 transition-transform ${expanded ? '' : '-rotate-90'}`}
-              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-        )}
       </div>
-      {hasChildren && expanded && (
-        <ul className="mt-0.5 space-y-0.5" role="list">
-          {heading.children!.map((child) => (
-            <TocItem
-              key={child.id}
-              heading={child as TocHeading}
-              activeId={activeId}
-              depth={depth + 1}
-              expanded={true}
-              onToggle={() => {}}
-              mode={mode}
-            />
-          ))}
-        </ul>
-      )}
     </li>
   );
 }
@@ -160,67 +102,53 @@ type TableOfContentsProps = {
 };
 
 export function TableOfContents({ headings, mode = 'desktop' }: TableOfContentsProps) {
-  const tree = buildTree(headings);
+  const items = topLevelHeadings(headings);
   const [activeId, setActiveId] = useState('');
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set(tree.map((h) => h.id)));
-  const observerRef = useRef<IntersectionObserver | null>(null);
-
-  const handleToggle = useCallback((id: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
+  const frameRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!headings.length) return;
-
     const ids = headings.map((h) => h.id);
-    // Track intersection for all heading elements
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        // Find the topmost visible heading
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .map((e) => e.target.id);
 
-        if (visible.length > 0) {
-          // Pick the first one in document order
-          const first = ids.find((id) => visible.includes(id));
-          if (first) setActiveId(first);
-        }
-      },
-      { threshold: 0, rootMargin: '-80px 0px -40% 0px' },
-    );
+    const update = () => {
+      frameRef.current = null;
+      let current = ids[0];
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        if (el.getBoundingClientRect().top <= SCROLL_OFFSET + 24) current = id;
+        else break;
+      }
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) {
+        current = ids[ids.length - 1];
+      }
+      setActiveId((prev) => (prev === current ? prev : current));
+    };
 
-    for (const id of ids) {
-      const el = document.getElementById(id);
-      if (el) observerRef.current.observe(el);
-    }
+    const onScroll = () => {
+      if (frameRef.current !== null) return;
+      frameRef.current = window.requestAnimationFrame(update);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    update();
 
     return () => {
-      observerRef.current?.disconnect();
-      observerRef.current = null;
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+      frameRef.current = null;
     };
   }, [headings]);
 
-  if (!tree.length) return null;
+  if (!items.length) return null;
 
   return (
     <nav aria-label="Table of contents">
-      <ul className="space-y-0.5" role="list">
-        {tree.map((heading) => (
-          <TocItem
-            key={heading.id}
-            heading={heading}
-            activeId={activeId}
-            depth={0}
-            expanded={expandedIds.has(heading.id)}
-            onToggle={() => handleToggle(heading.id)}
-            mode={mode}
-          />
+      <ul className="space-y-0.5 border-l border-border/80" role="list">
+        {items.map((heading) => (
+          <TocItem key={heading.id} heading={heading} activeId={activeId} mode={mode} />
         ))}
       </ul>
     </nav>

@@ -28,7 +28,7 @@ export function StickyArticleHeader({ title, readingTime, sentinelId }: StickyAr
 
   return (
     <div
-      className="sticky-article-header fixed top-0 left-0 right-0 z-40 border-b border-border bg-white/90 dark:bg-card/90 backdrop-blur-sm transition-transform duration-200"
+      className="sticky-article-header fixed left-0 right-0 top-16 z-40 border-b border-border bg-white/90 backdrop-blur-sm transition-transform duration-200 dark:bg-card/90"
       style={{
         transform: visible ? 'translateY(0)' : 'translateY(-100%)',
       }}

@@ -31,35 +31,39 @@ export function ArticleFeedback({ postSlug }: ArticleFeedbackProps) {
   };
 
   return (
-    <div className="mt-10 rounded-2xl border border-border bg-surface/60 p-5 text-center">
+    <div className="mt-10 flex flex-col gap-4 border-y border-border py-5 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p className="text-sm font-semibold text-text">Was this guide helpful?</p>
+        <p className="mt-0.5 text-xs text-text-subtle">Your feedback helps improve our guides.</p>
+      </div>
       {submitted ? (
-        <p className="text-sm font-medium text-text-muted">
-          <span className="text-primary font-semibold">Thanks for your feedback!</span> It helps us improve our guides.
+        <p role="status" className="inline-flex items-center gap-2 rounded-xl bg-primary-light px-4 py-2.5 text-sm font-medium text-primary">
+          <ThumbsUp className="h-4 w-4" aria-hidden="true" />
+          Thanks for your feedback!
         </p>
       ) : (
-        <>
-          <p className="text-sm font-medium text-text mb-4">Was this guide helpful?</p>
-          <div className="flex items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={() => submit(true)}
-              disabled={loading}
-              className="inline-flex h-11 min-w-[44px] items-center gap-2 rounded-xl border border-border bg-white dark:bg-card px-4 text-sm font-medium text-text-muted transition-colors hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2"
-              aria-label="Yes, this guide was helpful"
-            >
-              <ThumbsUp className="h-4 w-4" aria-hidden="true" /> Yes
-            </button>
-            <button
-              type="button"
-              onClick={() => submit(false)}
-              disabled={loading}
-              className="inline-flex h-11 min-w-[44px] items-center gap-2 rounded-xl border border-border bg-white dark:bg-card px-4 text-sm font-medium text-text-muted transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2"
-              aria-label="No, this guide was not helpful"
-            >
-              <ThumbsDown className="h-4 w-4" aria-hidden="true" /> Not really
-            </button>
-          </div>
-        </>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => submit(true)}
+            disabled={loading}
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-border bg-white px-4 text-sm font-medium text-text-muted transition-colors hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 dark:bg-card"
+            style={{ outlineColor: 'rgb(var(--primary) / 0.5)' }}
+            aria-label="Yes, this guide was helpful"
+          >
+            <ThumbsUp className="h-4 w-4" aria-hidden="true" /> Yes, helpful
+          </button>
+          <button
+            type="button"
+            onClick={() => submit(false)}
+            disabled={loading}
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-border bg-white px-4 text-sm font-medium text-text-muted transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 dark:bg-card"
+            style={{ outlineColor: 'rgb(var(--primary) / 0.5)' }}
+            aria-label="No, this guide was not helpful"
+          >
+            <ThumbsDown className="h-4 w-4" aria-hidden="true" /> Not really
+          </button>
+        </div>
       )}
     </div>
   );
