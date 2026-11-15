@@ -25,40 +25,19 @@ const FILTERS = [
 
 export function ReviewsClient({
   searchParams,
+  initialReviews,
+  initialSummary,
 }: {
   searchParams: { review?: string; filter?: string };
+  initialReviews: Review[];
+  initialSummary: { averageRating: number | null; reviewCount: number };
 }) {
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [summary, setSummary] = useState<{ averageRating: number | null; reviewCount: number } | null>(null);
   const highlightId = searchParams.review;
   const activeFilter = searchParams.filter || 'all';
   const initialVisible = 12;
   const [visibleCount, setVisibleCount] = useState(initialVisible);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    fetch(`/api/reviews?platform=${activeFilter}&limit=50`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!cancelled && data?.ok) {
-          setReviews(data.data.reviews || []);
-          setSummary({
-            averageRating: data.data.averageRating ?? null,
-            reviewCount: data.data.reviewCount ?? 0,
-          });
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activeFilter]);
+  const reviews = initialReviews;
+  const summary = initialSummary;
 
   useEffect(() => {
     setVisibleCount(initialVisible);
@@ -93,7 +72,7 @@ export function ReviewsClient({
             />
           </div>
 
-          {!loading && featured.length > 0 && (
+          {featured.length > 0 && (
             <div className="mb-12">
               <ReviewMarquee reviews={featured} />
             </div>
@@ -117,43 +96,33 @@ export function ReviewsClient({
             </div>
           )}
 
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-64 rounded-2xl bg-surface animate-pulse" />
-              ))}
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                {visible.map((review) => (
-                  <div
-                    key={review.id}
-                    id={`review-${review.id}`}
-                    className={highlightId === review.id ? 'ring-2 ring-primary rounded-2xl' : ''}
-                  >
-                    <ReviewCard review={review} />
-                  </div>
-                ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {visible.map((review) => (
+              <div
+                key={review.id}
+                id={`review-${review.id}`}
+                className={highlightId === review.id ? 'ring-2 ring-primary rounded-2xl' : ''}
+              >
+                <ReviewCard review={review} />
               </div>
+            ))}
+          </div>
 
-              {reviews.length === 0 && (
-                <div className="text-center py-16">
-                  <p className="text-text-muted">No reviews yet. Be the first to share your experience!</p>
-                </div>
-              )}
+          {reviews.length === 0 && (
+            <div className="text-center py-16">
+              <p className="text-text-muted">No reviews yet. Be the first to share your experience!</p>
+            </div>
+          )}
 
-              {hasMore && (
-                <div className="mt-12 text-center">
-                  <button
-                    onClick={loadMore}
-                    className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
-                  >
-                    Load More Reviews <ArrowRight className="w-5 h-5" />
-                  </button>
-                </div>
-              )}
-            </>
+          {hasMore && (
+            <div className="mt-12 text-center">
+              <button
+                onClick={loadMore}
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl text-base font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
+              >
+                Load More Reviews <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
           )}
         </Container>
       </Section>

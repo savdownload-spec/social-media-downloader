@@ -423,7 +423,7 @@ export const blogPosts: BlogPost[] = [
     "category": "Tips",
     "coverImage": "/images/blog/content-strategy.webp",
     "coverAlt": "Content creator workspace with monitors and clips laid out for repurposing",
-    "seoTitle": "A Creator's Guide to Repurposing Video Content | SavDown",
+    "seoTitle": "A Creator's Guide to Repurposing Video Content",
     "metaDescription": "Turn one video into a week of platform-ready content. A practical workflow for finding moments, formatting clips, captioning, and archiving.",
     "primaryKeyword": "repurpose video content",
     "secondaryKeywords": [

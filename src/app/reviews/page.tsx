@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { buildMetadata, jsonLd, breadcrumbSchema } from '@/lib/seo';
 import { siteConfig } from '@/config/site';
+import { getPublishedReviews } from '@/lib/reviews-server';
 
 export const metadata: Metadata = buildMetadata({
   title: 'Reviews',
@@ -10,11 +11,18 @@ export const metadata: Metadata = buildMetadata({
 
 import { ReviewsClient } from './ReviewsClient';
 
-export default function ReviewsPage({
+export const dynamic = 'force-dynamic';
+
+export default async function ReviewsPage({
   searchParams,
 }: {
   searchParams: { review?: string; filter?: string };
 }) {
+  const data = await getPublishedReviews({
+    platform: searchParams.filter || 'all',
+    limit: 50,
+  });
+
   return (
     <>
       <script
@@ -24,7 +32,11 @@ export default function ReviewsPage({
           { name: 'Reviews', url: `${siteConfig.url}/reviews` },
         ]))}
       />
-      <ReviewsClient searchParams={searchParams} />
+      <ReviewsClient
+        searchParams={searchParams}
+        initialReviews={data.reviews}
+        initialSummary={{ averageRating: data.averageRating, reviewCount: data.reviewCount }}
+      />
     </>
   );
 }
