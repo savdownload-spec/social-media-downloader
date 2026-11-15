@@ -1,4 +1,6 @@
 import { Container } from '@/components/layout/Container';
+import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import { BlogListingClient } from '@/components/blog/BlogListingClient';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { getPublicBlogPosts } from '@/lib/blog';
@@ -23,7 +25,7 @@ export default async function BlogPage() {
             { label: 'Home', href: '/' },
             { label: 'Blog', href: '/blog' },
           ]} />
-          <div className="max-w-3xl"><p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">SavDown journal</p><h1 className="mt-4 font-display text-4xl font-semibold leading-[1.04] tracking-tight text-text md:text-6xl">Useful guides for saving, creating, and sharing content responsibly.</h1><p className="mt-5 max-w-2xl text-base leading-7 text-text-muted md:text-lg">Thoughtful downloader guides, creator workflows, format tips, and practical answers for everyday media tasks.</p></div>
+          <div className="max-w-3xl"><p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">SavDown journal</p><h1 className="mt-4 font-display text-4xl font-semibold leading-[1.04] tracking-tight text-text md:text-6xl">Useful guides for saving, creating, and sharing content responsibly.</h1><p className="mt-5 max-w-2xl text-base leading-7 text-text-muted md:text-lg">Thoughtful downloader guides, creator workflows, format tips, and practical answers for everyday media tasks.</p><Link href="/authors" className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:text-primary-hover">Meet our authors <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link></div>
         </Container>
       </section>
       <Container className="max-w-6xl py-10 md:py-14"><BlogListingClient posts={posts} /></Container>

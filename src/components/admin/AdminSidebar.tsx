@@ -26,6 +26,7 @@ import {
   ChevronLeft,
   ExternalLink,
   DatabaseBackup,
+  UserRound,
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 
@@ -83,6 +84,7 @@ const NAV_GROUPS: NavGroup[] = [
     section: 'Content',
     items: [
       { label: 'Content', href: '/admin/content', icon: FileText },
+      { label: 'Authors', href: '/admin/authors', icon: UserRound },
       { label: 'Comments', href: '/admin/comments', icon: MessageSquare },
     ],
   },
@@ -128,6 +130,7 @@ export function AdminSidebar({ onClose, collapsed, onToggleCollapse, badges }: P
 
   function isActive(href: string) {
     if (href === '/admin') return pathname === '/admin';
+    if (href === '/admin/authors') return pathname.startsWith('/admin/authors');
     return pathname.startsWith(href);
   }
 

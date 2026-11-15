@@ -28,6 +28,12 @@ const nextConfig = {
   },
   async headers() {
     return [
+      // Prevent search engines from indexing Preview and Development deployments.
+      // VERCEL_ENV is 'production' | 'preview' | 'development' — set by Vercel automatically.
+      ...(process.env.VERCEL_ENV !== 'production' ? [{
+        source: '/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      }] : []),
       { source: '/upscaler/esrgan-slim-1.0.0-tf4.11.0/:asset*', headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },
       { source: '/upscaler/esrgan-slim-1.0.0-tf4.11.0/:file*.wasm', headers: [{ key: 'Content-Type', value: 'application/wasm' }] },
       {

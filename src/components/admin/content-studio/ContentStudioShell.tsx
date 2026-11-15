@@ -383,7 +383,7 @@ function ArticleHeaderFields({ form, setField, onScheduleClick, scheduling }: {
   const [authors, setAuthors] = useState<{ id: string; name: string; slug: string }[]>([]);
 
   useEffect(() => {
-    fetch('/api/admin/authors')
+    fetch('/api/admin/authors?all=1')
       .then((r) => r.json())
       .then((d) => { if (d.ok) setAuthors(d.data); })
       .catch(() => undefined);

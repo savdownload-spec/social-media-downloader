@@ -12,7 +12,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [posts, toolStatuses, authors] = await Promise.all([
     getPublicBlogPosts(),
     getToolPageStatuses(),
-    prisma.blogAuthor.findMany({ select: { slug: true, updatedAt: true } }).catch(() => []),
+    prisma.blogAuthor
+      .findMany({
+        where: { published: true, isSample: false },
+        select: { slug: true, updatedAt: true },
+      })
+      .catch(() => []),
   ]);
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -22,6 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/about`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${base}/contact`, lastModified: now, changeFrequency: 'yearly', priority: 0.5 },
     { url: `${base}/blog`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${base}/authors`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${base}/faq`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/search`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${base}/privacy`, lastModified: now, changeFrequency: 'yearly', priority: 0.4 },
@@ -49,7 +55,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   const authorRoutes: MetadataRoute.Sitemap = authors.map((author) => ({
-    url: `${base}/blog/author/${author.slug}`,
+    url: `${base}/authors/${author.slug}`,
     lastModified: author.updatedAt,
     changeFrequency: 'monthly' as const,
     priority: 0.5,

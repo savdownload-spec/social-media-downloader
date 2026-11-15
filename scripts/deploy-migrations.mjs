@@ -2,13 +2,13 @@
  * deploy-migrations.mjs
  *
  * This database was originally set up with `prisma db push`, not
- * `prisma migrate`. All schema changes in the migrations directory already
- * exist in the production DB. This script marks every migration file as
- * applied (without running its SQL) so that `prisma migrate deploy` only
- * executes genuinely new migrations added in future deploys.
+ * `prisma migrate`. The migrations listed in LEGACY_MIGRATIONS already exist
+ * in the production DB, so this script marks only those as applied (without
+ * running their SQL). Genuinely new migrations are left untouched and are
+ * executed by `prisma migrate deploy` afterwards.
  *
- * Safe to run on every deploy — `migrate resolve --applied` is a no-op
- * if the migration is already recorded as successfully applied.
+ * Safe to run on every deploy — `migrate resolve --applied` is a no-op if the
+ * migration is already recorded as successfully applied.
  */
 
 import { readdirSync } from 'node:fs';
@@ -18,6 +18,19 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const MIGRATIONS_DIR = join(__dirname, '..', 'prisma', 'migrations');
+
+// Snapshot of migrations that predate this script being fixed. Everything
+// after this list must be executed normally; resolving a new migration as
+// applied without running its SQL is never safe.
+const LEGACY_MIGRATIONS = new Set([
+  '0_init',
+  '20261014_session_account_indexes',
+  '20261015_newsletter_provider',
+  '20261017_operation_lifecycle',
+  '20261018_admin_notifications',
+  '20261019_add_blog_author_and_feedback',
+  '20261019_affiliate_referral_rewards',
+]);
 
 function runPrisma(args) {
   const command = process.platform === 'win32' ? 'npx.cmd' : 'npx';
@@ -35,9 +48,10 @@ const migrations = readdirSync(MIGRATIONS_DIR, { withFileTypes: true })
   .map((d) => d.name)
   .sort();
 
-console.log(`Found ${migrations.length} migration(s). Resolving each as --applied if not already recorded...`);
+const legacyMigrations = migrations.filter((name) => LEGACY_MIGRATIONS.has(name));
+console.log(`Found ${migrations.length} migration(s); reconciling ${legacyMigrations.length} legacy migration(s) and leaving ${migrations.length - legacyMigrations.length} new migration(s) for migrate deploy...`);
 
-for (const name of migrations) {
+for (const name of legacyMigrations) {
   // `migrate resolve --applied` succeeds silently if already applied (exit 0).
   // It fails with P3008 if already applied — that is NOT an error, so we
   // capture the exit code and treat P3008 as success.

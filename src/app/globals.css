@@ -394,6 +394,52 @@
   /* ─── Phase L: Tag contrast fix ────────────────────────────────────────── */
   .blog-tag-pill { @apply rounded-full bg-primary-light px-3 py-1.5 text-xs font-medium text-text; }
 
+  /* ─── Blog detail: premium reading rhythm ─────────────────────────────── */
+  /* Scoped to the article body so the blog listing, legal pages, and admin
+     previews that share .prose-elegant keep their current appearance. */
+  .blog-article-content {
+    font-size: 1rem;
+    line-height: 1.9;
+    overflow-wrap: anywhere;
+  }
+  .blog-article-content > p:first-of-type {
+    font-size: 1.0625rem;
+    line-height: 1.8;
+    color: rgb(var(--text-muted));
+  }
+  .blog-article-content p { margin-bottom: 1.35rem; }
+  .blog-article-content h2 {
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    font-size: clamp(1.375rem, 1.1rem + 0.9vw, 1.625rem);
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+  }
+  .blog-article-content h3 {
+    margin-top: 2.1rem;
+    margin-bottom: 0.65rem;
+    font-size: 1.125rem;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+  }
+  .blog-article-content h4 { margin-top: 1.75rem; margin-bottom: 0.5rem; }
+  .blog-article-content ul,
+  .blog-article-content ol {
+    margin: 1rem 0 1.6rem;
+    padding-left: 1.4rem;
+  }
+  .blog-article-content li { margin-bottom: 0.55rem; padding-left: 0.25rem; }
+  .blog-article-content li::marker { color: rgb(var(--primary)); }
+  .blog-article-content li > p { margin-bottom: 0.35rem; }
+  .blog-article-content a { font-weight: 600; overflow-wrap: anywhere; }
+  .blog-article-content img { max-width: 100%; height: auto; }
+  .blog-article-content pre { line-height: 1.7; }
+  .blog-article-content iframe { max-width: 100%; }
+  .blog-article-content table { min-width: 560px; }
+  .blog-article-content h2,
+  .blog-article-content h3,
+  .blog-article-content h4 { scroll-margin-top: 7rem; }
+
   /* ─── Phase L: Reduced-motion for animated blog components ────────────── */
   @media (prefers-reduced-motion: reduce) {
     .reading-progress-bar { transition: none !important; }

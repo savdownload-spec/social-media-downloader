@@ -54,7 +54,10 @@ export async function POST(req: NextRequest) {
 
   const now = new Date();
   const filename = `${crypto.randomUUID()}.webp`;
-  const relativePath = `blog/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${filename}`;
+  // Author profile photos live under avatars/ so backup and media
+  // classification treat them as permanent profile media.
+  const prefix = req.nextUrl.searchParams.get('purpose') === 'author' ? 'avatars' : 'blog';
+  const relativePath = `${prefix}/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${filename}`;
 
   // Vercel sets this on every deployment (not just production), so it's a
   // reliable "are we running on serverless with no writable filesystem?"
@@ -76,10 +79,11 @@ export async function POST(req: NextRequest) {
       { status: 500 },
     );
   } else {
-    const dir = path.join(process.cwd(), 'public', 'images', 'blog', 'uploads', String(now.getFullYear()), String(now.getMonth() + 1).padStart(2, '0'));
+    const localPrefix = prefix === 'avatars' ? 'avatars' : 'blog/uploads';
+    const dir = path.join(process.cwd(), 'public', 'images', ...localPrefix.split('/'), String(now.getFullYear()), String(now.getMonth() + 1).padStart(2, '0'));
     await mkdir(dir, { recursive: true });
     await writeFile(path.join(dir, filename), outBuffer);
-    url = `/images/blog/uploads/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${filename}`;
+    url = `/images/${localPrefix}/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${filename}`;
   }
 
   await writeAuditLog({ adminId: admin.id!, adminEmail: admin.email!, action: 'content.media.upload', targetType: 'Media', targetId: url });

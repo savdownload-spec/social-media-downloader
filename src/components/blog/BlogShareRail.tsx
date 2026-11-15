@@ -47,13 +47,14 @@ export function BlogShareRail({ title }: BlogShareRailProps) {
   ];
 
   return (
-    <div className="hidden xl:flex flex-col items-center gap-3 pt-2" aria-label="Share article">
+    <div className="sticky top-28 hidden flex-col items-center gap-2.5 xl:flex" aria-label="Share article">
+      <span className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-text-subtle">Share</span>
       {buttons.map((btn) => (
         <button
           key={btn.label}
           type="button"
           onClick={btn.onClick}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-white dark:bg-card text-text-muted shadow-soft transition-colors hover:border-primary/30 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-white text-text-muted shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 dark:bg-card"
           style={{ outlineColor: 'rgb(var(--primary) / 0.5)' }}
           aria-label={btn.label}
           title={btn.label}

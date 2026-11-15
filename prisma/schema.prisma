@@ -388,19 +388,39 @@ model BlogAuthor {
   id           String   @id @default(cuid())
   name         String
   slug         String   @unique
+  /// Admin-only contact address. Never selected by public author queries.
+  email        String?
   profileImage String?
   role         String   @default("Author")
   shortBio     String?
   extendedBio  String?  @db.Text
   expertiseJson String  @default("[]")
   website      String?
+  /// Platform -> URL map. Only allowlisted http(s) URLs are exposed publicly.
   socialsJson  String   @default("{}")
+  /// Drafts are hidden from the public directory, profile pages, and sitemap.
+  published    Boolean  @default(true)
+  /// Seeded demo profiles are noindexed and excluded from the sitemap.
+  isSample     Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  posts Post[]
+  posts         Post[]
+  slugRedirects AuthorSlugRedirect[]
 
   @@index([slug])
+  @@index([published])
+}
+
+/// Old author slugs kept after a rename so previously indexed/shared profile
+/// URLs can permanently redirect to the author's current slug.
+model AuthorSlugRedirect {
+  oldSlug   String     @id
+  authorId  String
+  author    BlogAuthor @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+
+  @@index([authorId])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

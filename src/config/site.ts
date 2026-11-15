@@ -78,6 +78,7 @@ export const siteConfig = {
     ],
     Resources: [
       { label: 'Blog', href: '/blog' },
+      { label: 'Our Authors', href: '/authors' },
       { label: 'FAQ', href: '/faq' },
       { label: 'Pricing', href: '/pricing' },
       { label: 'Search Tools', href: '/search' },

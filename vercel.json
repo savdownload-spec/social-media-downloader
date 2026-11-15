@@ -9,6 +9,10 @@
     {
       "path": "/api/tools/pdf/cleanup",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/admin/backups/auto",
+      "schedule": "0 4 * * *"
     }
   ],
   "functions": {
@@ -27,6 +31,7 @@
     "src/app/api/tools/ai-image-generator/route.ts": { "maxDuration": 120 },
     "src/app/api/tools/ai-text/route.ts":            { "maxDuration": 30 },
     "src/app/api/admin/backups/route.ts":            { "maxDuration": 300 },
+    "src/app/api/admin/backups/auto/route.ts":       { "maxDuration": 300 },
     "src/app/api/admin/backups/restore/route.ts":    { "maxDuration": 300 },
     "src/app/api/admin/backups/[id]/download/route.ts": { "maxDuration": 60 },
     "src/app/api/download/route.ts":             { "maxDuration": 60 },
