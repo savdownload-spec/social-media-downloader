@@ -263,7 +263,7 @@ export default async function BlogPostPage({ params }: Props) {
 
             {/* Author card */}
             {post.authorProfile && (
-              <AuthorCard authorProfile={post.authorProfile} />
+              <AuthorCard authorProfile={post.authorProfile} authorName={post.author} />
             )}
 
             {/* Prev / Next navigation */}
