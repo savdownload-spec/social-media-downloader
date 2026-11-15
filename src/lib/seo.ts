@@ -41,7 +41,11 @@ export function buildMetadata({
   const url = canonicalUrl(path);
   const ogImageUrl = image ? (image.startsWith('http') ? image : `${siteConfig.url}${image}`) : `${siteConfig.url}${siteConfig.ogImage}`;
   const ogImage = ogImageUrl;
-  const socialTitle = title.includes(siteConfig.name) ? title : `${title} | ${siteConfig.name}`;
+  // A title that already carries the brand must bypass the layout's
+  // `%s | SavDown` template, otherwise DB-authored SEO titles render the
+  // brand twice.
+  const titleAlreadyBranded = title.includes(siteConfig.name);
+  const socialTitle = titleAlreadyBranded ? title : `${title} | ${siteConfig.name}`;
   const authors = author ? [{ name: author }] : [{ name: siteConfig.name }];
 
   const openGraphBase = {
@@ -61,7 +65,7 @@ export function buildMetadata({
   };
 
   return {
-    title,
+    title: titleAlreadyBranded ? { absolute: socialTitle } : title,
     description,
     keywords: keywords.length ? keywords : [...siteConfig.keywords],
     metadataBase: new URL(siteConfig.url),
