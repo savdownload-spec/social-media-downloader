@@ -26,6 +26,7 @@ import { getYtdlpBin, getFfmpegBin } from '@/lib/binaryPaths';
 import { isSupportedPlatformUrl } from '@/lib/security/remote-url';
 import { requireToolAvailable } from '@/lib/toolStatus';
 import { normalizeYouTubeVideoUrl } from '@/lib/youtube-url';
+import { DOWNLOAD_NOT_PERMITTED, getToolPolicy } from '@/lib/downloaderPolicy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -44,12 +45,12 @@ export async function GET(req: Request) {
   const rl = await ratelimit(`dlmerge:${ip}`, {
     limit: 10,
     windowSeconds: 60,
-    failClosed: process.env.NODE_ENV === 'production',
+    fallbackToMemory: true,
   });
   if (!rl.success) {
     return NextResponse.json(
-      { error: rl.unavailable ? 'Download service is temporarily unavailable.' : 'Too many requests. Please slow down.' },
-      { status: rl.unavailable ? 503 : 429 },
+      { error: 'Too many requests. Please slow down.', code: 'PROVIDER_RATE_LIMITED' },
+      { status: 429 },
     );
   }
 
@@ -61,15 +62,29 @@ export async function GET(req: Request) {
   const tool = searchParams.get('tool') || 'media-downloader';
   const platform = searchParams.get('platform') || 'download';
 
+  // Compliance gate: reject tools that are not permitted to deliver media,
+  // before touching credits or running yt-dlp. The tool id is client-supplied,
+  // so unknown ids fall back to the default deny policy.
+  const policy = getToolPolicy(tool);
+  if (!policy.downloadPermitted) {
+    return NextResponse.json(
+      {
+        error: policy.restriction?.message ?? 'Download delivery is not available for this tool.',
+        code: policy.restriction?.code ?? DOWNLOAD_NOT_PERMITTED,
+      },
+      { status: 403 },
+    );
+  }
+
   if (!pageUrl || !isSupportedPlatformUrl(pageUrl)) {
-    return NextResponse.json({ error: 'Invalid or missing source URL.' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid or missing source URL.', code: 'INVALID_URL' }, { status: 400 });
   }
   if (tool === 'youtube-video-downloader' && !normalizeYouTubeVideoUrl(pageUrl).ok) {
-    return NextResponse.json({ error: 'Invalid YouTube video URL.' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid YouTube video URL.', code: 'INVALID_URL' }, { status: 400 });
   }
   const height = heightRaw ? parseInt(heightRaw, 10) : NaN;
   if (!Number.isInteger(height) || height < 1 || height > 4320) {
-    return NextResponse.json({ error: 'Invalid quality.' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid quality.', code: 'FORMAT_UNAVAILABLE' }, { status: 400 });
   }
 
   /* ── Tool status gate — reject before credits are charged ── */
@@ -118,7 +133,7 @@ export async function GET(req: Request) {
         ? 'This video is private and cannot be downloaded.'
         : 'Could not download this video.';
       await gate.fail({ ...activeOperation, failureCode: 'processing_failed', failureReason: friendly });
-      return NextResponse.json({ error: friendly }, { status: 502 });
+      return NextResponse.json({ error: friendly, code: 'PROCESSING_FAILED' }, { status: 502 });
     }
 
     const outputSize = (await stat(outPath)).size;

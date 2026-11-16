@@ -1,19 +1,23 @@
 /**
  * GET /api/proxy?url=...&filename=...
  *
- * Proxies a media file from an external CDN through our server so:
+ * Proxies an allowlisted media file through our server so:
  *   - CORS headers are set correctly for browser downloads
  *   - Content-Disposition forces a file download with the right filename
  *   - The original CDN URL is never exposed to the client
  *
  * Security:
- *   - Only streams from allowed media hostnames (allowlist)
- *   - Rate-limited per IP (10 req/min for large files)
- *   - Max response size: 500 MB
+ *   - Only streams from allowlisted media hostnames
+ *   - Revalidates every redirect hop (no allowlist bypass via redirect)
+ *   - Rejects hosts that resolve to private / link-local / metadata ranges
+ *   - Enforces a byte cap even when upstream omits Content-Length
+ *   - Delivery is gated by the downloader permission policy
  */
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
+import { DOWNLOAD_NOT_PERMITTED, getToolPolicy } from '@/lib/downloaderPolicy';
+import { assertPublicAllowedUrl } from '@/lib/security/outbound';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,42 +40,64 @@ const ALLOWED_HOSTS = [
   'ggpht.com',
 ];
 
-function isAllowedHost(url: string): boolean {
-  try {
-    const { hostname } = new URL(url);
-    return ALLOWED_HOSTS.some(h => hostname === h || hostname.endsWith(`.${h}`));
-  } catch {
-    return false;
-  }
-}
-
 const MAX_BYTES = 500 * 1024 * 1024; // 500 MB
+const MAX_REDIRECTS = 3;
+
+/** Caps a streamed body without buffering it. */
+function limitStream(body: ReadableStream<Uint8Array>, maxBytes: number): ReadableStream<Uint8Array> {
+  const reader = body.getReader();
+  let received = 0;
+  return new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      const { done, value } = await reader.read();
+      if (done) {
+        controller.close();
+        return;
+      }
+      received += value.byteLength;
+      if (received > maxBytes) {
+        controller.error(new Error('FILE_TOO_LARGE'));
+        await reader.cancel().catch(() => {});
+        return;
+      }
+      controller.enqueue(value);
+    },
+    cancel(reason) {
+      return reader.cancel(reason);
+    },
+  });
+}
 
 export async function GET(req: Request) {
   const ip = getClientId(req);
-  const rl = await ratelimit(`proxy:${ip}`, { limit: 10, windowSeconds: 60 });
+  const rl = await ratelimit(`proxy:${ip}`, { limit: 10, windowSeconds: 60, fallbackToMemory: true });
   if (!rl.success) {
-    return new NextResponse('Rate limit exceeded.', { status: 429 });
+    return NextResponse.json(
+      { error: 'Too many requests. Please slow down.', code: 'PROVIDER_RATE_LIMITED' },
+      { status: 429 },
+    );
   }
 
   const { searchParams } = new URL(req.url);
   const targetUrl = searchParams.get('url');
   const filename  = searchParams.get('filename') || 'download';
-  // Some CDNs (e.g. TikTok) bind signed stream URLs to the exact Referer and
-  // session cookies present at extraction time and 403 anything else. When
-  // the resolver captured them, replay them here instead of generic headers.
-  const referer   = searchParams.get('ref');
-  const cookie    = searchParams.get('cookie');
   const operationId = searchParams.get('operationId') ?? undefined;
   const tool = searchParams.get('tool') || 'media-downloader';
   const platform = searchParams.get('platform') || 'download';
 
   if (!targetUrl) {
-    return new NextResponse('Missing url parameter.', { status: 400 });
+    return NextResponse.json({ error: 'Missing url parameter.', code: 'INVALID_URL' }, { status: 400 });
   }
 
-  if (!isAllowedHost(targetUrl)) {
-    return new NextResponse('Host not allowed.', { status: 403 });
+  const policy = getToolPolicy(tool);
+  if (!policy.downloadPermitted) {
+    return NextResponse.json(
+      {
+        error: policy.restriction?.message ?? 'Download delivery is not available for this tool.',
+        code: policy.restriction?.code ?? DOWNLOAD_NOT_PERMITTED,
+      },
+      { status: 403 },
+    );
   }
 
   const operation = {
@@ -87,16 +113,41 @@ export async function GET(req: Request) {
   const activeOperation = { ...operation, operationId: activeOperationId };
 
   try {
-    const upstream = await fetch(targetUrl, {
-      headers: {
-        'User-Agent': referer
-          ? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-          : 'Mozilla/5.0 (compatible; SavDown/1.0)',
-        'Referer': referer || new URL(targetUrl).origin,
-        ...(cookie ? { Cookie: cookie } : {}),
-      },
-      signal: AbortSignal.timeout(30_000),
-    });
+    let upstream: Response | null = null;
+    let currentUrl = targetUrl;
+
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+      const validated = await assertPublicAllowedUrl(currentUrl, ALLOWED_HOSTS);
+      if (!validated) {
+        await gate.fail({ ...activeOperation, failureCode: 'host_not_allowed', failureReason: 'Host not allowed' });
+        return new NextResponse('Host not allowed.', { status: 403 });
+      }
+
+      const res = await fetch(validated, {
+        redirect: 'manual',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; SavDown/1.0)',
+          'Referer': validated.origin,
+        },
+        signal: AbortSignal.timeout(30_000),
+      });
+
+      if (res.status >= 300 && res.status < 400) {
+        const location = res.headers.get('location');
+        await res.body?.cancel().catch(() => {});
+        if (!location) break;
+        currentUrl = new URL(location, validated).toString();
+        continue;
+      }
+
+      upstream = res;
+      break;
+    }
+
+    if (!upstream) {
+      await gate.fail({ ...activeOperation, failureCode: 'redirect_failed', failureReason: 'Too many redirects or missing location' });
+      return new NextResponse('Could not fetch this file. Please try again.', { status: 502 });
+    }
 
     if (!upstream.ok) {
       await gate.fail({ ...activeOperation, failureCode: 'upstream_http_error', failureReason: `Upstream responded ${upstream.status}` });
@@ -109,9 +160,12 @@ export async function GET(req: Request) {
       return new NextResponse('File too large to proxy.', { status: 413 });
     }
 
-    const contentType = upstream.headers.get('content-type') || 'application/octet-stream';
+    if (!upstream.body) {
+      await gate.fail({ ...activeOperation, failureCode: 'empty_upstream', failureReason: 'Upstream returned an empty body' });
+      return new NextResponse('Could not fetch this file. Please try again.', { status: 502 });
+    }
 
-    // Sanitise filename
+    const contentType = upstream.headers.get('content-type') || 'application/octet-stream';
     const safeFilename = filename.replace(/[/\\?%*:|"<>]/g, '-').slice(0, 200);
 
     // Charged once the upstream has accepted and the body is on its way.
@@ -125,12 +179,12 @@ export async function GET(req: Request) {
       });
     }
 
-    return new NextResponse(upstream.body, {
+    return new NextResponse(limitStream(upstream.body, MAX_BYTES), {
       status: 200,
       headers: {
         'Content-Type':        contentType,
         'Content-Disposition': `attachment; filename="${safeFilename}"`,
-        'Cache-Control':       'public, max-age=3600',
+        'Cache-Control':       'private, no-store',
         'X-Content-Type-Options': 'nosniff',
         ...(upstream.headers.get('content-length')
           ? { 'Content-Length': upstream.headers.get('content-length')! }

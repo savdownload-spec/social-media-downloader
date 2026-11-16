@@ -13,12 +13,25 @@ import type { Tool } from '@/config/tools';
 import { jsonLd, faqSchema, softwareAppSchema, breadcrumbSchema, howToSchema } from '@/lib/seo';
 import { siteConfig } from '@/config/site';
 import { requireToolGuide } from '@/config/toolGuides';
+import { getToolPolicy } from '@/lib/downloaderPolicy';
 import { RelatedToolSection } from './RelatedToolSection';
 
 export function ToolPageView({ tool }: { tool: Tool }) {
   const guide = tool.slug === 'youtube-video-downloader' ? undefined : requireToolGuide(tool.slug);
-  const pageContent = guide ? { ...tool, description: guide.description, faq: guide.faq, howTo: guide.howTo, supportedFormats: guide.formats } : tool;
-  const pagePerks = guide ? guide.trust.map((item, index) => ({ icon: perks[index % perks.length].icon, title: item.title, body: item.description })) : perks;
+  const policy = getToolPolicy(tool.slug);
+  const baseContent = guide ? { ...tool, description: guide.description, faq: guide.faq, howTo: guide.howTo, supportedFormats: guide.formats } : tool;
+  const pageContent = policy.downloadPermitted ? baseContent : { ...baseContent, supportedFormats: ['Preview metadata only'] };
+  const previewPerks = [
+    { icon: perks[0].icon, title: 'Preview Only', body: 'Metadata display; no media file is delivered.' },
+    { icon: perks[1].icon, title: 'Official Options', body: 'Guidance to the platform’s own download or export controls.' },
+    { icon: perks[2].icon, title: 'Account Based', body: 'A free SavDown account is required to use the tool.' },
+  ];
+  const pagePerks = policy.downloadPermitted
+    ? (guide ? guide.trust.map((item, index) => ({ icon: perks[index % perks.length].icon, title: item.title, body: item.description })) : perks)
+    : previewPerks;
+  const heroDescription = policy.downloadPermitted
+    ? (guide?.description ?? tool.subheadline)
+    : (policy.restriction?.message ?? tool.subheadline);
   const url = `${siteConfig.url}/tools/${tool.slug}`;
   const meta = getCatalogTool(tool.slug);
   const group = meta?.group ?? 'Downloaders';
@@ -87,7 +100,7 @@ export function ToolPageView({ tool }: { tool: Tool }) {
               {guide ? tool.name : tool.headline}
             </h1>
             <p className="mt-5 type-body-large text-text-muted">
-              {guide?.description ?? tool.subheadline}
+              {heroDescription}
             </p>
           </div>
 
@@ -100,6 +113,8 @@ export function ToolPageView({ tool }: { tool: Tool }) {
                   name: tool.name,
                   placeholder: tool.placeholder,
                   urlPattern: tool.urlPattern.source,
+                  downloadPermitted: policy.downloadPermitted,
+                  restriction: policy.restriction,
                 }}
               />
             </Suspense>

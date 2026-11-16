@@ -11,6 +11,7 @@ import type { DownloadResult } from '@/types';
 import { isSupportedPlatformUrl } from '@/lib/security/remote-url';
 import { requireToolAvailable } from '@/lib/toolStatus';
 import { normalizeYouTubeVideoUrl } from '@/lib/youtube-url';
+import { DOWNLOAD_NOT_PERMITTED, getToolPolicy } from '@/lib/downloaderPolicy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -69,12 +70,16 @@ export async function POST(req: Request) {
   const rl = await ratelimit(`dl:${ip}`, {
     limit: 20,
     windowSeconds: 60,
-    failClosed: process.env.NODE_ENV === 'production',
+    fallbackToMemory: true,
   });
   if (!rl.success) {
     return NextResponse.json<DownloadResult>(
-      { ok: false, error: rl.unavailable ? 'Download service is temporarily unavailable.' : 'Too many requests. Please slow down.' },
-      { status: rl.unavailable ? 503 : 429, headers: { 'x-ratelimit-remaining': String(rl.remaining) } },
+      {
+        ok: false,
+        error: 'Too many requests. Please slow down.',
+        code: 'PROVIDER_RATE_LIMITED',
+      },
+      { status: 429, headers: { 'x-ratelimit-remaining': String(rl.remaining) } },
     );
   }
 
@@ -87,7 +92,7 @@ export async function POST(req: Request) {
     body = BodySchema.parse(await req.json());
   } catch {
     return NextResponse.json<DownloadResult>(
-      { ok: false, error: 'Invalid request.' },
+      { ok: false, error: 'Invalid request.', code: 'INVALID_REQUEST' },
       { status: 400 },
     );
   }
@@ -96,7 +101,7 @@ export async function POST(req: Request) {
   const tool = toolsBySlug.get(body.tool);
   if (!tool) {
     return NextResponse.json<DownloadResult>(
-      { ok: false, error: 'Unknown tool.' },
+      { ok: false, error: 'Unknown tool.', code: 'UNSUPPORTED_PLATFORM' },
       { status: 404 },
     );
   }
@@ -105,15 +110,29 @@ export async function POST(req: Request) {
   const statusGate = await requireToolAvailable(body.tool);
   if (!statusGate.ok) return statusGate.response;
 
+  /* ── 4b. Compliance gate — some tools are preview-only by policy ── */
+  const policy = getToolPolicy(tool.slug);
+  if (!policy.metadataPermitted) {
+    return NextResponse.json<DownloadResult>(
+      {
+        ok: false,
+        error: policy.restriction?.message ?? 'This tool is not available.',
+        code: policy.restriction?.code ?? DOWNLOAD_NOT_PERMITTED,
+        restriction: policy.restriction,
+      },
+      { status: 403 },
+    );
+  }
+
   if (!tool.urlPattern.test(body.url)) {
     return NextResponse.json<DownloadResult>(
-      { ok: false, error: `That doesn't look like a valid ${tool.platform} link.` },
+      { ok: false, error: `That doesn't look like a valid ${tool.platform} link.`, code: 'INVALID_URL' },
       { status: 400 },
     );
   }
   if (!isSupportedPlatformUrl(body.url)) {
     return NextResponse.json<DownloadResult>(
-      { ok: false, error: 'Only HTTPS links from supported platforms are allowed.' },
+      { ok: false, error: 'Only HTTPS links from supported platforms are allowed.', code: 'UNSUPPORTED_PLATFORM' },
       { status: 400 },
     );
   }
@@ -131,27 +150,34 @@ export async function POST(req: Request) {
   if (!gate.ok) return gate.response;
 
   /* ── 5. Cache → resolve ── */
-  const cacheKey = `dl:v3:${tool.slug}:${await sha256(sourceUrl)}`;
+  const cacheKey = `dl:v4:${tool.slug}:${await sha256(sourceUrl)}`;
 
   const result = await cacheJson<DownloadResult>(
     cacheKey,
     60 * 30,
-    async () => dispatch(tool.slug, sourceUrl),
+    async () => dispatch(tool.slug, sourceUrl, policy),
     (value) => value.ok,
   );
 
   /* ── 6. Persist one canonical metadata/tool operation ── */
+  // Only same-origin delivery routes complete an operation later. A
+  // preview-only result, or a direct CDN format, is already complete;
+  // marking it pending would leave the operation stuck forever.
+  const hasDeferredDelivery = result.ok && result.formats.some((format) => format.url.startsWith('/'));
   const operationId = await recordToolOperation(gate.userId, {
     platform: tool.platform,
     tool: tool.slug,
     sourceUrl,
-    status: result.ok ? 'pending' : 'failed',
+    status: result.ok ? (hasDeferredDelivery ? 'pending' : 'success') : 'failed',
     failureReason: result.ok ? null : result.error,
     idempotencyKey: requestIdempotencyKey(req),
     ipHash: await sha256(ip),
     userAgent: req.headers.get('user-agent'),
   });
-  const response = result.ok && operationId ? withOperationContext(result, operationId, tool.slug, tool.platform) : result;
+  const scoped = result.ok
+    ? { ...result, downloadPermitted: policy.downloadPermitted, restriction: policy.restriction }
+    : result;
+  const response = scoped.ok && operationId ? withOperationContext(scoped, operationId, tool.slug, tool.platform) : scoped;
 
   return NextResponse.json(response, {
     headers: {
@@ -182,7 +208,15 @@ function withOperationContext(result: Extract<DownloadResult, { ok: true }>, ope
 /**
  * Route a download request to the correct service layer.
  */
-async function dispatch(toolSlug: string, url: string): Promise<DownloadResult> {
+async function dispatch(
+  toolSlug: string,
+  url: string,
+  policy: ReturnType<typeof getToolPolicy>,
+): Promise<DownloadResult> {
+  // Preview-only tools must not run format probing or gallery extraction.
+  // Metadata is fetched, no downloadable URLs are produced.
+  const metadataOnly = !policy.downloadPermitted;
+
   if (GALLERY_DL_TOOLS.has(toolSlug)) {
     return resolveWithGalleryDl(url, toolSlug);
   }
@@ -192,17 +226,17 @@ async function dispatch(toolSlug: string, url: string): Promise<DownloadResult> 
   }
 
   if (METADATA_THUMBNAIL_TOOLS.has(toolSlug)) {
-    return resolveWithYtdlp(url, toolSlug, { thumbnailViaMetadata: true });
+    return resolveWithYtdlp(url, toolSlug, { thumbnailViaMetadata: true, metadataOnly });
   }
 
   if (AUDIO_ONLY_TOOLS.has(toolSlug)) {
-    return resolveWithYtdlp(url, toolSlug, { audioOnly: true });
+    return resolveWithYtdlp(url, toolSlug, { audioOnly: true, metadataOnly });
   }
 
   if (PLAYLIST_TOOLS.has(toolSlug)) {
-    return resolveWithYtdlp(url, toolSlug, { playlist: true });
+    return resolveWithYtdlp(url, toolSlug, { playlist: true, metadataOnly });
   }
 
   // Default: yt-dlp with full video+audio formats
-  return resolveWithYtdlp(url, toolSlug);
+  return resolveWithYtdlp(url, toolSlug, { metadataOnly });
 }

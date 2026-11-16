@@ -11,6 +11,7 @@ import { downloaderPerks } from '@/components/tools/toolPerks';
 import { functionalToolContent } from '@/config/functionalToolContent';
 import { ToolStatusOverlay } from '@/components/tools/ToolStatusOverlay';
 import { getToolGuide } from '@/config/toolGuides';
+import { getToolPolicy } from '@/lib/downloaderPolicy';
 
 /** Status values that block the live tool UI. */
 const BLOCKED_STATUSES = new Set(['COMING_SOON', 'MAINTENANCE', 'DISABLED']);
@@ -78,17 +79,22 @@ export function resolveWorkspaceToolPage(slug: string, status?: string): ReactEl
   if (tool) {
     const guide = getToolGuide(slug);
     const entry = getCatalogTool(slug);
+    const policy = getToolPolicy(tool.slug);
     if (!entry) return null;
     return (
       <WorkspaceToolShell
         tool={entry}
         content={{
-          tagline: guide?.description ?? tool.subheadline,
+          tagline: policy.downloadPermitted
+            ? (guide?.description ?? tool.subheadline)
+            : (policy.restriction?.message ?? tool.subheadline),
           about: guide?.introduction ?? tool.description,
           features: guide ? guide.trust.map((item, index) => ({ icon: downloaderPerks[index % downloaderPerks.length].icon, title: item.title, body: item.description })) : downloaderPerks,
           howTo: (guide?.howTo ?? tool.howTo).slice(0, 4),
           faq: (guide?.faq ?? tool.faq).slice(0, 4),
-          supportedFormats: guide?.formats ?? tool.supportedFormats,
+          supportedFormats: policy.downloadPermitted
+            ? (guide?.formats ?? tool.supportedFormats)
+            : ['Preview metadata only'],
         }}
       >
         <DownloaderForm
@@ -98,6 +104,8 @@ export function resolveWorkspaceToolPage(slug: string, status?: string): ReactEl
             name: tool.name,
             placeholder: tool.placeholder,
             urlPattern: tool.urlPattern.source,
+            downloadPermitted: policy.downloadPermitted,
+            restriction: policy.restriction,
           }}
         />
       </WorkspaceToolShell>

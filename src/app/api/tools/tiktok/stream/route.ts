@@ -1,23 +1,13 @@
 /**
  * GET /api/tools/tiktok/stream?url=<tiktok page url>&selector=<format selector>&filename=<name>&audio=1
  *
- * TikTok's CDN binds signed stream URLs to the exact curl_cffi session that
- * resolved them via yt-dlp's --impersonate. A separate later fetch (even one
- * that replays the same headers/cookies/TLS fingerprint) gets rejected with
- * a 403. The only reliable fix is to have yt-dlp download the bytes itself,
- * in the same invocation, and hand the file back to the browser, so this
- * route re-runs the resolution + download in one shot instead of reusing a
- * previously-resolved CDN URL.
+ * TikTok media delivery is disabled by the compliance policy: no TikTok tool
+ * is permitted to hand back a media file. The route is retained for a future
+ * authorized flow and rejects every request with DOWNLOAD_NOT_PERMITTED
+ * before authentication or extraction.
  *
- * TikTok also has no separate audio-only stream (only muxed video+audio),
- * so `audio=1` runs the downloaded file through FFmpeg to extract an MP3.
- *
- * Downloads to a temp file rather than piping live, TikTok videos are a
- * few MB at most, and this avoids partial/broken HTTP responses when
- * extraction fails mid-stream (matches the temp-file pattern in
- * src/lib/videoService.ts).
- *
- * Architecture: API Route → yt-dlp binary (temp file) [→ FFmpeg] → response
+ * Architecture (when re-enabled): API Route → yt-dlp binary (temp file)
+ * [→ FFmpeg] → streamed response.
  */
 import { execFile } from 'child_process';
 import { promisify } from 'util';
@@ -28,9 +18,10 @@ import path from 'path';
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
-import { needsImpersonation, KNOWN_SELECTORS } from '@/lib/ytdlp';
+import { isTiktokHost, KNOWN_SELECTORS } from '@/lib/ytdlp';
 import { getYtdlpBin, getFfmpegBin } from '@/lib/binaryPaths';
 import { isSupportedPlatformUrl } from '@/lib/security/remote-url';
+import { DOWNLOAD_NOT_PERMITTED, getToolPolicy } from '@/lib/downloaderPolicy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -44,9 +35,12 @@ const DOWNLOAD_TIMEOUT = parseInt(process.env.YTDLP_TIMEOUT_MS || '45000', 10) *
 
 export async function GET(req: Request) {
   const ip = getClientId(req);
-  const rl = await ratelimit(`ttstream:${ip}`, { limit: 10, windowSeconds: 60 });
+  const rl = await ratelimit(`ttstream:${ip}`, { limit: 10, windowSeconds: 60, fallbackToMemory: true });
   if (!rl.success) {
-    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+    return NextResponse.json(
+      { error: 'Too many requests. Please slow down.', code: 'PROVIDER_RATE_LIMITED' },
+      { status: 429 },
+    );
   }
 
   const { searchParams } = new URL(req.url);
@@ -61,17 +55,30 @@ export async function GET(req: Request) {
     idempotencyKey: requestIdempotencyKey(req),
   };
 
+  // Compliance gate: no TikTok tool is delivery-permitted today. Reject before
+  // authentication or downloading anything.
+  const policy = getToolPolicy(tool);
+  if (!policy.downloadPermitted || !pageUrl || !isTiktokHost(pageUrl)) {
+    return NextResponse.json(
+      {
+        error: policy.restriction?.message ?? 'TikTok delivery is not available.',
+        code: policy.restriction?.code ?? DOWNLOAD_NOT_PERMITTED,
+      },
+      { status: 403 },
+    );
+  }
+
   // Credits are spent only once the job below succeeds.
   const gate = await requireCredits({ cost: JOB_COST.proxyDownload, request: req, operation });
   if (!gate.ok) return gate.response;
 
-  if (!pageUrl || !isSupportedPlatformUrl(pageUrl) || !needsImpersonation(pageUrl)) {
+  if (!isSupportedPlatformUrl(pageUrl)) {
     await gate.fail({ ...operation, failureCode: 'validation_failed', failureReason: 'Invalid or unsupported URL' });
-    return NextResponse.json({ error: 'Invalid or unsupported URL.' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid or unsupported URL.', code: 'INVALID_URL' }, { status: 400 });
   }
   if (!selector || !KNOWN_SELECTORS.has(selector)) {
     await gate.fail({ ...operation, failureCode: 'validation_failed', failureReason: 'Invalid format selector' });
-    return NextResponse.json({ error: 'Invalid format selector.' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid format selector.', code: 'FORMAT_UNAVAILABLE' }, { status: 400 });
   }
   const activeOperationId = await gate.begin({ ...operation, sourceUrl: pageUrl });
   if (!activeOperationId) return NextResponse.json({ error: 'Unable to start this download. Please try again.' }, { status: 500 });
@@ -86,7 +93,6 @@ export async function GET(req: Request) {
       await execFileAsync(YTDLP_BIN, [
         '--no-playlist', '--no-warnings',
         '--socket-timeout', '25', '--retries', '2',
-        '--impersonate', 'chrome',
         '-f', selector,
         '-o', videoPath,
         '--', pageUrl,
@@ -99,7 +105,7 @@ export async function GET(req: Request) {
         ? 'TikTok temporarily blocked this request. Please try again in a moment.'
         : 'Could not download this video.';
       await gate.fail({ ...activeOperation, failureCode: 'processing_failed', failureReason: friendly });
-      return NextResponse.json({ error: friendly }, { status: 502 });
+      return NextResponse.json({ error: friendly, code: 'PROCESSING_FAILED' }, { status: 502 });
     }
 
     if (!extractAudio) {

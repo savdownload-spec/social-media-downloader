@@ -1,3 +1,9 @@
+export type DownloadRestriction = {
+  code: string;
+  message: string;
+  alternatives?: { label: string; href: string; description: string }[];
+};
+
 export type DownloadResult = {
   ok: true;
   title: string;
@@ -6,9 +12,13 @@ export type DownloadResult = {
   author?: string;
   platform: string;
   formats: DownloadFormat[];
+  downloadPermitted?: boolean;
+  restriction?: DownloadRestriction;
 } | {
   ok: false;
   error: string;
+  code?: string;
+  restriction?: DownloadRestriction;
 };
 
 export type DownloadFormat = {

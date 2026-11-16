@@ -22,6 +22,8 @@ export type YtdlpOptions = {
   thumbnailOnly?: boolean;
   thumbnailViaMetadata?: boolean;
   playlist?:     boolean;
+  /** Fetch title/thumbnail/duration only. Produces no downloadable URLs. */
+  metadataOnly?: boolean;
 };
 
 /* ─── binary check ──────────────────────────────────────────── */
@@ -47,11 +49,7 @@ function sanitize(title: string): string {
   return title.replace(/[/\\?%*:|"<>]/g, '-').slice(0, 80);
 }
 
-// TikTok's web app blocks yt-dlp's default HTTP client (fails with "Unable to
-// extract universal data for rehydration"). Requires TLS-fingerprint
-// impersonation via curl_cffi (free, BSD-licensed) to look like a real
-// browser. Scoped to TikTok only, other extractors don't need it.
-export function needsImpersonation(url: string): boolean {
+export function isTiktokHost(url: string): boolean {
   try {
     const host = new URL(url).hostname.toLowerCase().replace(/\.$/, '');
     return host === 'tiktok.com' || host.endsWith('.tiktok.com');
@@ -60,11 +58,8 @@ export function needsImpersonation(url: string): boolean {
   }
 }
 
-function proxyUrl(rawUrl: string, filename: string, extra?: { referer?: string; cookie?: string }): string {
-  const params: Record<string, string> = { url: rawUrl, filename };
-  if (extra?.referer) params.ref = extra.referer;
-  if (extra?.cookie) params.cookie = extra.cookie;
-  return `/api/proxy?${new URLSearchParams(params)}`;
+function proxyUrl(rawUrl: string, filename: string): string {
+  return `/api/proxy?${new URLSearchParams({ url: rawUrl, filename })}`;
 }
 
 /**
@@ -104,7 +99,6 @@ async function getMeta(url: string): Promise<YtdlpMeta> {
   const args = [
     '--no-playlist', '--no-warnings', '--no-call-home',
     '--socket-timeout', '20', '--retries', '2',
-    ...(needsImpersonation(url) ? ['--impersonate', 'chrome'] : []),
     '--print', template,
     '--', url,
   ];
@@ -140,25 +134,16 @@ async function getMeta(url: string): Promise<YtdlpMeta> {
 async function getFormatUrl(
   url: string,
   formatSelector: string,
-): Promise<{ streamUrl: string; filesize: number; height?: number; referer?: string; cookie?: string }> {
-  const impersonating = needsImpersonation(url);
-  // TikTok's CDN rejects stream requests that don't carry the exact
-  // Referer + session cookies yt-dlp used during extraction (separate bot
-  // check from the page-extraction challenge). Capture them so the proxy
-  // can replay them when actually fetching the file.
-  //
+): Promise<{ streamUrl: string; filesize: number; height?: number }> {
   // %(height)s is always requested: a "height<=2160" selector will happily
   // fall back to whatever the video's actual max height is (e.g. 1080p),
   // the caller needs the real resolved height to dedupe/relabel tiers that
   // all silently landed on the same underlying stream.
-  const printTemplate = impersonating
-    ? '%(url)s\n---FIELD---\n%(filesize|filesize_approx|0)s\n---FIELD---\n%(height|0)s\n---FIELD---\n%(http_headers.Referer)s\n---FIELD---\n%(cookies)s'
-    : '%(url)s\n---FIELD---\n%(filesize|filesize_approx|0)s\n---FIELD---\n%(height|0)s';
+  const printTemplate = '%(url)s\n---FIELD---\n%(filesize|filesize_approx|0)s\n---FIELD---\n%(height|0)s';
 
   const args = [
     '--no-playlist', '--no-warnings', '--no-call-home',
     '--socket-timeout', '20', '--retries', '1',
-    ...(impersonating ? ['--impersonate', 'chrome'] : []),
     '-f', formatSelector,
     '--print', printTemplate,
     '--', url,
@@ -173,15 +158,7 @@ async function getFormatUrl(
     const streamUrl = parts[0]?.trim() || '';
     const filesize  = parseInt(parts[1]?.trim() || '0', 10) || 0;
     const height    = parseInt(parts[2]?.trim() || '0', 10) || undefined;
-    const referer   = parts[3]?.trim();
-    const cookie    = parts[4]?.trim();
-    return {
-      streamUrl,
-      filesize,
-      height,
-      referer: referer && referer !== 'NA' ? referer : undefined,
-      cookie:  cookie  && cookie  !== 'NA' ? cookie  : undefined,
-    };
+    return { streamUrl, filesize, height };
   } catch {
     return { streamUrl: '', filesize: 0 };
   }
@@ -255,10 +232,9 @@ export const KNOWN_SELECTORS = new Set([
  * our own API instead of ever exposing a TikTok CDN URL to the browser.
  */
 function ttStreamUrl(pageUrl: string, selector: string, filename: string, opts?: { extractAudio?: boolean }): string {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   const params: Record<string, string> = { url: pageUrl, selector, filename };
   if (opts?.extractAudio) params.audio = '1';
-  return `${base}/api/tools/tiktok/stream?${new URLSearchParams(params)}`;
+  return `/api/tools/tiktok/stream?${new URLSearchParams(params)}`;
 }
 
 /* ─── main resolver ─────────────────────────────────────────── */
@@ -268,13 +244,41 @@ export async function resolveWithYtdlp(
   toolSlug: string,
   options: YtdlpOptions = {},
 ): Promise<DownloadResult> {
+  // Thumbnail-only: no yt-dlp needed, direct CDN
+  if (options.thumbnailOnly) return resolveThumbnail(url);
+
   const available = await isBinaryAvailable();
-  if (!available) return resolveViaRemoteApi(url, toolSlug);
+  if (!available) {
+    // A remote resolver could hand back downloadable formats, which would
+    // bypass the preview-only policy.
+    if (options.metadataOnly) {
+      return {
+        ok: false,
+        error: 'Preview information is unavailable because the media service is not configured.',
+        code: 'PROVIDER_UNAVAILABLE',
+      };
+    }
+    return resolveViaRemoteApi(url, toolSlug);
+  }
+
+  if (options.metadataOnly) {
+    try {
+      const meta = await getMeta(url);
+      return {
+        ok: true,
+        title:     meta.title,
+        thumbnail: meta.thumbnail,
+        author:    meta.uploader || undefined,
+        duration:  meta.duration || undefined,
+        platform:  meta.platform || toolSlug,
+        formats:   [],
+      };
+    } catch (err) {
+      return failureFromError(err);
+    }
+  }
 
   try {
-    // Thumbnail-only: no yt-dlp needed, direct CDN
-    if (options.thumbnailOnly) return resolveThumbnail(url);
-
     // Thumbnail via metadata: platform has no guessable CDN pattern
     if (options.thumbnailViaMetadata) return resolveThumbnailViaMetadata(url);
 
@@ -288,7 +292,7 @@ export async function resolveWithYtdlp(
 
     const formats: DownloadFormat[] = [];
 
-    if (options.audioOnly && needsImpersonation(url)) {
+    if (options.audioOnly && isTiktokHost(url)) {
       // TikTok has no separate audio-only stream, it only serves muxed
       // video+audio MP4. Extract the audio track via FFmpeg from the best
       // muxed stream instead of probing for a bestaudio format that
@@ -304,14 +308,14 @@ export async function resolveWithYtdlp(
     } else if (options.audioOnly) {
       // Audio-only mode: fetch best audio streams
       for (const tier of AUDIO_TIERS) {
-        const { streamUrl, filesize, referer, cookie } = await getFormatUrl(url, tier.selector);
+        const { streamUrl, filesize } = await getFormatUrl(url, tier.selector);
         if (!streamUrl || streamUrl === 'NA') continue;
         formats.push({
           label:    tier.label,
           quality:  tier.quality,
           extension: tier.ext,
           size:     formatBytes(filesize),
-          url:      proxyUrl(streamUrl, `${sanitize(title)}.${tier.ext}`, { referer, cookie }),
+          url:      proxyUrl(streamUrl, `${sanitize(title)}.${tier.ext}`),
           hasAudio: true,
           hasVideo: false,
         });
@@ -362,7 +366,7 @@ export async function resolveWithYtdlp(
           quality,
           extension: 'mp4',
           size:     formatBytes(filesize),
-          url:      needsImpersonation(url)
+          url:      isTiktokHost(url)
             ? ttStreamUrl(url, tier.selector, `${sanitize(title)}.mp4`)
             : mergeDownloadUrl(url, mergeHeight, `${sanitize(title)}.mp4`),
           hasAudio: true,
@@ -396,12 +400,11 @@ export async function resolveWithYtdlp(
     // attempt to extract individual slide images. Recent yt-dlp versions (2024+)
     // support TikTok photo slideshows by returning image-format entries.
     // This is a best-effort attempt — degrades gracefully if not supported.
-    if (formats.length === 0 && needsImpersonation(url)) {
+    if (formats.length === 0 && isTiktokHost(url)) {
       try {
         const imgArgs = [
           '--no-warnings', '--no-call-home',
           '--socket-timeout', '20', '--retries', '1',
-          '--impersonate', 'chrome',
           '--print', '%(url)s\n---FIELD---\n%(ext)s\n---FIELD---\n%(width|0)s\n---FIELD---\n%(height|0)s',
           '--no-playlist',
           '--', url,
@@ -436,32 +439,36 @@ export async function resolveWithYtdlp(
     }
 
     if (!formats.length) {
-      return { ok: false, error: 'No downloadable formats found for this URL.' };
+      return { ok: false, error: 'No downloadable formats found for this URL.', code: 'FORMAT_UNAVAILABLE' };
     }
 
     return { ok: true, title, thumbnail, author, duration, platform, formats };
 
   } catch (err) {
-    // Node's execFile rejection .message is "Command failed: <full binary
-    // path and args>\n<stderr>", that leaks internal server paths/flags to
-    // the client. Prefer .stderr (yt-dlp's own clean error line) when present.
-    const execErr = err as (Error & { stderr?: string }) | undefined;
-    const msg = execErr?.stderr || (err instanceof Error ? err.message : String(err));
-
-    if (msg.includes('Sign in to confirm') || msg.includes('not a bot'))
-      return { ok: false, error: 'The platform is temporarily rate-limiting automated requests. Please try again in a few minutes.' };
-    if (msg.includes('Private video') || msg.includes('private'))
-      return { ok: false, error: 'This video is private and cannot be downloaded.' };
-    if (msg.includes('not available') || msg.includes('removed'))
-      return { ok: false, error: 'This media is no longer available.' };
-    if (msg.includes('geo') || msg.includes('blocked') || msg.includes('not available in your country'))
-      return { ok: false, error: 'This content is not available in the server region.' };
-    if (msg.includes('Unsupported URL'))
-      return { ok: false, error: 'This URL is not supported.' };
-
-    // Never leak internal paths or command-line details in the fallback.
-    return { ok: false, error: 'Could not process this URL. The platform may be temporarily unavailable, please try again shortly.' };
+    return failureFromError(err);
   }
+}
+
+function failureFromError(err: unknown): DownloadResult {
+  // Node's execFile rejection .message is "Command failed: <full binary
+  // path and args>\n<stderr>", that leaks internal server paths/flags to
+  // the client. Prefer .stderr (yt-dlp's own clean error line) when present.
+  const execErr = err as (Error & { stderr?: string }) | undefined;
+  const msg = execErr?.stderr || (err instanceof Error ? err.message : String(err));
+
+  if (msg.includes('Sign in to confirm') || msg.includes('not a bot'))
+    return { ok: false, error: 'The platform is temporarily rate-limiting automated requests. Please try again in a few minutes.', code: 'PROVIDER_RATE_LIMITED' };
+  if (msg.includes('Private video') || msg.includes('private'))
+    return { ok: false, error: 'This video is private and cannot be downloaded.', code: 'MEDIA_PRIVATE' };
+  if (msg.includes('not available') || msg.includes('removed'))
+    return { ok: false, error: 'This media is no longer available.', code: 'MEDIA_NOT_FOUND' };
+  if (msg.includes('geo') || msg.includes('blocked') || msg.includes('not available in your country'))
+    return { ok: false, error: 'This content is not available in the server region.', code: 'MEDIA_NOT_FOUND' };
+  if (msg.includes('Unsupported URL'))
+    return { ok: false, error: 'This URL is not supported.', code: 'UNSUPPORTED_PLATFORM' };
+
+  // Never leak internal paths or command-line details in the fallback.
+  return { ok: false, error: 'Could not process this URL. The platform may be temporarily unavailable, please try again shortly.', code: 'PROVIDER_UNAVAILABLE' };
 }
 
 /* ─── thumbnail resolver (no yt-dlp needed) ─────────────────── */
@@ -477,24 +484,35 @@ async function resolveThumbnail(url: string): Promise<DownloadResult> {
     if (m?.[1]) { videoId = m[1]; break; }
   }
   if (!videoId)
-    return { ok: false, error: 'Could not extract YouTube video ID from this URL.' };
+    return { ok: false, error: 'Could not extract YouTube video ID from this URL.', code: 'INVALID_URL' };
 
   const base = `https://img.youtube.com/vi/${videoId}`;
   const variants = [
-    { label: 'MaxRes JPG', quality: '1280×720', url: `${base}/maxresdefault.jpg` },
-    { label: 'HQ JPG',     quality: '480×360',  url: `${base}/hqdefault.jpg`     },
-    { label: 'MQ JPG',     quality: '320×180',  url: `${base}/mqdefault.jpg`     },
-    { label: 'SD JPG',     quality: '120×90',   url: `${base}/default.jpg`       },
+    { code: 'maxres', label: 'MaxRes JPG', quality: '1280×720', url: `${base}/maxresdefault.jpg` },
+    { code: 'hq',     label: 'HQ JPG',     quality: '480×360',  url: `${base}/hqdefault.jpg`     },
+    { code: 'mq',     label: 'MQ JPG',     quality: '320×180',  url: `${base}/mqdefault.jpg`     },
+    { code: 'sd',     label: 'SD JPG',     quality: '120×90',   url: `${base}/default.jpg`       },
   ];
 
   // Verify maxres exists (some videos don't have it)
   const formats: DownloadFormat[] = [];
   for (const v of variants) {
-    if (v.label === 'MaxRes JPG') {
-      try { const r = await fetch(v.url, { method: 'HEAD' }); if (!r.ok) continue; }
-      catch { continue; }
+    if (v.code === 'maxres') {
+      try {
+        const r = await fetch(v.url, { method: 'HEAD', signal: AbortSignal.timeout(5_000) });
+        if (!r.ok) continue;
+      } catch { continue; }
     }
-    formats.push({ label: v.label, quality: v.quality, extension: 'jpg', url: v.url, hasAudio: false, hasVideo: false });
+    formats.push({
+      label: v.label,
+      quality: v.quality,
+      extension: 'jpg',
+      // Public YouTube image CDN, CORS-enabled. Serving it directly keeps the
+      // long-standing free thumbnail behavior; no media file is involved.
+      url: v.url,
+      hasAudio: false,
+      hasVideo: false,
+    });
   }
 
   return {
@@ -514,7 +532,7 @@ async function resolveThumbnail(url: string): Promise<DownloadResult> {
 async function resolveThumbnailViaMetadata(url: string): Promise<DownloadResult> {
   const meta = await getMeta(url);
   if (!meta.thumbnail) {
-    return { ok: false, error: 'No thumbnail was found for this URL.' };
+    return { ok: false, error: 'No thumbnail was found for this URL.', code: 'MEDIA_NOT_FOUND' };
   }
   return {
     ok: true,
@@ -540,7 +558,7 @@ async function resolveThumbnailViaMetadata(url: string): Promise<DownloadResult>
 async function resolveViaRemoteApi(url: string, toolSlug: string): Promise<DownloadResult> {
   const apiUrl = process.env.DOWNLOADER_API_URL;
   if (!apiUrl) {
-    return { ok: false, error: 'Downloader service is not configured. Set YTDLP_BIN or DOWNLOADER_API_URL.' };
+    return { ok: false, error: 'Downloader service is not configured. Set YTDLP_BIN or DOWNLOADER_API_URL.', code: 'PROVIDER_UNAVAILABLE' };
   }
   try {
     const res = await fetch(apiUrl, {
@@ -554,9 +572,13 @@ async function resolveViaRemoteApi(url: string, toolSlug: string): Promise<Downl
       body: JSON.stringify({ url, tool: toolSlug }),
       signal: AbortSignal.timeout(25_000),
     });
-    if (!res.ok) return { ok: false, error: `Remote downloader responded ${res.status}.` };
-    return (await res.json()) as DownloadResult;
+    if (!res.ok) return { ok: false, error: `Remote downloader responded ${res.status}.`, code: 'PROVIDER_UNAVAILABLE' };
+    const data: unknown = await res.json();
+    if (!data || typeof data !== 'object' || typeof (data as { ok?: unknown }).ok !== 'boolean') {
+      return { ok: false, error: 'The remote downloader returned an invalid response.', code: 'INTERNAL_ERROR' };
+    }
+    return data as DownloadResult;
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : 'Remote downloader failed.' };
+    return { ok: false, error: e instanceof Error ? e.message : 'Remote downloader failed.', code: 'PROVIDER_UNAVAILABLE' };
   }
 }

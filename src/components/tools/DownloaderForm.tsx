@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { ProcessingProgress } from '@/components/tools/ProcessingProgress';
 import { CopyButton } from '@/components/ui/CopyButton';
 import { useToast } from '@/components/ui/Toast';
-import type { DownloadResult, DownloadFormat } from '@/types';
+import type { DownloadResult, DownloadFormat, DownloadRestriction } from '@/types';
 import { useSignInGuard } from '@/hooks/useSignInGuard';
 import { normalizeYouTubeVideoUrl } from '@/lib/youtube-url';
 
@@ -87,6 +87,8 @@ export type ClientTool = {
   name: string;
   placeholder: string;
   urlPattern: string;
+  downloadPermitted: boolean;
+  restriction?: DownloadRestriction;
 };
 
 export function DownloaderForm({ tool }: { tool: ClientTool }) {
@@ -184,7 +186,11 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
 
       setResult(data);
       setState('done');
-      success('Download ready', `${tool.name} media analyzed successfully.`);
+      if (data.downloadPermitted === false) {
+        warning('Preview ready', 'Download delivery is not available for this platform.');
+      } else {
+        success('Download ready', `${tool.name} media analyzed successfully.`);
+      }
     } catch {
       setError('Network error. Please try again.');
       setState('error');
@@ -208,10 +214,31 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
             aria-label={`${tool.name} URL`}
           />
           <Button size="lg" onClick={() => submit()} disabled={authLoading || state === 'loading'} className="shrink-0">
-            {state === 'loading' ? 'Fetching…' : <>Download <Download className="w-4 h-4" /></>}
+            {state === 'loading' ? 'Fetching…' : <>{tool.downloadPermitted ? 'Download' : 'Preview'} <Download className="w-4 h-4" /></>}
           </Button>
         </div>
       </div>
+
+      {!tool.downloadPermitted && tool.restriction && (
+        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm dark:border-amber-500/20 dark:bg-amber-500/10">
+          <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-700 dark:text-amber-400" />
+          <div className="min-w-0">
+            <p className="font-semibold text-amber-900 dark:text-amber-200">Preview only</p>
+            <p className="mt-1 leading-relaxed text-amber-800 dark:text-amber-300">{tool.restriction.message}</p>
+            {tool.restriction.alternatives?.map((alternative) => (
+              <a
+                key={alternative.href}
+                href={alternative.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 block font-medium text-amber-900 underline underline-offset-2 dark:text-amber-200"
+              >
+                {alternative.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         {error && state === 'error' && (
@@ -268,6 +295,14 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
                 </p>
                 {result.author && (
                   <p className="mt-1 text-sm text-text-muted">by {result.author}</p>
+                )}
+                {result.downloadPermitted === false && (
+                  <p className="mt-2 text-sm font-medium text-amber-700 dark:text-amber-400">
+                    Preview only — no file is delivered for this platform.
+                  </p>
+                )}
+                {result.downloadPermitted !== false && result.formats.length === 0 && (
+                  <p className="mt-2 text-sm text-text-muted">No deliverable formats were found.</p>
                 )}
                 <div className="mt-4 flex flex-wrap gap-2">
                   {result.formats.map((f) => {
