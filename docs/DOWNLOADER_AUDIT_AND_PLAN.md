@@ -331,3 +331,30 @@ Phase 0 has been implemented as described in section 12. Phases 1–4 have not b
 3. Align long-form guides, feature cards, and workspace content with preview-only reality.
 4. Decide whether to add official own-content flows (YouTube Data API metadata, Meta Graph for managed accounts) and whether to keep preview extraction at all.
 5. Add a live test matrix on Preview with a test account once deployed.
+
+---
+
+## 13. Owner-directed reversal (2026-11-17)
+
+The owner reviewed the preview-only result and asked for the downloaders to work again, with the existing credit/usage gates untouched. Section 12 is kept as history; this section describes the current implementation.
+
+### Behavior now
+
+- **Delivery restored.** `downloaderPolicy.ts` permits delivery for the 16 tools that have a working processor. Four tools remain explicitly unavailable with a reason: `youtube-playlist-downloader` (playlist processing not implemented), `instagram-video-downloader` (use the Reels route), `instagram-photo-downloader`, and `instagram-story-downloader` (needs an authenticated session).
+- **Credits unchanged.** `requireCredits` / `JOB_COST` values, plans, billing, and webhook logic were not modified. Delivery routes still charge the same credits as before (proxy 1, merge 1, 4K merge 2, audio conversion 2).
+- **One-shot yt-dlp resolve.** `resolveWithYtdlp` runs a single `-J` call and builds formats from what the platform returns: muxed CDN streams go through `/api/proxy`, video-only streams through `/api/download/merge`, audio through `/api/download/audio` (new MP3 route) or the TikTok stream route, and X GIFs through the existing GIF route. The 8-tier sequential probe is gone.
+- **Bot-wall mitigations.** Updated bundled `bin/yt-dlp_linux` (2026.10.26), `--force-ipv4`, `--js-runtimes node` plus player-client fallbacks for YouTube, and `--impersonate chrome` for TikTok. These are upstream-supported yt-dlp behaviours; no DRM or session bypass was added.
+- **Streaming delivery.** `/api/download/merge` and `/api/tools/tiktok/stream` stream the produced file with `createReadStream` + `Readable.toWeb` and clean up temp files on stream close, so the old 4 MB Vercel buffer cap no longer applies.
+- **Thumbnail downloads fixed.** The client only sends the `Idempotency-Key` header on same-origin requests. Cross-origin CDN URLs (for example `img.youtube.com`) previously triggered a CORS preflight that the CDN rejected, surfacing as "Failed to fetch".
+- **Instagram profile picture.** New dedicated resolver (`src/lib/instagram.ts`): reads `web_profile_info` for the HD avatar when Instagram answers, falls back to the avatar embedded in the crawler-rendered profile page, and labels the 150×150 fallback with its real size instead of "HD". Copy, guide text, and FAQ were updated to match.
+- **Progress UI.** `DownloaderForm` now uses the same `ProcessingProgress` card as the image tools for both the resolve stage and the byte-level download stage.
+
+### Verification evidence
+
+- `npx tsc --noEmit` → exit 0.
+- `npx eslint` on changed files → exit 0.
+- `npx vitest run` → 261 passed, 4 failed. The same 4 failures (PDF renderer, 2 Newsletter, 1 search typo) reproduce on unmodified `HEAD`, so they are pre-existing and unrelated.
+- `src/lib/instagram.test.ts` covers username parsing and avatar extraction (HD field, standard field, `og:image`, JSON escape decoding); the parser also returns the standard avatar from a real saved Instagram profile page.
+- Local live checks before this change: YouTube formats 2160→144 via `-J`, TikTok 720p/480p with sizes, Instagram Reels 1080p/720p merge URLs, TikTok MP3 192k format.
+- Not verified locally: server-side ffmpeg paths (the `ffmpeg-static` binary is absent on this dev machine) and a real signed-in download on Preview. Both are exercised on Vercel.
+

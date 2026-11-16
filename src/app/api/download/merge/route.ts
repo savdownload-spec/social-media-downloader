@@ -16,7 +16,9 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { randomUUID } from 'crypto';
-import { mkdtemp, readFile, rm, stat } from 'fs/promises';
+import { createReadStream } from 'fs';
+import { mkdtemp, rm, stat } from 'fs/promises';
+import { Readable } from 'stream';
 import { tmpdir } from 'os';
 import path from 'path';
 import { NextResponse } from 'next/server';
@@ -106,6 +108,7 @@ export async function GET(req: Request) {
 
   const dir     = await mkdtemp(path.join(tmpdir(), 'savdown-merge-'));
   const outPath = path.join(dir, `v-${randomUUID()}.mp4`);
+  let streaming = false;
 
   try {
     try {
@@ -113,15 +116,24 @@ export async function GET(req: Request) {
       // binary literally named "ffmpeg"/"ffmpeg.exe", our FFMPEG_BIN is a
       // versioned filename (e.g. from the imageio_ffmpeg package), so it
       // must be passed as the exact binary path, not its containing folder.
-      await execFileAsync(YTDLP_BIN, [
+      const ytArgs = [
         '--no-playlist', '--no-warnings',
         '--socket-timeout', '25', '--retries', '2',
+        '--force-ipv4',
         '--ffmpeg-location', FFMPEG_BIN,
-        '-f', `bestvideo[height<=${height}]+bestaudio/best[height<=${height}]`,
+        '-f', `bestvideo[height<=${height}]+bestaudio/best[height<=${height}]/best`,
         '--merge-output-format', 'mp4',
         '-o', outPath,
         '--', pageUrl,
-      ], { timeout: DOWNLOAD_TIMEOUT, maxBuffer: 10 * 1024 * 1024 });
+      ];
+      if (/(?:^|\.)youtube\.com$|^youtu\.be$/.test(new URL(pageUrl).hostname)) {
+        const urlIndex = ytArgs.indexOf('--');
+        ytArgs.splice(urlIndex, 0,
+          '--js-runtimes', 'node',
+          '--extractor-args', 'youtube:player_client=default,tv,web_safari',
+        );
+      }
+      await execFileAsync(YTDLP_BIN, ytArgs, { timeout: DOWNLOAD_TIMEOUT, maxBuffer: 10 * 1024 * 1024 });
     } catch (err) {
       const execErr = err as (Error & { stderr?: string }) | undefined;
       const msg = execErr?.stderr || (err instanceof Error ? err.message : String(err));
@@ -137,18 +149,17 @@ export async function GET(req: Request) {
     }
 
     const outputSize = (await stat(outPath)).size;
-    const maxResponseBytes = process.env.VERCEL
-      ? 4 * 1024 * 1024
-      : parseInt(process.env.MAX_DOWNLOAD_BYTES || String(450 * 1024 * 1024), 10);
+    const maxResponseBytes = parseInt(process.env.MAX_DOWNLOAD_BYTES || String(450 * 1024 * 1024), 10);
+    if (!outputSize) {
+      await gate.fail({ ...activeOperation, failureCode: 'empty_output', failureReason: 'Empty output file' });
+      return NextResponse.json({ error: 'The platform returned an empty file.', code: 'PROCESSING_FAILED' }, { status: 502 });
+    }
     if (outputSize > maxResponseBytes) {
-      const reason = process.env.VERCEL
-        ? 'This file cannot be delivered from the current Vercel deployment. An external media delivery service is required.'
-        : 'The generated file exceeds the configured download size limit.';
+      const reason = 'The generated file exceeds the configured download size limit.';
       await gate.fail({ ...activeOperation, failureCode: 'output_too_large', failureReason: reason });
-      return NextResponse.json({ error: reason }, { status: 413 });
+      return NextResponse.json({ error: reason, code: 'FILE_TOO_LARGE' }, { status: 413 });
     }
 
-    const buffer = await readFile(outPath);
     if (!(await gate.spend({
       ...activeOperation,
       description: `${height}p download`,
@@ -159,20 +170,31 @@ export async function GET(req: Request) {
         { status: 402 },
       );
     }
-    return new NextResponse(buffer, {
+
+    // Streaming keeps large downloads out of memory and avoids Vercel's
+    // 4.5 MB buffered-response limit. The temp directory is removed once the
+    // stream closes.
+    const fileStream = createReadStream(outPath);
+    streaming = true;
+    fileStream.on('close', () => { void rm(dir, { recursive: true, force: true }).catch(() => {}); });
+    fileStream.on('error', () => { void rm(dir, { recursive: true, force: true }).catch(() => {}); });
+
+    return new NextResponse(Readable.toWeb(fileStream) as ReadableStream<Uint8Array>, {
       status: 200,
       headers: {
         'Content-Type':        'video/mp4',
         'Content-Disposition': `attachment; filename="${filename}"`,
-        'Content-Length':      String(buffer.length),
+        'Content-Length':      String(outputSize),
         'Cache-Control':       'no-store',
       },
     });
   } catch (err) {
     const reason = err instanceof Error ? err.message : 'Unexpected delivery failure.';
     await gate.fail({ ...activeOperation, failureCode: 'delivery_failed', failureReason: reason }).catch(() => {});
-    return NextResponse.json({ error: 'The file could not be delivered. No credits were charged.' }, { status: 500 });
+    return NextResponse.json({ error: 'The file could not be delivered. No credits were charged.', code: 'DELIVERY_FAILED' }, { status: 500 });
   } finally {
-    await rm(dir, { recursive: true, force: true }).catch(() => {});
+    if (!streaming) {
+      await rm(dir, { recursive: true, force: true }).catch(() => {});
+    }
   }
 }

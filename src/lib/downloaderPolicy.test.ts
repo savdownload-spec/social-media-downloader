@@ -1,19 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { DOWNLOAD_NOT_PERMITTED, getToolPolicy } from './downloaderPolicy';
+import { getToolPolicy, TOOL_UNAVAILABLE } from './downloaderPolicy';
 
-const BLOCKED_TOOLS = [
+const ENABLED_TOOLS = [
   'youtube-video-downloader',
   'youtube-shorts-downloader',
+  'youtube-thumbnail-downloader',
   'youtube-to-mp3',
-  'youtube-playlist-downloader',
   'tiktok-video-downloader',
   'tiktok-to-mp3',
   'tiktok-thumbnail-downloader',
   'tiktok-photo-downloader',
   'instagram-reels-downloader',
-  'instagram-video-downloader',
-  'instagram-photo-downloader',
-  'instagram-story-downloader',
   'instagram-profile-picture-downloader',
   'facebook-video-downloader',
   'facebook-reels-downloader',
@@ -23,30 +20,32 @@ const BLOCKED_TOOLS = [
   'pinterest-image-downloader',
 ];
 
+const UNAVAILABLE_TOOLS = [
+  'youtube-playlist-downloader',
+  'instagram-video-downloader',
+  'instagram-photo-downloader',
+  'instagram-story-downloader',
+];
+
 describe('downloader policy', () => {
-  it('permits the YouTube thumbnail CDN download', () => {
-    expect(getToolPolicy('youtube-thumbnail-downloader')).toMatchObject({
+  it.each(ENABLED_TOOLS)('permits delivery for %s', (slug) => {
+    expect(getToolPolicy(slug)).toMatchObject({
       downloadPermitted: true,
       metadataPermitted: true,
     });
   });
 
-  it.each(BLOCKED_TOOLS)('blocks media delivery for %s', (slug) => {
+  it.each(UNAVAILABLE_TOOLS)('blocks %s with a reason', (slug) => {
     const policy = getToolPolicy(slug);
     expect(policy.downloadPermitted).toBe(false);
-    expect(policy.restriction?.code).toBe(DOWNLOAD_NOT_PERMITTED);
-    expect(policy.restriction?.message).toMatch(/do not authorize downloading third-party public media/);
+    expect(policy.metadataPermitted).toBe(false);
+    expect(policy.restriction?.code).toBe(TOOL_UNAVAILABLE);
+    expect(policy.restriction?.message.length).toBeGreaterThan(20);
   });
 
   it('blocks unknown tools by default', () => {
     const policy = getToolPolicy('not-a-real-tool');
     expect(policy.downloadPermitted).toBe(false);
     expect(policy.metadataPermitted).toBe(false);
-  });
-
-  it('does not run metadata extraction for tools with no processor', () => {
-    expect(getToolPolicy('youtube-playlist-downloader').metadataPermitted).toBe(false);
-    expect(getToolPolicy('instagram-video-downloader').metadataPermitted).toBe(false);
-    expect(getToolPolicy('instagram-story-downloader').metadataPermitted).toBe(false);
   });
 });

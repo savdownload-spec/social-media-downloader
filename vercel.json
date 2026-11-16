@@ -34,8 +34,9 @@
     "src/app/api/admin/backups/auto/route.ts":       { "maxDuration": 300 },
     "src/app/api/admin/backups/restore/route.ts":    { "maxDuration": 300 },
     "src/app/api/admin/backups/[id]/download/route.ts": { "maxDuration": 60 },
-    "src/app/api/download/route.ts":             { "maxDuration": 60 },
+    "src/app/api/download/route.ts":             { "maxDuration": 120 },
     "src/app/api/download/merge/route.ts":       { "maxDuration": 300 },
+    "src/app/api/download/audio/route.ts":       { "maxDuration": 300 },
     "src/app/api/proxy/route.ts":                { "maxDuration": 60 },
     "src/app/api/tools/tiktok/stream/route.ts":  { "maxDuration": 120 }
   }

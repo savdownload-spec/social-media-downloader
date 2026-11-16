@@ -30,9 +30,16 @@ async function downloadWithProgress(
   idempotencySuffix: string,
   onProgress: (pct: number | null, receivedBytes: number) => void,
 ): Promise<void> {
-  const operationId = new URL(url, window.location.origin).searchParams.get('operationId') ?? crypto.randomUUID();
+  const target = new URL(url, window.location.origin);
+  const sameOrigin = target.origin === window.location.origin;
+  const operationId = target.searchParams.get('operationId') ?? crypto.randomUUID();
   const safeSuffix = idempotencySuffix.replace(/[^A-Za-z0-9._:-]/g, '-').slice(0, 48);
-  const res = await fetch(url, { headers: { 'Idempotency-Key': `download:${operationId}:${safeSuffix}` } });
+  // Custom headers on a cross-origin request trigger a CORS preflight that
+  // image CDNs do not answer, which surfaced as "Failed to fetch" for direct
+  // thumbnail URLs. Only same-origin delivery needs the idempotency header.
+  const res = await fetch(url, sameOrigin
+    ? { headers: { 'Idempotency-Key': `download:${operationId}:${safeSuffix}` } }
+    : {});
   if (!res.ok) {
     const body = await res.json().catch(() => null);
     throw new Error(body?.error || 'Download failed.');
@@ -262,7 +269,11 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
             exit={{ opacity: 0 }}
             className="mt-6"
           >
-            <ProcessingProgress stage="Analyzing your link…" className="w-full" />
+            <ProcessingProgress
+              stage="Analyzing your link…"
+              detail="Checking the source and the formats it actually provides. Please keep this page open."
+              className="w-full"
+            />
           </motion.div>
         )}
 
@@ -323,7 +334,6 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
                       </button>
                     );
                   })}
-                  {downloadingKey && <ProcessingProgress stage={`Downloading ${tool.name}…`} percent={downloadPct} detail={downloadedBytes > 0 ? `${formatBytes(downloadedBytes)} received` : undefined} className="w-full" />}
                   {result.formats.length > 0 && (
                     <CopyButton
                       value={result.formats[0].url}
@@ -336,6 +346,15 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
                 </div>
               </div>
             </div>
+            {downloadingKey && (
+              <ProcessingProgress
+                stage={downloadPct === 100 ? 'Finalizing your file…' : `Downloading ${tool.name}…`}
+                percent={downloadPct}
+                progressLabel={downloadPct === null ? undefined : 'Downloading'}
+                detail={downloadedBytes > 0 ? `${formatBytes(downloadedBytes)} received` : 'Preparing the file…'}
+                className="mt-4 w-full"
+              />
+            )}
           </motion.div>
         )}
       </AnimatePresence>

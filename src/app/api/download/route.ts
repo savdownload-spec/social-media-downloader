@@ -7,6 +7,7 @@ import { cacheJson } from '@/lib/redis';
 import { sha256 } from '@/lib/utils';
 import { resolveWithYtdlp } from '@/lib/ytdlp';
 import { resolveWithGalleryDl } from '@/lib/gallerydl';
+import { resolveInstagramProfilePicture } from '@/lib/instagram';
 import type { DownloadResult } from '@/types';
 import { isSupportedPlatformUrl } from '@/lib/security/remote-url';
 import { requireToolAvailable } from '@/lib/toolStatus';
@@ -46,7 +47,6 @@ const THUMBNAIL_TOOLS = new Set([
  */
 const METADATA_THUMBNAIL_TOOLS = new Set([
   'tiktok-thumbnail-downloader',
-  'instagram-profile-picture-downloader',
 ]);
 
 /**
@@ -219,6 +219,10 @@ async function dispatch(
 
   if (GALLERY_DL_TOOLS.has(toolSlug)) {
     return resolveWithGalleryDl(url, toolSlug);
+  }
+
+  if (toolSlug === 'instagram-profile-picture-downloader') {
+    return resolveInstagramProfilePicture(url);
   }
 
   if (THUMBNAIL_TOOLS.has(toolSlug)) {
