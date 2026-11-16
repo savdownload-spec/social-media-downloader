@@ -6,7 +6,6 @@
  * such local install, so when those env vars are absent this falls back to
  * binaries bundled with the deployment itself:
  *   - yt-dlp: the official static Linux binary, committed under bin/.
- *     Impersonation flags are deliberately not used (see downloaderPolicy.ts).
  *   - ffmpeg: the `ffmpeg-static` npm package, which downloads the correct
  *     binary for whatever platform runs `npm install` (Linux x64 on
  *     Vercel's build, matching what actually deploys).
