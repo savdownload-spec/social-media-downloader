@@ -16,7 +16,7 @@
  *           Content-Disposition headers, plus X-* metadata headers.
  */
 import { NextResponse } from 'next/server';
-import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
+import { requireCredits, requireAuth, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 import { processImage, detectInputFormat, type ImageOperation, type OutputFormat } from '@/lib/imageService';
 import { requireToolAvailable } from '@/lib/toolStatus';
 import { IMAGE_MAX_FILE_BYTES, isAllowedImageType } from '@/lib/imageConfig';
@@ -47,6 +47,10 @@ function reusableOutputFormat(file: File): OutputFormat {
 export async function POST(req: Request) {
   const ipLimited = await checkImageIpLimit(req, 'single', { limit: 30, windowSeconds: 60 });
   if (ipLimited) return ipLimited;
+
+  /* ── Auth first: no multipart parsing before the session is verified (D8) ── */
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
 
   /* ── parse multipart early (needed to resolve tool slug for status gate) ── */
   let formData: FormData;

@@ -92,7 +92,7 @@ export function ToolPageView({ tool }: { tool: Tool }) {
             </span>
             <div className="mt-5 flex items-center justify-center gap-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-light text-xs font-semibold text-accent-hover">
-                <Zap className="w-3.5 h-3.5" /> {guide ? 'Account-based credits' : 'Free tool, no signup'}
+                <Zap className="w-3.5 h-3.5" /> Account-based credits
               </span>
               <ShareButton url={url} />
             </div>

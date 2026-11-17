@@ -118,9 +118,11 @@ export function resolveWorkspaceToolPage(slug: string, status?: string): ReactEl
     if (functional) {
       const { Component } = functional;
       const extra = functionalToolContent[slug];
+      const badge = (functional.processing ?? 'server') === 'browser' ? 'Runs in your browser' : 'Processed on our servers';
       return (
         <WorkspaceToolShell
           tool={entry}
+          badge={badge}
           content={{
             about: getToolGuide(slug)?.introduction ?? entry.description,
             howTo: extra?.howTo,

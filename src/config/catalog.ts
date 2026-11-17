@@ -11,6 +11,7 @@ import {
 import { toolsBySlug } from '@/config/tools';
 import { getFunctionalTool } from '@/config/functionalTools';
 import { getToolGuide, type ToolPageSlug } from '@/config/toolGuides';
+import { getToolPolicy } from '@/lib/downloaderPolicy';
 
 export type ToolGroup = 'Downloaders' | 'Image' | 'Video' | 'PDF' | 'AI' | 'SEO' | 'Utility';
 
@@ -45,7 +46,7 @@ const TILE = {
 };
 
 const downloaders: CatalogTool[] = [
-  { slug: 'youtube-video-downloader', name: 'YouTube Video Downloader', group: 'Downloaders', description: 'Save YouTube videos in up to 4K, watermark-free.', icon: MonitorPlay, tile: TILE.red, keywords: ['video downloader', 'youtube video downloader', 'mp4 downloader', 'online video downloader'] },
+  { slug: 'youtube-video-downloader', name: 'YouTube Video Downloader', group: 'Downloaders', description: 'Save YouTube videos in up to 4K on Pro, watermark-free.', icon: MonitorPlay, tile: TILE.red, keywords: ['video downloader', 'youtube video downloader', 'mp4 downloader', 'online video downloader'] },
   { slug: 'youtube-shorts-downloader', name: 'YouTube Shorts Downloader', group: 'Downloaders', description: 'Grab vertical YouTube Shorts in original quality.', icon: Film, tile: TILE.orange },
   { slug: 'youtube-playlist-downloader', name: 'YouTube Playlist Downloader', group: 'Downloaders', description: 'Playlist processing is not available yet.', icon: ListVideo, tile: TILE.red },
   { slug: 'youtube-thumbnail-downloader', name: 'YouTube Thumbnail Downloader', group: 'Downloaders', description: 'Grab any YouTube thumbnail in full resolution.', icon: Image, tile: TILE.amber },
@@ -179,7 +180,10 @@ export function getCatalogTool(slug: string): CatalogTool | undefined {
  * even though its page worked fine.
  */
 export function isToolAvailable(slug: string): boolean {
-  return toolsBySlug.has(slug) || !!getFunctionalTool(slug);
+  // Downloader routes can exist in the registry while their processor is
+  // disabled on this deployment; the policy registry is authoritative.
+  if (toolsBySlug.has(slug)) return getToolPolicy(slug).downloadPermitted;
+  return !!getFunctionalTool(slug);
 }
 
 export const fallbackIcon = Download;

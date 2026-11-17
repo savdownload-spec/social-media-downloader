@@ -22,7 +22,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
-import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
+import { requireCredits, requireAuth, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 import { requireToolAvailable } from '@/lib/toolStatus';
 
 export const runtime = 'nodejs';
@@ -151,6 +151,10 @@ export async function POST(req: Request) {
   if (!rl.success) {
     return NextResponse.json({ ok: false, error: 'Too many requests. Please slow down.' }, { status: 429 });
   }
+
+  /* ── Auth first: no payload parsing before the session is verified (D8) ── */
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
 
   let body: unknown;
   try { body = await req.json(); } catch { return NextResponse.json({ ok: false, error: 'Invalid request.' }, { status: 400 }); }

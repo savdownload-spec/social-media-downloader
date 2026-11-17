@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/Toast';
 import type { DownloadResult, DownloadFormat, DownloadRestriction } from '@/types';
 import { useSignInGuard } from '@/hooks/useSignInGuard';
 import { normalizeYouTubeVideoUrl } from '@/lib/youtube-url';
+import { PLATFORM_DISPLAY_NAMES, type Platform } from '@/config/tools';
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
@@ -113,6 +114,7 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
   const { success, error: errorToast, warning } = useToast();
   const callbackUrl = url.trim() ? `${pathname}?${new URLSearchParams({ url: url.trim() })}` : pathname;
   const { requireAuth, SignInModal, authLoading } = useSignInGuard(callbackUrl);
+  const errorId = `${tool.slug}-url-error`;
 
   const handleDownload = useCallback(async (f: DownloadFormat) => {
     if (downloadingRef.current) return;
@@ -160,7 +162,8 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
       }
       target = normalized.url;
     } else if (!new RegExp(tool.urlPattern, 'i').test(target)) {
-      setError(`That doesn't look like a valid ${tool.platform} URL.`);
+      const platformName = PLATFORM_DISPLAY_NAMES[tool.platform as Platform] ?? tool.platform;
+      setError(`That doesn't look like a valid ${platformName} URL.`);
       setState('error');
       return;
     }
@@ -219,6 +222,8 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
             placeholder={tool.placeholder}
             className="border-0 shadow-none focus:shadow-none focus:border-0 px-4 text-base"
             aria-label={`${tool.name} URL`}
+            aria-invalid={!!error}
+            aria-describedby={error ? errorId : undefined}
           />
           <Button size="lg" onClick={() => submit()} disabled={authLoading || state === 'loading'} className="shrink-0">
             {state === 'loading' ? 'Fetching…' : <>{tool.downloadPermitted ? 'Download' : 'Preview'} <Download className="w-4 h-4" /></>}
@@ -251,6 +256,8 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
         {error && state === 'error' && (
           <motion.div
             key="err"
+            id={errorId}
+            role="alert"
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}

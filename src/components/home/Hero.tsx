@@ -75,7 +75,7 @@ export function Hero() {
           </h1>
 
           <p className="mt-6 type-body-large text-text-muted">
-            {"SavDown is a free social media downloader that lets you save videos, reels, thumbnails, and images from YouTube, TikTok, Instagram, Facebook, Pinterest, and X. Paste a link, pick your format, and download in seconds. No software to install, no signup required, and no watermarks on your files."}
+            {"SavDown is a free social media downloader that lets you save videos, reels, thumbnails, and images from YouTube, TikTok, Instagram, Facebook, Pinterest, and X. Paste a link, pick your format, and download in seconds. No software to install, free daily credits with a free account, and no watermarks on your files."}
           </p>
 
           <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">

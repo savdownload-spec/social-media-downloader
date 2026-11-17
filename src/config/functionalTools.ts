@@ -38,6 +38,12 @@ export type FunctionalToolProps = {
 export type FunctionalToolEntry = {
   /** The interactive component rendered inside the shared tool layout. */
   Component: ComponentType<FunctionalToolProps>;
+  /**
+   * Where user files are processed. 'browser' means everything stays on the
+   * user's device; 'server' (default) means files are uploaded to /api/tools/*
+   * for processing. Drives the accuracy of the processing-badge copy.
+   */
+  processing?: 'browser' | 'server';
 };
 
 /**
@@ -76,33 +82,33 @@ const functionalTools: Record<string, FunctionalToolEntry> = {
   'qr-code-scanner':   { Component: QrScannerTool },
 
   /* ── Utility tools (client-only) ─────────────────────────────── */
-  'color-picker':      { Component: ColorPickerTool },
-  'gradient-generator':{ Component: GradientGeneratorTool },
+  'color-picker':      { Component: ColorPickerTool, processing: 'browser' },
+  'gradient-generator':{ Component: GradientGeneratorTool, processing: 'browser' },
 
   /* ── SEO tools (local templates/logic, client-only) ──────────── */
-  'meta-title-generator':       { Component: SeoTool },
-  'meta-description-generator': { Component: SeoTool },
-  'youtube-tags-generator':     { Component: SeoTool },
-  'keyword-generator':          { Component: SeoTool },
-  'schema-generator':           { Component: SeoTool },
+  'meta-title-generator':       { Component: SeoTool, processing: 'browser' },
+  'meta-description-generator': { Component: SeoTool, processing: 'browser' },
+  'youtube-tags-generator':     { Component: SeoTool, processing: 'browser' },
+  'keyword-generator':          { Component: SeoTool, processing: 'browser' },
+  'schema-generator':           { Component: SeoTool, processing: 'browser' },
 
   /* ── AI tools (Cloudflare Workers AI) ────────────────────────── */
-  'ai-image-generator': { Component: AIImageGenerator },
+  'ai-image-generator': { Component: AIImageGenerator, processing: 'server' },
 
   /* ── AI text tools (Cloudflare Workers AI — llama-3.1-8b-instruct) ── */
-  'ai-youtube-title-generator': { Component: AiTextTool },
-  'ai-description-generator':   { Component: AiTextTool },
-  'ai-hashtag-generator':        { Component: AiTextTool },
-  'ai-caption-generator':        { Component: AiTextTool },
+  'ai-youtube-title-generator': { Component: AiTextTool, processing: 'server' },
+  'ai-description-generator':   { Component: AiTextTool, processing: 'server' },
+  'ai-hashtag-generator':        { Component: AiTextTool, processing: 'server' },
+  'ai-caption-generator':        { Component: AiTextTool, processing: 'server' },
 
   /* ── AI/Browser tools (client-side processing) ───────────────── */
-  'background-remover':     { Component: BackgroundRemoverTool },
-  'image-upscaler':         { Component: ImageUpscalerTool },
+  'background-remover':     { Component: BackgroundRemoverTool, processing: 'browser' },
+  'image-upscaler':         { Component: ImageUpscalerTool, processing: 'server' },
 
   /* ── AI category tools ───────────────────────────────────────── */
-  'ai-thumbnail-generator': { Component: AIImageGenerator },
-  'ai-background-remover':  { Component: BackgroundRemoverTool },
-  'ai-image-enhancer':      { Component: ImageTool },
+  'ai-thumbnail-generator': { Component: AIImageGenerator, processing: 'server' },
+  'ai-background-remover':  { Component: BackgroundRemoverTool, processing: 'browser' },
+  'ai-image-enhancer':      { Component: ImageTool, processing: 'server' },
 };
 
 /** Returns the live tool entry for a slug, or undefined if it isn't built yet. */

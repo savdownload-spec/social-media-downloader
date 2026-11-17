@@ -65,7 +65,7 @@ export function Footer() {
           <div className="lg:col-span-5">
             <Logo variant="light" height={32} />
             <p className="mt-4 text-sm text-ink-muted leading-relaxed max-w-sm">
-              {"SavDown is the fast, private way to save videos, reels, and thumbnails from the platforms you use every day. No watermarks, no signup, no clutter."}
+              {"SavDown is the fast, private way to save videos, reels, and thumbnails from the platforms you use every day. No watermarks, no clutter — free daily credits with a free account."}
             </p>
 
             {/* Social media row */}

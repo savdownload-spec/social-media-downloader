@@ -3,6 +3,7 @@ import sharp from 'sharp';
 
 const mocks = vi.hoisted(() => ({
   requireCredits: vi.fn(),
+  requireAuth: vi.fn(),
   spend: vi.fn(),
   fail: vi.fn(),
 }));
@@ -11,6 +12,7 @@ vi.mock('@/lib/credits', () => ({
   JOB_COST: { imageTool: 1 },
   requestIdempotencyKey: (request: Request) => request.headers.get('Idempotency-Key'),
   requireCredits: mocks.requireCredits,
+  requireAuth: mocks.requireAuth,
 }));
 vi.mock('@/lib/toolStatus', () => ({ requireToolAvailable: vi.fn(async () => ({ ok: true })) }));
 vi.mock('@/lib/imageRateLimit', () => ({
@@ -32,6 +34,13 @@ describe('image tool API validation and charging', () => {
     mocks.spend.mockReset().mockResolvedValue(true);
     mocks.fail.mockReset().mockResolvedValue('operation');
     mocks.requireCredits.mockReset().mockResolvedValue({ ok: true, userId: 'user-1', spend: mocks.spend, fail: mocks.fail });
+    mocks.requireAuth.mockReset().mockResolvedValue({ ok: true, userId: 'user-1' });
+  });
+
+  it('rejects unauthenticated requests before parsing the payload', async () => {
+    mocks.requireAuth.mockResolvedValue({ ok: false, response: new Response('Sign in', { status: 401 }) });
+    const response = await POST(request(new File(['x'], 'photo.png', { type: 'image/png' }), { op: 'resize', width: '5' }));
+    expect(response.status).toBe(401);
   });
 
   it('rejects unsupported uploads before opening the credit gate', async () => {

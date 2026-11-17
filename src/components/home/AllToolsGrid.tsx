@@ -145,7 +145,7 @@ export function AllToolsGrid() {  const [filter, setFilter] = useState<Filter>(
         >
           {"View All Tools"} <ArrowRight className="w-5 h-5" />
         </Link>
-        <p className="mt-3 text-sm text-text-muted">{"Every tool you need, in one place. Free, no signup, no watermarks."}</p>
+        <p className="mt-3 text-sm text-text-muted">{"Every tool you need, in one place. Free daily credits, no watermarks."}</p>
       </div>
     </Section>
   );

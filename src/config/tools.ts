@@ -15,6 +15,17 @@ export type Platform =
   | 'x'
   | 'ai';
 
+/** Brand-cased display names for platform tokens (user-facing copy). */
+export const PLATFORM_DISPLAY_NAMES: Record<Platform, string> = {
+  youtube: 'YouTube',
+  tiktok: 'TikTok',
+  instagram: 'Instagram',
+  facebook: 'Facebook',
+  pinterest: 'Pinterest',
+  x: 'X',
+  ai: 'AI',
+};
+
 export type Tool = {
   slug: ToolPageSlug;
   platform: Platform;
@@ -53,7 +64,7 @@ const downloaderDefinitions: Tool[] = [
     placeholder: 'https://youtube.com/watch?v=…',
     urlPattern: /^https:\/\/(?:www\.|m\.|music\.)?(?:youtube\.com\/(?:watch\?[^#]*v=|shorts\/|embed\/)|youtu\.be\/)[A-Za-z0-9_-]{11}/i,
     outputKind: 'video',
-    supportedFormats: ['MP4 4K', 'MP4 1080p', 'MP4 720p'],
+    supportedFormats: ['MP4 4K (Pro)', 'MP4 1080p', 'MP4 720p'],
     featured: true,
     trending: true,
     faq: [

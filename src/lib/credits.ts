@@ -82,6 +82,20 @@ export function newIdempotencyKey(prefix: string): string {
 }
 
 /**
+ * Session-only gate. Use at the top of routes that must reject
+ * unauthenticated requests before parsing or validating payloads, so no
+ * request body work (or schema/error detail leakage) happens pre-auth.
+ */
+export async function requireAuth(plainText?: boolean): Promise<{ ok: true; userId: string } | { ok: false; response: NextResponse }> {
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
+  if (!userId) {
+    return { ok: false, response: errorResponse('Sign in to use SavDown tools. Every account gets free daily credits.', 401, plainText) };
+  }
+  return { ok: true, userId };
+}
+
+/**
  * Authenticate and preflight the request balance. The final debit remains an
  * atomic conditional transaction; this read is only an early, friendly error.
  */

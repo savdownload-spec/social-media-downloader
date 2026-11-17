@@ -10,7 +10,7 @@ import { buildMetadata } from '@/lib/seo';
 export const metadata = buildMetadata({
   title: 'All Tools',
   description:
-    'Browse the full SavDown toolkit: social media downloaders plus image, video, PDF, AI, SEO, and utility tools. All free, no signup.',
+    'Browse the full SavDown toolkit: social media downloaders plus image, video, PDF, AI, SEO, and utility tools. Free daily credits with a free account.',
   path: '/tools',
   keywords: ['free online tools', 'social media downloader', 'image tools', 'pdf tools', 'ai tools', 'seo tools'],
 });
@@ -42,7 +42,7 @@ export default function ToolsIndexPage() {
             </h1>
             <p className="mt-5 text-lg text-text-muted leading-relaxed">
               Downloaders, image and video tools, PDF utilities, AI helpers, and SEO generators.
-              All free to use, with no signup and no watermarks.
+              Free daily credits with a free account — no card required.
             </p>
             <nav className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
               {toolGroups.map((g) => (
