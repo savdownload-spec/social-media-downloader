@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -9,19 +9,26 @@ import {
   toolGroups,
   HOMEPAGE_DESKTOP_LIMIT,
   HOMEPAGE_MOBILE_LIMIT,
-  isToolAvailable,
   type ToolGroup,
 } from '@/config/catalog';
+import { isToolLive } from '@/lib/toolStatuses';
 
 type Filter = 'all' | ToolGroup;
 
-export function AllToolsGrid() {  const [filter, setFilter] = useState<Filter>('all');
+interface Props {
+  /**
+   * Serialised slug->status map from the server (passed as a plain object so
+   * it survives the Server->Client boundary). Missing slugs are treated as
+   * LIVE (fail-open). Fetched once per page render by the parent Server Component.
+   */
+  toolStatuses: Record<string, string>;
+}
 
-  // Ref placed just above the tab bar. On tab change we scroll here so the
-  // first row of cards is visible below the sticky header + sticky tabs.
-  // The scroll target sits at the section heading, which means the heading
-  // briefly comes into view then the tabs stick naturally as the user sees
-  // the refreshed card list — no extra jump, no flicker on load.
+export function AllToolsGrid({ toolStatuses }: Props) {
+  const [filter, setFilter] = useState<Filter>('all');
+
+  const statusMap = new Map(Object.entries(toolStatuses));
+
   const scrollAnchorRef = useRef<HTMLDivElement>(null);
 
   const filters: Filter[] = ['all', ...toolGroups];
@@ -33,14 +40,10 @@ export function AllToolsGrid() {  const [filter, setFilter] = useState<Filter>(
 
   function selectFilter(f: Filter) {
     setFilter(f);
-    // Scroll the anchor into view, offset so it lands just below the sticky
-    // header (64 px) + a little breathing room. requestAnimationFrame gives
-    // React one tick to commit the new filter before we measure positions.
     requestAnimationFrame(() => {
       const el = scrollAnchorRef.current;
       if (!el) return;
       const top = el.getBoundingClientRect().top + window.scrollY;
-      // 64px header + 8px breathing room
       const offset = 64 + 8;
       window.scrollTo({ top: top - offset, behavior: 'smooth' });
     });
@@ -48,9 +51,6 @@ export function AllToolsGrid() {  const [filter, setFilter] = useState<Filter>(
 
   return (
     <Section variant="default" id="tools">
-      {/* Scroll anchor — sits at the very top of the Tools section content.
-          Clicking a tab scrolls here so the section heading is visible and
-          the sticky tab bar takes its position naturally beneath the header. */}
       <div ref={scrollAnchorRef} aria-hidden />
 
       <div className="max-w-3xl mx-auto text-center">
@@ -62,12 +62,6 @@ export function AllToolsGrid() {  const [filter, setFilter] = useState<Filter>(
         </p>
       </div>
 
-      {/* Category filter tabs — sticky within this section only.
-          The outer div is a transparent sticky positioner with no background
-          or border of its own. The visible surface lives on the inner pill
-          row so it stays content-width, rounded, and contained — matching
-          the card grid below rather than bleeding edge-to-edge.
-          top-16 accounts for the 64 px sticky site header. */}
       <div className="sticky top-16 z-20 mt-10 py-2">
         <div className="flex flex-wrap items-center justify-center gap-2.5 rounded-2xl bg-surface/70 dark:bg-card/70 backdrop-blur-md border border-border/50 dark:border-border/40 px-4 py-3">
           {filters.map((f) => {
@@ -91,18 +85,14 @@ export function AllToolsGrid() {  const [filter, setFilter] = useState<Filter>(
         </div>
       </div>
 
-      {/* Tool cards */}
       <motion.div
         layout
         className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
       >
         {visible.map((tool, i) => {
           const Icon = tool.icon;
-          const live = isToolAvailable(tool.slug);
+          const live = isToolLive(tool.slug, statusMap);
           const mobileHidden = filter === 'all' && i >= HOMEPAGE_MOBILE_LIMIT;
-          
-          const toolName = tool.name;
-          const toolDesc = tool.description;
 
           return (
             <motion.div
@@ -126,10 +116,10 @@ export function AllToolsGrid() {  const [filter, setFilter] = useState<Filter>(
                   )}
                 </div>
                 <h3 className="mt-5 text-base font-bold text-text tracking-tight group-hover:text-primary transition-colors">
-                  {toolName}
+                  {tool.name}
                 </h3>
                 <p className="mt-2 text-sm text-text-muted leading-relaxed flex-1">
-                  {toolDesc}
+                  {tool.description}
                 </p>
               </Link>
             </motion.div>
@@ -137,7 +127,6 @@ export function AllToolsGrid() {  const [filter, setFilter] = useState<Filter>(
         })}
       </motion.div>
 
-      {/* See the full list */}
       <div className="mt-12 text-center">
         <Link
           href="/tools"

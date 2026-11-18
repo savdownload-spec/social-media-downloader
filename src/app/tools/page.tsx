@@ -4,8 +4,9 @@ import { Container } from '@/components/layout/Container';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Section } from '@/components/layout/Section';
 import { Reveal } from '@/components/ui/Reveal';
-import { catalog, toolGroups, isToolAvailable, groupBlurb } from '@/config/catalog';
+import { catalog, toolGroups, groupBlurb } from '@/config/catalog';
 import { buildMetadata } from '@/lib/seo';
+import { getToolStatuses, isToolLive } from '@/lib/toolStatuses';
 
 export const metadata = buildMetadata({
   title: 'All Tools',
@@ -15,7 +16,9 @@ export const metadata = buildMetadata({
   keywords: ['free online tools', 'social media downloader', 'image tools', 'pdf tools', 'ai tools', 'seo tools'],
 });
 
-export default function ToolsIndexPage() {
+export default async function ToolsIndexPage() {
+  const statuses = await getToolStatuses();
+
   return (
     <>
       <section className="relative overflow-hidden">
@@ -73,7 +76,7 @@ export default function ToolsIndexPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {items.map((tool) => {
                 const Icon = tool.icon;
-                const live = isToolAvailable(tool.slug);
+                const live = isToolLive(tool.slug, statuses);
                 return (
                   <Reveal key={tool.slug}>
                     <Link
@@ -107,4 +110,3 @@ export default function ToolsIndexPage() {
     </>
   );
 }
-

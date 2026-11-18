@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Link2, Search, Upload, CheckCircle2 } from 'lucide-react';
 import { tools } from '@/config/tools';
-import { catalog, isToolAvailable, groupSlug } from '@/config/catalog';
+import { catalog, groupSlug } from '@/config/catalog';
 import { cn } from '@/lib/utils';
 import { FOCUS_UNIVERSAL_INPUT_EVENT } from './WorkspaceMobileNav';
+import { useToolStatuses } from '@/components/tools/ToolStatusProvider';
 
 const UPLOAD_ROUTE_BY_PREFIX: { test: (type: string) => boolean; label: string; href: string }[] = [
   { test: (t) => t.startsWith('image/'), label: 'image tools', href: '/workspace/tools/image' },
@@ -23,6 +24,7 @@ function looksLikeUrl(value: string) {
 export function UniversalInput() {
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const { isLive } = useToolStatuses();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -45,10 +47,10 @@ export function UniversalInput() {
     const q = value.trim().toLowerCase();
     if (!q || looksLikeUrl(q)) return [];
     return catalog
-      .filter((t) => isToolAvailable(t.slug))
+      .filter((t) => isLive(t.slug))
       .filter((t) => t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q))
       .slice(0, 5);
-  }, [value]);
+  }, [value, isLive]);
 
   const [uploadHint, setUploadHint] = useState<{ label: string; href: string } | null>(null);
 
