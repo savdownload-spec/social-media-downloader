@@ -7,7 +7,7 @@ import { LiveRating } from '@/components/home/LiveRating';
 
 export function Hero() {
   const trustBadges = [
-    "Unlimited Downloads",
+    "Free Daily Credits",
     "No Ads",
     "Privacy-First",
     "Every Platform",

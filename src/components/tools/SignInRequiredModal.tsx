@@ -11,6 +11,7 @@
  * their file. We do NOT auto-submit for them; that would be surprising.
  */
 
+import { useId } from 'react';
 import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, Sparkles } from 'lucide-react';
@@ -26,6 +27,7 @@ type Props = {
 export function SignInRequiredModal({ open, onClose, callbackUrl: requestedCallbackUrl }: Props) {
   const router = useRouter();
   const pathname = usePathname();
+  const headingId = useId();
 
   function handleSignIn() {
     onClose();
@@ -40,6 +42,7 @@ export function SignInRequiredModal({ open, onClose, callbackUrl: requestedCallb
       open={open}
       onClose={onClose}
       size="sm"
+      labelledById={headingId}
       footer={
         <>
           <button
@@ -63,7 +66,7 @@ export function SignInRequiredModal({ open, onClose, callbackUrl: requestedCallb
 
         {/* Heading */}
         <div className="space-y-1.5">
-          <h2 className="text-lg font-bold text-text tracking-tight">
+          <h2 id={headingId} className="text-lg font-bold text-text tracking-tight">
             Sign in to use this tool
           </h2>
           <p className="text-sm text-text-muted leading-relaxed max-w-xs mx-auto">

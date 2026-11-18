@@ -374,7 +374,7 @@ export function AboutClient() {
               Ready to Simplify Your Workflow?
             </h2>
             <p className="mt-5 text-ink-muted max-w-xl mx-auto leading-relaxed text-base md:text-lg">
-              Experience the fastest, cleanest media downloader and AI toolkit on the web. No signup required.
+              Experience the fastest, cleanest media downloader and AI toolkit on the web. Free daily credits with a free account.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <Link
