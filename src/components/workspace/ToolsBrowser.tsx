@@ -10,16 +10,18 @@ import { WorkspaceCardGrid } from './WorkspaceCard';
 import { SectionHeader } from './SectionHeader';
 
 interface Props {
-  /** Restrict to a single group; omit to browse every group. */
   group?: ToolGroup;
+  toolStatuses: Record<string, string>;
 }
 
-export function ToolsBrowser({ group }: Props) {
+export function ToolsBrowser({ group, toolStatuses }: Props) {
   const searchParams = useSearchParams();
   const [q, setQ] = useState(() => searchParams.get('q') ?? '');
   const [activeGroup, setActiveGroup] = useState<ToolGroup | 'All'>('All');
   const query = q.trim().toLowerCase();
   const groups = group ? [group] : activeGroup === 'All' ? toolGroups : [activeGroup];
+
+  const statusMap = new Map(Object.entries(toolStatuses));
 
   const anyResults = groups.some((g) =>
     catalog.some(
@@ -79,7 +81,7 @@ export function ToolsBrowser({ group }: Props) {
             {!group && activeGroup === 'All' && <SectionHeader title={g} />}
             <WorkspaceCardGrid>
               {items.map((t) => (
-                <ToolCard key={t.slug} tool={t} />
+                <ToolCard key={t.slug} tool={t} toolStatuses={statusMap} />
               ))}
             </WorkspaceCardGrid>
           </div>

@@ -24,6 +24,8 @@ type Props = {
   /** The actual interactive tool UI (DownloaderForm, or a functional-tool component). */
   children: React.ReactNode;
   content?: WorkspaceToolContent;
+  /** Honest capability line, e.g. "Account-based credits" or "Runs in your browser". */
+  badge?: string;
 };
 
 /**
@@ -33,7 +35,7 @@ type Props = {
  * public /tools/[slug] page uses — not reproducing its full long-form SEO
  * article. Ends with a large "Read Full Guide" CTA out to that public page.
  */
-export function WorkspaceToolShell({ tool, children, content }: Props) {
+export function WorkspaceToolShell({ tool, children, content, badge = 'Account-based credits' }: Props) {
   const Icon = tool.icon ?? fallbackIcon;
   const groupLabel = tool.group === 'Downloaders' ? 'Social Media Downloaders' : `${tool.group} Tools`;
 
@@ -62,7 +64,7 @@ export function WorkspaceToolShell({ tool, children, content }: Props) {
         <h1 className="mt-1 text-xl md:text-2xl font-bold tracking-tight text-text">{tool.name}</h1>
         <p className="text-sm text-text-muted leading-relaxed max-w-lg">{content?.tagline ?? tool.description}</p>
         <span className="mt-1 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent-light text-[11px] font-semibold text-accent-hover">
-          <Zap className="w-3 h-3" /> Free tool, no signup
+          <Zap className="w-3 h-3" /> {badge}
         </span>
       </div>
 

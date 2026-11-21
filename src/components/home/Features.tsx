@@ -9,7 +9,7 @@ export function Features() {
   const features = [
     { icon: Sparkles, title: 'Lightning Fast', description: 'Download content in seconds with optimized streaming' },
     { icon: ShieldCheck, title: 'Completely Secure', description: 'Your privacy is our priority. No data collection' },
-    { icon: Layers, title: 'Unlimited Downloads', description: 'Download as much as you want, completely free' },
+    { icon: Layers, title: 'Free Daily Credits', description: 'Every account gets daily credits — no card required' },
     { icon: Gauge, title: 'No Ads', description: 'Clean interface without annoying advertisements' },
     { icon: BadgeDollarSign, title: 'Original Quality', description: 'No re-encoding, no watermarks. Get the source file exactly as it was uploaded.' },
     { icon: MonitorSmartphone, title: 'Any Device', description: 'Works on iPhone, Android, Mac, and PC. No app to install, just use your browser.' },

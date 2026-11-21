@@ -4,18 +4,21 @@ import { Container } from '@/components/layout/Container';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { Section } from '@/components/layout/Section';
 import { Reveal } from '@/components/ui/Reveal';
-import { catalog, toolGroups, isToolAvailable, groupBlurb } from '@/config/catalog';
+import { catalog, toolGroups, groupBlurb } from '@/config/catalog';
 import { buildMetadata } from '@/lib/seo';
+import { getToolStatuses, isToolLive } from '@/lib/toolStatuses';
 
 export const metadata = buildMetadata({
   title: 'All Tools',
   description:
-    'Browse the full SavDown toolkit: social media downloaders plus image, video, PDF, AI, SEO, and utility tools. All free, no signup.',
+    'Browse the full SavDown toolkit: social media downloaders plus image, video, PDF, AI, SEO, and utility tools. Free daily credits with a free account.',
   path: '/tools',
   keywords: ['free online tools', 'social media downloader', 'image tools', 'pdf tools', 'ai tools', 'seo tools'],
 });
 
-export default function ToolsIndexPage() {
+export default async function ToolsIndexPage() {
+  const statuses = await getToolStatuses();
+
   return (
     <>
       <section className="relative overflow-hidden">
@@ -42,7 +45,7 @@ export default function ToolsIndexPage() {
             </h1>
             <p className="mt-5 text-lg text-text-muted leading-relaxed">
               Downloaders, image and video tools, PDF utilities, AI helpers, and SEO generators.
-              All free to use, with no signup and no watermarks.
+              Free daily credits with a free account — no card required.
             </p>
             <nav className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
               {toolGroups.map((g) => (
@@ -73,7 +76,7 @@ export default function ToolsIndexPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {items.map((tool) => {
                 const Icon = tool.icon;
-                const live = isToolAvailable(tool.slug);
+                const live = isToolLive(tool.slug, statuses);
                 return (
                   <Reveal key={tool.slug}>
                     <Link
@@ -107,4 +110,3 @@ export default function ToolsIndexPage() {
     </>
   );
 }
-

@@ -6,13 +6,12 @@
  *
  * Architecture: API Route → gallerydl.ts → gallery-dl binary
  *
- * Supported tools:
- *   - instagram-photo-downloader      (public posts / carousels)
- *   - instagram-story-downloader      (public stories)
- *   - instagram-profile-picture-downloader
- *   - pinterest-image-downloader
- *   - x-gif-downloader                (image/gif extraction)
- *   - tiktok-photo-downloader         (photo slideshows)
+ * Tools mapped here:
+ *   - instagram-photo-downloader
+ *   - instagram-story-downloader
+ *
+ * Both are preview-only/unavailable under downloaderPolicy.ts, so this
+ * service is not reached by the public resolve route today.
  */
 import { execFile } from 'child_process';
 import { promisify } from 'util';
@@ -42,8 +41,9 @@ async function isBinaryAvailable(): Promise<boolean> {
 }
 
 function proxyUrl(originalUrl: string, filename: string): string {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  return `${base}/api/proxy?${new URLSearchParams({ url: originalUrl, filename })}`;
+  // Relative so the resolve route can attach operation/tool context for
+  // credit and policy binding.
+  return `/api/proxy?${new URLSearchParams({ url: originalUrl, filename })}`;
 }
 
 function guessExt(url: string): string {
@@ -98,8 +98,9 @@ export async function resolveWithGalleryDl(
     return {
       ok: false,
       error:
-        'gallery-dl is not installed on this server. ' +
+        'Gallery extraction is not available on this server. ' +
         'Set GALLERY_DL_BIN or install gallery-dl to enable this tool.',
+      code: 'PROVIDER_UNAVAILABLE',
     };
   }
 
@@ -109,10 +110,6 @@ export async function resolveWithGalleryDl(
     // Instagram profile picture: use --range 1 to only get the avatar
     if (toolSlug === 'instagram-profile-picture-downloader') {
       extraArgs.push('--range', '1');
-    }
-    // Stories: target stories endpoint
-    if (toolSlug === 'instagram-story-downloader') {
-      extraArgs.push('--cookies-from-browser', 'none');
     }
 
     const entries = await runGdlJson(url, extraArgs);
@@ -187,11 +184,8 @@ export async function resolveWithGalleryDl(
     }
 
     if (!formats.length) {
-      return { ok: false, error: 'Could not extract media from this URL.' };
+      return { ok: false, error: 'Could not extract media from this URL.', code: 'MEDIA_NOT_FOUND' };
     }
-
-    // If multiple images, offer a ZIP label hint (actual ZIP served separately)
-    const hasMultiple = formats.length > 1;
 
     return {
       ok: true,
@@ -199,32 +193,21 @@ export async function resolveWithGalleryDl(
       thumbnail,
       author,
       platform: toolSlug,
-      formats: hasMultiple
-        ? [
-            ...formats,
-            {
-              label: '⬇ Download All (ZIP)',
-              quality: 'ZIP',
-              extension: 'zip',
-              url: `/api/tools/gallery-dl/zip?url=${encodeURIComponent(url)}&tool=${toolSlug}`,
-              hasAudio: false,
-              hasVideo: false,
-            },
-          ]
-        : formats,
+      formats,
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     if (msg.includes('private') || msg.includes('login')) {
-      return { ok: false, error: 'This content requires login and cannot be accessed.' };
+      return { ok: false, error: 'This content requires login and cannot be accessed.', code: 'MEDIA_PRIVATE' };
     }
     if (msg.includes('not found') || msg.includes('404')) {
-      return { ok: false, error: 'Content not found. It may have been deleted.' };
+      return { ok: false, error: 'Content not found. It may have been deleted.', code: 'MEDIA_NOT_FOUND' };
     }
     if (msg.includes('Unsupported')) {
-      return { ok: false, error: 'This URL is not supported by gallery-dl.' };
+      return { ok: false, error: 'This URL is not supported by gallery-dl.', code: 'UNSUPPORTED_PLATFORM' };
     }
-    return { ok: false, error: `Download failed: ${msg.slice(0, 120)}` };
+    // Never expose raw process output (it can contain local paths).
+    return { ok: false, error: 'Gallery extraction failed. The content may be unavailable or restricted.', code: 'PROCESSING_FAILED' };
   }
 }
 

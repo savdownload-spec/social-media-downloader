@@ -20,6 +20,11 @@ type ModalProps = {
   onClose: () => void;
   /** Optional headline, renders as an H2. */
   title?: ReactNode;
+  /**
+   * id of a heading rendered inside `children` when the design needs its own
+   * title markup; used as the dialog's accessible name when `title` is absent.
+   */
+  labelledById?: string;
   /** Optional supporting text under the title. */
   description?: ReactNode;
   /** The body content. */
@@ -46,6 +51,7 @@ export function Modal({
   open,
   onClose,
   title,
+  labelledById,
   description,
   children,
   footer,
@@ -125,7 +131,7 @@ export function Modal({
               ref={dialogRef}
               role="dialog"
               aria-modal="true"
-              aria-labelledby={title ? titleId : undefined}
+              aria-labelledby={title ? titleId : labelledById}
               aria-describedby={description ? descId : undefined}
               initial={{ opacity: 0, y: 24, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}

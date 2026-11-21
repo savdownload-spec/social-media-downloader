@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { catalog, toolGroups, type ToolGroup } from '@/config/catalog';
 import { blogPostsByDate } from '@/config/blog';
-import { isToolAvailable } from '@/config/catalog';
+import { useToolStatuses } from '@/components/tools/ToolStatusProvider';
 import { usePricing } from '@/components/pricing/PricingProvider';
 import { derivePlan, deriveLifetime } from '@/config/pricing';
 
@@ -58,7 +58,9 @@ const FEATURED_SLUGS = [
 /* ═══════════════════════════════════════════════════════════
    TOOLS PANEL , clean 3-zone layout
 ═══════════════════════════════════════════════════════════ */
-function ToolsPanel({ close }: { close: () => void }) {  const [activeGroup, setActiveGroup] = useState<ToolGroup>('Downloaders');
+function ToolsPanel({ close }: { close: () => void }) {
+  const [activeGroup, setActiveGroup] = useState<ToolGroup>('Downloaders');
+  const { isLive } = useToolStatuses();
   const groupTools = catalog.filter((tool) => tool.group === activeGroup);
   const featured = FEATURED_SLUGS
     .map((s) => catalog.find((tool) => tool.slug === s))
@@ -126,7 +128,7 @@ function ToolsPanel({ close }: { close: () => void }) {  const [activeGroup, se
         <div className="grid grid-cols-2 gap-1">
           {groupTools.map((tool) => {
             const TIcon = tool.icon;
-            const live = isToolAvailable(tool.slug);
+            const live = isLive(tool.slug);
             return (
               <Link
                 key={tool.slug}

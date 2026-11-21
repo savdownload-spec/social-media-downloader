@@ -11,6 +11,7 @@ import {
 import { toolsBySlug } from '@/config/tools';
 import { getFunctionalTool } from '@/config/functionalTools';
 import { getToolGuide, type ToolPageSlug } from '@/config/toolGuides';
+import { getToolPolicy } from '@/lib/downloaderPolicy';
 
 export type ToolGroup = 'Downloaders' | 'Image' | 'Video' | 'PDF' | 'AI' | 'SEO' | 'Utility';
 
@@ -45,9 +46,9 @@ const TILE = {
 };
 
 const downloaders: CatalogTool[] = [
-  { slug: 'youtube-video-downloader', name: 'YouTube Video Downloader', group: 'Downloaders', description: 'Save YouTube videos in up to 4K, watermark-free.', icon: MonitorPlay, tile: TILE.red, keywords: ['video downloader', 'youtube video downloader', 'mp4 downloader', 'online video downloader'] },
+  { slug: 'youtube-video-downloader', name: 'YouTube Video Downloader', group: 'Downloaders', description: 'Save YouTube videos in up to 4K on Pro, watermark-free.', icon: MonitorPlay, tile: TILE.red, keywords: ['video downloader', 'youtube video downloader', 'mp4 downloader', 'online video downloader'] },
   { slug: 'youtube-shorts-downloader', name: 'YouTube Shorts Downloader', group: 'Downloaders', description: 'Grab vertical YouTube Shorts in original quality.', icon: Film, tile: TILE.orange },
-  { slug: 'youtube-playlist-downloader', name: 'YouTube Playlist Downloader', group: 'Downloaders', description: 'Download an entire YouTube playlist in one go.', icon: ListVideo, tile: TILE.red },
+  { slug: 'youtube-playlist-downloader', name: 'YouTube Playlist Downloader', group: 'Downloaders', description: 'Playlist processing is not available yet.', icon: ListVideo, tile: TILE.red },
   { slug: 'youtube-thumbnail-downloader', name: 'YouTube Thumbnail Downloader', group: 'Downloaders', description: 'Grab any YouTube thumbnail in full resolution.', icon: Image, tile: TILE.amber },
   { slug: 'youtube-to-mp3', name: 'YouTube MP3 Downloader', group: 'Downloaders', description: 'Convert YouTube videos into high-quality MP3 audio.', icon: Music, tile: TILE.lime },
   { slug: 'tiktok-video-downloader', name: 'TikTok Video Downloader', group: 'Downloaders', description: 'Save TikToks in HD without the watermark.', icon: Video, tile: TILE.slate, keywords: ['tiktok video downloader', 'tiktok downloader', 'save tiktok video'] },
@@ -55,10 +56,10 @@ const downloaders: CatalogTool[] = [
   { slug: 'tiktok-thumbnail-downloader', name: 'TikTok Thumbnail Downloader', group: 'Downloaders', description: 'Download the cover thumbnail of any TikTok.', icon: Image, tile: TILE.teal },
   { slug: 'tiktok-photo-downloader', name: 'TikTok Photo Downloader', group: 'Downloaders', description: 'Save TikTok photo slideshows in full resolution.', icon: Images, tile: TILE.teal },
   { slug: 'instagram-reels-downloader', name: 'Instagram Reels Downloader', group: 'Downloaders', description: 'Save Instagram Reels in crisp HD.', icon: Clapperboard, tile: TILE.fuchsia, keywords: ['instagram reels downloader', 'download instagram reels', 'save reels'] },
-  { slug: 'instagram-video-downloader', name: 'Instagram Video Downloader', group: 'Downloaders', description: 'Download any public Instagram video post.', icon: Video, tile: TILE.pink },
-  { slug: 'instagram-photo-downloader', name: 'Instagram Photo Downloader', group: 'Downloaders', description: 'Save Instagram photos and carousels in full resolution.', icon: Image, tile: TILE.rose },
-  { slug: 'instagram-story-downloader', name: 'Instagram Story Downloader', group: 'Downloaders', description: 'Download public Instagram Stories before they disappear.', icon: Camera, tile: TILE.purple },
-  { slug: 'instagram-profile-picture-downloader', name: 'Instagram Profile Picture Downloader', group: 'Downloaders', description: 'View and save Instagram profile pictures in HD.', icon: UserRound, tile: TILE.violet },
+  { slug: 'instagram-video-downloader', name: 'Instagram Video Downloader', group: 'Downloaders', description: 'Instagram video processing is not available.', icon: Video, tile: TILE.pink },
+  { slug: 'instagram-photo-downloader', name: 'Instagram Photo Downloader', group: 'Downloaders', description: 'Instagram photo processing is not available.', icon: Image, tile: TILE.rose },
+  { slug: 'instagram-story-downloader', name: 'Instagram Story Downloader', group: 'Downloaders', description: 'Instagram Story processing is not available.', icon: Camera, tile: TILE.purple },
+  { slug: 'instagram-profile-picture-downloader', name: 'Instagram Profile Picture Downloader', group: 'Downloaders', description: 'View and save an Instagram profile photo.', icon: UserRound, tile: TILE.violet },
   { slug: 'facebook-video-downloader', name: 'Facebook Video Downloader', group: 'Downloaders', description: 'Download Facebook videos in HD or SD.', icon: Tv, tile: TILE.blue },
   { slug: 'facebook-reels-downloader', name: 'Facebook Reels Downloader', group: 'Downloaders', description: 'Save Facebook Reels without the watermark.', icon: Film, tile: TILE.indigo },
   { slug: 'x-video-downloader', name: 'X (Twitter) Video Downloader', group: 'Downloaders', description: 'Download videos from X (Twitter) in HD.', icon: MonitorPlay, tile: TILE.slate },
@@ -179,7 +180,10 @@ export function getCatalogTool(slug: string): CatalogTool | undefined {
  * even though its page worked fine.
  */
 export function isToolAvailable(slug: string): boolean {
-  return toolsBySlug.has(slug) || !!getFunctionalTool(slug);
+  // Downloader routes can exist in the registry while their processor is
+  // disabled on this deployment; the policy registry is authoritative.
+  if (toolsBySlug.has(slug)) return getToolPolicy(slug).downloadPermitted;
+  return !!getFunctionalTool(slug);
 }
 
 export const fallbackIcon = Download;

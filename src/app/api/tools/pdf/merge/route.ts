@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
-import { requireCredits, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
+import { requireCredits, requireAuth, JOB_COST, requestIdempotencyKey } from '@/lib/credits';
 import { mergePdfs } from '@/lib/pdfService';
 import { PDF_MAX_BATCH_BYTES } from '@/lib/pdfConfig';
 import { cleanupPdfUploadRefs, readPdfUploadRefs, type PdfUploadRef } from '@/lib/pdfUpload';
@@ -13,6 +13,10 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   const rl = await ratelimit(`pdf:${getClientId(req)}`, { limit: 20, windowSeconds: 60 });
   if (!rl.success) return NextResponse.json({ error: 'Too many requests. Please wait a minute and try again.' }, { status: 429 });
+
+  /* ── Auth first: no payload parsing before the session is verified (D8) ── */
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
 
   /* ── Tool status gate ── */
   const statusGate = await requireToolAvailable('merge-pdf');

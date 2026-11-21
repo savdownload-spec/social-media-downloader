@@ -1,8 +1,14 @@
-import { groupSlug, isToolAvailable, type CatalogTool } from '@/config/catalog';
+﻿import { groupSlug, type CatalogTool } from '@/config/catalog';
 import { WorkspaceCard } from './WorkspaceCard';
+import { isToolLive } from '@/lib/toolStatuses';
 
-export function ToolCard({ tool }: { tool: CatalogTool }) {
-  const live = isToolAvailable(tool.slug);
+interface Props {
+  tool: CatalogTool;
+  toolStatuses: Map<string, string>;
+}
+
+export function ToolCard({ tool, toolStatuses }: Props) {
+  const live = isToolLive(tool.slug, toolStatuses);
 
   return (
     <WorkspaceCard

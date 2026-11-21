@@ -14,6 +14,8 @@ import { LanguageProvider } from '@/contexts/LanguageContext';
 import { Providers } from '@/components/providers';
 import { PricingProvider } from '@/components/pricing/PricingProvider';
 import { getPricingConfig } from '@/lib/pricing-server';
+import { ToolStatusProvider } from '@/components/tools/ToolStatusProvider';
+import { getToolStatuses } from '@/lib/toolStatuses';
 import { SupportChat } from '@/components/support/SupportChat';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { THEME_INIT_SCRIPT } from '@/lib/theme/theme-init-script';
@@ -81,7 +83,11 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const pricing = await getPricingConfig();
+  const [pricing, toolStatuses] = await Promise.all([
+    getPricingConfig(),
+    getToolStatuses(),
+  ]);
+  const toolStatusesObj = Object.fromEntries(toolStatuses);
 
   return (
     // suppressHydrationWarning: the blocking script below mutates this
@@ -102,6 +108,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="font-sans bg-surface text-text antialiased">
         <Providers>
           <PricingProvider value={pricing}>
+            <ToolStatusProvider value={toolStatusesObj}>
             <LanguageProvider>
               <ThemeProvider>
               <ToastProvider>
@@ -122,6 +129,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </ToastProvider>
               </ThemeProvider>
             </LanguageProvider>
+            </ToolStatusProvider>
           </PricingProvider>
         </Providers>
         {/* GoogleTagManager: loads GTM afterInteractive to avoid blocking FCP/LCP */}

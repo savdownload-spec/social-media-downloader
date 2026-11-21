@@ -6,6 +6,7 @@ import { FAQSection } from '@/components/ui/FAQSection';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 import { ShareButton } from '@/components/ui/ShareButton';
 import type { CatalogTool } from '@/config/catalog';
+import { getFunctionalTool } from '@/config/functionalTools';
 import { requireToolGuide } from '@/config/toolGuides';
 import { jsonLd, softwareAppSchema, breadcrumbSchema, howToSchema } from '@/lib/seo';
 import { siteConfig } from '@/config/site';
@@ -21,6 +22,9 @@ export function FunctionalToolLayout({ tool, children, unavailable = false }: Pr
   const groupHref = `/tools#${tool.group.toLowerCase()}`;
   const Icon = tool.icon;
   const content = requireToolGuide(tool.slug);
+  // Badge reflects where files are actually processed (browser vs /api/tools/*).
+  const processing = getFunctionalTool(tool.slug)?.processing ?? 'server';
+  const processingBadge = processing === 'browser' ? 'Runs in your browser' : 'Processed on our servers';
 
   return <>
     {!unavailable && <script type="application/ld+json" dangerouslySetInnerHTML={jsonLd({
@@ -52,7 +56,7 @@ export function FunctionalToolLayout({ tool, children, unavailable = false }: Pr
         <div className="reveal max-w-2xl mx-auto">
           <span className={`inline-flex w-20 h-20 rounded-3xl ${tool.tile} items-center justify-center shadow-soft-md`}><Icon className="w-10 h-10" /></span>
           <div className="mt-5 flex items-center justify-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-light text-xs font-semibold text-accent-hover"><Zap className="w-3.5 h-3.5" />{unavailable ? 'Processor not available' : 'Browser-based tool'}</span>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-light text-xs font-semibold text-accent-hover"><Zap className="w-3.5 h-3.5" />{unavailable ? 'Processor not available' : processingBadge}</span>
             <ShareButton url={url} />
           </div>
           <h1 className="mt-5 type-page-title text-text">{tool.name}</h1>

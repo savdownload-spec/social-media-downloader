@@ -11,6 +11,7 @@ import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { requireCredits, JOB_COST, recordRejectedOperation, requestIdempotencyKey } from '@/lib/credits';
 import { urlToGif } from '@/lib/videoService';
 import { isTrustedXMediaUrl } from '@/lib/security/remote-url';
+import { DOWNLOAD_NOT_PERMITTED, getToolPolicy } from '@/lib/downloaderPolicy';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,11 +31,26 @@ export async function GET(req: Request) {
     sourceUrl: `tool://${tool}`,
     idempotencyKey: requestKey,
   };
+
+  const policy = getToolPolicy(tool);
+  if (!policy.downloadPermitted) {
+    return NextResponse.json(
+      {
+        error: policy.restriction?.message ?? 'Download delivery is not available for this tool.',
+        code: policy.restriction?.code ?? DOWNLOAD_NOT_PERMITTED,
+      },
+      { status: 403 },
+    );
+  }
+
   const ip = getClientId(req);
-  const rl = await ratelimit(`vidurl:${ip}`, { limit: 10, windowSeconds: 60 });
+  const rl = await ratelimit(`vidurl:${ip}`, { limit: 10, windowSeconds: 60, fallbackToMemory: true });
   if (!rl.success) {
     await recordRejectedOperation(req, gateOperation, 'rate_limited', 'Rate limit exceeded');
-    return NextResponse.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
+    return NextResponse.json(
+      { error: 'Too many requests. Please slow down.', code: 'PROVIDER_RATE_LIMITED' },
+      { status: 429 },
+    );
   }
 
   // Credits are spent only once the job below succeeds.

@@ -15,6 +15,17 @@ export type Platform =
   | 'x'
   | 'ai';
 
+/** Brand-cased display names for platform tokens (user-facing copy). */
+export const PLATFORM_DISPLAY_NAMES: Record<Platform, string> = {
+  youtube: 'YouTube',
+  tiktok: 'TikTok',
+  instagram: 'Instagram',
+  facebook: 'Facebook',
+  pinterest: 'Pinterest',
+  x: 'X',
+  ai: 'AI',
+};
+
 export type Tool = {
   slug: ToolPageSlug;
   platform: Platform;
@@ -53,7 +64,7 @@ const downloaderDefinitions: Tool[] = [
     placeholder: 'https://youtube.com/watch?v=…',
     urlPattern: /^https:\/\/(?:www\.|m\.|music\.)?(?:youtube\.com\/(?:watch\?[^#]*v=|shorts\/|embed\/)|youtu\.be\/)[A-Za-z0-9_-]{11}/i,
     outputKind: 'video',
-    supportedFormats: ['MP4 4K', 'MP4 1080p', 'MP4 720p'],
+    supportedFormats: ['MP4 4K (Pro)', 'MP4 1080p', 'MP4 720p'],
     featured: true,
     trending: true,
     faq: [
@@ -908,21 +919,21 @@ const downloaderDefinitions: Tool[] = [
     platform: 'instagram',
     name: 'Instagram Profile Picture Downloader',
     shortName: 'Instagram DP',
-    headline: 'View And Save Instagram Profile Pictures In HD.',
-    subheadline: 'Zoom in and download any public profile photo in full size.',
+    headline: 'View And Save Instagram Profile Pictures.',
+    subheadline: 'Save the profile photo Instagram exposes for a public account.',
     description:
-      'View and download Instagram profile pictures (DP) in HD. Free, no login, no app.',
+      'View and download the current Instagram profile photo for public accounts. Free, no login, no app.',
     keywords: ['instagram profile picture downloader', 'instagram dp downloader', 'view instagram dp'],
     placeholder: 'https://instagram.com/username',
     urlPattern: /^(https?:\/\/)?(www\.)?instagram\.com\/.+/i,
     outputKind: 'image',
-    supportedFormats: ['JPG HD'],
+    supportedFormats: ['JPG'],
     featured: false,
     trending: false,
     faq: [
       {
         question: 'Can I view and download an Instagram profile picture in full size?',
-        answer: 'Yes. Instagram crops and shrinks profile photos to a small circle in the app. SavDown retrieves the full-resolution version Instagram stores, typically 320×320 HD, and lets you save it as a JPG.',
+        answer: 'SavDown returns the largest avatar Instagram exposes for the profile. When Instagram provides the full-resolution image it is labelled HD; otherwise the public-page image is 150×150 and labelled with that size.',
       },
       {
         question: 'Do I need to follow the account to download their profile picture?',
@@ -934,15 +945,15 @@ const downloaderDefinitions: Tool[] = [
       },
       {
         question: 'Can I download profile pictures from private Instagram accounts?',
-        answer: 'Even private accounts have a visible (though small) profile picture accessible publicly. SavDown downloads this public thumbnail at the highest available resolution Instagram exposes without authentication.',
+        answer: 'Private profiles may not resolve: Instagram often withholds profile data for private accounts from anonymous requests. When it does expose an avatar, SavDown returns that public image.',
       },
       {
         question: 'What is the maximum resolution for an Instagram profile picture?',
-        answer: 'Instagram caps profile photos at 320×320 pixels on its public API. SavDown downloads at this full 320×320 resolution. The circular crop you see in the app is just a display effect, the actual stored image is square.',
+        answer: 'It depends on what Instagram returns for the profile. The full-resolution avatar is labelled HD; when Instagram only exposes the public-page image, it is 150×150 and labelled with that size.',
       },
       {
         question: 'How do I use this tool, do I enter a username or a URL?',
-        answer: 'Both work. You can paste the full profile URL (instagram.com/username) or just type the username handle. SavDown resolves either input to the correct profile.',
+        answer: 'Paste the full profile URL (instagram.com/username). The tool resolves that URL to the profile avatar.',
       },
       {
         question: 'Why do I want to download a profile picture in full size?',

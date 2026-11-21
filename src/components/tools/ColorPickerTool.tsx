@@ -5,7 +5,7 @@
  *
  * No backend required.
  */
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Pipette, Copy, Check, Upload, X } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 
@@ -57,6 +57,10 @@ export function ColorPickerTool() {
   const canvasRef  = useRef<HTMLCanvasElement>(null);
   const fileRef    = useRef<HTMLInputElement>(null);
   const { success, error: errToast } = useToast();
+  // Gate browser-only capability checks behind mount so server and first
+  // client render stay identical (prevents React #418 hydration errors).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   /* ── EyeDropper API ── */
   const pickFromScreen = useCallback(async () => {
@@ -106,7 +110,7 @@ export function ColorPickerTool() {
     });
   }, []);
 
-  const hasEyeDropper = typeof window !== 'undefined' && 'EyeDropper' in window;
+  const hasEyeDropper = mounted && 'EyeDropper' in window;
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6">

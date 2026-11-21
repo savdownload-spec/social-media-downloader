@@ -147,6 +147,10 @@ const nextConfig = {
         './bin/**/*',
         './node_modules/ffmpeg-static/**/*',
       ],
+      '/api/download/audio': [
+        './bin/**/*',
+        './node_modules/ffmpeg-static/**/*',
+      ],
       '/api/tools/tiktok/stream': [
         './bin/**/*',
         './node_modules/ffmpeg-static/**/*',

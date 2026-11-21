@@ -27,13 +27,14 @@ export function Header() {
           <Logo variant="dark" height={30} linked={false} />
         </Link>
 
-        {/* Desktop mega menu */}
-        <nav className="hidden md:flex items-center" aria-label="Primary navigation">
+        {/* Desktop mega menu — desktop nav + right actions need ~1180px, so they
+            only appear at xl; below that the hamburger drawer handles navigation (D2) */}
+        <nav className="hidden xl:flex items-center" aria-label="Primary navigation">
           <MegaMenu />
         </nav>
 
         {/* Desktop right actions */}
-        <div className="hidden md:flex items-center gap-2 shrink-0">
+        <div className="hidden xl:flex items-center gap-2 shrink-0">
           <ThemeToggle variant="header" />
           <LanguageSelector variant="header" />
           <Link
@@ -78,9 +79,9 @@ export function Header() {
           </Link>
         </div>
 
-        {/* Mobile hamburger */}
+        {/* Mobile/tablet hamburger */}
         <button
-          className="md:hidden w-10 h-10 rounded-full hover:bg-surface flex items-center justify-center transition-colors"
+          className="xl:hidden w-10 h-10 rounded-full hover:bg-surface flex items-center justify-center transition-colors"
           onClick={() => setMobileOpen((v) => !v)}
           aria-label={mobileOpen ? "Close" : "Menu"}
           aria-expanded={mobileOpen}
@@ -102,7 +103,7 @@ export function Header() {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="md:hidden overflow-hidden border-t border-border-light bg-white dark:bg-card"
+            className="xl:hidden overflow-hidden border-t border-border-light bg-white dark:bg-card"
           >
             <Container className="py-3">
               <div className="flex items-center justify-between pb-3 border-b border-border-light mb-1">

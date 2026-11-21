@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/Button';
 import { ProcessingProgress } from '@/components/tools/ProcessingProgress';
 import { CopyButton } from '@/components/ui/CopyButton';
 import { useToast } from '@/components/ui/Toast';
-import type { DownloadResult, DownloadFormat } from '@/types';
+import type { DownloadResult, DownloadFormat, DownloadRestriction } from '@/types';
 import { useSignInGuard } from '@/hooks/useSignInGuard';
 import { normalizeYouTubeVideoUrl } from '@/lib/youtube-url';
+import { PLATFORM_DISPLAY_NAMES, type Platform } from '@/config/tools';
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
@@ -30,9 +31,16 @@ async function downloadWithProgress(
   idempotencySuffix: string,
   onProgress: (pct: number | null, receivedBytes: number) => void,
 ): Promise<void> {
-  const operationId = new URL(url, window.location.origin).searchParams.get('operationId') ?? crypto.randomUUID();
+  const target = new URL(url, window.location.origin);
+  const sameOrigin = target.origin === window.location.origin;
+  const operationId = target.searchParams.get('operationId') ?? crypto.randomUUID();
   const safeSuffix = idempotencySuffix.replace(/[^A-Za-z0-9._:-]/g, '-').slice(0, 48);
-  const res = await fetch(url, { headers: { 'Idempotency-Key': `download:${operationId}:${safeSuffix}` } });
+  // Custom headers on a cross-origin request trigger a CORS preflight that
+  // image CDNs do not answer, which surfaced as "Failed to fetch" for direct
+  // thumbnail URLs. Only same-origin delivery needs the idempotency header.
+  const res = await fetch(url, sameOrigin
+    ? { headers: { 'Idempotency-Key': `download:${operationId}:${safeSuffix}` } }
+    : {});
   if (!res.ok) {
     const body = await res.json().catch(() => null);
     throw new Error(body?.error || 'Download failed.');
@@ -87,6 +95,8 @@ export type ClientTool = {
   name: string;
   placeholder: string;
   urlPattern: string;
+  downloadPermitted: boolean;
+  restriction?: DownloadRestriction;
 };
 
 export function DownloaderForm({ tool }: { tool: ClientTool }) {
@@ -104,6 +114,7 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
   const { success, error: errorToast, warning } = useToast();
   const callbackUrl = url.trim() ? `${pathname}?${new URLSearchParams({ url: url.trim() })}` : pathname;
   const { requireAuth, SignInModal, authLoading } = useSignInGuard(callbackUrl);
+  const errorId = `${tool.slug}-url-error`;
 
   const handleDownload = useCallback(async (f: DownloadFormat) => {
     if (downloadingRef.current) return;
@@ -151,7 +162,8 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
       }
       target = normalized.url;
     } else if (!new RegExp(tool.urlPattern, 'i').test(target)) {
-      setError(`That doesn't look like a valid ${tool.platform} URL.`);
+      const platformName = PLATFORM_DISPLAY_NAMES[tool.platform as Platform] ?? tool.platform;
+      setError(`That doesn't look like a valid ${platformName} URL.`);
       setState('error');
       return;
     }
@@ -184,7 +196,11 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
 
       setResult(data);
       setState('done');
-      success('Download ready', `${tool.name} media analyzed successfully.`);
+      if (data.downloadPermitted === false) {
+        warning('Preview ready', 'Download delivery is not available for this platform.');
+      } else {
+        success('Download ready', `${tool.name} media analyzed successfully.`);
+      }
     } catch {
       setError('Network error. Please try again.');
       setState('error');
@@ -206,17 +222,42 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
             placeholder={tool.placeholder}
             className="border-0 shadow-none focus:shadow-none focus:border-0 px-4 text-base"
             aria-label={`${tool.name} URL`}
+            aria-invalid={!!error}
+            aria-describedby={error ? errorId : undefined}
           />
           <Button size="lg" onClick={() => submit()} disabled={authLoading || state === 'loading'} className="shrink-0">
-            {state === 'loading' ? 'Fetching…' : <>Download <Download className="w-4 h-4" /></>}
+            {state === 'loading' ? 'Fetching…' : <>{tool.downloadPermitted ? 'Download' : 'Preview'} <Download className="w-4 h-4" /></>}
           </Button>
         </div>
       </div>
+
+      {!tool.downloadPermitted && tool.restriction && (
+        <div className="mt-4 flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm dark:border-amber-500/20 dark:bg-amber-500/10">
+          <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-700 dark:text-amber-400" />
+          <div className="min-w-0">
+            <p className="font-semibold text-amber-900 dark:text-amber-200">Preview only</p>
+            <p className="mt-1 leading-relaxed text-amber-800 dark:text-amber-300">{tool.restriction.message}</p>
+            {tool.restriction.alternatives?.map((alternative) => (
+              <a
+                key={alternative.href}
+                href={alternative.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 block font-medium text-amber-900 underline underline-offset-2 dark:text-amber-200"
+              >
+                {alternative.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         {error && state === 'error' && (
           <motion.div
             key="err"
+            id={errorId}
+            role="alert"
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
@@ -235,7 +276,11 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
             exit={{ opacity: 0 }}
             className="mt-6"
           >
-            <ProcessingProgress stage="Analyzing your link…" className="w-full" />
+            <ProcessingProgress
+              stage="Analyzing your link…"
+              detail="Checking the source and the formats it actually provides. Please keep this page open."
+              className="w-full"
+            />
           </motion.div>
         )}
 
@@ -269,6 +314,14 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
                 {result.author && (
                   <p className="mt-1 text-sm text-text-muted">by {result.author}</p>
                 )}
+                {result.downloadPermitted === false && (
+                  <p className="mt-2 text-sm font-medium text-amber-700 dark:text-amber-400">
+                    Preview only — no file is delivered for this platform.
+                  </p>
+                )}
+                {result.downloadPermitted !== false && result.formats.length === 0 && (
+                  <p className="mt-2 text-sm text-text-muted">No deliverable formats were found.</p>
+                )}
                 <div className="mt-4 flex flex-wrap gap-2">
                   {result.formats.map((f) => {
                     const key = f.label + f.quality;
@@ -288,7 +341,6 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
                       </button>
                     );
                   })}
-                  {downloadingKey && <ProcessingProgress stage={`Downloading ${tool.name}…`} percent={downloadPct} detail={downloadedBytes > 0 ? `${formatBytes(downloadedBytes)} received` : undefined} className="w-full" />}
                   {result.formats.length > 0 && (
                     <CopyButton
                       value={result.formats[0].url}
@@ -301,6 +353,15 @@ export function DownloaderForm({ tool }: { tool: ClientTool }) {
                 </div>
               </div>
             </div>
+            {downloadingKey && (
+              <ProcessingProgress
+                stage={downloadPct === 100 ? 'Finalizing your file…' : `Downloading ${tool.name}…`}
+                percent={downloadPct}
+                progressLabel={downloadPct === null ? undefined : 'Downloading'}
+                detail={downloadedBytes > 0 ? `${formatBytes(downloadedBytes)} received` : 'Preparing the file…'}
+                className="mt-4 w-full"
+              />
+            )}
           </motion.div>
         )}
       </AnimatePresence>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { authOptions } from '@/lib/auth';
-import { recordRejectedOperation, recordToolOperation, requireCredits, requestIdempotencyKey } from '@/lib/credits';
+import { recordRejectedOperation, recordToolOperation, requireAuth, requireCredits, requestIdempotencyKey } from '@/lib/credits';
 import { getBillingSummary } from '@/lib/billing';
 import { prisma } from '@/lib/prisma';
 import { getImageProvider, ImageProviderError } from '@/lib/ai-image/provider';
@@ -66,6 +66,10 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const config = await getAiImageConfig();
   const requestKey = requestIdempotencyKey(request);
+
+  /* ── Auth first: no payload parsing before the session is verified (D8) ── */
+  const auth = await requireAuth();
+  if (!auth.ok) return auth.response;
 
   const inputSchema = z.object({
     tool: z.enum(['ai-image-generator', 'ai-thumbnail-generator']).default('ai-image-generator'),

@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { getUserActivity } from '@/lib/workspace/activity';
+import { getToolStatuses } from '@/lib/toolStatuses';
 import { getBillingSummary } from '@/lib/billing';
 import { UniversalInput } from '@/components/workspace/UniversalInput';
 import { ToolCategoryCard } from '@/components/workspace/ToolCategoryCard';
@@ -34,9 +35,10 @@ export default async function WorkspaceHomePage() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect('/login?callbackUrl=/workspace');
 
-  const [allActivity, billing] = await Promise.all([
+  const [allActivity, billing, toolStatuses] = await Promise.all([
     getUserActivity(session.user.id, 200),
     getBillingSummary(session.user.id),
+    getToolStatuses(),
   ]);
   const firstName = session.user.name?.split(' ')[0];
   const activity = allActivity.slice(0, 5);
@@ -119,7 +121,7 @@ export default async function WorkspaceHomePage() {
         <SectionHeader title="Popular Tools" />
         <WorkspaceCardGrid>
           {POPULAR_TOOLS.map((tool) => (
-            <ToolCard key={tool.slug} tool={tool} />
+            <ToolCard key={tool.slug} tool={tool} toolStatuses={toolStatuses} />
           ))}
         </WorkspaceCardGrid>
       </div>

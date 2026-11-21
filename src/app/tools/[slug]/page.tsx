@@ -6,6 +6,7 @@ import { resolveToolPage } from '@/components/tools/resolveToolPage';
 import { buildMetadata } from '@/lib/seo';
 import { prisma } from '@/lib/prisma';
 import { getToolGuide } from '@/config/toolGuides';
+import { getToolPolicy } from '@/lib/downloaderPolicy';
 
 // This route used generateStaticParams() + dynamicParams = false to try to
 // prerender every tool page at build time, but it only ever returned
@@ -42,9 +43,13 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     const badge = STATUS_BADGE[status];
     const baseTitle = guide ? `${tool.name} Online` : tool.seoTitle ?? tool.name;
     const title = badge ? `${baseTitle} ${badge}` : baseTitle;
+    const policy = getToolPolicy(tool.slug);
+    const description = policy.downloadPermitted
+      ? (guide?.description ?? tool.description)
+      : (policy.restriction?.message ?? guide?.description ?? tool.description);
     return buildMetadata({
       title,
-      description: guide?.description ?? tool.description,
+      description,
       path: `/tools/${tool.slug}`,
       keywords: tool.keywords,
     });

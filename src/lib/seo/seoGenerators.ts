@@ -87,9 +87,11 @@ export function generateYoutubeTags(title: string): string[] {
     tags.add(`${words[i]} ${words[i + 1]}`);
   }
 
-  // Title + modifier combos
+  // Title + modifier combos (skip modifiers the base already ends with, so
+  // "…tutorial" never produces "…tutorial tutorial")
   const base = words.filter(w => !stopwords.has(w)).slice(0, 4).join(' ');
   for (const mod of YOUTUBE_MODIFIERS) {
+    if (base.endsWith(mod)) continue;
     tags.add(`${base} ${mod}`);
   }
 

@@ -5,10 +5,7 @@
  * binaries installed on the developer's machine. Production (Vercel) has no
  * such local install, so when those env vars are absent this falls back to
  * binaries bundled with the deployment itself:
- *   - yt-dlp: the official static Linux binary, committed under bin/
- *     (curl_cffi — needed for TikTok's --impersonate bypass — is bundled
- *     into yt-dlp's own official Linux build, confirmed via their release
- *     requirements file, so this covers impersonation too).
+ *   - yt-dlp: the official static Linux binary, committed under bin/.
  *   - ffmpeg: the `ffmpeg-static` npm package, which downloads the correct
  *     binary for whatever platform runs `npm install` (Linux x64 on
  *     Vercel's build, matching what actually deploys).

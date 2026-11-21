@@ -20,8 +20,9 @@ import {
   CornerDownLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { catalog, isToolAvailable, groupSlug, type CatalogTool } from '@/config/catalog';
+import { catalog, groupSlug, type CatalogTool } from '@/config/catalog';
 import { OPEN_SUPPORT_EVENT } from '@/components/support/SupportChat';
+import { useToolStatuses } from '@/components/tools/ToolStatusProvider';
 
 type ResultItem = {
   id: string;
@@ -65,7 +66,7 @@ function toolToResult(tool: CatalogTool): ResultItem {
   };
 }
 
-const availableTools = catalog.filter((t) => isToolAvailable(t.slug)).map(toolToResult);
+
 
 interface Props {
   open: boolean;
@@ -77,6 +78,13 @@ export function CommandBar({ open, onClose }: Props) {
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const { isLive } = useToolStatuses();
+
+  const liveToolResults = useMemo(
+    () => catalog.filter((t) => isLive(t.slug)).map(toolToResult),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   useEffect(() => {
     if (open) {
@@ -89,14 +97,14 @@ export function CommandBar({ open, onClose }: Props) {
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const pool = [...STATIC_ITEMS, ...availableTools];
-    if (!q) return STATIC_ITEMS.concat(availableTools.slice(0, 6));
+    const pool = [...STATIC_ITEMS, ...liveToolResults];
+    if (!q) return STATIC_ITEMS.concat(liveToolResults.slice(0, 6));
     return pool.filter(
       (item) =>
         item.label.toLowerCase().includes(q) ||
         item.sublabel?.toLowerCase().includes(q),
     );
-  }, [query]);
+  }, [query, liveToolResults]);
 
   const grouped = useMemo(() => {
     const groups: Record<string, ResultItem[]> = {};

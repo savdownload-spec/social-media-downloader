@@ -66,7 +66,7 @@ export function ToolStatusOverlay({ status, toolName, tool }: ToolStatusOverlayP
               )}
               <p className="mt-3 text-sm text-text-subtle">
                 We&rsquo;re putting the finishing touches on this tool. Check back soon — it will be
-                free to use, with no signup required.
+                free to use with your daily credits.
               </p>
               <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Link
