@@ -117,7 +117,10 @@ export function AdminBackupClient() {
   useEffect(() => { void loadHistory(); void loadStatus(); }, [loadHistory, loadStatus]);
 
   const selectedSummary = useMemo(() => BACKUP_CATEGORIES.filter((item) => selected.includes(item.id)).map((item) => item.label).join(', '), [selected]);
-  const latestAuto = useMemo(() => history.find((item) => item.type === 'automatic'), [history]);
+  const latestAuto = useMemo(
+    () => autoStatus?.latestAutomaticBackup ?? history.find((item) => item.type === 'automatic') ?? null,
+    [autoStatus, history],
+  );
   const latestScheduledRun = autoStatus ? (autoStatus.runs.find((run) => run.trigger !== 'admin') ?? autoStatus.runs[0] ?? null) : null;
   const autoHeadline = !autoStatus ? 'Checking automatic backup…'
     : autoStatus.scheduler.status === 'configuration_error' ? 'Automatic backup is misconfigured'
