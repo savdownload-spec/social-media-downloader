@@ -49,6 +49,16 @@ export type AccountDTO = {
   createdAt: string;
 };
 
+export type ProviderDTO = {
+  platform: string;
+  mode: 'oauth' | 'credentials' | 'approval';
+  env: string[];
+  callbackPath?: string;
+  label: string;
+  instructions: string[];
+  configured: boolean;
+};
+
 export type Stats = {
   counts: Record<string, number>;
   publishedRecent: number;

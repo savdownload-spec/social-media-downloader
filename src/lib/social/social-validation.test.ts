@@ -26,11 +26,9 @@ function errors(
 }
 
 describe('platform validation', () => {
-  it('enforces X 280 characters including a 23-character link allowance', () => {
-    const base = { caption: 'a'.repeat(280), media: [] };
-    expect(errors('X', base)).toHaveLength(0);
-    const withLink = { ...base, linkUrl: 'https://getsavdown.com/blog/a-very-long-slug' };
-    expect(errors('X', withLink).some((issue) => /280/.test(issue.message))).toBe(true);
+  it('enforces the Bluesky 300 character limit', () => {
+    expect(errors('BLUESKY', { caption: 'a'.repeat(300), media: [] })).toHaveLength(0);
+    expect(errors('BLUESKY', { caption: 'a'.repeat(301), media: [] }).some((issue) => /300/.test(issue.message))).toBe(true);
   });
 
   it('requires media for Instagram and rejects non-JPEG images', () => {
@@ -39,11 +37,13 @@ describe('platform validation', () => {
     expect(errors('INSTAGRAM', { caption: 'hello', media: [image('image/jpeg')] })).toHaveLength(0);
   });
 
-  it('requires a video and a title for YouTube', () => {
-    const result = errors('YOUTUBE', { caption: 'desc', media: [] });
-    expect(result.some((issue) => /image or video/.test(issue.message))).toBe(true);
-    expect(result.some((issue) => /title/i.test(issue.message))).toBe(true);
-    expect(errors('YOUTUBE', { caption: 'desc', title: 'Video title', media: [video()] })).toHaveLength(0);
+  it('accepts a video for Instagram Reels', () => {
+    expect(errors('INSTAGRAM', { caption: 'hello', media: [video()] })).toHaveLength(0);
+  });
+
+  it('requires a title for Pinterest', () => {
+    expect(errors('PINTEREST', { caption: 'pin', media: [image()] }).some((issue) => /title/i.test(issue.message))).toBe(true);
+    expect(errors('PINTEREST', { caption: 'pin', title: 'Pin title', media: [image()] })).toHaveLength(0);
   });
 
   it('requires a Pinterest board only once an account is connected', () => {
@@ -53,10 +53,10 @@ describe('platform validation', () => {
     expect(errors('PINTEREST', post, { accountConnected: true, optionValues: { board: 'Tools' } })).toHaveLength(0);
   });
 
-  it('warns (does not block) that manual-only platforms will not auto-publish', () => {
-    const result = validateVariant({ caption: 'hello', media: [] }, { platform: 'MEDIUM' }, { accountConnected: false });
+  it('warns (does not block) when an automation platform has no connected account', () => {
+    const result = validateVariant({ caption: 'hello', media: [] }, { platform: 'BLUESKY' }, { accountConnected: false });
     expect(result.blocking).toBe(false);
-    expect(result.issues.some((issue) => /Manual publishing only/.test(issue.message))).toBe(true);
+    expect(result.issues.some((issue) => /No Bluesky account connected/.test(issue.message))).toBe(true);
   });
 
   it('rejects malformed destination links', () => {

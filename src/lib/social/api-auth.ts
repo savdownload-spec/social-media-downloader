@@ -38,6 +38,37 @@ function sameOrigin(request: Request): boolean {
   }
 }
 
+async function loadActor(): Promise<SocialActor | null> {
+  const session = await getServerSession(authOptions);
+  const userId = (session?.user as { id?: string } | undefined)?.id;
+  if (!userId) return null;
+
+  const [user, membership] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, name: true, role: true },
+    }),
+    prisma.socialMember.findUnique({ where: { userId }, select: { role: true } }),
+  ]);
+  if (!user) return null;
+
+  const role: SocialRole | null =
+    user.role === 'ADMIN'
+      ? 'SUPER_ADMIN'
+      : membership && isSocialRole(membership.role)
+        ? membership.role
+        : null;
+
+  if (!role) return null;
+  return { id: user.id, email: user.email ?? 'admin', name: user.name, role };
+}
+
+/** Session-only actor resolution (no capability or rate-limit gate). */
+export async function resolveSocialActor(request: Request): Promise<SocialActor | null> {
+  if (!sameOrigin(request)) return null;
+  return loadActor();
+}
+
 /**
  * Server-side gate for every Social Media Manager API. The DB role is re-read
  * on each call (never trusted from the JWT) and module membership is resolved
@@ -49,31 +80,14 @@ export async function requireSocialApi(
 ): Promise<{ ok: true; actor: SocialActor } | { ok: false; response: NextResponse }> {
   if (!sameOrigin(request)) return reject(403, 'Invalid request origin.');
 
-  const session = await getServerSession(authOptions);
-  const userId = (session?.user as { id?: string } | undefined)?.id;
-  if (!userId) return reject(401, 'Sign in required.');
+  const actor = await loadActor();
+  if (!actor) return reject(403, 'Forbidden');
 
-  const [user, membership] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true, email: true, name: true, role: true },
-    }),
-    prisma.socialMember.findUnique({ where: { userId }, select: { role: true } }),
-  ]);
-  if (!user) return reject(403, 'Forbidden');
-
-  const role: SocialRole | null =
-    user.role === 'ADMIN'
-      ? 'SUPER_ADMIN'
-      : membership && isSocialRole(membership.role)
-        ? membership.role
-        : null;
-
-  if (!role || !roleCan(role, capability)) {
-    return reject(403, role ? 'Your social role does not allow this action.' : 'Forbidden');
+  if (!roleCan(actor.role, capability)) {
+    return reject(403, 'Your social role does not allow this action.');
   }
 
-  const limit = await ratelimit(`social:${capability}:${userId}:${getClientId(request)}`, {
+  const limit = await ratelimit(`social:${capability}:${actor.id}:${getClientId(request)}`, {
     limit: 120,
     windowSeconds: 60,
   });
@@ -83,10 +97,7 @@ export async function requireSocialApi(
     });
   }
 
-  return {
-    ok: true,
-    actor: { id: user.id, email: user.email ?? 'admin', name: user.name, role },
-  };
+  return { ok: true, actor };
 }
 
 export function socialError(message: string, status = 400) {

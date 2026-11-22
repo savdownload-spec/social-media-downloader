@@ -354,7 +354,7 @@ export function SocialSettings() {
       </div>
 
       <p className="mt-4 text-[11px] text-text-muted flex items-center gap-1.5">
-        <RefreshCw className="w-3 h-3" /> Phase 1: manual publishing everywhere, scheduled queue active, OAuth integrations next.
+        <RefreshCw className="w-3 h-3" /> Facebook, Instagram, LinkedIn, Pinterest, Bluesky and Mastodon publish through their official APIs. Manual publishing stays available for every platform.
       </p>
     </AdminPage>
   );

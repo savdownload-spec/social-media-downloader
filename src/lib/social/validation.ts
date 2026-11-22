@@ -30,7 +30,6 @@ export type VariantContext = {
   accountConnected: boolean;
   optionValues?: {
     board?: string | null;
-    subreddit?: string | null;
     visibility?: string | null;
   };
 };
@@ -57,12 +56,12 @@ export function composeFullText(caption: string, hashtags?: string | null, linkU
   return parts.filter(Boolean).join('\n\n');
 }
 
-/** X counts every URL as 23 characters (t.co wrapping). */
-export function effectiveLength(platform: PlatformId, text: string, linkUrl?: string | null): number {
-  if (platform === 'X' && linkUrl && URL_PATTERN.test(linkUrl)) {
-    const withoutLink = text.replace(linkUrl, '').trimEnd();
-    return withoutLink.length + (withoutLink ? 1 : 0) + 23;
-  }
+/**
+ * Character count used for limits. Kept as a function per platform because
+ * providers count URLs differently; none of the connected platforms rewrap
+ * links yet, so this is the raw length.
+ */
+export function effectiveLength(_platform: PlatformId, text: string, _linkUrl?: string | null): number {
   return text.length;
 }
 
@@ -187,15 +186,6 @@ export function validateVariant(
         : 'A Pinterest board is required at publish time; manual export is available now.',
     });
   }
-  if (def.accountOptions?.includes('subreddit') && !optionValues.subreddit) {
-    issues.push({
-      level: context.accountConnected ? 'error' : 'warning',
-      message: context.accountConnected
-        ? 'Choose a subreddit.'
-        : 'A subreddit is required for automated publishing; manual posting is available now.',
-    });
-  }
-
   if (def.autoPublish && def.automatedPhase !== null && !context.accountConnected) {
     issues.push({
       level: 'warning',

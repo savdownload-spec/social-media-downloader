@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireSocialApi, socialError, SOCIAL_NO_STORE_HEADERS } from '@/lib/social/api-auth';
-import { PLATFORMS } from '@/lib/social/platforms';
+import { revokeAccount } from '@/lib/social/connect';
+import { PLATFORMS, PLATFORM_IDS } from '@/lib/social/platforms';
+import { PROVIDER_SETUP, isProviderConfigured } from '@/lib/social/providers';
+import { oauthBaseUrl } from '@/lib/social/oauth/state';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -31,18 +34,31 @@ export async function GET(request: NextRequest) {
     },
   });
 
+  const expiringSoon = Date.now() + 7 * 24 * 60 * 60 * 1000;
   return NextResponse.json(
     {
       ok: true,
       data: {
         accounts: accounts.map((account) => ({
           ...account,
+          status:
+            account.status === 'CONNECTED' &&
+            account.tokenExpiresAt &&
+            account.tokenExpiresAt.getTime() <= expiringSoon
+              ? 'EXPIRING'
+              : account.status,
           tokenExpiresAt: account.tokenExpiresAt?.toISOString() ?? null,
           lastConnectedAt: account.lastConnectedAt?.toISOString() ?? null,
           lastPublishedAt: account.lastPublishedAt?.toISOString() ?? null,
           createdAt: account.createdAt.toISOString(),
         })),
         platforms: PLATFORMS,
+        providers: PLATFORM_IDS.map((platform) => ({
+          platform,
+          ...PROVIDER_SETUP[platform],
+          configured: isProviderConfigured(platform),
+        })),
+        callbackOrigin: oauthBaseUrl(request.url),
       },
     },
     { headers: SOCIAL_NO_STORE_HEADERS },
@@ -58,12 +74,18 @@ export async function DELETE(request: NextRequest) {
 
   const account = await prisma.socialAccount.findUnique({
     where: { id },
-    select: { id: true, platform: true, accountName: true },
+    select: {
+      id: true,
+      platform: true,
+      accountName: true,
+      accessToken: true,
+      refreshToken: true,
+      metadata: true,
+    },
   });
   if (!account) return socialError('Account not found.', 404);
 
-  // Phase 1 stores no tokens yet; Phase 2 adds provider revocation here before
-  // the row (and its ciphertext) is removed.
+  await revokeAccount(account);
   await prisma.socialAccount.delete({ where: { id } });
   await prisma.auditLog.create({
     data: {

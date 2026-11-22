@@ -796,7 +796,7 @@ model UserExportJob {
 /// ciphertext (`v1:iv:tag:ct`) and must never be exposed to the browser.
 model SocialAccount {
   id                String    @id @default(cuid())
-  platform          String // FACEBOOK | INSTAGRAM | LINKEDIN | LINKEDIN_PAGE | PINTEREST | X | YOUTUBE | REDDIT | MEDIUM | QUORA | BLUESKY | MASTODON
+  platform          String // FACEBOOK | INSTAGRAM | LINKEDIN | PINTEREST | BLUESKY | MASTODON
   externalAccountId String
   accountName       String
   username          String?

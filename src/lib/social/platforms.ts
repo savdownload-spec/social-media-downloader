@@ -12,13 +12,7 @@ export const PLATFORM_IDS = [
   'FACEBOOK',
   'INSTAGRAM',
   'LINKEDIN',
-  'LINKEDIN_PAGE',
   'PINTEREST',
-  'X',
-  'YOUTUBE',
-  'REDDIT',
-  'MEDIUM',
-  'QUORA',
   'BLUESKY',
   'MASTODON',
 ] as const;
@@ -53,7 +47,7 @@ export type PlatformDefinition = {
   titleRequired?: boolean;
   titleLimit?: number;
   /** Options that must be supplied from a connected account before publishing. */
-  accountOptions?: ('board' | 'subreddit' | 'visibility')[];
+  accountOptions?: ('board' | 'visibility')[];
   media: MediaRule;
   connection: 'oauth' | 'manual' | 'app-password';
   /** Shown in the accounts page so limitations are explicit. */
@@ -131,27 +125,6 @@ const DEFINITIONS: Record<PlatformId, PlatformDefinition> = {
     providerNotes: 'Self-serve "Share on LinkedIn" access. Access tokens last about 60 days, then reconnect.',
     manualComposerUrl: 'https://www.linkedin.com/feed/?shareActive=true',
   },
-  LINKEDIN_PAGE: {
-    id: 'LINKEDIN_PAGE',
-    label: 'LinkedIn (Company Page)',
-    short: 'Company Page',
-    group: 'Professional',
-    color: '#004182',
-    mark: 'in',
-    autoPublish: true,
-    manualFallback: true,
-    automatedPhase: 3,
-    accountType: 'Company Page (admin)',
-    captionLimit: 3000,
-    media: {
-      images: { min: 0, max: 20, mimeTypes: COMMON_IMAGES },
-      video: VIDEO_200MB,
-      requiresMedia: false,
-    },
-    connection: 'oauth',
-    providerNotes: 'Requires LinkedIn Community Management API approval before publishing is enabled.',
-    manualComposerUrl: 'https://www.linkedin.com/feed/?shareActive=true',
-  },
   PINTEREST: {
     id: 'PINTEREST',
     label: 'Pinterest',
@@ -161,7 +134,7 @@ const DEFINITIONS: Record<PlatformId, PlatformDefinition> = {
     mark: 'P',
     autoPublish: true,
     manualFallback: true,
-    automatedPhase: 3,
+    automatedPhase: 2,
     accountType: 'Business account',
     captionLimit: 800,
     titleRequired: true,
@@ -173,121 +146,8 @@ const DEFINITIONS: Record<PlatformId, PlatformDefinition> = {
       requiresMedia: true,
     },
     connection: 'oauth',
-    providerNotes: 'A destination board is required. Standard access review is needed for public Pins.',
+    providerNotes: 'Free API. A board is required; public Pins need Pinterest Standard access approval.',
     manualComposerUrl: 'https://www.pinterest.com/',
-  },
-  X: {
-    id: 'X',
-    label: 'X (Twitter)',
-    short: 'X',
-    group: 'Community',
-    color: '#111827',
-    mark: 'X',
-    autoPublish: false,
-    manualFallback: true,
-    automatedPhase: null,
-    accountType: 'Account',
-    captionLimit: 280,
-    media: {
-      images: { min: 0, max: 4, mimeTypes: COMMON_IMAGES },
-      video: VIDEO_200MB,
-      requiresMedia: false,
-    },
-    connection: 'manual',
-    providerNotes:
-      'The free posting API was closed to new developers. Publishing stays manual unless you approve paid access.',
-    manualComposerUrl: 'https://twitter.com/intent/tweet',
-  },
-  YOUTUBE: {
-    id: 'YOUTUBE',
-    label: 'YouTube',
-    short: 'YouTube',
-    group: 'Video',
-    color: '#FF0000',
-    mark: '▶',
-    autoPublish: true,
-    manualFallback: true,
-    automatedPhase: 3,
-    accountType: 'Channel',
-    captionLimit: 5000,
-    titleRequired: true,
-    titleLimit: 100,
-    accountOptions: ['visibility'],
-    media: {
-      images: { min: 0, max: 0, mimeTypes: [] },
-      video: VIDEO_200MB,
-      requiresMedia: true,
-    },
-    connection: 'oauth',
-    providerNotes: 'Video is required. Uploads use the Data API quota and OAuth verification for non-test users.',
-    manualComposerUrl: 'https://studio.youtube.com/',
-  },
-  REDDIT: {
-    id: 'REDDIT',
-    label: 'Reddit',
-    short: 'Reddit',
-    group: 'Community',
-    color: '#FF4500',
-    mark: 'r',
-    autoPublish: false,
-    manualFallback: true,
-    automatedPhase: null,
-    accountType: 'Account',
-    captionLimit: 40000,
-    titleRequired: true,
-    titleLimit: 300,
-    accountOptions: ['subreddit'],
-    media: {
-      images: { min: 0, max: 1, mimeTypes: COMMON_IMAGES },
-      video: VIDEO_200MB,
-      requiresMedia: false,
-    },
-    connection: 'manual',
-    providerNotes:
-      'The free Data API is limited to approved non-commercial use. A commercial site needs Reddit’s agreement.',
-    manualComposerUrl: 'https://www.reddit.com/submit',
-  },
-  MEDIUM: {
-    id: 'MEDIUM',
-    label: 'Medium',
-    short: 'Medium',
-    group: 'Open web',
-    color: '#111827',
-    mark: 'M',
-    autoPublish: false,
-    manualFallback: true,
-    automatedPhase: null,
-    accountType: 'Account',
-    captionLimit: 100000,
-    media: {
-      images: { min: 0, max: 0, mimeTypes: [] },
-      video: null,
-      requiresMedia: false,
-    },
-    connection: 'manual',
-    providerNotes: 'Medium issues no new API integrations. Articles are prepared with Markdown export.',
-    manualComposerUrl: 'https://medium.com/new-story',
-  },
-  QUORA: {
-    id: 'QUORA',
-    label: 'Quora',
-    short: 'Quora',
-    group: 'Open web',
-    color: '#B92B27',
-    mark: 'Q',
-    autoPublish: false,
-    manualFallback: true,
-    automatedPhase: null,
-    accountType: 'Account',
-    captionLimit: 100000,
-    media: {
-      images: { min: 0, max: 0, mimeTypes: [] },
-      video: null,
-      requiresMedia: false,
-    },
-    connection: 'manual',
-    providerNotes: 'No public publishing API. Answers are drafted, copied, and confirmed manually.',
-    manualComposerUrl: 'https://www.quora.com/',
   },
   BLUESKY: {
     id: 'BLUESKY',
@@ -327,8 +187,8 @@ const DEFINITIONS: Record<PlatformId, PlatformDefinition> = {
       video: VIDEO_200MB,
       requiresMedia: false,
     },
-    connection: 'oauth',
-    providerNotes: 'Free OAuth per instance. Character limit depends on the instance (500 default).',
+    connection: 'app-password',
+    providerNotes: 'Free API per instance. Create an access token with write scope in your instance preferences.',
     manualComposerUrl: 'https://mastodon.social/',
   },
 };
@@ -343,9 +203,9 @@ export function isPlatformId(value: string): value is PlatformId {
   return (PLATFORM_IDS as readonly string[]).includes(value);
 }
 
-/** Platforms whose automation is enabled in the current phase (1). */
+/** Platforms whose automation is available in this build (phases 1–2). */
 export function platformsAutomatedNow(): PlatformDefinition[] {
-  return PLATFORMS.filter((p) => p.automatedPhase !== null && p.automatedPhase <= 1);
+  return PLATFORMS.filter((p) => p.automatedPhase !== null && p.automatedPhase <= 2);
 }
 
 export function manualComposerHref(
@@ -353,22 +213,5 @@ export function manualComposerHref(
   input: { text: string; title?: string | null; url?: string | null },
 ): string {
   const def = DEFINITIONS[platform];
-  const base = def.manualComposerUrl ?? 'https://www.google.com/';
-  try {
-    if (platform === 'X') {
-      const params = new URLSearchParams({ text: input.text.slice(0, 280) });
-      return `${base}?${params.toString()}`;
-    }
-    if (platform === 'REDDIT') {
-      const params = new URLSearchParams({
-        title: (input.title ?? input.text.split('\n')[0] ?? '').slice(0, 300),
-        text: input.text,
-      });
-      if (input.url) params.set('url', input.url);
-      return `${base}?${params.toString()}`;
-    }
-  } catch {
-    return base;
-  }
-  return base;
+  return def.manualComposerUrl ?? 'https://www.google.com/';
 }

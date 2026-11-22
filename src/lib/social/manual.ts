@@ -44,11 +44,8 @@ export function buildManualChecklist(platform: PlatformId): string[] {
     'Publish in the platform and copy the public post URL.',
     'Return here and confirm the URL — only then is the post marked published.',
   ];
-  if (def?.id === 'REDDIT') {
-    steps.splice(2, 0, 'Confirm the subreddit rules and flair requirements before posting.');
-  }
-  if (def?.id === 'QUORA') {
-    steps.splice(2, 0, 'Open the specific question you are answering, not the generic composer.');
+  if (def?.id === 'INSTAGRAM') {
+    steps.splice(2, 0, 'Instagram requires an image or video; download it from the media library first.');
   }
   return steps;
 }

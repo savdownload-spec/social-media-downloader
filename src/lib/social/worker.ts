@@ -86,9 +86,9 @@ async function runVariant(context: PublishContext): Promise<PublishOutcome> {
   }
   if (def.autoPublish) {
     return {
-      outcome: 'FAILED',
-      code: 'ADAPTER_UNAVAILABLE',
-      message: `Automated ${def.short} publishing is not enabled yet. Use the manual workflow.`,
+      outcome: 'NEEDS_AUTH',
+      code: 'APPROVAL_REQUIRED',
+      message: `${def.short} publishing needs provider approval or setup that is not enabled yet. Use the manual workflow.`,
     };
   }
   return {

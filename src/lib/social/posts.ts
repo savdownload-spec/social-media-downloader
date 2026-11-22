@@ -90,7 +90,6 @@ async function buildContexts(
       accountConnected: accountMap.has(variant.platform),
       optionValues: {
         board: typeof options.board === 'string' ? options.board : null,
-        subreddit: typeof options.subreddit === 'string' ? options.subreddit : null,
         visibility: typeof options.visibility === 'string' ? options.visibility : null,
       },
     };

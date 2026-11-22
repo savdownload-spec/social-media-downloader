@@ -1,5 +1,11 @@
 import type { SocialAccount, SocialMediaAsset, SocialPost, SocialPostVariant } from '@prisma/client';
 import type { PlatformId } from '../platforms';
+import { facebookAdapter } from './facebook';
+import { instagramAdapter } from './instagram';
+import { linkedinAdapter } from './linkedin';
+import { pinterestAdapter } from './pinterest';
+import { blueskyAdapter } from './bluesky';
+import { mastodonAdapter } from './mastodon';
 
 export type PublishAsset = Pick<SocialMediaAsset, 'id' | 'url' | 'kind' | 'mimeType' | 'altText'>;
 
@@ -17,12 +23,20 @@ export type PublishOutcome =
 export type PlatformAdapter = (context: PublishContext) => Promise<PublishOutcome>;
 
 /**
- * Real integrations register here in Phase 2 (Meta, LinkedIn, Bluesky,
- * Mastodon). An absent adapter is handled honestly by the worker: manual
- * platforms become MANUAL_ACTION_REQUIRED, automation targets become
- * NEEDS_AUTHORIZATION — never a fabricated success.
+ * Real integrations register here. Facebook Pages, Instagram, LinkedIn member
+ * profiles, Pinterest, Bluesky and Mastodon publish through their official
+ * APIs. Platforms without an adapter are handled honestly by the worker:
+ * manual platforms become MANUAL_ACTION_REQUIRED, automation targets without
+ * an integration become NEEDS_AUTHORIZATION — never a fabricated success.
  */
-export const adapters: Partial<Record<PlatformId, PlatformAdapter>> = {};
+export const adapters: Partial<Record<PlatformId, PlatformAdapter>> = {
+  FACEBOOK: facebookAdapter,
+  INSTAGRAM: instagramAdapter,
+  LINKEDIN: linkedinAdapter,
+  PINTEREST: pinterestAdapter,
+  BLUESKY: blueskyAdapter,
+  MASTODON: mastodonAdapter,
+};
 
 export function hasAdapter(platform: string): boolean {
   return Boolean(adapters[platform as PlatformId]);

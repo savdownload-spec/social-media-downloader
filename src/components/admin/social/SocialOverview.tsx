@@ -212,7 +212,7 @@ export function SocialOverview() {
               <Share2 className="w-3.5 h-3.5" /> Manage accounts
             </Link>
             <div className="mt-4 rounded-lg bg-surface/70 p-3 text-[11px] text-text-muted leading-relaxed">
-              Phase 1 supports the full manual workflow. Meta, LinkedIn, Bluesky and Mastodon OAuth arrive in Phase 2.
+              Connect a free API account on the Social Accounts page to publish automatically. Platforms without a connection use the manual workflow.
             </div>
           </div>
         </SectionCard>

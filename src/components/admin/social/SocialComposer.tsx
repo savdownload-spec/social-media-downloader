@@ -173,6 +173,17 @@ export function SocialComposer() {
     () => new Set(accounts.filter((account) => account.status === 'CONNECTED' || account.status === 'EXPIRING').map((account) => account.platform)),
     [accounts],
   );
+
+  const pinterestBoards = useMemo(() => {
+    const account = accounts.find(
+      (entry) => entry.platform === 'PINTEREST' && (entry.status === 'CONNECTED' || entry.status === 'EXPIRING'),
+    );
+    const boards = (account?.metadata as { boards?: unknown } | null)?.boards;
+    if (!Array.isArray(boards)) return [] as Array<{ id: string; name: string }>;
+    return boards
+      .filter((board): board is { id: string; name: string } => Boolean(board) && typeof board === 'object')
+      .map((board) => ({ id: String(board.id), name: String((board as { name?: unknown }).name ?? board.id) }));
+  }, [accounts]);
   const selectedAssets = useMemo(
     () => selectedMedia.map((id) => media.find((asset) => asset.id === id)).filter((asset): asset is MediaAsset => Boolean(asset)),
     [selectedMedia, media],
@@ -399,7 +410,7 @@ export function SocialComposer() {
           <SectionCard title="Content" subtitle="Master copy used by platforms that inherit it">
             <div className="p-5 space-y-4">
               <label className="block">
-                <span className="text-[12px] font-semibold text-text">Title <span className="text-text-subtle font-normal">(optional — required by YouTube, Pinterest, Reddit)</span></span>
+                <span className="text-[12px] font-semibold text-text">Title <span className="text-text-subtle font-normal">(optional — required by Pinterest)</span></span>
                 <input value={title} onChange={(event) => setTitle(event.target.value)} disabled={editingLocked} className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/30" />
               </label>
               <label className="block">
@@ -459,7 +470,7 @@ export function SocialComposer() {
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
                 {bootstrap.platforms.map((platform) => {
                   const selected = platforms.includes(platform.id);
-                  const phase = !platform.autoPublish ? 'Manual' : platform.automatedPhase === 2 ? 'Phase 2' : platform.automatedPhase === 3 ? 'Phase 3' : 'Auto';
+                  const phase = !platform.autoPublish ? 'Manual' : platform.automatedPhase === 3 ? 'Approval' : 'Live API';
                   return (
                     <button
                       key={platform.id}
@@ -550,13 +561,14 @@ export function SocialComposer() {
                           {activeDef.accountOptions?.includes('board') && (
                             <label className="block">
                               <span className="text-[11px] font-semibold text-text-muted">Pinterest board</span>
-                              <input value={activeVariant.board} onChange={(event) => updateVariant({ board: event.target.value })} disabled={editingLocked} placeholder="Board name or id" className="mt-1 w-full rounded-lg border border-border px-3 py-1.5 text-[12px]" />
-                            </label>
-                          )}
-                          {activeDef.accountOptions?.includes('subreddit') && (
-                            <label className="block">
-                              <span className="text-[11px] font-semibold text-text-muted">Subreddit</span>
-                              <input value={activeVariant.subreddit} onChange={(event) => updateVariant({ subreddit: event.target.value })} disabled={editingLocked} placeholder="r/example" className="mt-1 w-full rounded-lg border border-border px-3 py-1.5 text-[12px]" />
+                              {pinterestBoards.length > 0 ? (
+                                <select value={activeVariant.board} onChange={(event) => updateVariant({ board: event.target.value })} disabled={editingLocked} className="mt-1 w-full rounded-lg border border-border px-3 py-1.5 text-[12px] bg-white">
+                                  <option value="">Select a board</option>
+                                  {pinterestBoards.map((board) => <option key={board.id} value={board.id}>{board.name}</option>)}
+                                </select>
+                              ) : (
+                                <input value={activeVariant.board} onChange={(event) => updateVariant({ board: event.target.value })} disabled={editingLocked} placeholder="Board name or id" className="mt-1 w-full rounded-lg border border-border px-3 py-1.5 text-[12px]" />
+                              )}
                             </label>
                           )}
                           {activeDef.accountOptions?.includes('visibility') && (
