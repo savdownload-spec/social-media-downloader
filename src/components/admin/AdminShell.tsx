@@ -7,6 +7,8 @@ import { AdminHeader } from './AdminHeader';
 
 interface Props {
   children: React.ReactNode;
+  isAdmin?: boolean;
+  socialRole?: 'SUPER_ADMIN' | 'PUBLISHER' | 'EDITOR' | null;
 }
 
 export type AdminBadges = {
@@ -16,6 +18,7 @@ export type AdminBadges = {
   affiliatesUnread: number;
   paymentsUnread: number;
   subscriptionsUnread: number;
+  contactsUnread: number;
   total: number;
   notifications: AdminNotificationItem[];
 };
@@ -31,11 +34,11 @@ export type AdminNotificationItem = {
   createdAt: string;
 };
 
-const EMPTY_BADGES: AdminBadges = { supportUnread: 0, commentsUnread: 0, reviewsUnread: 0, affiliatesUnread: 0, paymentsUnread: 0, subscriptionsUnread: 0, total: 0, notifications: [] };
+const EMPTY_BADGES: AdminBadges = { supportUnread: 0, commentsUnread: 0, reviewsUnread: 0, affiliatesUnread: 0, paymentsUnread: 0, subscriptionsUnread: 0, contactsUnread: 0, total: 0, notifications: [] };
 
 const POLL_INTERVAL_MS = 10_000;
 
-export function AdminShell({ children }: Props) {
+export function AdminShell({ children, isAdmin = true, socialRole = 'SUPER_ADMIN' }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [badges, setBadges] = useState<AdminBadges>(EMPTY_BADGES);
@@ -94,6 +97,8 @@ export function AdminShell({ children }: Props) {
           collapsed={collapsed}
           onToggleCollapse={toggleCollapse}
           badges={badges}
+          isAdmin={isAdmin}
+          socialRole={socialRole}
         />
       </div>
 
@@ -108,6 +113,8 @@ export function AdminShell({ children }: Props) {
             <AdminSidebar
               onClose={() => setMobileOpen(false)}
               badges={badges}
+              isAdmin={isAdmin}
+              socialRole={socialRole}
             />
           </div>
         </>

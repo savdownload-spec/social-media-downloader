@@ -13,6 +13,10 @@
     {
       "path": "/api/admin/backups/auto",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/social",
+      "schedule": "30 2 * * *"
     }
   ],
   "functions": {
@@ -33,6 +37,7 @@
     "src/app/api/admin/backups/route.ts":            { "maxDuration": 300 },
     "src/app/api/admin/backups/auto/route.ts":       { "maxDuration": 300 },
     "src/app/api/admin/backups/restore/route.ts":    { "maxDuration": 300 },
+    "src/app/api/cron/social/route.ts":              { "maxDuration": 60 },
     "src/app/api/admin/backups/[id]/download/route.ts": { "maxDuration": 60 },
     "src/app/api/download/route.ts":             { "maxDuration": 120 },
     "src/app/api/download/merge/route.ts":       { "maxDuration": 300 },

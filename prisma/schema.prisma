@@ -79,6 +79,7 @@ model User {
   supportMessages              SupportMessage[]      @relation("SupportSender")
   adminNotificationReads       AdminNotificationRead[] @relation("AdminNotificationReader")
   referredBy                   Referral? @relation("ReferredUser")
+  socialMembership             SocialMember?
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -465,12 +466,20 @@ model NewsletterSubscriber {
 }
 
 model ContactMessage {
-  id        String   @id @default(cuid())
-  name      String
-  email     String
-  subject   String?
-  message   String
-  createdAt DateTime @default(now())
+  id                    String   @id @default(cuid())
+  name                  String
+  email                 String
+  subject               String?
+  message               String
+  status                String   @default("NEW") // NEW | IN_PROGRESS | RESOLVED
+  emailNotificationSent Boolean  @default(false)
+  emailDeliveryFailed   Boolean  @default(false)
+  idempotencyKey        String?  @unique
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([createdAt])
 }
 
 // Human support. Guest conversations are protected by a hashed, random browser
@@ -772,4 +781,245 @@ model UserExportJob {
 
   @@index([adminId, createdAt])
   @@index([status, expiresAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Social Media Manager
+//
+// Single-tenant publishing console for the site owner's own accounts. Access
+// tokens are stored ONLY as AES-256-GCM ciphertext (see src/lib/social/crypto.ts)
+// and are never selected into client responses. Posts store schedule times in
+// UTC; rendering converts to the configured admin timezone.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// A connected social account. `accessToken`/`refreshToken` hold versioned
+/// ciphertext (`v1:iv:tag:ct`) and must never be exposed to the browser.
+model SocialAccount {
+  id                String    @id @default(cuid())
+  platform          String // FACEBOOK | INSTAGRAM | LINKEDIN | LINKEDIN_PAGE | PINTEREST | X | YOUTUBE | REDDIT | MEDIUM | QUORA | BLUESKY | MASTODON
+  externalAccountId String
+  accountName       String
+  username          String?
+  avatarUrl         String?
+  accountType       String // PAGE | PROFILE | CHANNEL | ...
+  accessToken       String?
+  refreshToken      String?
+  tokenExpiresAt    DateTime?
+  scopes            String?
+  status            String    @default("CONNECTED") // CONNECTED | EXPIRING | EXPIRED | REVOKED | ERROR
+  /// Non-secret provider identifiers and cached options (page id, boards, subreddits).
+  metadata          Json?
+  lastConnectedAt   DateTime?
+  lastPublishedAt   DateTime?
+  lastError         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  variants SocialPostVariant[]
+  attempts PublishingAttempt[]
+
+  @@unique([platform, externalAccountId])
+  @@index([platform, status])
+}
+
+/// Uploaded media. `provider` is BLOB (Vercel Blob) or LOCAL (dev filesystem).
+model SocialMediaAsset {
+  id              String    @id @default(cuid())
+  url             String
+  pathname        String?
+  provider        String    @default("BLOB")
+  kind            String // IMAGE | VIDEO
+  mimeType        String
+  sizeBytes       Int
+  width           Int?
+  height          Int?
+  durationSeconds Float?
+  altText         String?
+  name            String
+  checksum        String?
+  createdBy       String?
+  createdAt       DateTime  @default(now())
+  deletedAt       DateTime?
+
+  posts SocialPostMedia[]
+
+  @@index([kind, createdAt])
+  @@index([deletedAt])
+}
+
+/// Master post shared across platforms. `caption` is the default content;
+/// each variant may override it.
+model SocialPost {
+  id           String    @id @default(cuid())
+  title        String?
+  caption      String    @default("")
+  hashtags     String?
+  linkUrl      String?
+  status       String    @default("DRAFT") // DRAFT | SCHEDULED | QUEUED | PUBLISHING | PUBLISHED | PARTIAL | FAILED | NEEDS_AUTHORIZATION | MANUAL_ACTION_REQUIRED | CANCELLED
+  scheduledAt  DateTime? // always UTC
+  timezone     String    @default("Asia/Karachi")
+  publishedAt  DateTime?
+  createdBy    String?
+  updatedBy    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  variants SocialPostVariant[]
+  media    SocialPostMedia[]
+  jobs     PublishingJob[]
+
+  @@index([status, scheduledAt])
+  @@index([updatedAt])
+}
+
+model SocialPostVariant {
+  id            String    @id @default(cuid())
+  postId        String
+  platform      String
+  accountId     String?
+  caption       String    @default("")
+  title         String?
+  hashtags      String?
+  linkUrl       String?
+  /// Platform-specific publishing options (boardId, subreddit, visibility, ...).
+  options       Json?
+  status        String    @default("DRAFT")
+  remotePostId  String?
+  publishedUrl  String?
+  errorCode     String?
+  errorMessage  String?
+  attemptCount  Int       @default(0)
+  lastAttemptAt DateTime?
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  post     SocialPost       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  account  SocialAccount?   @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  attempts PublishingAttempt[]
+
+  // One variant per platform/account. accountId is NULL until an account is
+  // connected, so uniqueness across accounts is also enforced in the API.
+  @@unique([postId, platform, accountId])
+  @@index([status])
+  @@index([accountId])
+  @@index([postId])
+}
+
+model SocialPostMedia {
+  postId   String
+  assetId  String
+  position Int    @default(0)
+
+  post  SocialPost       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  asset SocialMediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@id([postId, assetId])
+  @@index([assetId])
+}
+
+/// Durable publishing queue. Claimed atomically with FOR UPDATE SKIP LOCKED;
+/// `leaseUntil` lets a crashed worker's job be reclaimed.
+model PublishingJob {
+  id         String    @id @default(cuid())
+  postId     String
+  runAt      DateTime
+  status     String    @default("QUEUED") // QUEUED | CLAIMED | DONE | FAILED | CANCELLED
+  attempts   Int       @default(0)
+  claimedBy  String?
+  claimedAt  DateTime?
+  leaseUntil DateTime?
+  lastError  String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  post     SocialPost         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  attemptsLog PublishingAttempt[]
+
+  @@index([status, runAt])
+  @@index([postId])
+}
+
+/// One record per provider interaction. Provider payloads are scrubbed before
+/// storage; tokens are never written here.
+model PublishingAttempt {
+  id               String    @id @default(cuid())
+  jobId            String?
+  variantId        String?
+  accountId        String?
+  platform         String
+  attemptNo        Int       @default(1)
+  httpStatus       Int?
+  outcome          String // SUCCESS | FAILED | SKIPPED | MANUAL | UNKNOWN
+  errorCode        String?
+  message          String?
+  providerResponse Json?
+  startedAt        DateTime  @default(now())
+  finishedAt       DateTime?
+  durationMs       Int?
+
+  job     PublishingJob?     @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  variant SocialPostVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  account SocialAccount?     @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@index([platform, startedAt])
+  @@index([variantId])
+  @@index([jobId])
+}
+
+/// One-time, hashed OAuth state bound to the initiating admin session.
+model SocialOAuthState {
+  id         String    @id @default(cuid())
+  stateHash  String    @unique
+  platform   String
+  adminId    String
+  /// Encrypted PKCE verifier (short-lived; never returned to the browser).
+  verifier   String?
+  redirectTo String?
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([expiresAt])
+  @@index([adminId])
+}
+
+/// Module-scoped role. Global ADMIN users always resolve to SUPER_ADMIN.
+model SocialMember {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  role      String // EDITOR | PUBLISHER
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([role])
+}
+
+model SocialTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  category  String
+  /// { caption, hashtags, linkUrl, variants: [...] }
+  content   Json
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+}
+
+/// Provider-sourced metrics only. A missing metric is rendered as
+/// "Unavailable" — never estimated.
+model SocialAnalyticsSnapshot {
+  id         String   @id @default(cuid())
+  accountId  String?
+  platform   String
+  variantId  String?
+  capturedAt DateTime @default(now())
+  metrics    Json
+  source     String // e.g. "facebook.graph"
+
+  @@index([platform, capturedAt])
+  @@index([accountId, capturedAt])
 }
