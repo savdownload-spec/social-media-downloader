@@ -38,110 +38,143 @@ export type BackupManifest = {
 
 export type BuiltBackup = { buffer: Buffer; manifest: BackupManifest; fileName: string; warnings: string[] };
 
-const delegate = (name: string) => (prisma as unknown as Record<string, Delegate>)[name];
+const delegateOn = (client: unknown, name: string) => (client as Record<string, Delegate>)[name];
+const delegate = (name: string) => delegateOn(prisma, name);
 const safeFilePart = (value: string) => value.replace(/[^a-zA-Z0-9._/-]/g, '_').replace(/\.\./g, '_');
 const contentTypeForPath = (value: string) => ({
   '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
   '.gif': 'image/gif', '.svg': 'image/svg+xml', '.pdf': 'application/pdf',
 }[path.extname(value).toLowerCase()] ?? 'application/octet-stream');
 
-async function rows(name: string, args?: unknown) {
-  const result = await delegate(name).findMany({ ...(args as object ?? {}), take: MAX_ROWS_PER_MODEL + 1 });
+async function rowsWith(client: unknown, name: string, args?: unknown) {
+  const result = await delegateOn(client, name).findMany({ ...(args as object ?? {}), take: MAX_ROWS_PER_MODEL + 1 });
   if (result.length > MAX_ROWS_PER_MODEL) {
     throw new Error(`${name} has more than ${MAX_ROWS_PER_MODEL.toLocaleString()} records. Narrow or archive old data before creating a serverless backup.`);
   }
   return result;
 }
 
+const rows = (name: string, args?: unknown) => rowsWith(prisma, name, args);
+
 function redactedPaymentId(id: unknown) {
   return `restored-${crypto.createHash('sha256').update(String(id)).digest('hex').slice(0, 24)}`;
 }
 
-async function collectData(categories: Set<BackupCategory>) {
-  const data: Record<string, JsonRecord[]> = {};
+type ReadStep = { key: string; read: (client: unknown) => Promise<JsonRecord[]> };
+
+function planReads(categories: Set<BackupCategory>): ReadStep[] {
+  const plan: ReadStep[] = [];
+  const add = (key: string, name: string, args?: unknown, transform?: (records: JsonRecord[]) => JsonRecord[]) => {
+    plan.push({
+      key,
+      read: async (client) => {
+        const records = await rowsWith(client, name, args);
+        return transform ? transform(records) : records;
+      },
+    });
+  };
 
   if (categories.has('content')) {
-    data.posts = await rows('post');
-    data.postRevisions = await rows('postRevision');
-    data.blogAuthors = await rows('blogAuthor');
-    data.authorSlugRedirect = await rows('authorSlugRedirect');
+    add('posts', 'post');
+    add('postRevisions', 'postRevision');
+    add('blogAuthors', 'blogAuthor');
+    add('authorSlugRedirect', 'authorSlugRedirect');
   }
   if (categories.has('users')) {
-    data.users = await rows('user', { select: {
+    add('users', 'user', { select: {
       id: true, name: true, email: true, emailVerified: true, image: true, role: true,
       jobTitle: true, company: true, bio: true, themePreference: true, createdAt: true, updatedAt: true,
     } });
   }
   if (categories.has('pricing')) {
-    data.pricingSettings = await rows('adminSetting', { where: { key: 'pricing_config' } });
+    add('pricingSettings', 'adminSetting', { where: { key: 'pricing_config' } });
   }
   if (categories.has('credits_usage')) {
-    const [creditTransactions, downloads, aiImageGenerations, analyticsEvents, creditAllocations, creditState] = await Promise.all([
-      rows('creditTransaction', { select: {
-        id: true, userId: true, amount: true, kind: true, bucket: true, description: true,
-        externalId: true, idempotencyKey: true, operationId: true, paymentId: true,
-        planDelta: true, purchasedDelta: true, referralDelta: true, balanceAfter: true,
-        planBalanceAfter: true, purchasedBalanceAfter: true, referralBalanceAfter: true,
-        expiresAt: true, referralId: true, createdAt: true,
-      } }), rows('download'), rows('aiImageGeneration'), rows('analyticsEvent'), rows('creditAllocation'),
-      rows('user', { select: {
-        id: true, planCredits: true, planCreditsResetAt: true, purchasedCredits: true, referralCredits: true,
-      } }),
-    ]);
-    data.creditTransactions = creditTransactions.map((record) => ({
-      ...record, externalId: null, idempotencyKey: null,
-    }));
-    data.downloads = downloads.map((record) => ({ ...record, idempotencyKey: null, ipHash: null, userAgent: null }));
-    data.aiImageGenerations = aiImageGenerations;
-    data.analyticsEvents = analyticsEvents.map((record) => ({ ...record, metaJson: null }));
-    data.creditAllocations = creditAllocations;
-    data.userCreditState = creditState;
+    add('creditTransactions', 'creditTransaction', { select: {
+      id: true, userId: true, amount: true, kind: true, bucket: true, description: true,
+      externalId: true, idempotencyKey: true, operationId: true, paymentId: true,
+      planDelta: true, purchasedDelta: true, referralDelta: true, balanceAfter: true,
+      planBalanceAfter: true, purchasedBalanceAfter: true, referralBalanceAfter: true,
+      expiresAt: true, referralId: true, createdAt: true,
+    } }, (records) => records.map((record) => ({ ...record, externalId: null, idempotencyKey: null })));
+    add('downloads', 'download', undefined, (records) => records.map((record) => ({
+      ...record, idempotencyKey: null, ipHash: null, userAgent: null,
+    })));
+    add('aiImageGenerations', 'aiImageGeneration');
+    add('analyticsEvents', 'analyticsEvent', undefined, (records) => records.map((record) => ({ ...record, metaJson: null })));
+    add('creditAllocations', 'creditAllocation');
+    add('userCreditState', 'user', { select: {
+      id: true, planCredits: true, planCreditsResetAt: true, purchasedCredits: true, referralCredits: true,
+    } });
   }
   if (categories.has('billing')) {
-    const [subscriptions, payments, entitlementState] = await Promise.all([
-      rows('subscription'), rows('payment'),
-      rows('user', { select: { id: true, plan: true } }),
-    ]);
-    data.subscriptions = subscriptions.map((record) => ({
+    add('subscriptions', 'subscription', undefined, (records) => records.map((record) => ({
       ...record,
       stripeSubscriptionId: redactedPaymentId(record.id),
       safepaySubscriptionId: null,
-    }));
-    data.payments = payments.map((record) => ({
+    })));
+    add('payments', 'payment', undefined, (records) => records.map((record) => ({
       ...record,
       providerPaymentId: redactedPaymentId(record.id),
       reference: null,
       metadata: null,
-    }));
-    data.userEntitlements = entitlementState;
+    })));
+    add('userEntitlements', 'user', { select: { id: true, plan: true } });
   }
   if (categories.has('feedback')) {
-    data.reviews = await rows('review');
-    data.blogComments = await rows('blogComment');
+    add('reviews', 'review');
+    add('blogComments', 'blogComment');
   }
   if (categories.has('settings')) {
-    const settings = await rows('adminSetting', { where: { key: { not: 'pricing_config' } } });
-    data.adminSettings = settings.filter((record) => !/(secret|token|password|api[_-]?key|private[_-]?key)/i.test(String(record.key)));
-    data.toolConfigs = await rows('toolConfig');
+    add('adminSettings', 'adminSetting', { where: { key: { not: 'pricing_config' } } },
+      (records) => records.filter((record) => !/(secret|token|password|api[_-]?key|private[_-]?key)/i.test(String(record.key))));
+    add('toolConfigs', 'toolConfig');
   }
   if (categories.has('support')) {
-    data.contactMessages = await rows('contactMessage');
-    data.supportConversations = (await rows('supportConversation')).map(({ guestTokenHash: _secret, ...record }) => record);
-    data.supportMessages = await rows('supportMessage');
-    const attachments = await rows('supportAttachment', { select: {
+    add('contactMessages', 'contactMessage');
+    add('supportConversations', 'supportConversation', undefined,
+      (records) => records.map(({ guestTokenHash: _secret, ...record }) => record));
+    add('supportMessages', 'supportMessage');
+    add('supportAttachments', 'supportAttachment', { select: {
       id: true, messageId: true, fileName: true, contentType: true, size: true, createdAt: true,
     } });
-    data.supportAttachments = attachments;
   }
   if (categories.has('audience')) {
-    data.newsletterSubscribers = (await rows('newsletterSubscriber')).map((record) => ({
+    add('newsletterSubscribers', 'newsletterSubscriber', undefined, (records) => records.map((record) => ({
       ...record, providerSubscriberId: null, providerListId: null,
-    }));
-    data.affiliates = await rows('affiliate');
-    data.referrals = await rows('referral');
+    })));
+    add('affiliates', 'affiliate');
+    add('referrals', 'referral');
   }
 
-  return data;
+  return plan;
+}
+
+/**
+ * Reads every selected model inside one RepeatableRead transaction so a record
+ * changed mid-export cannot produce a partially updated snapshot. Hosts
+ * without `$transaction` (unit tests) fall back to plain sequential reads.
+ */
+async function collectData(categories: Set<BackupCategory>) {
+  const plan = planReads(categories);
+  const readAll = async (client: unknown) => {
+    const data: Record<string, JsonRecord[]> = {};
+    for (const step of plan) data[step.key] = await step.read(client);
+    return data;
+  };
+
+  const transaction = (prisma as unknown as { $transaction?: unknown }).$transaction;
+  if (typeof transaction !== 'function') return readAll(prisma);
+  return (prisma as unknown as {
+    $transaction: (
+      fn: (client: unknown) => Promise<Record<string, JsonRecord[]>>,
+      options: { isolationLevel: 'RepeatableRead'; maxWait: number; timeout: number },
+    ) => Promise<Record<string, JsonRecord[]>>;
+  }).$transaction((client) => readAll(client), {
+    isolationLevel: 'RepeatableRead',
+    maxWait: 20_000,
+    timeout: 240_000,
+  });
 }
 
 function discoverReferencedMedia(data: Record<string, JsonRecord[]>) {

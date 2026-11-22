@@ -583,6 +583,36 @@ model Review {
 // Admin
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// One row per attempted automatic-backup execution. The (kind, dateKey)
+/// unique constraint is the atomic daily lock: concurrent cron invocations on
+/// the same UTC date claim the row once and take it over only after a stale or
+/// failed attempt. Manual and recovery archives are tracked by AuditLog.
+model BackupRun {
+  id           String    @id @default(cuid())
+  kind         String // AUTOMATIC
+  dateKey      String? // YYYY-MM-DD (UTC); NULL rows would not collide
+  status       String // RUNNING | COMPLETED | FAILED | VERIFICATION_FAILED
+  trigger      String // cron | external | admin
+  attempts     Int       @default(1)
+  backupId     String?   @unique
+  fileName     String?
+  size         Int?
+  sha256       String?
+  recordCounts Json?
+  fileCount    Int?
+  warnings     Json?
+  error        String?
+  createdBy    String?
+  startedAt    DateTime  @default(now())
+  finishedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([kind, dateKey])
+  @@index([status, startedAt])
+  @@index([startedAt])
+}
+
 /// Append-only record of every significant admin action.
 model AuditLog {
   id         String   @id @default(cuid())

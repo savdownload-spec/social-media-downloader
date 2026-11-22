@@ -1,18 +1,33 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
-  Archive, CalendarClock, Check, CheckCircle2, CloudDownload, DatabaseBackup, Download, FileArchive, HardDrive,
+  AlertTriangle, Archive, CalendarClock, Check, CheckCircle2, Clock, CloudDownload, DatabaseBackup, Download, FileArchive, HardDrive,
   LoaderCircle, RefreshCw, RotateCcw, ShieldCheck, Trash2, Upload, XCircle,
 } from 'lucide-react';
 import { AdminPage, EmptyState, PageHeader, SectionCard } from './AdminUI';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { cn } from '@/lib/utils';
-import { ALL_BACKUP_CATEGORIES, AUTO_BACKUP_RETENTION_DAYS, AUTO_BACKUP_SCHEDULE_LABEL, BACKUP_CATEGORIES, type BackupCategory } from '@/lib/backup/catalog';
+import { ALL_BACKUP_CATEGORIES, AUTO_BACKUP_RETENTION_DAYS, BACKUP_CATEGORIES, type BackupCategory } from '@/lib/backup/catalog';
+import { AUTO_BACKUP_LOCAL_SCHEDULE_LABEL, type BackupDayState, type BackupRunView, type SchedulerInfo } from '@/lib/backup/schedule';
 import type { BackupHistoryItem } from '@/lib/backup/storage';
 
 type HistoryItem = BackupHistoryItem & { downloadUrl?: string };
+type AutoStatus = {
+  serverTime: string;
+  scheduler: SchedulerInfo;
+  schedule: { cron: string; catchUpCron: string; timeZone: string; localLabel: string; graceMinutes: number };
+  storageConfigured: boolean;
+  retentionDays: number;
+  today: { dateKey: string; state: BackupDayState; canRetry: boolean; window: { startsAt: string; endsAt: string; graceEndsAt: string } };
+  nextWindow: { dateKey: string; startsAt: string; endsAt: string; graceEndsAt: string };
+  latestAutomaticBackup: HistoryItem | null;
+  todayBackup: HistoryItem | null;
+  todayRun: BackupRunView | null;
+  runs: BackupRunView[];
+  warnings: string[];
+};
 type Preview = {
   sha256: string; createdAt: string; createdBy: string; categories: BackupCategory[];
   recordCounts: Record<string, number>; fileCount: number; mediaCount: number;
@@ -22,6 +37,35 @@ type Preview = {
 
 const bytes = (value: number) => value < 1024 ? `${value} B` : value < 1024 ** 2 ? `${(value / 1024).toFixed(1)} KB` : `${(value / 1024 ** 2).toFixed(1)} MB`;
 const dateTime = (value: string) => new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+const utcDateTime = (value: string) => `${new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }).format(new Date(value))} UTC`;
+
+const dayLabel: Record<BackupDayState, string> = {
+  completed: 'Completed', running: 'Running', failed: 'Failed', verification_failed: 'Verification failed',
+  scheduled: 'Scheduled', missed: 'Missed', not_configured: 'Configuration error',
+};
+const dayTone: Record<BackupDayState, string> = {
+  completed: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  running: 'border-sky-200 bg-sky-50 text-sky-700',
+  failed: 'border-rose-200 bg-rose-50 text-rose-700',
+  verification_failed: 'border-rose-200 bg-rose-50 text-rose-700',
+  scheduled: 'border-slate-200 bg-slate-50 text-slate-600',
+  missed: 'border-amber-200 bg-amber-50 text-amber-800',
+  not_configured: 'border-amber-200 bg-amber-50 text-amber-800',
+};
+const runTone = (status: string) => status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700'
+  : status === 'RUNNING' ? 'bg-sky-50 text-sky-700'
+    : status === 'VERIFICATION_FAILED' ? 'bg-rose-50 text-rose-700'
+      : 'bg-amber-50 text-amber-800';
+
+function StatusCell({ label, value, hint, alert }: { label: string; value: ReactNode; hint?: ReactNode; alert?: boolean }) {
+  return (
+    <div className={cn('rounded-xl border px-4 py-3', alert ? 'border-amber-200 bg-amber-50/60' : 'border-border-light bg-surface/50')}>
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-text-subtle">{label}</p>
+      <div className={cn('mt-1.5 text-[13px] font-semibold', alert ? 'text-amber-900' : 'text-text')}>{value}</div>
+      {hint && <p className={cn('mt-1 text-[11px] leading-4', alert ? 'text-amber-800' : 'text-text-muted')}>{hint}</p>}
+    </div>
+  );
+}
 
 export function AdminBackupClient() {
   const [selected, setSelected] = useState<BackupCategory[]>(ALL_BACKUP_CATEGORIES);
@@ -32,6 +76,8 @@ export function AdminBackupClient() {
   const [progress, setProgress] = useState({ value: 0, message: '' });
   const [completed, setCompleted] = useState<HistoryItem | null>(null);
   const [backupWarnings, setBackupWarnings] = useState<string[]>([]);
+  const [autoStatus, setAutoStatus] = useState<AutoStatus | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [previewing, setPreviewing] = useState(false);
@@ -56,10 +102,30 @@ export function AdminBackupClient() {
     finally { setHistoryLoading(false); }
   }, [error]);
 
-  useEffect(() => { void loadHistory(); }, [loadHistory]);
+  const loadStatus = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/backups/status', { cache: 'no-store' });
+      const json = await response.json().catch(() => null);
+      if (!response.ok || !json?.ok) throw new Error(json?.error || 'Scheduler status is unavailable.');
+      setAutoStatus(json.data as AutoStatus);
+      setStatusError(null);
+    } catch (cause) {
+      setStatusError(cause instanceof Error ? cause.message : 'Scheduler status is unavailable.');
+    }
+  }, []);
+
+  useEffect(() => { void loadHistory(); void loadStatus(); }, [loadHistory, loadStatus]);
 
   const selectedSummary = useMemo(() => BACKUP_CATEGORIES.filter((item) => selected.includes(item.id)).map((item) => item.label).join(', '), [selected]);
   const latestAuto = useMemo(() => history.find((item) => item.type === 'automatic'), [history]);
+  const latestScheduledRun = autoStatus ? (autoStatus.runs.find((run) => run.trigger !== 'admin') ?? autoStatus.runs[0] ?? null) : null;
+  const autoHeadline = !autoStatus ? 'Checking automatic backup…'
+    : autoStatus.scheduler.status === 'configuration_error' ? 'Automatic backup is misconfigured'
+      : autoStatus.today.state === 'missed' ? 'Today’s automatic backup is overdue'
+        : autoStatus.today.state === 'failed' || autoStatus.today.state === 'verification_failed' ? 'Today’s automatic backup failed'
+          : autoStatus.today.state === 'running' ? 'Today’s automatic backup is running'
+            : autoStatus.today.state === 'completed' ? 'Daily auto-backup is working'
+              : 'Daily auto-backup is scheduled';
 
   function toggleCategory(id: BackupCategory) {
     setCompleted(null);
@@ -104,12 +170,12 @@ export function AdminBackupClient() {
       const response = await fetch('/api/admin/backups/auto', { method: 'POST' });
       const json = await response.json().catch(() => null);
       if (!response.ok || !json?.ok) throw new Error(json?.error || 'Automatic backup could not be created.');
-      if (json.data.skipped) success('Today\'s automatic backup is ready', 'The single daily ZIP is available below.');
+      if (json.data.skipped) success(json.data.status === 'running' ? 'Automatic backup is already running' : 'Today\'s automatic backup is ready', json.data.status === 'running' ? 'The current run will finish and record its result.' : 'The single daily ZIP is available below.');
       else {
         const warnings = (json.data.warnings ?? []) as string[];
-        success('Automatic backup created', `Today's single ZIP is ready${json.data.pruned ? `; ${json.data.pruned} older automatic file(s) removed` : ''}${warnings.length ? `. Note: ${warnings[0]}` : ''}.`);
+        success('Automatic backup created', `Today's single ZIP is verified${json.data.pruned ? `; ${json.data.pruned} older automatic file(s) removed` : ''}${warnings.length ? `. Note: ${warnings[0]}` : ''}.`);
       }
-      await loadHistory();
+      await Promise.all([loadHistory(), loadStatus()]);
     } catch (cause) { error('Automatic backup failed', cause instanceof Error ? cause.message : undefined); }
     finally { setAutoRunning(false); }
   }
@@ -123,6 +189,7 @@ export function AdminBackupClient() {
       setHistory((current) => current.filter((row) => row.id !== item.id));
       if (completed?.id === item.id) setCompleted(null);
       success('Backup deleted');
+      void loadStatus();
     } catch (cause) { error('Delete failed', cause instanceof Error ? cause.message : undefined); }
   }
 
@@ -164,28 +231,87 @@ export function AdminBackupClient() {
       <PageHeader title="Backup & Restore" description="Create portable, checksum-verified archives and restore without overwriting existing data." />
 
       <div className="space-y-6">
-        <SectionCard title="Automatic daily backup" subtitle={`One full ZIP per day · ${AUTO_BACKUP_SCHEDULE_LABEL}`}>
+        <SectionCard title="Automatic daily backup" subtitle={`One full ZIP per day · 04:00 UTC · ${AUTO_BACKUP_LOCAL_SCHEDULE_LABEL} · retry slot 08:00 UTC`}>
           <div className="p-5 space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex items-start gap-3">
                 <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/[0.08] text-primary"><CalendarClock className="h-4.5 w-4.5" /></span>
                 <div>
-                  <p className="text-[13px] font-semibold text-text">Daily auto-backup is on</p>
-                  <p className="mt-1 max-w-2xl text-[12px] leading-5 text-text-muted">The complete SavDown backup runs once a day and produces exactly one downloadable ZIP. Creating it again on the same day returns today&apos;s existing ZIP instead of a duplicate. Manual and recovery backups are never removed by this schedule.</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-[13px] font-semibold text-text">{autoHeadline}</p>
+                    {autoStatus && <span className={cn('rounded-full border px-2 py-0.5 text-[10px] font-semibold', dayTone[autoStatus.today.state])}>{dayLabel[autoStatus.today.state]}</span>}
+                  </div>
+                  <p className="mt-1 max-w-2xl text-[12px] leading-5 text-text-muted">The server-side job creates exactly one checksum-verified ZIP per UTC day. Repeated or overlapping runs return the existing archive instead of creating a duplicate. Manual and recovery archives are never pruned by this schedule.</p>
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={runAutoBackup} disabled={autoRunning} loading={autoRunning}><CloudDownload className="h-4 w-4" /> Create today&apos;s backup now</Button>
+              <Button variant="outline" size="sm" onClick={runAutoBackup} disabled={autoRunning} loading={autoRunning}><CloudDownload className="h-4 w-4" /> {autoStatus?.today.canRetry ? 'Retry today’s backup' : 'Create today’s backup now'}</Button>
             </div>
-            {historyLoading && !latestAuto ? <div className="flex items-center gap-2 rounded-xl border border-border-light bg-surface/50 px-4 py-3 text-[12px] text-text-muted"><LoaderCircle className="h-4 w-4 animate-spin text-primary" /> Checking the latest automatic backup…</div> : latestAuto ? (
-              <div className="flex flex-col gap-3 rounded-xl border border-border-light bg-surface/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2"><FileArchive className="h-4 w-4 shrink-0 text-primary" /><p className="truncate text-[13px] font-semibold text-text">{latestAuto.fileName}</p><span className="rounded bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700">Latest</span></div>
-                  <p className="mt-1 text-[11px] text-text-muted">{dateTime(latestAuto.createdAt)} · {bytes(latestAuto.size)} · {Object.values(latestAuto.recordCounts).reduce((a, b) => a + b, 0).toLocaleString()} records · {latestAuto.fileCount} files</p>
-                </div>
-                <a href={latestAuto.downloadUrl ?? `/api/admin/backups/${latestAuto.id}/download`} className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-[12px] font-semibold text-white hover:bg-primary-hover"><Download className="h-3.5 w-3.5" /> Download latest ZIP</a>
+
+            {statusError && <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] text-amber-900"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><span>{statusError}</span></div>}
+
+            {autoStatus?.scheduler.status === 'configuration_error' && <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-[12px] text-rose-900"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><span><strong>Scheduler configuration error.</strong> {autoStatus.scheduler.detail}</span></div>}
+            {!autoStatus?.storageConfigured && autoStatus && <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-[12px] text-rose-900"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><span><strong>Secure backup storage is not configured.</strong> Connect the private backup Blob store to this environment so archives survive redeploys.</span></div>}
+            {autoStatus?.scheduler.status === 'external_required' && <div className="flex items-start gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-[12px] text-sky-900"><Clock className="mt-0.5 h-4 w-4 shrink-0" /><span><strong>Preview scheduling uses an external daily trigger.</strong> {autoStatus.scheduler.detail}</span></div>}
+            {autoStatus?.scheduler.status === 'manual' && <div className="flex items-start gap-2 rounded-xl border border-border-light bg-surface/60 px-4 py-3 text-[12px] text-text-muted"><Clock className="mt-0.5 h-4 w-4 shrink-0" /><span>{autoStatus.scheduler.detail}</span></div>}
+            {autoStatus?.today.state === 'missed' && <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] text-amber-900"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><span><strong>No verified backup for {autoStatus.today.dateKey}.</strong> The 04:00 UTC window and two-hour grace period ended at {utcDateTime(autoStatus.today.window.graceEndsAt)}. Use the retry button or wait for the 08:00 UTC slot.</span></div>}
+            {(autoStatus?.today.state === 'failed' || autoStatus?.today.state === 'verification_failed') && <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-[12px] text-rose-900"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><span><strong>Today’s attempt failed.</strong> {autoStatus.todayRun?.error ?? 'The failure reason was not recorded.'} Verified archives were not touched.</span></div>}
+            {autoStatus?.today.state === 'running' && <div className="flex items-start gap-2 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-[12px] text-sky-900"><LoaderCircle className="mt-0.5 h-4 w-4 shrink-0 animate-spin" /><span>The scheduled run started at {autoStatus.todayRun ? utcDateTime(autoStatus.todayRun.startedAt) : 'an unknown time'} and is still in progress.</span></div>}
+            {autoStatus && autoStatus.warnings.length > 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] text-amber-900"><p className="font-semibold">Status warnings</p><ul className="mt-1 list-inside list-disc space-y-0.5">{autoStatus.warnings.map((warning, index) => <li key={index}>{warning}</li>)}</ul></div>}
+
+            {autoStatus ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <StatusCell
+                  label="Scheduler"
+                  value={autoStatus.scheduler.mechanism === 'vercel-cron' ? 'Vercel Cron · Production' : autoStatus.scheduler.mechanism === 'external' ? 'External job · Preview' : 'Manual · Local'}
+                  hint={autoStatus.scheduler.configured ? 'Authorized with CRON_SECRET' : 'CRON_SECRET missing'}
+                  alert={autoStatus.scheduler.status === 'configuration_error'}
+                />
+                <StatusCell
+                  label="Last scheduled attempt"
+                  value={latestScheduledRun ? utcDateTime(latestScheduledRun.startedAt) : 'No run recorded yet'}
+                  hint={latestScheduledRun ? `${latestScheduledRun.trigger === 'admin' ? 'Manual retry' : latestScheduledRun.trigger === 'external' ? 'External scheduler' : 'Vercel cron'} · attempt ${latestScheduledRun.attempts} · ${latestScheduledRun.status.replaceAll('_', ' ').toLowerCase()}` : 'Waiting for the first scheduler invocation'}
+                />
+                <StatusCell
+                  label="Last verified backup"
+                  value={latestAuto ? dateTime(latestAuto.createdAt) : 'None yet'}
+                  hint={latestAuto ? `${bytes(latestAuto.size)} · ${latestAuto.sha256 ? `SHA-256 ${latestAuto.sha256.slice(0, 12)}…` : 'checksum not recorded (older archive)'}` : 'A backup counts only after read-back verification'}
+                />
+                <StatusCell
+                  label="Next expected window"
+                  value={utcDateTime(autoStatus.nextWindow.startsAt)}
+                  hint={`Expected by ${utcDateTime(autoStatus.nextWindow.endsAt)} · ${autoStatus.schedule.localLabel}`}
+                  alert={autoStatus.today.state === 'missed'}
+                />
               </div>
-            ) : <div className="rounded-xl border border-dashed border-border px-4 py-4 text-[12px] text-text-muted">No automatic backup has been created yet. The first scheduled run will create it, or use “Create today&apos;s backup now”.</div>}
-            <p className="text-[11px] text-text-muted">Keeps the newest {AUTO_BACKUP_RETENTION_DAYS} daily automatic ZIPs. Older automatic files are pruned; manual and recovery backups stay until you delete them.</p>
+            ) : <div className="flex items-center gap-2 rounded-xl border border-border-light bg-surface/50 px-4 py-3 text-[12px] text-text-muted"><LoaderCircle className="h-4 w-4 animate-spin text-primary" /> Reading scheduler configuration…</div>}
+
+            <div className="flex flex-col gap-3 rounded-xl border border-border-light bg-surface/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2"><FileArchive className="h-4 w-4 shrink-0 text-primary" /><p className="truncate text-[13px] font-semibold text-text">{latestAuto ? latestAuto.fileName : 'No automatic archive yet'}</p>{latestAuto && <span className="rounded bg-sky-50 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700">Latest</span>}</div>
+                <p className="mt-1 text-[11px] text-text-muted">{latestAuto ? `${dateTime(latestAuto.createdAt)} · ${bytes(latestAuto.size)} · ${Object.values(latestAuto.recordCounts).reduce((a, b) => a + b, 0).toLocaleString()} records · ${latestAuto.fileCount} files · ${latestAuto.sha256 ? 'verified SHA-256' : 'checksum not recorded'}` : 'The first verified automatic run will appear here.'}</p>
+              </div>
+              {latestAuto && <a href={latestAuto.downloadUrl ?? `/api/admin/backups/${latestAuto.id}/download`} className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-[12px] font-semibold text-white hover:bg-primary-hover"><Download className="h-3.5 w-3.5" /> Download latest ZIP</a>}
+            </div>
+
+            {autoStatus && autoStatus.runs.length > 0 && (
+              <div className="overflow-hidden rounded-xl border border-border-light">
+                <div className="flex items-center gap-2 bg-surface/60 px-4 py-2.5 text-[12px] font-semibold text-text"><Clock className="h-3.5 w-3.5" /> Recent scheduled runs</div>
+                <div className="divide-y divide-border-light">
+                  {autoStatus.runs.slice(0, 5).map((run) => (
+                    <div key={run.id} className="flex flex-col gap-1 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className={cn('rounded px-1.5 py-0.5 text-[10px] font-semibold', runTone(run.status))}>{run.status.replaceAll('_', ' ')}</span>
+                        <span className="text-[12px] text-text">{utcDateTime(run.startedAt)}</span>
+                        <span className="text-[11px] text-text-muted">{run.trigger === 'admin' ? 'manual' : run.trigger} · attempt {run.attempts}</span>
+                      </div>
+                      {run.error && <span className="line-clamp-2 text-[11px] text-rose-600">{run.error}</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <p className="text-[11px] text-text-muted">Keeps the newest {AUTO_BACKUP_RETENTION_DAYS} verified daily automatic ZIPs. Older automatic files are pruned only after the newest archive verifies; manual and recovery backups stay until you delete them.</p>
           </div>
         </SectionCard>
 

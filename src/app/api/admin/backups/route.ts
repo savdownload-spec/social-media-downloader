@@ -5,7 +5,8 @@ import { requireAdminApi, PRIVATE_NO_STORE_HEADERS } from '@/lib/admin-auth';
 import { writeAuditLog } from '@/lib/admin';
 import { buildBackup } from '@/lib/backup/archive';
 import { ALL_BACKUP_CATEGORIES, isBackupCategory } from '@/lib/backup/catalog';
-import { assertBackupStorageConfigured, BackupStorageConfigurationError, listBackups, storeBackup, type BackupHistoryItem } from '@/lib/backup/storage';
+import { assertBackupStorageConfigured, BackupStorageConfigurationError, deleteBackupArchive, listBackups, storeBackupArchive, storeBackupMetadata, type BackupHistoryItem } from '@/lib/backup/storage';
+import { sha256Of, verifyStoredBackup } from '@/lib/backup/verify';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -50,22 +51,36 @@ export async function POST(request: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       const send = (phase: string, message: string, progress: number) => controller.enqueue(line({ phase, message, progress }));
+      let fileName = '';
+      let archiveStored = false;
       try {
         send('starting', 'Preparing secure backup…', 2);
         const built = await buildBackup({ categories, createdBy: auth.user.email ?? 'admin', onProgress: send });
+        fileName = built.fileName;
+        const sha256 = sha256Of(built.buffer);
         const metadata: BackupHistoryItem = {
           id, type: 'backup', fileName: built.fileName, size: built.buffer.length,
           createdAt: built.manifest.createdAt, createdBy: auth.user.email ?? 'admin', categories,
-          recordCounts: built.manifest.recordCounts, fileCount: built.manifest.fileCount,
+          recordCounts: built.manifest.recordCounts, fileCount: built.manifest.fileCount, sha256,
         };
-        await storeBackup(id, built.fileName, built.buffer, metadata);
+        send('storing', 'Saving backup to protected history…', 88);
+        await storeBackupArchive(id, built.fileName, built.buffer);
+        archiveStored = true;
+        send('verifying', 'Reading the archive back and verifying every checksum…', 94);
+        const verified = await verifyStoredBackup(id, built.fileName, sha256);
+        await storeBackupMetadata(id, metadata);
         await writeAuditLog({
           adminId: auth.user.id, adminEmail: auth.user.email ?? 'admin', action: 'backup.create',
           targetType: 'Backup', targetId: id,
-          detail: { categories, recordCounts: built.manifest.recordCounts, fileCount: built.manifest.fileCount, size: built.buffer.length },
+          detail: {
+            categories, recordCounts: built.manifest.recordCounts, fileCount: built.manifest.fileCount,
+            size: built.buffer.length, sha256, verified: true, verifiedRecords: verified.recordCount,
+          },
         });
         controller.enqueue(line({ phase: 'done', message: 'Backup ready to download', progress: 100, backup: { ...metadata, downloadUrl: `/api/admin/backups/${id}/download` }, warnings: built.warnings }));
       } catch (error) {
+        // A ZIP without verified metadata is never a successful backup.
+        if (archiveStored && fileName) await deleteBackupArchive(id, fileName).catch(() => undefined);
         // Do not log Blob URLs, SDK request details, tokens, or archive data.
         console.error('Admin backup failed', error instanceof Error ? error.name : 'BackupError');
         controller.enqueue(line({ phase: 'error', message: error instanceof Error ? error.message : 'Backup failed.' }));

@@ -12,9 +12,15 @@ export type BackupHistoryItem = {
   categories: string[];
   recordCounts: Record<string, number>;
   fileCount: number;
+  /** SHA-256 of the stored ZIP. Absent on archives created before 2026-11-22. */
+  sha256?: string;
 };
 
-const LOCAL_DIR = path.join(process.cwd(), '.backup-cache');
+// Non-Vercel hosts keep backups on disk. Override the directory in isolated
+// tests so they can never read, prune, or overwrite real local archives.
+const localDir = () => process.env.BACKUP_LOCAL_DIR
+  ? path.resolve(process.env.BACKUP_LOCAL_DIR)
+  : path.join(process.cwd(), '.backup-cache');
 const safeId = (id: string) => /^[a-f0-9-]{36}$/i.test(id);
 
 type BackupBlobAuth = { token?: string; storeId?: string };
@@ -54,6 +60,16 @@ function requireBackupBlobAuth(): BackupBlobAuth {
   return auth;
 }
 
+export function isBackupStorageConfigured(): boolean {
+  if (!process.env.VERCEL) return true;
+  try {
+    assertBackupStorageConfigured();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function assertBackupStorageConfigured(): void {
   if (!process.env.VERCEL) return;
   const auth = backupBlobAuth();
@@ -69,42 +85,89 @@ export function assertBackupStorageConfigured(): void {
   }
 }
 
-export async function storeBackup(id: string, fileName: string, buffer: Buffer, metadata: BackupHistoryItem) {
+const archiveKey = (id: string, fileName: string) => `backups/${id}/${path.basename(fileName)}`;
+const metadataKey = (id: string) => `backups/${id}/metadata.json`;
+
+/**
+ * Two-phase storage. The ZIP is written first, then read back and validated,
+ * and only then is `metadata.json` written. Metadata is the completion marker:
+ * an archive without it is never listed as a successful backup.
+ */
+export async function storeBackupArchive(id: string, fileName: string, buffer: Buffer): Promise<string> {
   if (!safeId(id)) throw new Error('Invalid backup identifier.');
   const auth = backupBlobAuth();
   if (auth) {
-    let archiveUrl: string | null = null;
-    const archivePath = `backups/${id}/${fileName}`;
-    const metadataPath = `backups/${id}/metadata.json`;
     try {
-      const archive = await put(archivePath, buffer, {
+      const archive = await put(archiveKey(id, fileName), buffer, {
         ...auth, access: 'private', contentType: 'application/zip', addRandomSuffix: false,
-      });
-      archiveUrl = archive.url;
-      // Metadata is the completion marker used by history. Write it only after
-      // the complete ZIP is durably stored.
-      await put(metadataPath, JSON.stringify(metadata), {
-        ...auth, access: 'private', contentType: 'application/json', addRandomSuffix: false,
       });
       return archive.url;
     } catch (error) {
-      // A ZIP without its completion metadata is never a successful backup.
-      // Best-effort deletion prevents private orphan archives after a partial upload.
-      if (archiveUrl) await del([archivePath, metadataPath], auth).catch(() => undefined);
       throw storageError(error);
     }
   }
   if (process.env.VERCEL) throw new BackupStorageConfigurationError();
-  const directory = path.join(LOCAL_DIR, id);
+  const directory = path.join(localDir(), id);
   try {
     await mkdir(directory, { recursive: true });
-    await writeFile(path.join(directory, fileName), buffer);
-    await writeFile(path.join(directory, 'metadata.json'), JSON.stringify(metadata, null, 2));
+    await writeFile(path.join(directory, path.basename(fileName)), buffer);
     return `local:${id}/${fileName}`;
   } catch (error) {
     await rm(directory, { recursive: true, force: true }).catch(() => undefined);
     throw error;
   }
+}
+
+export async function storeBackupMetadata(id: string, metadata: BackupHistoryItem): Promise<void> {
+  if (!safeId(id)) throw new Error('Invalid backup identifier.');
+  const auth = backupBlobAuth();
+  if (auth) {
+    try {
+      await put(metadataKey(id), JSON.stringify(metadata), {
+        ...auth, access: 'private', contentType: 'application/json', addRandomSuffix: false,
+      });
+      return;
+    } catch (error) {
+      throw storageError(error);
+    }
+  }
+  if (process.env.VERCEL) throw new BackupStorageConfigurationError();
+  await writeFile(path.join(localDir(), id, 'metadata.json'), JSON.stringify(metadata, null, 2));
+}
+
+export async function readBackupArchive(id: string, fileName: string): Promise<Buffer> {
+  if (!safeId(id)) throw new Error('Invalid backup identifier.');
+  const auth = backupBlobAuth();
+  if (auth) {
+    try {
+      const page = await list({ ...auth, prefix: `backups/${id}/`, limit: 1000 });
+      const archive = page.blobs.find((blob) => blob.pathname === archiveKey(id, fileName));
+      if (!archive) throw new Error('Backup file is unavailable.');
+      const result = await get(archive.url, { ...auth, access: 'private', useCache: false });
+      if (!result || result.statusCode !== 200) throw new Error('Backup file is unavailable.');
+      return Buffer.from(await new Response(result.stream).arrayBuffer());
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Backup file is unavailable.') throw error;
+      throw storageError(error);
+    }
+  }
+  if (process.env.VERCEL) throw new BackupStorageConfigurationError();
+  return readFile(path.join(localDir(), id, path.basename(fileName)));
+}
+
+/** Best-effort cleanup for archives that failed verification or completion. */
+export async function deleteBackupArchive(id: string, fileName: string): Promise<void> {
+  if (!safeId(id)) return;
+  const auth = backupBlobAuth();
+  if (auth) {
+    const key = archiveKey(id, fileName);
+    const page = await list({ ...auth, prefix: key, limit: 10 }).catch(() => null);
+    const urls = page?.blobs.filter((blob) => blob.pathname === key).map((blob) => blob.url) ?? [];
+    if (urls.length) await del(urls, auth).catch(() => undefined);
+    return;
+  }
+  if (process.env.VERCEL) return;
+  await rm(path.join(localDir(), id, path.basename(fileName)), { force: true }).catch(() => undefined);
 }
 
 async function fetchJson<T>(url: string, auth: BackupBlobAuth): Promise<T> {
@@ -130,9 +193,9 @@ export async function listBackups(): Promise<BackupHistoryItem[]> {
     } catch (error) { throw storageError(error); }
   }
   if (process.env.VERCEL) throw new BackupStorageConfigurationError();
-  const directories = await readdir(LOCAL_DIR, { withFileTypes: true }).catch(() => []);
+  const directories = await readdir(localDir(), { withFileTypes: true }).catch(() => []);
   const rows = await Promise.all(directories.filter((entry) => entry.isDirectory()).map(async (entry) => {
-    try { return JSON.parse(await readFile(path.join(LOCAL_DIR, entry.name, 'metadata.json'), 'utf8')) as BackupHistoryItem; }
+    try { return JSON.parse(await readFile(path.join(localDir(), entry.name, 'metadata.json'), 'utf8')) as BackupHistoryItem; }
     catch { return null; }
   }));
   return rows.filter((row): row is BackupHistoryItem => !!row).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -159,8 +222,8 @@ export async function readBackup(id: string): Promise<{ buffer: Buffer; metadata
     }
   }
   if (process.env.VERCEL) requireBackupBlobAuth();
-  const metadata = JSON.parse(await readFile(path.join(LOCAL_DIR, id, 'metadata.json'), 'utf8')) as BackupHistoryItem;
-  const filePath = path.join(LOCAL_DIR, id, path.basename(metadata.fileName));
+  const metadata = JSON.parse(await readFile(path.join(localDir(), id, 'metadata.json'), 'utf8')) as BackupHistoryItem;
+  const filePath = path.join(localDir(), id, path.basename(metadata.fileName));
   const info = await stat(filePath);
   if (!info.isFile()) throw new Error('Backup not found.');
   return { buffer: await readFile(filePath), metadata };
@@ -181,5 +244,5 @@ export async function deleteBackup(id: string) {
     }
   }
   if (process.env.VERCEL) requireBackupBlobAuth();
-  await rm(path.join(LOCAL_DIR, id), { recursive: true, force: true });
+  await rm(path.join(localDir(), id), { recursive: true, force: true });
 }
