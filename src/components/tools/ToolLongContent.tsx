@@ -354,17 +354,17 @@ export async function ToolLongContentSection({ slug, guide = getToolGuide(slug) 
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
                 <Zap className="w-5 h-5 text-gradient-light mb-2" />
                 <h4 className="text-sm font-bold">Fast</h4>
-                <p className="mt-1 text-xs text-ink-muted leading-relaxed">Most downloads complete in under 10 seconds.</p>
+                <p className="mt-1 text-xs text-ink-muted leading-relaxed">Most links resolve in seconds; large files take longer.</p>
               </div>
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
                 <Shield className="w-5 h-5 text-gradient-light mb-2" />
                 <h4 className="text-sm font-bold">Private</h4>
-                <p className="mt-1 text-xs text-ink-muted leading-relaxed">We never log, store, or share your activity.</p>
+                <p className="mt-1 text-xs text-ink-muted leading-relaxed">Files are processed only to deliver your download and are never shared.</p>
               </div>
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
                 <Users className="w-5 h-5 text-gradient-light mb-2" />
                 <h4 className="text-sm font-bold">Free</h4>
-                <p className="mt-1 text-xs text-ink-muted leading-relaxed">No signup, no watermarks, no daily caps.</p>
+                <p className="mt-1 text-xs text-ink-muted leading-relaxed">Free daily credits with a free account; no watermarks.</p>
               </div>
             </div>}
           </div>

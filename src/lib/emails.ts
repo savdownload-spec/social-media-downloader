@@ -55,7 +55,7 @@ export async function sendEmail(args: SendEmailArgs): Promise<ResolvedEmail> {
         text: args.text,
       };
       if (args.html) payload.html = args.html;
-      if (args.replyTo) payload.reply_to = args.replyTo;
+      if (args.replyTo) payload.replyTo = args.replyTo;
 
       await resend.emails.send(payload);
       return { sent: true };
