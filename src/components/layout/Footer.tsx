@@ -185,20 +185,20 @@ export function Footer() {
 
         {/* ---- Bottom bar ---- */}
         <div className="mt-14 pt-8 border-t border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-            <p className="text-xs text-ink-subtle">
-              &copy; {new Date().getFullYear()} {siteConfig.name}. {"All Rights Reserved."}
-            </p>
-            <span className="hidden sm:inline text-white/20 text-xs">|</span>
-            <p className="flex items-center gap-1.5 text-xs text-ink-subtle">
+          <div className="flex flex-wrap items-center gap-x-0 gap-y-1 text-xs text-ink-subtle">
+            <span>&copy; {new Date().getFullYear()} {siteConfig.name}. All Rights Reserved.</span>
+            <span className="mx-2 text-white/20">|</span>
+            <span className="flex items-center gap-1">
               Made with
               <Heart className="h-3 w-3 text-red-500 fill-current" aria-hidden />
-              from
-              <PakistanFlag className="h-3 w-[18px] rounded-[2px] ring-1 ring-white/10" />
-              <span className="text-white/20">|</span>
-              {" Developed by "}
+              From
+              <span role="img" aria-label="Pakistan">🇵🇰</span>
+            </span>
+            <span className="mx-2 text-white/20">|</span>
+            <span>
+              Developed by{" "}
               <a href="https://aurangzaib.dev/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Aurangzaib Dev</a>
-            </p>
+            </span>
           </div>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
             {siteConfig.legalLinks.map((link) => {
