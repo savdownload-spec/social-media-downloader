@@ -189,13 +189,15 @@ export function Footer() {
             <p className="text-xs text-ink-subtle">
               &copy; {new Date().getFullYear()} {siteConfig.name}. {"All Rights Reserved."}
             </p>
+            <span className="hidden sm:inline text-white/20 text-xs">|</span>
             <p className="flex items-center gap-1.5 text-xs text-ink-subtle">
               Made with
               <Heart className="h-3 w-3 text-red-500 fill-current" aria-hidden />
               from
               <PakistanFlag className="h-3 w-[18px] rounded-[2px] ring-1 ring-white/10" />
-              {" · Developed by "}
-              <a href="https://aurangzaib.dev/" target="_blank" rel="noopener noreferrer">Aurangzaib Dev</a>
+              <span className="text-white/20">|</span>
+              {" Developed by "}
+              <a href="https://aurangzaib.dev/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Aurangzaib Dev</a>
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
