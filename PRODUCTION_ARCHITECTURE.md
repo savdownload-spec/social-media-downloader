@@ -230,5 +230,36 @@ Not with server-delivered video downloads enabled. Vercel function responses are
 ### Optional
 `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `ADMIN_EMAILS`
 
+### Transactional Email (Contact Us notifications, visitor acknowledgements, password reset, support replies, admin user notices)
+
+Transactional email is sent through the existing GoDaddy Titan Mail mailbox
+`info@getsavdown.com` via SMTP (nodemailer). Official SMTP config from the GoDaddy Email & Office Dashboard (the account is
+"Professional Email powered by Titan"): host `smtpout.secureserver.net`, port
+`465` (SSL), auth username = the full mailbox address, `From` must equal the
+auth mailbox. No new DNS
+records are required — Titan already hosts the mailbox, so the `getsavdown.com`
+MX/SPF/DKIM records already authorise Titan to send. Prereq: enable
+"third-party email access" in Titan webmail Settings; use an application
+password if 2FA is on.
+
+| Variable | Purpose |
+|----------|---------|
+| `SMTP_HOST` | GoDaddy SMTP host (`smtpout.secureserver.net`). Active production transport. |
+| `SMTP_PORT` | GoDaddy SMTP port (`465` SSL). `secure = port === 465` (so 465 → SSL). |
+| `SMTP_USER` | Full mailbox address (`info@getsavdown.com`) = SMTP auth username. |
+| `SMTP_PASS` | Mailbox password (or a Titan application password if 2FA is on). |
+| `SMTP_FROM` | Sender address — MUST equal `SMTP_USER` (Titan rejects a mismatched From). |
+| `SMTP_CONTACT_RECIPIENT` | Recipient for Contact Us notifications (default `info@getsavdown.com`). |
+| `EMAIL_OVERRIDE_TO` | Preview-only safety: rewrites every recipient to this sink and forces the SMTP path so dev/preview can never email real customers. Do NOT set in Production. |
+| `RESEND_API_KEY` | Resend API key — present-but-unused. Stays UNSET in Production so Titan SMTP wins; setting it again reverts to Resend (reversible). Retained per the phased rollout. |
+| `RESEND_FROM_EMAIL` | Resend verified sender (present-but-unused fallback). |
+| `RESEND_CONTACT_RECIPIENT` | Legacy Contact Us recipient; `SMTP_CONTACT_RECIPIENT` now takes precedence. |
+
+### Newsletter
+| Variable | Purpose |
+|----------|---------|
+| `KIT_API_KEY` | Kit V4 API key for newsletter subscription. |
+| `KIT_FORM_ID` | Numeric Kit form ID (not the embed UID). |
+
 ### VPS-only
 `GALLERY_DL_BIN`, `DOWNLOADER_API_URL`, `DOWNLOADER_API_KEY`

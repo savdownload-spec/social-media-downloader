@@ -49,6 +49,7 @@ export async function GET() {
     affiliatesUnread: counts.affiliates ?? 0,
     paymentsUnread: counts.payments ?? 0,
     subscriptionsUnread: counts.subscriptions ?? 0,
+    contactsUnread: counts.contacts ?? 0,
     total,
     notifications,
   });

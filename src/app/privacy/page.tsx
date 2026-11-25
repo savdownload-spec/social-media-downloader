@@ -202,7 +202,7 @@ export default function PrivacyPage() {
 
       <InfoCallout
         title="Privacy questions? Just ask."
-        body={<>Reach us via the contact page and we will respond within 30 days, usually much faster.</>}
+        body={<>Reach us via the contact page and we will respond within 30 days, usually much faster. You can also email us directly at <a href="mailto:info@getsavdown.com" className="underline hover:no-underline">info@getsavdown.com</a>.</>}
         cta={{ label: 'Contact Us', href: '/contact' }}
       />
     </>

@@ -28,7 +28,7 @@ function getTransporter() {
 
 export type ResolvedEmail =
   | { sent: true }
-  | { sent: false; reason: 'no-smtp' | 'no-config' | 'resend'; previewText: string };
+  | { sent: false; reason: 'no-smtp' | 'no-config' | 'resend' | 'smtp'; previewText: string };
 
 /**
  * Sends an email via Resend (when RESEND_API_KEY is set) or SMTP (when
@@ -38,9 +38,18 @@ export type ResolvedEmail =
 export async function sendEmail(args: SendEmailArgs): Promise<ResolvedEmail> {
   const previewText = [`To: ${args.to}`, `Subject: ${args.subject}`, '', args.text].join('\n');
 
-  // ── Resend path (takes priority over SMTP) ──────────────────────────────
+  // ── Preview-safe recipient override (Preview/dev only) ──────────────────
+  // When EMAIL_OVERRIDE_TO is set, every recipient is rewritten to that sink
+  // address and the SMTP path is forced — so even if a stray RESEND_API_KEY
+  // were configured in Preview, Resend could never send real customer mail.
+  // Leave EMAIL_OVERRIDE_TO UNSET in Production (its absence = today's behaviour).
+  const overrideTo = process.env.EMAIL_OVERRIDE_TO?.trim();
+  const effectiveTo = overrideTo || args.to;
+  const forceSmtp = Boolean(overrideTo);
+
+  // ── Resend path (priority over SMTP unless the preview override forces SMTP) ──
   const resendKey = process.env.RESEND_API_KEY;
-  if (resendKey) {
+  if (resendKey && !forceSmtp) {
     try {
       const { Resend } = await import('resend');
       const resend = new Resend(resendKey);
@@ -75,16 +84,21 @@ export async function sendEmail(args: SendEmailArgs): Promise<ResolvedEmail> {
 
   const from = process.env.SMTP_FROM || `"${siteConfig.name}" <${process.env.SMTP_USER}>`;
 
-  await transporter.sendMail({
-    from,
-    to: args.to,
-    replyTo: args.replyTo,
-    subject: args.subject,
-    text: args.text,
-    html: args.html,
-  });
-
-  return { sent: true };
+  try {
+    await transporter.sendMail({
+      from,
+      to: effectiveTo,
+      replyTo: args.replyTo,
+      subject: args.subject,
+      text: args.text,
+      html: args.html,
+    });
+    return { sent: true };
+  } catch (err) {
+    const code = err instanceof Error ? err.message : String(err);
+    console.error('[email] SMTP send failed:', code);
+    return { sent: false, reason: 'smtp', previewText };
+  }
 }
 
 // ── Contact notification emails ──────────────────────────────────────────────
@@ -236,8 +250,15 @@ export async function sendContactNotification(data: {
   message: string;
   createdAt: Date;
 }): Promise<ContactNotificationResult> {
+  // Contact Us notifications go to info@getsavdown.com by default.
+  // SMTP_CONTACT_RECIPIENT takes precedence; RESEND_CONTACT_RECIPIENT is kept
+  // as a backwards-compatible fallback (Resend is present-but-unused while
+  // Titan SMTP is the active production path). Reply-To stays the visitor's
+  // submitted email (passed through to the SMTP send above).
   const recipient =
-    process.env.RESEND_CONTACT_RECIPIENT ?? 'info@getsavdown.com';
+    process.env.SMTP_CONTACT_RECIPIENT ??
+    process.env.RESEND_CONTACT_RECIPIENT ??
+    'info@getsavdown.com';
   const submittedAt = data.createdAt.toUTCString();
   const subjectLine = data.subject
     ? `[SavDown Contact] ${data.subject}`

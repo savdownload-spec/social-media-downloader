@@ -137,6 +137,12 @@ export function organizationSchema() {
     logo: `${siteConfig.url}/icon-512.png`,
     description: siteConfig.description,
     sameAs: siteConfig.social.map((s) => s.href),
+    contactPoint: {
+      '@type': 'ContactPoint',
+      email: 'info@getsavdown.com',
+      contactType: 'customer support',
+      url: `${siteConfig.url}/contact`,
+    },
   };
 }
 
