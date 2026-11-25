@@ -128,23 +128,25 @@ export function Hero() {
                 return (
                   <div
                     key={s.label}
-                    className={`group relative flex min-h-[118px] flex-col justify-between gap-4 p-4 transition-colors duration-200 hover:bg-primary-light md:min-h-[126px] md:p-5 ${index < 2 ? 'border-b border-border-light md:border-b-0' : ''} ${index < heroStats.length - 1 ? 'md:border-r md:border-border-light' : ''}`}
+                    className={`group relative flex min-h-[118px] flex-col p-4 transition-colors duration-200 hover:bg-primary-light md:min-h-[126px] md:p-5 ${index < 2 ? 'border-b border-border-light md:border-b-0' : ''} ${index < heroStats.length - 1 ? 'md:border-r md:border-border-light' : ''}`}
                   >
                     <dt className="sr-only">{s.label}</dt>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className={`inline-flex h-8 w-8 items-center justify-center rounded-xl transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:scale-105 ${s.iconBg}`}>
-                        <Icon className={`h-4 w-4 ${s.iconClass}`} strokeWidth={1.9} />
+                    <dd className="m-0 flex flex-1 flex-col justify-between gap-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className={`inline-flex h-8 w-8 items-center justify-center rounded-xl transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:scale-105 ${s.iconBg}`}>
+                          <Icon className={`h-4 w-4 ${s.iconClass}`} strokeWidth={1.9} />
+                        </div>
+                        <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary/25 transition-colors duration-200 group-hover:bg-primary" aria-hidden />
                       </div>
-                      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary/25 transition-colors duration-200 group-hover:bg-primary" aria-hidden />
-                    </div>
-                    <div>
-                      <dd className="inline-flex items-center gap-1 text-2xl font-bold tracking-tight text-gradient font-display md:text-3xl">
-                        {s.value === null ? <LiveRating /> : s.value}
-                        {s.star && s.value !== null && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 md:h-4 md:w-4" />}
-                      </dd>
-                      <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.13em] text-text-muted">{s.label}</p>
-                      <p className="mt-1 text-xs text-text-subtle">{s.detail}</p>
-                    </div>
+                      <div>
+                        <span className="inline-flex items-center gap-1 text-2xl font-bold tracking-tight text-gradient font-display md:text-3xl">
+                          {s.value === null ? <LiveRating /> : s.value}
+                          {s.star && s.value !== null && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400 md:h-4 md:w-4" />}
+                        </span>
+                        <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.13em] text-text-muted">{s.label}</p>
+                        <p className="mt-1 text-xs text-text-subtle">{s.detail}</p>
+                      </div>
+                    </dd>
                   </div>
                 );
               })}

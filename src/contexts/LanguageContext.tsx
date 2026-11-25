@@ -86,8 +86,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   // root layout and does NOT remount on client-side navigation, so a language
   // the user picks stays active while they browse — but a reload, a reopened
   // tab, or a new session remounts it and lands back on English. The cookie is
-  // cleared here BEFORE the translate widget is ever constructed (below), so a
-  // stale cookie from a previous session can never auto-translate the page.
+  // cleared here so a stale cookie from a previous session can never
+  // auto-translate the page.
   //
   // Intentionally NOT reading localStorage/cookies/navigator.language to pick a
   // starting language: English is the default unless the user actively chooses
@@ -97,13 +97,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Preload the widget and drive it to the current language (English on load,
-  // near-instant since English just means "no translation"). Preloading here
-  // means a later language pick applies quickly rather than waiting on Google's
-  // slow async bootstrap.
-  useEffect(() => {
-    loadGoogleTranslateScript().then(() => translatePage(language.code));
-  }, [language.code]);
+  // The Google Translate widget is loaded only on demand (when the language
+  // menu opens or a language is chosen). It injects ~250 DOM nodes plus
+  // ~180 KiB of third-party JS, rewrites text nodes, and can race React
+  // hydration — so loading it for every English visitor is pure cost.
 
   const value: LanguageContextType = {
     language,

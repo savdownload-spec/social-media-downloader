@@ -31,7 +31,7 @@ export function LifetimeCard({ lifetime }: { lifetime: LifetimeView }) {
 
             {lifetime.promotion && (
               <div className="mt-4 rounded-xl border border-primary/15 bg-primary-light/60 p-3">
-                {lifetime.promotion.badge && <span className="mb-1 inline-flex max-w-full break-words rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">{lifetime.promotion.badge}</span>}
+                {lifetime.promotion.badge && <span className="mb-1 inline-flex max-w-full break-words rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700 dark:text-violet-800">{lifetime.promotion.badge}</span>}
                 <p className="break-words text-sm font-semibold leading-snug text-primary [overflow-wrap:anywhere]">{lifetime.promotion.text}</p>
               </div>
             )}

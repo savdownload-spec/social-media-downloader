@@ -30,7 +30,7 @@ export function AdBanner() {
               <span className="inline-flex w-9 h-9 flex-shrink-0 rounded-xl bg-white dark:bg-card items-center justify-center shadow-soft-md">
                 <Sparkles className="w-4 h-4 text-primary" />
               </span>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-primary/70">Advertisement</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-primary">Advertisement</p>
             </div>
 
             {/* Middle: headline + size, vertically centred in the remaining space */}
@@ -55,7 +55,7 @@ export function AdBanner() {
                 <Sparkles className="w-5 h-5 text-primary" />
               </span>
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-wider text-primary/70">Advertisement</p>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-primary">Advertisement</p>
                 <p className="mt-1 text-lg font-bold text-text tracking-tight">
                   Advertise Your Brand Here
                 </p>

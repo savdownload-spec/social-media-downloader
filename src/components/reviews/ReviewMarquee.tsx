@@ -90,6 +90,10 @@ function MarqueeRow({ items, speed, direction, paused, onPauseChange }: MarqueeR
                   <img
                     src={review.photo}
                     alt={review.name}
+                    width={32}
+                    height={32}
+                    loading="lazy"
+                    decoding="async"
                     className="w-8 h-8 rounded-full object-cover shrink-0"
                   />
                 ) : (
