@@ -359,7 +359,7 @@ export async function ToolLongContentSection({ slug, guide = getToolGuide(slug) 
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
                 <Shield className="w-5 h-5 text-gradient-light mb-2" />
                 <h4 className="text-sm font-bold">Private</h4>
-                <p className="mt-1 text-xs text-ink-muted leading-relaxed">Files are processed only to deliver your download and are never shared.</p>
+                <p className="mt-1 text-xs text-ink-muted leading-relaxed">Files are processed transiently to deliver your download; operation records are kept.</p>
               </div>
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
                 <Users className="w-5 h-5 text-gradient-light mb-2" />

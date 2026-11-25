@@ -7,6 +7,6 @@ import { Zap, Lock, Sparkles } from 'lucide-react';
  *  are retained (see each page's "Processing and privacy" section). */
 export const downloaderPerks = [
   { icon: Zap, title: 'Blazing Fast', body: 'Fast link analysis and delivery.' },
-  { icon: Lock, title: 'Private by Design', body: 'Your files are delivered transiently and never shared.' },
+  { icon: Lock, title: 'Private by Design', body: 'Files are processed transiently to deliver your download; operation records are kept.' },
   { icon: Sparkles, title: 'No Watermarks', body: 'Clean, original media output.' },
 ];

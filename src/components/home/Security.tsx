@@ -7,13 +7,13 @@ import { Reveal } from '@/components/ui/Reveal';
 
 export function Security() {
   const points = [
-    { icon: ServerOff, title: "Nothing Is Stored", body: "Files stream straight through to you. We never keep a copy on our servers." },
+    { icon: ServerOff, title: "Transient By Design", body: "Files are streamed to you from temporary working storage that is cleaned up after delivery." },
     { icon: EyeOff, title: "No Tracking History", body: "We do not build a profile of what you download or tie activity back to you." },
     { icon: Lock, title: "Encrypted Connections", body: "Every request runs over HTTPS, so your links stay private in transit." },
   ];
 
-  const statValues = ['0', 'None', 'None', 'HTTPS'];
-  const statLabels = ['Files stored', 'Accounts needed', 'Trackers on page', 'Connection'];
+  const statValues = ['Transient', 'Free', 'Never', 'HTTPS'];
+  const statLabels = ['File storage', 'Account required', 'Data sold', 'Connection'];
 
   return (
     <Section variant="white" id="security">
