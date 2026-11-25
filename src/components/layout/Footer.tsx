@@ -109,6 +109,12 @@ export function Footer() {
               <Mail className="w-4 h-4" />
               {"Contact"}
             </Link>
+            <p className="mt-3 text-sm text-ink-muted">
+              {"or email "}
+              <a href="mailto:info@getsavdown.com" className="text-white/80 hover:text-white transition-colors">
+                info@getsavdown.com
+              </a>
+            </p>
             <div className="mt-6 flex flex-wrap gap-x-10 gap-y-6">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
@@ -188,6 +194,8 @@ export function Footer() {
               <Heart className="h-3 w-3 text-red-500 fill-current" aria-hidden />
               from
               <PakistanFlag className="h-3 w-[18px] rounded-[2px] ring-1 ring-white/10" />
+              {" · Developed by "}
+              <a href="https://aurangzaib.dev/" target="_blank" rel="noopener noreferrer">Aurangzaib Dev</a>
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
