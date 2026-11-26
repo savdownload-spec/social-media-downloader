@@ -16,6 +16,7 @@ import { PricingProvider } from '@/components/pricing/PricingProvider';
 import { getPricingConfig } from '@/lib/pricing-server';
 import { ToolStatusProvider } from '@/components/tools/ToolStatusProvider';
 import { getToolStatuses } from '@/lib/toolStatuses';
+import { getComplianceSettings } from '@/lib/compliance-server';
 import { SupportChat } from '@/components/support/SupportChat';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { THEME_INIT_SCRIPT } from '@/lib/theme/theme-init-script';
@@ -83,9 +84,10 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [pricing, toolStatuses] = await Promise.all([
+  const [pricing, toolStatuses, compliance] = await Promise.all([
     getPricingConfig(),
     getToolStatuses(),
+    getComplianceSettings(),
   ]);
   const toolStatusesObj = Object.fromEntries(toolStatuses);
 
@@ -102,7 +104,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={jsonLd({ '@graph': [organizationSchema(), websiteSchema()] })}
+          dangerouslySetInnerHTML={jsonLd({ '@graph': [organizationSchema(compliance.business), websiteSchema()] })}
         />
       </head>
       <body className="font-sans bg-surface text-text antialiased">
@@ -121,7 +123,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     </PublicShell>
                     <main className="min-h-[calc(100vh-4rem)]">{children}</main>
                     <PublicShell>
-                      <Footer />
+                      <Footer business={compliance.business} />
                       <SupportChat />
                     </PublicShell>
                   </InstallProvider>

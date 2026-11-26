@@ -9,6 +9,8 @@ import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { Container } from './Container';
 import { FooterToolGrid } from './FooterToolGrid';
 import { FooterApps } from './FooterApps';
+import { BusinessContact } from './BusinessContact';
+import type { BusinessDetails } from '@/config/compliance';
 
 function PinterestIcon({ className }: SVGProps<SVGSVGElement>) {
   return (
@@ -50,7 +52,7 @@ const socialIcons = {
   reddit: RedditIcon,
 } as const;
 
-export function Footer() {
+export function Footer({ business }: { business: BusinessDetails }) {
   return (
     <footer className="relative bg-ink text-white overflow-hidden">
       {/* subtle brand glow + grid for depth */}
@@ -183,10 +185,16 @@ export function Footer() {
           <FooterApps />
         </div>
 
+        {/* ---- Business contact ---- */}
+        <div className="mt-14 pt-8 border-t border-white/10">
+          <p className="mb-5 text-[11px] font-bold uppercase tracking-wider text-white">Business contact</p>
+          <BusinessContact business={business} variant="footer" />
+        </div>
+
         {/* ---- Bottom bar ---- */}
-        <div className="mt-14 pt-8 border-t border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="mt-10 pt-8 border-t border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-x-0 gap-y-1 text-xs text-ink-subtle">
-            <span>&copy; {new Date().getFullYear()} {siteConfig.name}. All Rights Reserved.</span>
+            <span>&copy; {new Date().getFullYear()} {business.name}. All Rights Reserved.</span>
             <span className="mx-2 text-white/20">|</span>
             <span className="flex items-center gap-1">
               Made with

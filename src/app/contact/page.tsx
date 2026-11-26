@@ -1,133 +1,46 @@
-﻿'use client';
-import { useState } from 'react';
+﻿import { Mail } from 'lucide-react';
 import { Container } from '@/components/layout/Container';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
-import { Send, Check, Mail } from 'lucide-react';
-import { useToast } from '@/components/ui/Toast';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
+import { BusinessContact } from '@/components/layout/BusinessContact';
+import { ContactForm } from '@/components/ContactForm';
+import { getComplianceSettings } from '@/lib/compliance-server';
 
-export default function ContactPage() {
-  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '', website: '' });
-  const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'err' | 'server-err'>('idle');
-  const [validationError, setValidationError] = useState('');
-  const { success, error: errorToast } = useToast();
+export const revalidate = 300;
 
-  const submit = async () => {
-    // Client-side validation
-    if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      setValidationError("Please enter a valid email address.");
-      setState('err');
-      return;
-    }
-    if (form.message.trim().length < 3) {
-      setValidationError("Please write a message before sending.");
-      setState('err');
-      return;
-    }
-
-    setValidationError('');
-    setState('loading');
-
-    try {
-      const res = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok || !data?.ok) {
-        if (res.status === 429) {
-          errorToast("Slow down!", "Too many requests, please wait a moment.");
-        } else {
-          errorToast('Send failed', data?.error ?? 'Please try again.');
-        }
-        setState('server-err');
-        return;
-      }
-
-      setState('ok');
-      setForm({ name: '', email: '', subject: '', message: '', website: '' });
-      success("Message sent!", "We'll get back to you as soon as possible.");
-    } catch {
-      errorToast("Network error", "Could not reach the server. Check your connection and try again.");
-      setState('server-err');
-    }
-  };
+export default async function ContactPage() {
+  const { business } = await getComplianceSettings();
 
   return (
-    <Container className="py-24 max-w-2xl">
+    <Container className="max-w-4xl py-16 md:py-24">
       <Breadcrumb
         className="mb-8"
         includeSchema
-        items={[
-          { label: 'Home', href: '/' },
-          { label: 'Contact Us' },
-        ]}
+        items={[{ label: 'Home', href: '/' }, { label: 'Contact Us' }]}
       />
-      <div className="w-12 h-12 rounded-2xl bg-primary-light flex items-center justify-center mb-6">
-        <Mail className="w-5 h-5 text-primary" />
+      <div className="max-w-2xl">
+        <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-light">
+          <Mail className="h-5 w-5 text-primary" aria-hidden="true" />
+        </div>
+        <p className="mb-3 text-sm font-medium text-primary">Contact</p>
+        <h1 className="text-4xl font-bold tracking-tight md:text-5xl">Say Hello.</h1>
+        <p className="mt-4 leading-relaxed text-text-muted">
+          Contact GetSavDown about tools, accounts, digital purchases, refunds, feedback, or partnerships. Use the business details below or send us a message.
+        </p>
       </div>
-      <p className="text-sm font-medium text-primary mb-3">{"Contact"}</p>
-      <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-        {"Say Hello."}
-      </h1>
-      <p className="mt-4 text-text-muted leading-relaxed">
-        {"Feedback, feature requests, bug reports, partnerships, we read every message. Or email us directly at "}
-        <a href="mailto:info@getsavdown.com" className="text-primary hover:underline">info@getsavdown.com</a>
-        {"."}
-      </p>
 
-      <div className="mt-10 space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder={"Your name"}
-          />
-          <Input
-            value={form.email}
-            onChange={(e) => { setForm({ ...form, email: e.target.value }); if (state === 'err') { setState('idle'); setValidationError(''); } }}
-            type="email"
-            placeholder={"you@example.com"}
-            required
-          />
-        </div>
-        <Input
-          value={form.subject}
-          onChange={(e) => setForm({ ...form, subject: e.target.value })}
-          placeholder={"Subject"}
-        />
-        <textarea
-          value={form.message}
-          onChange={(e) => { setForm({ ...form, message: e.target.value }); if (state === 'err') { setState('idle'); setValidationError(''); } }}
-          placeholder={"What's on your mind?"}
-          rows={6}
-          className="w-full bg-white dark:bg-card border border-border rounded-2xl px-5 py-3.5 text-text placeholder:text-text-subtle focus:outline-none focus:border-primary focus:shadow-glow resize-none"
-          required
-        />
-        {/* Honeypot — hidden from real users, bots fill it in */}
-        <div className="hidden" aria-hidden="true">
-          <input
-            name="website"
-            tabIndex={-1}
-            autoComplete="off"
-            value={form.website}
-            onChange={(e) => setForm({ ...form, website: e.target.value })}
-          />
-        </div>
-        <Button size="lg" onClick={submit} loading={state === 'loading'} disabled={state === 'ok'} className="w-full sm:w-auto">
-          {state === 'ok' ? <>{"Message Sent"} <Check className="w-4 h-4" /></> : <>{"Send Message"} <Send className="w-4 h-4" /></>}
-        </Button>
-        {state === 'err' && validationError && (
-          <p className="text-sm text-red-600">{validationError}</p>
-        )}
-        {state === 'ok' && (
-          <p className="text-sm text-accent">{"Thanks, we'll get back to you soon."}</p>
-        )}
+      <div className="mt-10">
+        <BusinessContact business={business} />
       </div>
+
+      <section className="mt-14 max-w-2xl" aria-labelledby="contact-form-heading">
+        <h2 id="contact-form-heading" className="text-2xl font-bold tracking-tight text-text md:text-3xl">
+          Send us a message
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-text-muted">
+          Include the relevant tool or payment reference when asking for technical or billing help. Never send passwords or full payment-card details.
+        </p>
+        <ContactForm />
+      </section>
     </Container>
   );
 }

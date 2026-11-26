@@ -96,7 +96,9 @@ export const siteConfig = {
   /** Policy links rendered in the footer's bottom bar (kept out of the column grid). */
   legalLinks: [
     { label: 'Privacy Policy', href: '/privacy' },
-    { label: 'Terms of Service', href: '/terms' },
+    { label: 'Terms & Conditions', href: '/terms' },
+    { label: 'Return & Refund Policy', href: '/refund-policy' },
+    { label: 'Shipping & Service Delivery Policy', href: '/service-policy' },
     { label: 'Cookie Policy', href: '/cookies' },
     { label: 'DMCA', href: '/dmca' },
     { label: 'Sitemap', href: '/sitemap.xml' },

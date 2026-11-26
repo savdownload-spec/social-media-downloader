@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { AdminPage, PageHeader, SectionCard, ErrorState, Skeleton } from './AdminUI';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
-import { Save, Settings, Coins, Star, Share2, Zap, LoaderCircle } from 'lucide-react';
+import { Save, Settings, Coins, Star, Share2, Zap, LoaderCircle, Building2, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type Settings = Record<string, string>;
@@ -14,6 +14,16 @@ const SECTIONS = [
     title: 'General',
     icon: Settings,
     keys: ['site_name', 'site_tagline', 'maintenance_mode'],
+  },
+  {
+    title: 'Business',
+    icon: Building2,
+    keys: ['business_name', 'business_address', 'business_phone', 'business_whatsapp'],
+  },
+  {
+    title: 'Policies',
+    icon: FileText,
+    keys: ['privacy_policy_content', 'terms_conditions_content', 'refund_policy_content', 'service_policy_content'],
   },
   {
     title: 'Credits',
@@ -40,6 +50,14 @@ const SECTIONS = [
 const LABELS: Record<string, string> = {
   site_name:                 'Site Name',
   site_tagline:              'Site Tagline',
+  business_name:             'Official Business Name',
+  business_address:          'Office Address',
+  business_phone:            'Mobile Number',
+  business_whatsapp:         'WhatsApp Number',
+  privacy_policy_content:    'Privacy Policy Content',
+  terms_conditions_content:  'Terms & Conditions Content',
+  refund_policy_content:     'Return & Refund Policy Content',
+  service_policy_content:    'Shipping & Service Delivery Policy Content',
   maintenance_mode:          'Maintenance Mode',
   free_daily_credits:        'Free Daily Credits',
   pro_monthly_credits:       'Pro Monthly Credits',
@@ -54,6 +72,14 @@ const LABELS: Record<string, string> = {
 const DESCRIPTIONS: Record<string, string> = {
   site_name:                 'The name displayed across the platform',
   site_tagline:              'Subtitle shown on the homepage',
+  business_name:             'Legal business name shown on the contact, policy, and footer sections',
+  business_address:          'Public office address used across the website',
+  business_phone:            'Public mobile number in international format, including the leading +',
+  business_whatsapp:         'Public WhatsApp number in international format, including the leading +',
+  privacy_policy_content:    'Public page body. Start section headings with ##, subheadings with ###, and list items with -. Leave a blank line between paragraphs.',
+  terms_conditions_content:  'Public page body. Start section headings with ##, subheadings with ###, and list items with -. Leave a blank line between paragraphs.',
+  refund_policy_content:     'Public page body. Start section headings with ##, subheadings with ###, and list items with -. Leave a blank line between paragraphs.',
+  service_policy_content:    'Public page body. Start section headings with ##, subheadings with ###, and list items with -. Leave a blank line between paragraphs.',
   maintenance_mode:          'Disables public access during maintenance',
   free_daily_credits:        'Credits given to free users each day',
   pro_monthly_credits:       'Credits for Pro subscribers per month',
@@ -66,6 +92,7 @@ const DESCRIPTIONS: Record<string, string> = {
 };
 
 const BOOL_KEYS = new Set(['maintenance_mode', 'reviews_enabled', 'reviews_require_approval', 'affiliate_enabled', 'newsletter_enabled']);
+const POLICY_KEYS = new Set(['privacy_policy_content', 'terms_conditions_content', 'refund_policy_content', 'service_policy_content']);
 
 export function AdminSettingsClient() {
   const [settings, setSettings] = useState<Settings>({});
@@ -212,8 +239,11 @@ export function AdminSettingsClient() {
               const isMaintenance = key === 'maintenance_mode';
               const maintenanceEnabled = settings.maintenance_mode === 'true';
               return (
-              <div key={key} className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 px-5 py-4">
-                <div className="min-w-0 max-w-2xl">
+              <div key={key} className={cn(
+                'flex flex-col gap-4 px-5 py-4',
+                !POLICY_KEYS.has(key) && 'sm:flex-row sm:items-start sm:justify-between',
+              )}>
+                <div className={cn('min-w-0', POLICY_KEYS.has(key) ? 'max-w-none' : 'max-w-2xl')}>
                   <p className="text-[13px] font-medium text-text">{LABELS[key] ?? key}</p>
                   <p className="text-[12px] text-text-muted mt-1">{DESCRIPTIONS[key] ?? ''}</p>
                   {isMaintenance && (
@@ -230,7 +260,15 @@ export function AdminSettingsClient() {
                     </p>
                   )}
                 </div>
-                {BOOL_KEYS.has(key) ? (
+                {POLICY_KEYS.has(key) ? (
+                  <textarea
+                    value={settings[key] ?? ''}
+                    onChange={(e) => setSettings({ ...settings, [key]: e.target.value })}
+                    rows={18}
+                    aria-label={LABELS[key] ?? key}
+                    className="min-h-80 w-full resize-y rounded-lg border border-border-light bg-white px-3 py-2 font-mono text-xs leading-relaxed text-text focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                ) : BOOL_KEYS.has(key) ? (
                   <label className={cn(
                     'relative inline-flex items-center shrink-0',
                     isMaintenance && maintenanceSaving ? 'cursor-wait opacity-70' : 'cursor-pointer',
