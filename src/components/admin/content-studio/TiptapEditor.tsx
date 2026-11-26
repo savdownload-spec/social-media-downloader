@@ -554,7 +554,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
           { type: 'text', text: linkDialog.text, marks: [...otherMarks, linkMark] },
         ).run();
       } else {
-        editor.chain().focus().extendMarkRange('link').setLink({ href, target, rel }).run();
+        editor.chain().focus().extendMarkRange('link').setMark('link', { href, target, rel }).run();
       }
     } else {
       const { from, to, empty } = editor.state.selection;
@@ -567,7 +567,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
           { type: 'text', text: linkDialog.text, marks: [...otherMarks, linkMark] },
         ).run();
       } else {
-        editor.chain().focus().extendMarkRange('link').setLink({ href, target, rel }).run();
+        editor.chain().focus().extendMarkRange('link').setMark('link', { href, target, rel }).run();
       }
     }
     setLinkDialog(EMPTY_LINK_DIALOG);
@@ -576,7 +576,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
   function unlinkSelection() {
     if (!editor) return;
     if (linkDialog.open) restoreSelection();
-    editor.chain().focus().extendMarkRange('link').unsetLink().run();
+    editor.chain().focus().extendMarkRange('link').unsetMark('link').run();
     setLinkDialog((d) => (d.open ? EMPTY_LINK_DIALOG : d));
   }
 
@@ -839,42 +839,42 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
             triggerActive={!!blockLevel}
             trigger={<span className="inline-flex items-center gap-1.5 text-[12px] font-medium min-w-[7.5rem]"><Type className="w-3.5 h-3.5 opacity-70" />{blockLabel}</span>}
             items={[
-              { key: 'p', label: 'Paragraph', active: editor.isActive('paragraph'), disabled: !editor.can().setParagraph(), icon: <Type className="w-3.5 h-3.5" />, onClick: () => editor.chain().focus().setParagraph().run() },
+              { key: 'p', label: 'Paragraph', active: editor.isActive('paragraph'), disabled: !editor.can().setNode('paragraph'), icon: <Type className="w-3.5 h-3.5" />, onClick: () => editor.chain().focus().setNode('paragraph').run() },
               ...[2, 3, 4, 5, 6].map((level) => ({
                 key: `h${level}`,
                 label: `Heading ${level}`,
                 active: blockLevel === level,
-                disabled: !editor.can().setHeading({ level: level as 2 | 3 | 4 | 5 | 6 }),
+                disabled: !editor.can().setNode('heading', { level: level as 2 | 3 | 4 | 5 | 6 }),
                 icon: <span className="w-3.5 h-3.5 inline-flex items-center justify-center text-[9px] font-bold">H{level}</span>,
-                onClick: () => editor.chain().focus().setHeading({ level: level as 2 | 3 | 4 | 5 | 6 }).run(),
+                onClick: () => editor.chain().focus().setNode('heading', { level: level as 2 | 3 | 4 | 5 | 6 }).run(),
               })),
             ]}
           />
           <Divider />
-          <ToolbarButton title="Bold (Ctrl+B)" active={editor.isActive('bold')} disabled={!editor.can().chain().toggleBold().run()} onClick={() => editor.chain().focus().toggleBold().run()}><Bold className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Italic (Ctrl+I)" active={editor.isActive('italic')} disabled={!editor.can().chain().toggleItalic().run()} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Underline (Ctrl+U)" active={editor.isActive('underline')} disabled={!editor.can().chain().toggleUnderline().run()} onClick={() => editor.chain().focus().toggleUnderline().run()}><UnderlineIcon className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Strikethrough" active={editor.isActive('strike')} disabled={!editor.can().chain().toggleStrike().run()} onClick={() => editor.chain().focus().toggleStrike().run()}><Strikethrough className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Bold (Ctrl+B)" active={editor.isActive('bold')} disabled={!editor.can().chain().toggleMark('bold').run()} onClick={() => editor.chain().focus().toggleMark('bold').run()}><Bold className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Italic (Ctrl+I)" active={editor.isActive('italic')} disabled={!editor.can().chain().toggleMark('italic').run()} onClick={() => editor.chain().focus().toggleMark('italic').run()}><Italic className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Underline (Ctrl+U)" active={editor.isActive('underline')} disabled={!editor.can().chain().toggleMark('underline').run()} onClick={() => editor.chain().focus().toggleMark('underline').run()}><UnderlineIcon className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Strikethrough" active={editor.isActive('strike')} disabled={!editor.can().chain().toggleMark('strike').run()} onClick={() => editor.chain().focus().toggleMark('strike').run()}><Strikethrough className="w-4 h-4" /></ToolbarButton>
           </fieldset>
           <ToolbarButton title={sourceMode ? 'Show formatted text' : 'Edit HTML source'} active={sourceMode} disabled={applyingSource} onClick={toggleSource}>
             {applyingSource ? <Loader2 className="w-4 h-4 animate-spin" /> : <Code className="w-4 h-4" />}
           </ToolbarButton>
           <fieldset disabled={sourceMode} className="contents">
-          <ToolbarButton title="Superscript" active={editor.isActive('superscript')} disabled={!editor.can().chain().toggleSuperscript().run()} onClick={() => editor.chain().focus().toggleSuperscript().run()}><span className="text-[11px] font-bold leading-none">x²</span></ToolbarButton>
-          <ToolbarButton title="Subscript" active={editor.isActive('subscript')} disabled={!editor.can().chain().toggleSubscript().run()} onClick={() => editor.chain().focus().toggleSubscript().run()}><span className="text-[11px] font-bold leading-none">x₂</span></ToolbarButton>
+          <ToolbarButton title="Superscript" active={editor.isActive('superscript')} disabled={!editor.can().chain().toggleMark('superscript').run()} onClick={() => editor.chain().focus().toggleMark('superscript').run()}><span className="text-[11px] font-bold leading-none">x²</span></ToolbarButton>
+          <ToolbarButton title="Subscript" active={editor.isActive('subscript')} disabled={!editor.can().chain().toggleMark('subscript').run()} onClick={() => editor.chain().focus().toggleMark('subscript').run()}><span className="text-[11px] font-bold leading-none">x₂</span></ToolbarButton>
           <Divider />
-          <ToolbarButton title="Bullet List" active={editor.isActive('bulletList')} disabled={!editor.can().chain().toggleBulletList().run()} onClick={() => editor.chain().focus().toggleBulletList().run()}><List className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Numbered List" active={editor.isActive('orderedList')} disabled={!editor.can().chain().toggleOrderedList().run()} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Blockquote" active={editor.isActive('blockquote')} disabled={!editor.can().chain().toggleBlockquote().run()} onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Code Block" active={editor.isActive('codeBlock')} disabled={!editor.can().chain().toggleCodeBlock().run()} onClick={() => editor.chain().focus().toggleCodeBlock().run()}><SquareCode className="w-4 h-4" /></ToolbarButton>
-          <ToolbarButton title="Horizontal Rule" disabled={!editor.can().chain().setHorizontalRule().run()} onClick={() => editor.chain().focus().setHorizontalRule().run()}><Minus className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Bullet List" active={editor.isActive('bulletList')} disabled={!editor.can().chain().toggleList('bulletList', 'listItem').run()} onClick={() => editor.chain().focus().toggleList('bulletList', 'listItem').run()}><List className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Numbered List" active={editor.isActive('orderedList')} disabled={!editor.can().chain().toggleList('orderedList', 'listItem').run()} onClick={() => editor.chain().focus().toggleList('orderedList', 'listItem').run()}><ListOrdered className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Blockquote" active={editor.isActive('blockquote')} disabled={!editor.can().chain().toggleWrap('blockquote').run()} onClick={() => editor.chain().focus().toggleWrap('blockquote').run()}><Quote className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Code Block" active={editor.isActive('codeBlock')} disabled={!editor.can().chain().toggleNode('codeBlock', 'paragraph').run()} onClick={() => editor.chain().focus().toggleNode('codeBlock', 'paragraph').run()}><SquareCode className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Horizontal Rule" disabled={!editor.can().chain().setNode('horizontalRule').run()} onClick={() => editor.chain().focus().setNode('horizontalRule').run()}><Minus className="w-4 h-4" /></ToolbarButton>
           <Divider />
           <ToolbarButton title="Align Left" active={editor.isActive({ textAlign: 'left' }) || ((editor.isActive('paragraph') || !!blockLevel) && !editor.getAttributes(blockLevel ? 'heading' : 'paragraph').textAlign)} disabled={!editor.can().chain().setTextAlign('left').run()} onClick={() => editor.chain().focus().setTextAlign('left').run()}><AlignLeft className="w-4 h-4" /></ToolbarButton>
           <ToolbarButton title="Align Center" active={editor.isActive({ textAlign: 'center' })} disabled={!editor.can().chain().setTextAlign('center').run()} onClick={() => editor.chain().focus().setTextAlign('center').run()}><AlignCenter className="w-4 h-4" /></ToolbarButton>
           <ToolbarButton title="Align Right" active={editor.isActive({ textAlign: 'right' })} disabled={!editor.can().chain().setTextAlign('right').run()} onClick={() => editor.chain().focus().setTextAlign('right').run()}><AlignRight className="w-4 h-4" /></ToolbarButton>
           <ToolbarButton title="Justify" active={editor.isActive({ textAlign: 'justify' })} disabled={!editor.can().chain().setTextAlign('justify').run()} onClick={() => editor.chain().focus().setTextAlign('justify').run()}><AlignJustify className="w-4 h-4" /></ToolbarButton>
           <Divider />
-          <ToolbarButton title="Insert / Edit Link (Ctrl+K)" active={inLink} disabled={!editor.can().setLink({ href: 'https://example.com' })} onClick={openLinkDialog}><LinkIcon className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton title="Insert / Edit Link (Ctrl+K)" active={inLink} disabled={!editor.can().setMark('link', { href: 'https://example.com' })} onClick={openLinkDialog}><LinkIcon className="w-4 h-4" /></ToolbarButton>
           <ToolbarButton title="Remove Link" active={false} disabled={!inLink} onClick={unlinkSelection}><Unlink className="w-4 h-4" /></ToolbarButton>
           <ToolbarButton
             title={figureActive ? 'Edit Image' : 'Insert Image'}
@@ -893,7 +893,7 @@ export const TiptapEditor = forwardRef<TiptapEditorHandle, {
             trigger={<span className="inline-flex items-center gap-1 text-[12px] font-medium">More</span>}
             align="right"
             items={[
-              { key: 'inline-code', label: 'Inline code (Ctrl+E)', active: editor.isActive('code'), disabled: !editor.can().toggleCode(), icon: <Code className="w-3.5 h-3.5" />, onClick: () => editor.chain().focus().toggleCode().run() },
+              { key: 'inline-code', label: 'Inline code (Ctrl+E)', active: editor.isActive('code'), disabled: !editor.can().toggleMark('code'), icon: <Code className="w-3.5 h-3.5" />, onClick: () => editor.chain().focus().toggleMark('code').run() },
               { key: 'find', label: 'Find In Article…', icon: <Search className="w-3.5 h-3.5" />, onClick: toggleFind },
               { key: 'youtube', label: 'YouTube Embed…', icon: <YoutubeIcon className="w-3.5 h-3.5" />, onClick: () => { rememberSelection(); setYoutubeUrl(''); setYoutubeOpen(true); } },
               ...CALLOUT_VARIANTS.map((v) => ({
