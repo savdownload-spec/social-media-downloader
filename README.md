@@ -41,24 +41,46 @@ A production-ready, full-stack social media downloader built with Next.js 14, Ty
 npm install
 
 # 2) Copy env and adjust values
-cp .env.example .env
+cp .env.example .env.local
 # Generate a NextAuth secret and paste it into NEXTAUTH_SECRET:
 #   openssl rand -base64 32
 
 # 3) Start Postgres + Redis via Docker (optional but easy)
 docker compose up -d
 
-# 4) Push the schema to your database and seed
-npx prisma db push
+# 4) Run database migrations
+npm run db:deploy
+
+# 5) Initialize configuration data
+npm run db:seed:config
+
+# 6) Seed sample data (optional, development only)
 npm run db:seed
 
-# 5) Run the dev server
+# 7) Verify setup
+npm run check:tool-sync
+
+# 8) Run the dev server
 npm run dev
 ```
 
 Open **http://localhost:3000**.
 
 The app runs fully in **demo mode** out of the box — the UI works, the DB logs, but downloads return placeholder data until you plug in a real downloader service (see next section).
+
+### First-Time Setup
+
+For detailed instructions on setting up new environments (development/production), database initialization, and configuration synchronization, see:
+
+📚 **[Environment Setup Guide](docs/ENVIRONMENT_SETUP.md)**
+
+This guide covers:
+- Complete first-time environment initialization
+- Development → Production deployment workflow  
+- Configuration sync procedures (keeping dev & prod in sync)
+- Backup and rollback procedures
+- What data syncs vs what stays separate
+- Troubleshooting common issues
 
 ---
 
@@ -199,15 +221,38 @@ Schema lives in `prisma/schema.prisma`. Models:
 - **Post** — blog posts with slug, tags, publish flag
 - **NewsletterSubscriber** — email list
 - **ContactMessage** — inbound contact form submissions
+- **ToolConfig** — per-tool configuration (status, credit cost, batch limits)
+- **AdminSetting** — key-value store for admin-configurable settings
 
-Common commands:
+### Common Commands
 
 ```bash
+# Schema management
 npm run db:push       # Push schema to DB (dev)
-npm run db:migrate    # Create + apply a migration (prod flow)
+npm run db:migrate    # Create + apply a migration (dev)
+npm run db:deploy     # Apply migrations (production)
 npm run db:studio     # Open Prisma Studio
-npm run db:seed       # Seed blog posts
+
+# Configuration seeding
+npm run db:seed:tools      # Initialize ToolConfig for all 59 tools
+npm run db:seed:admin      # Initialize default AdminSettings
+npm run db:seed:config     # Run both tool and admin seeds
+npm run db:seed            # Seed sample blog posts (dev only)
+
+# Configuration sync
+npm run db:export:config   # Export ToolConfig & AdminSetting to JSON
+npm run db:import:config <file>  # Import config from JSON file
+npm run check:tool-sync    # Verify code/DB tool definitions match
 ```
+
+### Configuration Synchronization
+
+For dev → production deployment workflow, see the **[Environment Setup Guide](docs/ENVIRONMENT_SETUP.md)** which documents:
+
+- How to keep configuration data synchronized between environments
+- What data syncs (ToolConfig, AdminSetting) vs what stays separate (Users, Payments)
+- Export/import workflow for configuration
+- Backup and rollback procedures
 
 ---
 
