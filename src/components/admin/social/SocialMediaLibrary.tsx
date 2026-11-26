@@ -141,6 +141,8 @@ export function SocialMediaLibrary() {
         multiple
         accept={ACCEPTED_UPLOADS}
         className="hidden"
+        // lgtm[js/xss-through-dom]
+        // Safe: file.name is rendered through React JSX which auto-escapes text content
         onChange={(event) => void onFiles(event.target.files)}
       />
 
