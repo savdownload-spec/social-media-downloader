@@ -109,6 +109,12 @@ export function Footer() {
               <Mail className="w-4 h-4" />
               {"Contact"}
             </Link>
+            <p className="mt-3 text-sm text-ink-muted">
+              {"or email "}
+              <a href="mailto:info@getsavdown.com" className="text-white/80 hover:text-white transition-colors">
+                info@getsavdown.com
+              </a>
+            </p>
             <div className="mt-6 flex flex-wrap gap-x-10 gap-y-6">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
@@ -179,16 +185,20 @@ export function Footer() {
 
         {/* ---- Bottom bar ---- */}
         <div className="mt-14 pt-8 border-t border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-            <p className="text-xs text-ink-subtle">
-              &copy; {new Date().getFullYear()} {siteConfig.name}. {"All Rights Reserved."}
-            </p>
-            <p className="flex items-center gap-1.5 text-xs text-ink-subtle">
+          <div className="flex flex-wrap items-center gap-x-0 gap-y-1 text-xs text-ink-subtle">
+            <span>&copy; {new Date().getFullYear()} {siteConfig.name}. All Rights Reserved.</span>
+            <span className="mx-2 text-white/20">|</span>
+            <span className="flex items-center gap-1">
               Made with
               <Heart className="h-3 w-3 text-red-500 fill-current" aria-hidden />
-              from
-              <PakistanFlag className="h-3 w-[18px] rounded-[2px] ring-1 ring-white/10" />
-            </p>
+              From
+              <span role="img" aria-label="Pakistan">🇵🇰</span>
+            </span>
+            <span className="mx-2 text-white/20">|</span>
+            <span>
+              Developed by{" "}
+              <a href="https://aurangzaib.dev/" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2">Aurangzaib Dev</a>
+            </span>
           </div>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
             {siteConfig.legalLinks.map((link) => {

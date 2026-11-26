@@ -110,7 +110,7 @@ export function BlogComments({ postSlug }: BlogCommentsProps) {
       <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
         <h2 id="comments-heading" className="font-display text-2xl font-semibold tracking-tight text-text md:text-3xl">
           Join the conversation
-          <span className="ml-2 align-middle text-base font-semibold text-primary/70">({comments.length})</span>
+          <span className="ml-2 align-middle text-base font-semibold text-primary">({comments.length})</span>
         </h2>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-primary-light px-3 py-1.5 text-xs font-semibold text-primary">
           <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />

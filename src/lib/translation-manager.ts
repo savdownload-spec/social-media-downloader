@@ -69,7 +69,11 @@ function constructOnce(): void {
   if (!container) {
     container = document.createElement('div');
     container.id = CONTAINER_ID;
-    container.setAttribute('aria-hidden', 'true');
+    // inert (not aria-hidden) keeps the off-screen widget out of the
+    // accessibility tree AND prevents its focusable <select>/<a> from being
+    // tabbed to. aria-hidden alone leaves focusable descendants behind,
+    // which audit tools flag as an accessibility failure.
+    container.setAttribute('inert', '');
     // Google's widget needs a real layout box to initialize into.
     // display:none gives it zero dimensions and it silently fails to ever
     // render its dropdown — pin it off-screen instead so it stays

@@ -4,7 +4,8 @@ import { requireAdminApi, PRIVATE_NO_STORE_HEADERS } from '@/lib/admin-auth';
 import { writeAuditLog } from '@/lib/admin';
 import { buildBackup } from '@/lib/backup/archive';
 import { restoreValidatedArchive, validateBackupArchive } from '@/lib/backup/restore';
-import { assertBackupStorageConfigured, BackupStorageConfigurationError, storeBackup, type BackupHistoryItem } from '@/lib/backup/storage';
+import { assertBackupStorageConfigured, BackupStorageConfigurationError, deleteBackupArchive, storeBackupArchive, storeBackupMetadata, type BackupHistoryItem } from '@/lib/backup/storage';
+import { sha256Of, verifyStoredBackup } from '@/lib/backup/verify';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -51,16 +52,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: 'The selected archive changed after preview. Preview it again before restoring.' }, { status: 409, headers: PRIVATE_NO_STORE_HEADERS });
     }
 
-    // A restore never starts unless its recovery archive is fully built and persisted.
+    // A restore never starts unless its recovery archive is fully built, stored, and verified.
     assertBackupStorageConfigured();
     const recoveryId = crypto.randomUUID();
     const recovery = await buildBackup({ categories: archive.manifest.selectedCategories, createdBy: auth.user.email ?? 'admin', type: 'recovery' });
+    const recoverySha256 = sha256Of(recovery.buffer);
     const recoveryMetadata: BackupHistoryItem = {
       id: recoveryId, type: 'recovery', fileName: recovery.fileName, size: recovery.buffer.length,
       createdAt: recovery.manifest.createdAt, createdBy: auth.user.email ?? 'admin',
-      categories: recovery.manifest.selectedCategories, recordCounts: recovery.manifest.recordCounts, fileCount: recovery.manifest.fileCount,
+      categories: recovery.manifest.selectedCategories, recordCounts: recovery.manifest.recordCounts,
+      fileCount: recovery.manifest.fileCount, sha256: recoverySha256,
     };
-    await storeBackup(recoveryId, recovery.fileName, recovery.buffer, recoveryMetadata);
+    await storeBackupArchive(recoveryId, recovery.fileName, recovery.buffer);
+    try {
+      await verifyStoredBackup(recoveryId, recovery.fileName, recoverySha256);
+      await storeBackupMetadata(recoveryId, recoveryMetadata);
+    } catch (error) {
+      await deleteBackupArchive(recoveryId, recovery.fileName).catch(() => undefined);
+      throw error;
+    }
 
     const report = await restoreValidatedArchive(archive);
     await writeAuditLog({

@@ -7,9 +7,12 @@ export default function NotFound() {
   return (
     <Container className="py-32 text-center">
       <div className="max-w-lg mx-auto">
-        <p className="text-8xl md:text-9xl font-semibold tracking-tighter text-text/10 leading-none">
-          404
-        </p>
+        {/* Decorative watermark: rendered via CSS so the duplicate number is
+            not exposed to assistive tech or counted as low-contrast text. */}
+        <div
+          aria-hidden="true"
+          className="text-8xl md:text-9xl font-semibold tracking-tighter text-text/10 leading-none before:content-['404']"
+        />
         <h1 className="mt-6 text-3xl md:text-4xl font-semibold tracking-tight">
           This Page Slipped Away.
         </h1>

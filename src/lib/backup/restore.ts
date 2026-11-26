@@ -15,7 +15,7 @@ const MAX_COMPRESSION_RATIO = 40;
 const MAX_ROWS = 50_000;
 
 const CATEGORY_MODELS: Record<BackupCategory, string[]> = {
-  content: ['posts', 'postRevisions'],
+  content: ['posts', 'postRevisions', 'blogAuthors', 'authorSlugRedirect'],
   media: [],
   users: ['users'],
   pricing: ['pricingSettings'],

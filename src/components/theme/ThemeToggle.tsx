@@ -116,7 +116,7 @@ export function ThemeToggle({ variant = 'header' }: ThemeToggleProps) {
           ref={triggerRef}
           onClick={() => setOpen((v) => !v)}
           className="flex items-center gap-2 text-sm text-ink-muted hover:text-white transition-colors"
-          aria-label="Change Theme"
+          aria-label={`Change Theme: ${mode}`}
           aria-expanded={open}
         >
           <ActiveIcon className="w-4 h-4" />

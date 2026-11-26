@@ -27,14 +27,20 @@ import {
   ExternalLink,
   DatabaseBackup,
   UserRound,
+  CalendarDays,
+  Send,
+  Image as ImageIcon,
+  Mail,
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
+import { roleLabel, type SocialRole } from '@/lib/social/permissions';
 
 interface NavItem {
   label: string;
   href: string;
   icon: typeof LayoutDashboard;
   badge?: number;
+  superAdminOnly?: boolean;
 }
 
 interface NavGroup {
@@ -55,6 +61,7 @@ const NAV_GROUPS: NavGroup[] = [
       { label: 'Users', href: '/admin/users', icon: Users },
       { label: 'Reviews', href: '/admin/reviews', icon: Star },
       { label: 'Support', href: '/admin/support', icon: MessageCircle },
+      { label: 'Contact Enquiries', href: '/admin/contacts', icon: Mail },
     ],
   },
   {
@@ -78,6 +85,20 @@ const NAV_GROUPS: NavGroup[] = [
     section: 'Growth',
     items: [
       { label: 'Affiliates', href: '/admin/affiliates', icon: Share2 },
+    ],
+  },
+  {
+    section: 'Social Media',
+    items: [
+      { label: 'Overview', href: '/admin/social', icon: LayoutDashboard },
+      { label: 'Create Post', href: '/admin/social/compose', icon: Send },
+      { label: 'Calendar', href: '/admin/social/calendar', icon: CalendarDays },
+      { label: 'Posts', href: '/admin/social/posts', icon: FileText },
+      { label: 'Media Library', href: '/admin/social/media', icon: ImageIcon },
+      { label: 'Social Accounts', href: '/admin/social/accounts', icon: Share2 },
+      { label: 'Analytics', href: '/admin/social/analytics', icon: BarChart3 },
+      { label: 'Settings', href: '/admin/social/settings', icon: Settings, superAdminOnly: true },
+      { label: 'Publishing Logs', href: '/admin/social/logs', icon: ClipboardList },
     ],
   },
   {
@@ -111,9 +132,11 @@ interface Props {
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   badges?: AdminBadges;
+  isAdmin?: boolean;
+  socialRole?: SocialRole | null;
 }
 
-export function AdminSidebar({ onClose, collapsed, onToggleCollapse, badges }: Props) {
+export function AdminSidebar({ onClose, collapsed, onToggleCollapse, badges, isAdmin = true, socialRole = null }: Props) {
   const pathname = usePathname();
 
   // Resolve live badge counts for each section.
@@ -126,13 +149,19 @@ export function AdminSidebar({ onClose, collapsed, onToggleCollapse, badges }: P
     '/admin/affiliates': badges?.affiliatesUnread || undefined,
     '/admin/payments': badges?.paymentsUnread || undefined,
     '/admin/subscriptions': badges?.subscriptionsUnread || undefined,
+    '/admin/contacts': badges?.contactsUnread || undefined,
   };
 
   function isActive(href: string) {
     if (href === '/admin') return pathname === '/admin';
+    if (href === '/admin/social') return pathname === '/admin/social';
     if (href === '/admin/authors') return pathname.startsWith('/admin/authors');
     return pathname.startsWith(href);
   }
+
+  // Social-only users get a focused sidebar; every other admin page is denied
+  // by the layout, so showing those links would only lead to redirects.
+  const groups = isAdmin ? NAV_GROUPS : NAV_GROUPS.filter((group) => group.section === 'Social Media');
 
   return (
     <aside
@@ -167,7 +196,7 @@ export function AdminSidebar({ onClose, collapsed, onToggleCollapse, badges }: P
         'flex-1 overflow-y-auto py-4 space-y-5',
         collapsed ? 'px-2' : 'px-3',
       )}>
-        {NAV_GROUPS.map((group) => (
+        {groups.map((group) => (
           <div key={group.section}>
             {!collapsed && (
               <p className="px-3 mb-2 text-[10px] font-semibold text-text-subtle uppercase tracking-[0.1em]">
@@ -178,7 +207,7 @@ export function AdminSidebar({ onClose, collapsed, onToggleCollapse, badges }: P
               <div className="w-full h-px bg-border-light mb-2 mt-1" />
             )}
             <div className="space-y-0.5">
-              {group.items.map(({ label, href, icon: Icon, badge: _staticBadge }) => {
+              {group.items.filter((item) => isAdmin || !item.superAdminOnly).map(({ label, href, icon: Icon, badge: _staticBadge }) => {
                 const active = isActive(href);
                 const badge = liveBadge[href] ?? _staticBadge;
                 return (
@@ -226,6 +255,11 @@ export function AdminSidebar({ onClose, collapsed, onToggleCollapse, badges }: P
         'border-t border-border shrink-0',
         collapsed ? 'p-2' : 'px-3 py-3',
       )}>
+        {!isAdmin && !collapsed && socialRole && (
+          <p className="px-3 pb-2 text-[10px] font-semibold text-text-subtle uppercase tracking-[0.1em]">
+            {roleLabel(socialRole)} access
+          </p>
+        )}
         {/* Collapse toggle (desktop only) */}
         {onToggleCollapse && (
           <button

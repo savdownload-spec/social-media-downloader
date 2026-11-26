@@ -45,7 +45,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 301);
   }
 
-  let response = NextResponse.next();
+  // Expose the pathname to server components (the admin layout uses it to
+  // decide whether a non-admin social member may pass).
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-pathname', pathname);
+
+  let response = NextResponse.next({ request: { headers: requestHeaders } });
   let hasSessionToken = false;
 
   if (!isMaintenanceBypassPath(pathname)) {

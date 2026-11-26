@@ -17,8 +17,8 @@ const principles = [
   {
     icon: <Lock className="w-5 h-5" />,
     tile: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400',
-    title: 'We never store your downloads',
-    description: 'The media files you download stream directly from the source. They never touch our disk.',
+    title: 'Downloads pass through, not stay',
+    description: 'Media is streamed through temporary working storage that is cleaned up after delivery. We do not keep your downloads.',
   },
   {
     icon: <Eye className="w-5 h-5" />,
@@ -65,7 +65,7 @@ export default function PrivacyPage() {
         eyebrow="Legal"
         title={<>Your Privacy, <span className="text-gradient">Respected.</span></>}
         description="Your privacy matters to us. This policy explains, in plain English, what data SavDown collects, why we collect it, and how it is handled."
-        meta="Last updated: January 2026"
+        meta="Last updated: November 2026"
         highlights={[
           { icon: <Shield className="w-3.5 h-3.5 text-accent" />, label: 'GDPR-aligned' },
           { icon: <Lock className="w-3.5 h-3.5 text-accent" />, label: 'No third-party trackers' },
@@ -202,7 +202,7 @@ export default function PrivacyPage() {
 
       <InfoCallout
         title="Privacy questions? Just ask."
-        body={<>Reach us via the contact page and we will respond within 30 days, usually much faster.</>}
+        body={<>Reach us via the contact page and we will respond within 30 days, usually much faster. You can also email us directly at <a href="mailto:info@getsavdown.com" className="underline hover:no-underline">info@getsavdown.com</a>.</>}
         cta={{ label: 'Contact Us', href: '/contact' }}
       />
     </>

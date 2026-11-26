@@ -29,7 +29,7 @@ export function CreditPackCard({ pack }: { pack: PackView }) {
         <p className="mt-1.5 text-sm text-text-muted">{pack.tagline}</p>
         {pack.promotion && (
           <div className="mt-3 rounded-xl border border-primary/15 bg-primary-light/60 p-3">
-            {pack.promotion.badge && <span className="mb-1 inline-flex max-w-full break-words rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">{pack.promotion.badge}</span>}
+            {pack.promotion.badge && <span className="mb-1 inline-flex max-w-full break-words rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700 dark:text-violet-800">{pack.promotion.badge}</span>}
             <p className="break-words text-sm font-semibold leading-snug text-primary [overflow-wrap:anywhere]">{pack.promotion.text}</p>
           </div>
         )}
@@ -51,7 +51,7 @@ export function CreditPackCard({ pack }: { pack: PackView }) {
         </div>
         <p className="mt-1 text-xs text-text-subtle">{pack.perThousand}</p>
 
-        <div className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-primary-light px-2.5 py-1 text-xs font-semibold text-primary">
+        <div className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-primary-light px-2.5 py-1 text-xs font-semibold text-primary dark:text-violet-300">
           <InfinityIcon className="h-3.5 w-3.5 flex-shrink-0" /> Credits never expire
         </div>
 

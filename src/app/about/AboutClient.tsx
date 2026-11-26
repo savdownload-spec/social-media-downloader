@@ -196,7 +196,7 @@ export function AboutClient() {
             {
               icon: Shield,
               title: 'Uncompromising Privacy',
-              body: 'Your files and downloads are never stored or logged on our servers. Processing happens securely and privately.',
+              body: 'Downloads are processed transiently to deliver your file; operation records are kept so you can manage your account.',
             },
             {
               icon: Zap,

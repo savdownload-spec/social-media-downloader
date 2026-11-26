@@ -8,10 +8,8 @@ import {
   AlignLeft, Tags, Search, Braces,
   QrCode, ScanLine, Pipette, Blend, Download,
 } from 'lucide-react';
-import { toolsBySlug } from '@/config/tools';
-import { getFunctionalTool } from '@/config/functionalTools';
 import { getToolGuide, type ToolPageSlug } from '@/config/toolGuides';
-import { getToolPolicy } from '@/lib/downloaderPolicy';
+import { isToolRegistered } from '@/config/toolAvailability';
 
 export type ToolGroup = 'Downloaders' | 'Image' | 'Video' | 'PDF' | 'AI' | 'SEO' | 'Utility';
 
@@ -182,8 +180,7 @@ export function getCatalogTool(slug: string): CatalogTool | undefined {
 export function isToolAvailable(slug: string): boolean {
   // Downloader routes can exist in the registry while their processor is
   // disabled on this deployment; the policy registry is authoritative.
-  if (toolsBySlug.has(slug)) return getToolPolicy(slug).downloadPermitted;
-  return !!getFunctionalTool(slug);
+  return isToolRegistered(slug);
 }
 
 export const fallbackIcon = Download;

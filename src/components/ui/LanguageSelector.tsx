@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Globe, ChevronDown } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { loadGoogleTranslateScript } from '@/lib/translation-manager';
 import { languages } from '@/config/languages';
 
 type LanguageSelectorProps = {
@@ -72,6 +73,13 @@ export function LanguageSelector({ variant = 'header', alwaysShowLabel = false }
     };
   }, [open, updateCoords]);
 
+  const toggleMenu = () => {
+    // Load Google Translate when the menu opens so a selection applies
+    // quickly, without paying its JS/DOM cost on every page load.
+    if (!open) void loadGoogleTranslateScript();
+    setOpen((v) => !v);
+  };
+
   const handleLanguageSelect = (langCode: string) => {
     setLanguage(langCode);
     setOpen(false);
@@ -117,9 +125,9 @@ export function LanguageSelector({ variant = 'header', alwaysShowLabel = false }
       <div className="relative">
         <button
           ref={triggerRef}
-          onClick={() => setOpen((v) => !v)}
+          onClick={toggleMenu}
           className="flex items-center gap-2 text-sm text-ink-muted hover:text-white transition-colors"
-          aria-label="Select Language"
+          aria-label={`Select Language: ${language.label}`}
           aria-expanded={open}
         >
           <Globe className="w-4 h-4" />
@@ -135,9 +143,9 @@ export function LanguageSelector({ variant = 'header', alwaysShowLabel = false }
     <div className="relative">
       <button
         ref={triggerRef}
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggleMenu}
           className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm text-text-muted transition-colors hover:bg-surface hover:text-text"
-        aria-label="Select Language"
+        aria-label={`Select Language: ${language.label}`}
         aria-expanded={open}
       >
         <Globe className="w-4 h-4" />

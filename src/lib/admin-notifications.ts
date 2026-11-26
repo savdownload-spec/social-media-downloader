@@ -4,7 +4,7 @@ type Db = PrismaClient | Prisma.TransactionClient;
 
 export type AdminNotificationInput = {
   type: string;
-  section: 'support' | 'comments' | 'reviews' | 'affiliates' | 'payments' | 'subscriptions';
+  section: 'support' | 'comments' | 'reviews' | 'affiliates' | 'payments' | 'subscriptions' | 'contacts';
   entityType: string;
   entityId: string;
   title: string;

@@ -7,7 +7,8 @@ import { Send, Check, Mail } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 import { Breadcrumb } from '@/components/ui/Breadcrumb';
 
-export default function ContactPage() {  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
+export default function ContactPage() {
+  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '', website: '' });
   const [state, setState] = useState<'idle' | 'loading' | 'ok' | 'err' | 'server-err'>('idle');
   const [validationError, setValidationError] = useState('');
   const { success, error: errorToast } = useToast();
@@ -48,7 +49,7 @@ export default function ContactPage() {  const [form, setForm] = useState({ nam
       }
 
       setState('ok');
-      setForm({ name: '', email: '', subject: '', message: '' });
+      setForm({ name: '', email: '', subject: '', message: '', website: '' });
       success("Message sent!", "We'll get back to you as soon as possible.");
     } catch {
       errorToast("Network error", "Could not reach the server. Check your connection and try again.");
@@ -74,7 +75,9 @@ export default function ContactPage() {  const [form, setForm] = useState({ nam
         {"Say Hello."}
       </h1>
       <p className="mt-4 text-text-muted leading-relaxed">
-        {"Feedback, feature requests, bug reports, partnerships, we read every message."}
+        {"Feedback, feature requests, bug reports, partnerships, we read every message. Or email us directly at "}
+        <a href="mailto:info@getsavdown.com" className="text-primary hover:underline">info@getsavdown.com</a>
+        {"."}
       </p>
 
       <div className="mt-10 space-y-4">
@@ -105,6 +108,16 @@ export default function ContactPage() {  const [form, setForm] = useState({ nam
           className="w-full bg-white dark:bg-card border border-border rounded-2xl px-5 py-3.5 text-text placeholder:text-text-subtle focus:outline-none focus:border-primary focus:shadow-glow resize-none"
           required
         />
+        {/* Honeypot — hidden from real users, bots fill it in */}
+        <div className="hidden" aria-hidden="true">
+          <input
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            value={form.website}
+            onChange={(e) => setForm({ ...form, website: e.target.value })}
+          />
+        </div>
         <Button size="lg" onClick={submit} loading={state === 'loading'} disabled={state === 'ok'} className="w-full sm:w-auto">
           {state === 'ok' ? <>{"Message Sent"} <Check className="w-4 h-4" /></> : <>{"Send Message"} <Send className="w-4 h-4" /></>}
         </Button>
@@ -118,4 +131,3 @@ export default function ContactPage() {  const [form, setForm] = useState({ nam
     </Container>
   );
 }
-

@@ -62,7 +62,7 @@ export function Compatibility() {
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-light text-primary transition-colors group-hover:bg-primary group-hover:text-white">
                     <Icon className="h-6 w-6" strokeWidth={1.8} />
                   </div>
-                  <span className="rounded-full border border-primary/15 bg-primary-light px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
+                  <span className="rounded-full border border-primary/15 bg-primary-light px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-primary dark:text-violet-300">
                     {"Ready"}
                   </span>
                 </div>
