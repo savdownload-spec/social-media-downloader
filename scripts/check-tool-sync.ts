@@ -18,6 +18,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { tools } from '../src/config/tools';
+import { toolGuides } from '../src/config/toolGuides';
 
 const prisma = new PrismaClient();
 
@@ -32,6 +33,22 @@ async function checkToolSync(): Promise<boolean> {
 
   const issues: SyncIssue[] = [];
 
+  // Collect all tool slugs from both downloaders and functional tools
+  const downloaderTools = tools.map(t => ({ slug: t.slug, name: t.name }));
+  const functionalTools = Object.keys(toolGuides)
+    .filter((slug) => !tools.some(t => t.slug === slug)) // Avoid duplicates
+    .map((slug) => {
+      // Extract name from slug by converting to title case
+      const name = slug
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+      return { slug, name };
+    });
+
+  const allCodeTools = [...downloaderTools, ...functionalTools];
+  const codeToolsMap = new Map(allCodeTools.map((t) => [t.slug, t]));
+
   // Get all tools from database
   const dbTools = await prisma.toolConfig.findMany({
     select: { slug: true, name: true },
@@ -39,16 +56,15 @@ async function checkToolSync(): Promise<boolean> {
   });
 
   const dbToolsMap = new Map(dbTools.map((t) => [t.slug, t]));
-  const codeToolsMap = new Map(tools.map((t) => [t.slug, t]));
 
   console.log(`📊 Tool counts:`);
-  console.log(`   TypeScript definitions: ${tools.length}`);
+  console.log(`   TypeScript definitions: ${allCodeTools.length}`);
   console.log(`   Database ToolConfig: ${dbTools.length}\n`);
 
   // Check for tools in code but not in database
   console.log('🔎 Checking for missing tools in database...');
   let missingCount = 0;
-  for (const tool of tools) {
+  for (const tool of allCodeTools) {
     if (!dbToolsMap.has(tool.slug)) {
       issues.push({
         type: 'missing_in_db',
@@ -84,7 +100,7 @@ async function checkToolSync(): Promise<boolean> {
   // Check for name mismatches
   console.log('\n🔎 Checking for name mismatches...');
   let mismatchCount = 0;
-  for (const tool of tools) {
+  for (const tool of allCodeTools) {
     const dbTool = dbToolsMap.get(tool.slug);
     if (dbTool && dbTool.name !== tool.name) {
       issues.push({

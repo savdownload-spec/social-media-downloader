@@ -14,6 +14,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { tools } from '../src/config/tools';
+import { toolGuides } from '../src/config/toolGuides';
 
 const prisma = new PrismaClient();
 
@@ -24,35 +25,57 @@ const TOOL_CATEGORIES: Record<string, string> = {
   'youtube-shorts-downloader': 'Downloader',
   'youtube-thumbnail-downloader': 'Downloader',
   'youtube-to-mp3': 'Downloader',
+  'youtube-playlist-downloader': 'Downloader',
   'tiktok-video-downloader': 'Downloader',
   'tiktok-to-mp3': 'Downloader',
   'tiktok-photo-downloader': 'Downloader',
   'tiktok-thumbnail-downloader': 'Downloader',
   'instagram-reels-downloader': 'Downloader',
+  'instagram-video-downloader': 'Downloader',
   'instagram-story-downloader': 'Downloader',
   'instagram-photo-downloader': 'Downloader',
+  'instagram-profile-picture-downloader': 'Downloader',
   'facebook-video-downloader': 'Downloader',
+  'facebook-reels-downloader': 'Downloader',
   'facebook-photo-downloader': 'Downloader',
   'pinterest-video-downloader': 'Downloader',
   'pinterest-image-downloader': 'Downloader',
   'x-video-downloader': 'Downloader',
+  'x-gif-downloader': 'Downloader',
   'x-image-downloader': 'Downloader',
   
   // Image tools
   'image-compressor': 'Image',
-  'webp-converter': 'Image',
-  'heic-to-jpg-converter': 'Image',
+  'image-resizer': 'Image',
+  'image-converter': 'Image',
+  'image-enhancer': 'Image',
   'image-upscaler': 'Image',
+  'webp-converter': 'Image',
+  'heic-to-jpg': 'Image',
+  'jpg-to-png': 'Image',
+  'png-to-jpg': 'Image',
   'background-remover': 'Image',
+  
+  // AI tools
   'ai-image-generator': 'AI',
+  'ai-thumbnail-generator': 'AI',
+  'ai-image-enhancer': 'AI',
+  'ai-background-remover': 'AI',
+  'ai-youtube-title-generator': 'AI',
+  'ai-description-generator': 'AI',
+  'ai-hashtag-generator': 'AI',
+  'ai-caption-generator': 'AI',
   
   // Video tools
   'video-compressor': 'Video',
-  'gif-to-video-converter': 'Video',
-  'video-to-gif-converter': 'Video',
+  'video-converter': 'Video',
+  'video-to-mp3': 'Video',
+  'gif-maker': 'Video',
+  'mp4-to-gif': 'Video',
   
   // PDF tools
   'pdf-compressor': 'PDF',
+  'compress-pdf': 'PDF',
   'merge-pdf': 'PDF',
   'split-pdf': 'PDF',
   'word-to-pdf': 'PDF',
@@ -68,9 +91,16 @@ const TOOL_CATEGORIES: Record<string, string> = {
   
   // Utility tools
   'qr-code-generator': 'Utility',
-  'qr-code-reader': 'Utility',
+  'qr-code-scanner': 'Utility',
+  'color-picker': 'Utility',
+  'gradient-generator': 'Utility',
   
   // SEO tools
+  'meta-title-generator': 'SEO',
+  'meta-description-generator': 'SEO',
+  'youtube-tags-generator': 'SEO',
+  'keyword-generator': 'SEO',
+  'schema-generator': 'SEO',
   'meta-tag-generator': 'SEO',
   'robots-txt-generator': 'SEO',
   'sitemap-generator': 'SEO',
@@ -108,7 +138,24 @@ async function seedTools() {
   let skipped = 0;
   let errors = 0;
 
-  for (const tool of tools) {
+  // Collect all tool slugs from both downloaders and functional tools
+  const downloaderSlugs = tools.map(t => ({ slug: t.slug, name: t.name }));
+  const functionalSlugs = Object.keys(toolGuides)
+    .filter((slug) => !tools.some(t => t.slug === slug)) // Avoid duplicates
+    .map((slug) => {
+      // Extract name from slug by converting to title case
+      const name = slug
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+      return { slug, name };
+    });
+
+  const allTools = [...downloaderSlugs, ...functionalSlugs];
+
+  console.log(`📋 Found ${allTools.length} tools to process (${downloaderSlugs.length} downloaders + ${functionalSlugs.length} functional tools)\n`);
+
+  for (const tool of allTools) {
     try {
       const category = TOOL_CATEGORIES[tool.slug] || 'Utility';
       const status = COMING_SOON_TOOLS.has(tool.slug) ? 'COMING_SOON' : 'LIVE';
@@ -154,7 +201,7 @@ async function seedTools() {
   console.log(`   Created: ${created}`);
   console.log(`   Skipped: ${skipped}`);
   console.log(`   Errors: ${errors}`);
-  console.log(`   Total tools: ${tools.length}`);
+  console.log(`   Total tools: ${allTools.length}`);
 }
 
 async function main() {
