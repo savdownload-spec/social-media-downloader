@@ -118,7 +118,7 @@ const TOOL_CATEGORIES: Record<string, string> = {
 };
 
 // Tools that should start as COMING_SOON
-const COMING_SOON_TOOLS = new Set([
+const COMING_SOON_TOOLS = new Set<string>([
   // Add tool slugs here if they should start as COMING_SOON instead of LIVE
 ]);
 

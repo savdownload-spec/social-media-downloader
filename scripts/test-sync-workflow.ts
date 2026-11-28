@@ -132,7 +132,7 @@ async function testSyncWorkflow() {
     }
     
     // Check for extra tools
-    const codeToolsMap = new Map(tools.map((t) => [t.slug, t]));
+    const codeToolsMap = new Map<string, (typeof tools)[number]>(tools.map((t) => [t.slug, t]));
     for (const dbTool of dbTools) {
       if (!codeToolsMap.has(dbTool.slug)) {
         extra++;
