@@ -190,7 +190,6 @@ export function Footer({ business }: { business: BusinessDetails }) {
 
         {/* ---- Business contact ---- */}
         <div className="mt-14 pt-8 border-t border-white/10">
-          <p className="mb-5 text-[11px] font-bold uppercase tracking-wider text-white">Business contact</p>
           <BusinessContact business={business} variant="footer" />
         </div>
 
