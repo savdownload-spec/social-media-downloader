@@ -6,7 +6,7 @@
  *   ai-hashtag-generator
  *   ai-caption-generator
  *
- * Calls POST /api/tools/ai-text (Cloudflare Workers AI, llama-3.1-8b-instruct).
+ * Calls POST /api/tools/ai-text (Vercel AI Gateway, free text models).
  * 1 SavCredit per generation. Rate-limited server-side.
  */
 import { useState } from 'react';

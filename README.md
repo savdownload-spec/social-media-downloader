@@ -28,7 +28,7 @@ A production-ready, full-stack social media downloader built with Next.js 14, Ty
 
 ## Requirements
 
-- **Node.js** 20+ (LTS recommended)
+- **Node.js** 22+ (LTS recommended)
 - **PostgreSQL** 14+ (or use the included docker-compose)
 - **Redis** 7+ (or use the included docker-compose, or Upstash for serverless)
 
@@ -358,7 +358,7 @@ docker run -p 3000:3000 --env-file .env savdown
 
 ### Self-hosted
 
-Any Node.js 20 host works. Behind an Nginx reverse proxy:
+Any Node.js 22 host works. Behind an Nginx reverse proxy:
 
 ```nginx
 server {

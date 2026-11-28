@@ -62,6 +62,7 @@ import {
 import { tools } from '@/config/tools';
 import { ratelimit, getClientId } from '@/lib/ratelimit';
 import { ok, fail } from '@/lib/api';
+import { generateGatewayText } from '@/lib/ai-gateway';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -107,32 +108,15 @@ const BodySchema = z.object({
 
 type AiMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 
-function aiConfig() {
-  const apiKey = process.env.SUPPORT_TRANSLATION_API_KEY || process.env.OPENAI_API_KEY;
-  if (!apiKey) return null;
-  return {
-    apiKey,
-    baseUrl: (process.env.SUPPORT_TRANSLATION_API_BASE || process.env.OPENAI_API_BASE || 'https://api.openai.com/v1').replace(/\/$/, ''),
-    model: process.env.SUPPORT_CHAT_MODEL || process.env.SUPPORT_TRANSLATION_MODEL || 'gpt-4o-mini',
-  };
-}
-
-async function callLlm(messages: AiMessage[], config: NonNullable<ReturnType<typeof aiConfig>>): Promise<string | null> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 20_000);
+async function callLlm(messages: AiMessage[]) {
   try {
-    const res = await fetch(config.baseUrl + '/chat/completions', {
-      method: 'POST',
-      headers: { authorization: 'Bearer ' + config.apiKey, 'content-type': 'application/json' },
-      body: JSON.stringify({ model: config.model, temperature: 0.15, max_tokens: 380, messages }),
-      signal: controller.signal,
+    return await generateGatewayText({
+      messages,
+      maxOutputTokens: 380,
+      temperature: 0.15,
+      timeoutMs: 20_000,
     });
-    clearTimeout(timeout);
-    if (!res.ok) return null;
-    const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-    return json.choices?.[0]?.message?.content?.trim() ?? null;
   } catch {
-    clearTimeout(timeout);
     return null;
   }
 }
@@ -410,7 +394,7 @@ export async function POST(request: Request) {
   const userId = (session?.user as { id?: string } | undefined)?.id;
   const clientId = userId || getClientId(request);
 
-  const rl = await ratelimit('support-ai:' + clientId, { limit: 20, windowSeconds: 300 });
+  const rl = await ratelimit('support-ai:' + clientId, { limit: 20, windowSeconds: 300, fallbackToMemory: true });
   if (!rl.success) return fail('Too many questions. Please wait a moment before trying again.', 429);
 
   let body: unknown;
@@ -640,11 +624,11 @@ export async function POST(request: Request) {
   const deterministic = buildDeterministicAnswer(intent, resolved, candidates.slice(0, 4));
 
   // ── 13. LLM answer (optional), validated against evidence ──
-  const config = aiConfig();
   let answer = deterministic.answer;
   let canAnswer = deterministic.canAnswer;
+  let gatewayResult: Awaited<ReturnType<typeof callLlm>> = null;
 
-  if (config && candidates.length > 0) {
+  if (candidates.length > 0) {
     const knowledgeContext = formatKnowledgeContext(candidates.slice(0, 4));
     const entityLine = resolved ? `The question is about: ${resolved.entity.label} (${resolved.entity.entityType}).` : '';
     const languageLine = language && language !== 'en'
@@ -680,10 +664,11 @@ export async function POST(request: Request) {
       { role: 'user', content: message },
     ];
 
-    const aiAnswer = await callLlm(messages, config);
-    if (aiAnswer && validateAiAnswer(aiAnswer, candidates.slice(0, 4), resolved)) {
-      answer = aiAnswer;
-      canAnswer = !/couldn't find|could not find|don't have|outside what i cover/i.test(aiAnswer);
+    const aiAnswer = await callLlm(messages);
+    if (aiAnswer && validateAiAnswer(aiAnswer.text, candidates.slice(0, 4), resolved)) {
+      answer = aiAnswer.text;
+      canAnswer = !/couldn't find|could not find|don't have|outside what i cover/i.test(aiAnswer.text);
+      gatewayResult = aiAnswer;
     }
   }
 
@@ -710,7 +695,8 @@ export async function POST(request: Request) {
       selected: candidates.slice(0, 4).map((d) => ({ id: d.id, title: d.title, category: d.category, entityId: d.entityId, priority: d.priority })),
       rejected: rejected.slice(0, 12).map((d) => d.id),
       evidenceConfidence: candidates[0]?.priority ?? 0,
-      usedLlm: Boolean(config),
+      usedLlm: Boolean(gatewayResult),
+      gateway: gatewayResult ? { model: gatewayResult.model, usage: gatewayResult.usage } : null,
     };
   }
 

@@ -31,15 +31,13 @@ export async function POST(request: Request, { params }: { params: { id: string 
   const access = await canAccessSupportConversation(params.id, request);
   if (!access.conversation) return fail('Conversation not found.', 404);
   if (!access.allowed || access.actor.isAdmin) return fail('Forbidden.', 403);
-  const rl = await ratelimit(`support:message:${access.actor.userId || getClientId(request)}`, { limit: 12, windowSeconds: 300 });
+  const rl = await ratelimit(`support:message:${access.actor.userId || getClientId(request)}`, { limit: 12, windowSeconds: 300, fallbackToMemory: true });
   if (!rl.success) return fail('You are sending messages too quickly. Please wait a moment.', 429);
   try {
     const form = await request.formData();
     const body = cleanSupportText(z.string().min(1).max(5000).parse(form.get('message')));
     const files = form.getAll('attachments').filter((entry): entry is File => entry instanceof File && entry.size > 0);
     if (!body) return fail('Please enter a message.');
-    const detectedLanguage = detectSupportLanguage(body);
-    const translation = await translateSupportMessage(body, detectedLanguage);
     if (files.length > MAX_SUPPORT_FILES) return fail(`You can attach up to ${MAX_SUPPORT_FILES} files.`);
     let total = 0;
     for (const file of files) {
@@ -48,6 +46,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
         return fail('Attachments must be PNG, JPG, WebP, PDF, or text files up to 4 MB each.');
       }
     }
+    const detectedLanguage = detectSupportLanguage(body);
+    const translation = await translateSupportMessage(body, detectedLanguage);
     const now = new Date();
     const message = await prisma.$transaction(async (tx) => {
       const created = await tx.supportMessage.create({
