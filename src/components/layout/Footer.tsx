@@ -67,7 +67,7 @@ export function Footer({ business }: { business: BusinessDetails }) {
         {/* ---- Top: brand + newsletter-style contact ---- */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 pb-12 border-b border-white/10">
           {/* Brand block */}
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-6">
             <Logo variant="light" height={32} />
             <p className="mt-4 text-sm text-ink-muted leading-relaxed max-w-sm">
               {"SavDown is the fast, private way to save videos, reels, and thumbnails from the platforms you use every day. No watermarks, no clutter — free daily credits with a free account."}
@@ -100,7 +100,7 @@ export function Footer({ business }: { business: BusinessDetails }) {
           </div>
 
           {/* Contact + language */}
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-6">
             <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-4">
               {"Stay In The Loop"}
             </p>
@@ -135,14 +135,27 @@ export function Footer({ business }: { business: BusinessDetails }) {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Brand statement */}
-          <div className="lg:col-span-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-4">
-              {"Why SavDown?"}
+        {/* ---- SEO mega-grid ---- */}
+        <FooterToolGrid />
+
+        {/* ---- Site nav columns ---- */}
+        <div className="mt-14 pt-12 border-t border-white/10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          {/* Why SavDown? - First column */}
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-white">
+              Why SavDown?
             </p>
-            <ul className="space-y-3">
-              {["Free Daily Credits", "No Card Required", "Completely Secure"].map((item) => (
+            <ul className="mt-4 space-y-3">
+              {[
+                "Free Daily Credits",
+                "No Card Required",
+                "Completely Secure",
+                "Fast Processing",
+                "No Software Installation",
+                "Easy to Use"
+              ].map((item) => (
                 <li key={item} className="flex items-center gap-2.5 text-sm text-ink-muted">
                   <span className="flex-shrink-0 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center">
                     <Check className="w-3 h-3 text-white" />
@@ -152,39 +165,50 @@ export function Footer({ business }: { business: BusinessDetails }) {
               ))}
             </ul>
           </div>
-        </div>
 
-        {/* ---- SEO mega-grid ---- */}
-        <FooterToolGrid />
+          {/* Company - Second column */}
+          {siteConfig.footerLinks.Company && (
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-white">
+                Company
+              </p>
+              <ul className="mt-4 space-y-2.5">
+                {siteConfig.footerLinks.Company.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-[13px] text-ink-muted hover:text-white transition-colors leading-snug block"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-        {/* ---- Site nav columns ---- */}
-        <div className="mt-14 pt-12 border-t border-white/10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {Object.entries(siteConfig.footerLinks)
-            .filter(([heading]) => !['All Tools', 'Social Media Downloaders', 'Video Downloaders', 'Audio Downloaders', 'Image Downloaders'].includes(heading))
-            .map(([heading, links]) => {
-              return (
-                <div key={heading}>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-white">
-                    {heading}
-                  </p>
-                  <ul className="mt-4 space-y-2.5">
-                    {links.map((link) => {
-                      const translatedLabel = link.label;
-                      return (
-                        <li key={link.href}>
-                          <Link
-                            href={link.href}
-                            className="text-[13px] text-ink-muted hover:text-white transition-colors leading-snug block"
-                          >
-                            {translatedLabel}
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              );
-            })}
+          {/* Legal & Policies - Third column */}
+          {siteConfig.footerLinks['Legal & Policies'] && (
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-white">
+                Legal & Policies
+              </p>
+              <ul className="mt-4 space-y-2.5">
+                {siteConfig.footerLinks['Legal & Policies'].map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-[13px] text-ink-muted hover:text-white transition-colors leading-snug block"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Our Apps - Fourth column */}
           <FooterApps />
         </div>
 
@@ -221,6 +245,8 @@ export function Footer({ business }: { business: BusinessDetails }) {
                     {link.label}
                   </Link>
                   {link.href === '/cookies' && (
+                    /* Cookie Settings button (5th item) - rendered conditionally after Cookie Policy 
+                       because it triggers client-side modal rather than navigation */
                     <button
                       type="button"
                       onClick={openSettings}

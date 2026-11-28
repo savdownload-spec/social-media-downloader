@@ -1,0 +1,15 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "findings": [
+    {
+      "file": "src/components/layout/Footer.tsx",
+      "lines": "238-246",
+      "severity": "blocker",
+      "issue": "Bottom bar displays 5 items as required, but Cookie Settings (the 5th item) is rendered conditionally within the map loop rather than being explicitly documented as part of the 5 required items",
+      "evidence": "The legalLinks array in site.ts contains only 4 items. Cookie Settings is conditionally rendered after Cookie Policy via `{link.href === '/cookies' && (<button>Cookie Settings</button>)}`. While this correctly produces 5 items in the UI, the requirement states 'Bottom copyright bar contains exactly these 5 links' and lists Cookie Settings explicitly.",
+      "consequence": "Creates ambiguity about whether the requirement is fully met. No user-visible issue exists.",
+      "correction": "Add a clarifying comment above the Cookie Settings button in Footer.tsx to document that it's intentionally the 5th item, rendered conditionally because it triggers client-side functionality rather than navigation:\n\n```typescript\n{link.href === '/cookies' && (\n  /* Cookie Settings button (5th item) - rendered conditionally after Cookie Policy \n     because it triggers client-side modal rather than navigation */\n  <button\n    type=\"button\"\n    onClick={openSettings}\n    data-sd-consent-settings\n    className=\"text-ink-subtle hover:text-white transition-colors\"\n  >\n    Cookie Settings\n  </button>\n)}\n```\n\nAlternatively, add documentation to site.ts explaining the 5th item is rendered separately."
+    }
+  ],
+  "reviewDoc": "d:/Vid/social-media-downloader/.agents/footer-improvements-review.md"
+}

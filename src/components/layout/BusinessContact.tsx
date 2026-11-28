@@ -26,7 +26,7 @@ export function BusinessContact({
   const whatsappHref = `https://wa.me/${internationalDigits(business.whatsapp)}`;
   const iconClass = footer ? 'h-4 w-4' : 'h-5 w-5';
   const itemClass = footer
-    ? 'flex items-start gap-2.5 text-xs text-ink-muted'
+    ? 'flex flex-col'
     : 'flex items-start gap-3 rounded-2xl border border-border-light bg-white p-4 text-sm text-text-muted shadow-soft dark:bg-card';
   const iconWrapClass = footer
     ? 'mt-0.5 shrink-0 text-white/70'
@@ -47,74 +47,91 @@ export function BusinessContact({
 
   const address = (
     <div className={itemClass}>
-      <span className={iconWrapClass}><MapPin className={iconClass} aria-hidden="true" /></span>
-      <div>
-        {!footer && <p className="text-xs font-semibold uppercase tracking-wide text-text-subtle">Office address</p>}
-        {footer ? (
-          <>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80 mb-1">Our Office</p>
+      {footer ? (
+        <>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80 mb-2">Our Office</p>
+          <div className="flex items-start gap-2.5 text-xs text-ink-muted">
+            <span className="mt-0.5 shrink-0 text-white/70">
+              <MapPin className="h-4 w-4" aria-hidden="true" />
+            </span>
             <p className="leading-relaxed text-sm">{business.address}</p>
-          </>
-        ) : (
-          <p className="mt-1 leading-relaxed text-text">{business.address}</p>
-        )}
-      </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <span className={iconWrapClass}><MapPin className={iconClass} aria-hidden="true" /></span>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-subtle">Office address</p>
+            <p className="mt-1 leading-relaxed text-text">{business.address}</p>
+          </div>
+        </>
+      )}
     </div>
   );
 
   const phone = (
     <div className={itemClass}>
-      <span className={iconWrapClass}><Phone className={iconClass} aria-hidden="true" /></span>
-      <div>
-        {!footer && <p className="text-xs font-semibold uppercase tracking-wide text-text-subtle">Mobile</p>}
-        {footer ? (
-          <>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80 mb-1">Call Us</p>
-            <a href={phoneHref} className={cn(linkClass, 'text-sm')} aria-label={`Call us at ${business.phone}`}>
+      {footer ? (
+        <>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80 mb-2">Call Us</p>
+          <a
+            href={phoneHref}
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-semibold text-white bg-white/10 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-ink"
+            aria-label={`Call us at ${business.phone}`}
+          >
+            <Phone className="w-4 h-4" aria-hidden="true" />
+            Call Now
+          </a>
+        </>
+      ) : (
+        <>
+          <span className={iconWrapClass}><Phone className={iconClass} aria-hidden="true" /></span>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-subtle">Mobile</p>
+            <a href={phoneHref} className={cn(linkClass, 'mt-1 inline-block')} aria-label={`Call ${business.name} at ${business.phone}`}>
               {business.phone}
             </a>
-          </>
-        ) : (
-          <a href={phoneHref} className={cn(linkClass, 'mt-1 inline-block')} aria-label={`Call ${business.name} at ${business.phone}`}>
-            {business.phone}
-          </a>
-        )}
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 
   const whatsapp = (
     <div className={itemClass}>
-      <span className={cn(iconWrapClass, footer && 'text-[#25D366]')}>
-        <WhatsAppIcon className={iconClass} />
-      </span>
-      <div>
-        {!footer && <p className="text-xs font-semibold uppercase tracking-wide text-text-subtle">WhatsApp</p>}
-        {footer ? (
-          <>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80 mb-1">WhatsApp Support</p>
-            <a
-              href={whatsappHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(linkClass, 'text-sm group inline-flex items-center gap-1.5')}
-              aria-label="Chat with us on WhatsApp"
-            >
-              <span className="group-hover:text-[#25D366] transition-colors">Chat on WhatsApp</span>
-            </a>
-          </>
-        ) : (
+      {footer ? (
+        <>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80 mb-2">WhatsApp Support</p>
           <a
             href={whatsappHref}
             target="_blank"
             rel="noopener noreferrer"
-            className={cn(linkClass, 'mt-1 inline-block')}
-            aria-label={`Message ${business.name} on WhatsApp at ${business.whatsapp}`}
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-semibold text-white bg-white/10 border border-white/20 hover:bg-white/15 hover:border-white/30 hover:text-[#25D366] transition-all focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-ink"
+            aria-label="Chat with us on WhatsApp"
           >
-            {business.whatsapp}
+            <WhatsAppIcon className="w-4 h-4" />
+            Chat on WhatsApp
           </a>
-        )}
-      </div>
+        </>
+      ) : (
+        <>
+          <span className={cn(iconWrapClass, footer && 'text-[#25D366]')}>
+            <WhatsAppIcon className={iconClass} />
+          </span>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-subtle">WhatsApp</p>
+            <a
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(linkClass, 'mt-1 inline-block')}
+              aria-label={`Message ${business.name} on WhatsApp at ${business.whatsapp}`}
+            >
+              {business.whatsapp}
+            </a>
+          </div>
+        </>
+      )}
     </div>
   );
 
