@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { Fragment, type SVGProps } from 'react';
-import { Facebook, Instagram, Linkedin, X, Mail, Check, Heart } from 'lucide-react';
+import { Facebook, Instagram, Linkedin, Mail, Check, Heart } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { useCookieConsent } from '@/contexts/CookieConsentContext';
 import { Logo } from '@/components/ui/Logo';
@@ -12,6 +12,14 @@ import { FooterToolGrid } from './FooterToolGrid';
 import { FooterApps } from './FooterApps';
 import { BusinessContact } from './BusinessContact';
 import type { BusinessDetails } from '@/config/compliance';
+
+function XIcon({ className }: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
 
 function PinterestIcon({ className }: SVGProps<SVGSVGElement>) {
   return (
@@ -47,7 +55,7 @@ function PakistanFlag({ className }: { className?: string }) {
 const socialIcons = {
   facebook: Facebook,
   instagram: Instagram,
-  x: X,
+  x: XIcon,
   pinterest: PinterestIcon,
   linkedin: Linkedin,
   reddit: RedditIcon,

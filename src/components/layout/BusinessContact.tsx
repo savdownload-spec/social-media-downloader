@@ -55,8 +55,8 @@ export function BusinessContact({
               <MapPin className="h-4 w-4" aria-hidden="true" />
             </span>
             <p className="leading-relaxed text-sm">
-              1st floor Commercial Plaza, PCSIR Phase 2,<br />
-              Lahore, punjab, Pakistan
+              1st Floor Commercial Plaza, PCSIR Phase 2, Lahore,<br />
+              Punjab, Pakistan
             </p>
           </div>
         </>

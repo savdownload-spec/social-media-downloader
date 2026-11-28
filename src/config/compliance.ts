@@ -9,7 +9,7 @@ export type BusinessDetails = {
 
 export const DEFAULT_BUSINESS: BusinessDetails = {
   name: 'GetSavDown',
-  address: '1st floor Commercial Plaza, PCSIR Phase 2, Lahore, punjab, Pakistan',
+  address: '1st Floor Commercial Plaza, PCSIR Phase 2, Lahore, Punjab, Pakistan',
   phone: '+92 304 8804973',
   whatsapp: '+92 304 8804973',
   email: 'info@getsavdown.com',
