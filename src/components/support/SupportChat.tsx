@@ -773,8 +773,8 @@ export function SupportChat() {
   const unread = conversations.reduce((sum, c) => sum + c.customerUnreadCount, 0);
 
   const floatingBottom = pathname.startsWith('/workspace')
-    ? 'calc(5rem + env(safe-area-inset-bottom, 0px))'
-    : 'calc(1.25rem + env(safe-area-inset-bottom, 0px))';
+    ? 'calc(5rem + env(safe-area-inset-bottom, 0px) + var(--sd-consent-h, 0px))'
+    : 'calc(1.25rem + env(safe-area-inset-bottom, 0px) + var(--sd-consent-h, 0px))';
 
   return <>
     {/* ── Floating trigger ─────────────────────────────────────────────── */}

@@ -1,8 +1,9 @@
 'use client';
 import Link from 'next/link';
-import type { SVGProps } from 'react';
+import { Fragment, type SVGProps } from 'react';
 import { Facebook, Instagram, Linkedin, Twitter, Mail, Check, Heart } from 'lucide-react';
 import { siteConfig } from '@/config/site';
+import { useCookieConsent } from '@/contexts/CookieConsentContext';
 import { Logo } from '@/components/ui/Logo';
 import { LanguageSelector } from '@/components/ui/LanguageSelector';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
@@ -53,6 +54,8 @@ const socialIcons = {
 } as const;
 
 export function Footer({ business }: { business: BusinessDetails }) {
+  const { openSettings } = useCookieConsent();
+
   return (
     <footer className="relative bg-ink text-white overflow-hidden">
       {/* subtle brand glow + grid for depth */}
@@ -211,13 +214,24 @@ export function Footer({ business }: { business: BusinessDetails }) {
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
             {siteConfig.legalLinks.map((link) => {
               return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="text-ink-subtle hover:text-white transition-colors"
-                >
-                  {link.label}
-                </Link>
+                <Fragment key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-ink-subtle hover:text-white transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                  {link.href === '/cookies' && (
+                    <button
+                      type="button"
+                      onClick={openSettings}
+                      data-sd-consent-settings
+                      className="text-ink-subtle hover:text-white transition-colors"
+                    >
+                      Cookie Settings
+                    </button>
+                  )}
+                </Fragment>
               );
             })}
           </div>

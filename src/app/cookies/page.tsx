@@ -17,13 +17,14 @@ const essential = [
   { name: 'next-auth.csrf-token', purpose: 'Prevents cross-site request forgery.' },
   { name: 'Rate-limit identifiers', purpose: 'Protects the service from abuse.' },
   { name: 'googtrans', purpose: 'Remembers your language preference (Google Translate).' },
+  { name: 'sd_auto_theme', purpose: 'Remembers the Auto theme choice so pages load in the right light or dark mode.' },
+  { name: 'sd_ref', purpose: 'Remembers the affiliate link you arrived from, for 30 days.' },
+  { name: 'sd_consent', purpose: 'Remembers your cookie choices.' },
 ];
 
 const notUsed = [
-  'Advertising cookies',
-  'Cross-site tracking cookies',
-  'Third-party ad network pixels',
   'Social media tracking pixels',
+  'Third-party ad network pixels',
   'Behavioral profiling cookies',
   'Device fingerprinting',
 ];
@@ -38,12 +39,12 @@ export default function CookiesPage() {
         ]}
         eyebrow="Legal"
         title={<>Cookie <span className="text-gradient">Policy.</span></>}
-        description="Cookies are small text files stored on your device when you visit a website. SavDown uses the minimum number necessary to make the service work well, nothing more."
-        meta="Last updated: January 2026"
+        description="Cookies are small text files stored on your device when you visit a website. SavDown uses only the cookies needed for the service to work, and adds analytics or advertising features only when you allow them."
+        meta="Last updated: November 2026"
         highlights={[
           { icon: <ShieldCheck className="w-3.5 h-3.5 text-accent" />, label: 'Minimal cookies' },
           { icon: <Settings className="w-3.5 h-3.5 text-accent" />, label: 'Opt-out anytime' },
-          { icon: <Globe className="w-3.5 h-3.5 text-accent" />, label: 'No cross-site tracking' },
+          { icon: <Globe className="w-3.5 h-3.5 text-accent" />, label: 'Consent first' },
         ]}
       />
 
@@ -81,13 +82,16 @@ export default function CookiesPage() {
 
       {/* Analytics */}
       <NarrowContent className="pb-8">
-        <p className="text-sm font-semibold uppercase tracking-wider text-gradient inline-block mb-3">Optional analytics</p>
+        <p className="text-sm font-semibold uppercase tracking-wider text-gradient inline-block mb-3">Optional analytics and marketing</p>
         <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-text">
           Only if you opt in.
         </h2>
         <p className="mt-4 text-text-muted leading-relaxed">
-          If enabled, we use privacy-friendly aggregate analytics to understand which tools are used most. You can
-          opt out at any time. We do not use Google Analytics by default.
+          If you allow analytics, we use Google Analytics 4 (through Google Tag Manager), Vercel Analytics, Vercel
+          Speed Insights and Ahrefs to understand which tools and pages are used most. If you allow marketing, Google
+          Analytics also uses Google Signals, which adds demographic and interest reports based on people signed in to
+          Google and can link to Google Ads audiences. These services set their own cookies or similar storage, and
+          none of them runs until you choose Accept All or turn a category on in Cookie Settings.
         </p>
       </NarrowContent>
       <NarrowContent className="pb-16">
@@ -95,20 +99,20 @@ export default function CookiesPage() {
           <InfoBlock
             icon={<BarChart3 className="w-5 h-5" />}
             tile="bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-400"
-            title="Aggregate only"
-            description="We see which tool is popular, not who used it. No per-user profiles, ever."
+            title="Measured, not profiled"
+            description="We look at visits, popular tools and page performance. Reports use pseudonymous identifiers, never your name or email."
           />
           <InfoBlock
             icon={<Settings className="w-5 h-5" />}
             tile="bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-warning"
             title="Opt out anytime"
-            description="Toggle analytics off from the cookie banner. Your choice is remembered for one year."
+            description="Turn categories off from Cookie Settings in the footer. Your choice is remembered for six months, then we ask again."
           />
           <InfoBlock
             icon={<ShieldCheck className="w-5 h-5" />}
             tile="bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400"
-            title="No cross-site tracking"
-            description="We do not run retargeting pixels, ad networks, or third-party trackers of any kind."
+            title="Off until you allow it"
+            description="Analytics and marketing tags are blocked until you say yes. Reject All keeps them off."
           />
         </InfoBlockGrid>
       </NarrowContent>
@@ -155,7 +159,7 @@ export default function CookiesPage() {
             icon={<Cookie className="w-5 h-5" />}
             tile="bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400"
             title="Cookie banner"
-            description="The first time you visit, you will see a banner that explains what we use and lets you opt out of anything non-essential."
+            description="The first time you visit, a banner explains what we use and lets you Accept All, Reject All or choose categories. Cookie Settings in the footer reopens it at any time."
           />
         </InfoBlockGrid>
       </NarrowContent>
