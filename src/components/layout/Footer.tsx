@@ -108,38 +108,65 @@ export function Footer({ business }: { business: BusinessDetails }) {
           </div>
 
           {/* Contact + language */}
-          <div className="lg:col-span-6">
-            <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-4">
-              {"Stay In The Loop"}
-            </p>
-            <p className="text-sm text-ink-muted leading-relaxed mb-5">
-              {"Get notified about new tools and updates."}
-            </p>
-            <Link
-              href="/contact"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
-            >
-              <Mail className="w-4 h-4" />
-              {"Contact"}
-            </Link>
-            <p className="mt-3 text-sm text-ink-muted">
-              {"or email "}
-              <a href="mailto:info@getsavdown.com" className="text-white/80 hover:text-white transition-colors">
-                info@getsavdown.com
-              </a>
-            </p>
-            <div className="mt-6 flex flex-wrap gap-x-10 gap-y-6">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
-                  {"Language"}
-                </p>
-                <LanguageSelector variant="footer" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
-                  Theme
-                </p>
-                <ThemeToggle variant="footer" />
+          <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-8">
+            {/* Why SavDown? */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-4">
+                Why SavDown?
+              </p>
+              <ul className="space-y-3">
+                {[
+                  "Free Daily Credits",
+                  "No Card Required",
+                  "Completely Secure",
+                  "Fast Processing",
+                  "No Software Installation",
+                  "Easy to Use"
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-2.5 text-sm text-ink-muted">
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white" />
+                    </span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Stay In The Loop */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-4">
+                {"Stay In The Loop"}
+              </p>
+              <p className="text-sm text-ink-muted leading-relaxed mb-5">
+                {"Get notified about new tools and updates."}
+              </p>
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
+              >
+                <Mail className="w-4 h-4" />
+                {"Contact"}
+              </Link>
+              <p className="mt-3 text-sm text-ink-muted">
+                {"or email "}
+                <a href="mailto:info@getsavdown.com" className="text-white/80 hover:text-white transition-colors">
+                  info@getsavdown.com
+                </a>
+              </p>
+              <div className="mt-6 flex flex-wrap gap-x-10 gap-y-6">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
+                    {"Language"}
+                  </p>
+                  <LanguageSelector variant="footer" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
+                    Theme
+                  </p>
+                  <ThemeToggle variant="footer" />
+                </div>
               </div>
             </div>
           </div>
@@ -150,29 +177,26 @@ export function Footer({ business }: { business: BusinessDetails }) {
 
         {/* ---- Site nav columns ---- */}
         <div className="mt-14 pt-12 border-t border-white/10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {/* Why SavDown? - First column */}
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-white">
-              Why SavDown?
-            </p>
-            <ul className="mt-4 space-y-3">
-              {[
-                "Free Daily Credits",
-                "No Card Required",
-                "Completely Secure",
-                "Fast Processing",
-                "No Software Installation",
-                "Easy to Use"
-              ].map((item) => (
-                <li key={item} className="flex items-center gap-2.5 text-sm text-ink-muted">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center">
-                    <Check className="w-3 h-3 text-white" />
-                  </span>
-                  {item}
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* Resources - First column */}
+          {siteConfig.footerLinks.Resources && (
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-white">
+                Resources
+              </p>
+              <ul className="mt-4 space-y-2.5">
+                {siteConfig.footerLinks.Resources.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-[13px] text-ink-muted hover:text-white transition-colors leading-snug block"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Company - Second column */}
           {siteConfig.footerLinks.Company && (
