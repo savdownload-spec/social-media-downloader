@@ -54,7 +54,10 @@ export function BusinessContact({
             <span className="mt-0.5 shrink-0 text-white/70">
               <MapPin className="h-4 w-4" aria-hidden="true" />
             </span>
-            <p className="leading-relaxed text-sm">{business.address}</p>
+            <p className="leading-relaxed text-sm">
+              1st floor Commercial Plaza, PCSIR Phase 2,<br />
+              Lahore, punjab, Pakistan
+            </p>
           </div>
         </>
       ) : (
@@ -76,7 +79,7 @@ export function BusinessContact({
           <p className="text-[11px] font-semibold uppercase tracking-wider text-white/80 mb-2">Call Us</p>
           <a
             href={phoneHref}
-            className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-semibold text-white bg-white/10 border border-white/20 hover:bg-white/15 hover:border-white/30 transition-all focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-ink"
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-full text-sm font-semibold text-white bg-gradient-to-r from-primary to-secondary hover:shadow-lg hover:shadow-primary/25 transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-ink"
             aria-label={`Call us at ${business.phone}`}
           >
             <Phone className="w-4 h-4" aria-hidden="true" />
@@ -106,7 +109,7 @@ export function BusinessContact({
             href={whatsappHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-sm font-semibold text-white bg-white/10 border border-white/20 hover:bg-white/15 hover:border-white/30 hover:text-[#25D366] transition-all focus:outline-none focus:ring-2 focus:ring-white/50 focus:ring-offset-2 focus:ring-offset-ink"
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-full text-sm font-semibold text-white bg-[#25D366] hover:bg-[#1fb855] hover:shadow-lg hover:shadow-[#25D366]/25 transition-all focus:outline-none focus:ring-2 focus:ring-[#25D366]/50 focus:ring-offset-2 focus:ring-offset-ink"
             aria-label="Chat with us on WhatsApp"
           >
             <WhatsAppIcon className="w-4 h-4" />

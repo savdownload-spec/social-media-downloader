@@ -12,7 +12,7 @@ export const siteConfig = {
   footerDescription:
     'SavDown is the fast, private way to save videos, reels, and thumbnails from the platforms you use every day. No watermarks, no clutter, free daily credits.',
   social: [
-    { label: 'Visit SavDownload on Facebook', href: 'https://www.facebook.com/profile.php?id=61592887680787', icon: 'facebook' },
+    { label: 'Visit SavDownload on Facebook', href: 'https://www.facebook.com/profile.php?id=61596688811323', icon: 'facebook' },
     { label: 'Visit SavDownload on Instagram', href: 'https://www.instagram.com/savdownload/?hl=en', icon: 'instagram' },
     { label: 'Visit SavDownload on X', href: 'https://x.com/SavDownload', icon: 'x' },
     { label: 'Visit SavDownload on Pinterest', href: 'https://www.pinterest.com/savdownload/_profile/', icon: 'pinterest' },

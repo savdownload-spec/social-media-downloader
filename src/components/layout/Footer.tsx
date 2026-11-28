@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { Fragment, type SVGProps } from 'react';
-import { Facebook, Instagram, Linkedin, Twitter, Mail, Check, Heart } from 'lucide-react';
+import { Facebook, Instagram, Linkedin, X, Mail, Check, Heart } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { useCookieConsent } from '@/contexts/CookieConsentContext';
 import { Logo } from '@/components/ui/Logo';
@@ -47,7 +47,7 @@ function PakistanFlag({ className }: { className?: string }) {
 const socialIcons = {
   facebook: Facebook,
   instagram: Instagram,
-  x: Twitter,
+  x: X,
   pinterest: PinterestIcon,
   linkedin: Linkedin,
   reddit: RedditIcon,
