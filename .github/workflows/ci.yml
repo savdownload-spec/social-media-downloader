@@ -25,12 +25,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
-      # actions/setup-node's Node 20 bundles npm v10, but package-lock.json
-      # is generated locally with whatever npm version development happens
-      # to have (currently v11, tracked in package.json's "packageManager"
+      # actions/setup-node's bundled npm can differ from the npm version used
+      # to generate package-lock.json locally (currently v11, tracked in
+      # package.json's "packageManager"
       # field). npm ci is strict about lockfile format across major
       # versions, so that skew intermittently breaks CI with a misleading
       # "Missing: X from lock file" error even though nothing is actually

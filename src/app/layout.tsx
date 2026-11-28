@@ -16,14 +16,16 @@ import { PricingProvider } from '@/components/pricing/PricingProvider';
 import { getPricingConfig } from '@/lib/pricing-server';
 import { ToolStatusProvider } from '@/components/tools/ToolStatusProvider';
 import { getToolStatuses } from '@/lib/toolStatuses';
+import { getComplianceSettings } from '@/lib/compliance-server';
 import { SupportChat } from '@/components/support/SupportChat';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { THEME_INIT_SCRIPT } from '@/lib/theme/theme-init-script';
+import { CONSENT_INIT_SCRIPT } from '@/lib/cookie-consent';
 import { buildMetadata, jsonLd, organizationSchema, websiteSchema } from '@/lib/seo';
-import { Analytics } from '@vercel/analytics/next';
-import { SpeedInsights } from '@vercel/speed-insights/next';
-import { GoogleTagManager } from '@/components/analytics/GoogleTagManager';
-import Script from 'next/script';
+import { AnalyticsScripts } from '@/components/analytics/AnalyticsScripts';
+import { CookieConsentBanner } from '@/components/consent/CookieConsentBanner';
+import { CookieSettingsDialog } from '@/components/consent/CookieSettingsDialog';
+import { CookieConsentProvider } from '@/contexts/CookieConsentContext';
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -83,9 +85,10 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [pricing, toolStatuses] = await Promise.all([
+  const [pricing, toolStatuses, compliance] = await Promise.all([
     getPricingConfig(),
     getToolStatuses(),
+    getComplianceSettings(),
   ]);
   const toolStatusesObj = Object.fromEntries(toolStatuses);
 
@@ -100,12 +103,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           Next.js stylesheet links during client rendering/recovery. */}
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        {/* Must run before any tag: sets Consent Mode defaults from the saved
+            choice and hides the consent banner before paint. */}
+        <script dangerouslySetInnerHTML={{ __html: CONSENT_INIT_SCRIPT }} />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={jsonLd({ '@graph': [organizationSchema(), websiteSchema()] })}
+          dangerouslySetInnerHTML={jsonLd({ '@graph': [organizationSchema(compliance.business), websiteSchema()] })}
         />
       </head>
       <body className="font-sans bg-surface text-text antialiased">
+        <CookieConsentProvider>
         <Providers>
           <PricingProvider value={pricing}>
             <ToolStatusProvider value={toolStatusesObj}>
@@ -121,8 +128,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     </PublicShell>
                     <main className="min-h-[calc(100vh-4rem)]">{children}</main>
                     <PublicShell>
-                      <Footer />
+                      <Footer business={compliance.business} />
                       <SupportChat />
+                      <CookieConsentBanner />
+                      <CookieSettingsDialog />
                     </PublicShell>
                   </InstallProvider>
                 </ConfirmProvider>
@@ -132,17 +141,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </ToolStatusProvider>
           </PricingProvider>
         </Providers>
-        {/* GoogleTagManager: loads GTM afterInteractive to avoid blocking FCP/LCP */}
-        <GoogleTagManager id="GTM-5SX8RKCS" />
-        {/* Ahrefs Web Analytics: loads afterInteractive to avoid blocking FCP/LCP */}
-        <Script
-          id="ahrefs-analytics"
-          src="https://analytics.ahrefs.com/analytics.js"
-          data-key="Y4hjtZYrkSQE4nUigWpKbg"
-          strategy="afterInteractive"
-        />
-        <Analytics />
-        <SpeedInsights />
+        {/* Optional tags load only after consent; GTM is injected on demand. */}
+        <AnalyticsScripts gtmId="GTM-5SX8RKCS" />
+        </CookieConsentProvider>
       </body>
     </html>
   );

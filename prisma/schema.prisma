@@ -1053,3 +1053,46 @@ model SocialAnalyticsSnapshot {
   @@index([platform, capturedAt])
   @@index([accountId, capturedAt])
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tool Health Monitoring
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Real-time health metrics for every tool. Updated on every tool execution
+/// to track success rates, common errors, and operational status.
+model ToolHealth {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  successCount  Int       @default(0)
+  failureCount  Int       @default(0)
+  lastSuccess   DateTime?
+  lastFailure   DateTime?
+  lastError     String?
+  lastErrorCode String?
+  avgResponseMs Int?
+  /// Computed health status based on recent success rate
+  isHealthy     Boolean   @default(true)
+  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime  @default(now())
+
+  @@index([slug])
+  @@index([isHealthy])
+  @@map("tool_health")
+}
+
+/// Append-only log of every tool execution for detailed analytics.
+/// Retained for 90 days to calculate rolling success rates.
+model ToolHealthLog {
+  id         String   @id @default(cuid())
+  slug       String
+  success    Boolean
+  error      String?
+  errorCode  String?
+  responseMs Int?
+  createdAt  DateTime @default(now())
+
+  @@index([slug, createdAt])
+  @@index([createdAt])
+  @@index([success, createdAt])
+  @@map("tool_health_logs")
+}

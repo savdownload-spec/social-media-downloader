@@ -33,6 +33,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base}/search`, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${base}/privacy`, changeFrequency: 'yearly', priority: 0.4 },
     { url: `${base}/terms`, changeFrequency: 'yearly', priority: 0.4 },
+    { url: `${base}/refund-policy`, changeFrequency: 'yearly', priority: 0.4 },
+    { url: `${base}/service-policy`, changeFrequency: 'yearly', priority: 0.4 },
     { url: `${base}/cookies`, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${base}/dmca`, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${base}/reviews`, changeFrequency: 'weekly', priority: 0.6 },

@@ -1,14 +1,25 @@
 'use client';
 import Link from 'next/link';
-import type { SVGProps } from 'react';
-import { Facebook, Instagram, Linkedin, Twitter, Mail, Check, Heart } from 'lucide-react';
+import { Fragment, type SVGProps } from 'react';
+import { Facebook, Instagram, Linkedin, Mail, Check, Heart } from 'lucide-react';
 import { siteConfig } from '@/config/site';
+import { useCookieConsent } from '@/contexts/CookieConsentContext';
 import { Logo } from '@/components/ui/Logo';
 import { LanguageSelector } from '@/components/ui/LanguageSelector';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { Container } from './Container';
 import { FooterToolGrid } from './FooterToolGrid';
 import { FooterApps } from './FooterApps';
+import { BusinessContact } from './BusinessContact';
+import type { BusinessDetails } from '@/config/compliance';
+
+function XIcon({ className }: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+  );
+}
 
 function PinterestIcon({ className }: SVGProps<SVGSVGElement>) {
   return (
@@ -44,13 +55,15 @@ function PakistanFlag({ className }: { className?: string }) {
 const socialIcons = {
   facebook: Facebook,
   instagram: Instagram,
-  x: Twitter,
+  x: XIcon,
   pinterest: PinterestIcon,
   linkedin: Linkedin,
   reddit: RedditIcon,
 } as const;
 
-export function Footer() {
+export function Footer({ business }: { business: BusinessDetails }) {
+  const { openSettings } = useCookieConsent();
+
   return (
     <footer className="relative bg-ink text-white overflow-hidden">
       {/* subtle brand glow + grid for depth */}
@@ -62,7 +75,7 @@ export function Footer() {
         {/* ---- Top: brand + newsletter-style contact ---- */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 pb-12 border-b border-white/10">
           {/* Brand block */}
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-6">
             <Logo variant="light" height={32} />
             <p className="mt-4 text-sm text-ink-muted leading-relaxed max-w-sm">
               {"SavDown is the fast, private way to save videos, reels, and thumbnails from the platforms you use every day. No watermarks, no clutter — free daily credits with a free account."}
@@ -95,57 +108,67 @@ export function Footer() {
           </div>
 
           {/* Contact + language */}
-          <div className="lg:col-span-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-4">
-              {"Stay In The Loop"}
-            </p>
-            <p className="text-sm text-ink-muted leading-relaxed mb-5">
-              {"Get notified about new tools and updates."}
-            </p>
-            <Link
-              href="/contact"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
-            >
-              <Mail className="w-4 h-4" />
-              {"Contact"}
-            </Link>
-            <p className="mt-3 text-sm text-ink-muted">
-              {"or email "}
-              <a href="mailto:info@getsavdown.com" className="text-white/80 hover:text-white transition-colors">
-                info@getsavdown.com
-              </a>
-            </p>
-            <div className="mt-6 flex flex-wrap gap-x-10 gap-y-6">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
-                  {"Language"}
-                </p>
-                <LanguageSelector variant="footer" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
-                  Theme
-                </p>
-                <ThemeToggle variant="footer" />
+          <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-8">
+            {/* Why SavDown? */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-4">
+                Why SavDown?
+              </p>
+              <ul className="space-y-3">
+                {[
+                  "Free Daily Credits",
+                  "No Card Required",
+                  "Completely Secure",
+                  "Fast Processing",
+                  "No Software Installation",
+                  "Easy to Use"
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-2.5 text-sm text-ink-muted">
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white" />
+                    </span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Stay In The Loop */}
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-4">
+                {"Stay In The Loop"}
+              </p>
+              <p className="text-sm text-ink-muted leading-relaxed mb-5">
+                {"Get notified about new tools and updates."}
+              </p>
+              <Link
+                href="/contact"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-semibold text-white bg-gradient-brand bg-[length:200%_200%] shadow-glow-lg hover:bg-[position:100%_50%] transition-all active:scale-[0.98]"
+              >
+                <Mail className="w-4 h-4" />
+                {"Contact"}
+              </Link>
+              <p className="mt-3 text-sm text-ink-muted">
+                {"or email "}
+                <a href="mailto:info@getsavdown.com" className="text-white/80 hover:text-white transition-colors">
+                  info@getsavdown.com
+                </a>
+              </p>
+              <div className="mt-6 flex flex-wrap gap-x-10 gap-y-6">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
+                    {"Language"}
+                  </p>
+                  <LanguageSelector variant="footer" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-3">
+                    Theme
+                  </p>
+                  <ThemeToggle variant="footer" />
+                </div>
               </div>
             </div>
-          </div>
-
-          {/* Brand statement */}
-          <div className="lg:col-span-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-4">
-              {"Why SavDown?"}
-            </p>
-            <ul className="space-y-3">
-              {["Free Daily Credits", "No Card Required", "Completely Secure"].map((item) => (
-                <li key={item} className="flex items-center gap-2.5 text-sm text-ink-muted">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center">
-                    <Check className="w-3 h-3 text-white" />
-                  </span>
-                  {item}
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
 
@@ -154,39 +177,82 @@ export function Footer() {
 
         {/* ---- Site nav columns ---- */}
         <div className="mt-14 pt-12 border-t border-white/10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {Object.entries(siteConfig.footerLinks)
-            .filter(([heading]) => !['All Tools', 'Social Media Downloaders', 'Video Downloaders', 'Audio Downloaders', 'Image Downloaders'].includes(heading))
-            .map(([heading, links]) => {
-              return (
-                <div key={heading}>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-white">
-                    {heading}
-                  </p>
-                  <ul className="mt-4 space-y-2.5">
-                    {links.map((link) => {
-                      const translatedLabel = link.label;
-                      return (
-                        <li key={link.href}>
-                          <Link
-                            href={link.href}
-                            className="text-[13px] text-ink-muted hover:text-white transition-colors leading-snug block"
-                          >
-                            {translatedLabel}
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              );
-            })}
+          {/* Resources - First column */}
+          {siteConfig.footerLinks.Resources && (
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-white">
+                Resources
+              </p>
+              <ul className="mt-4 space-y-2.5">
+                {siteConfig.footerLinks.Resources.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-[13px] text-ink-muted hover:text-white transition-colors leading-snug block"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Company - Second column */}
+          {siteConfig.footerLinks.Company && (
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-white">
+                Company
+              </p>
+              <ul className="mt-4 space-y-2.5">
+                {siteConfig.footerLinks.Company.map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-[13px] text-ink-muted hover:text-white transition-colors leading-snug block"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Legal & Policies - Third column */}
+          {siteConfig.footerLinks['Legal & Policies'] && (
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-white">
+                Legal & Policies
+              </p>
+              <ul className="mt-4 space-y-2.5">
+                {siteConfig.footerLinks['Legal & Policies'].map((link) => (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      className="text-[13px] text-ink-muted hover:text-white transition-colors leading-snug block"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Our Apps - Fourth column */}
           <FooterApps />
         </div>
 
+        {/* ---- Business contact ---- */}
+        <div className="mt-14 pt-8 border-t border-white/10">
+          <BusinessContact business={business} variant="footer" />
+        </div>
+
         {/* ---- Bottom bar ---- */}
-        <div className="mt-14 pt-8 border-t border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="mt-10 pt-8 border-t border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-x-0 gap-y-1 text-xs text-ink-subtle">
-            <span>&copy; {new Date().getFullYear()} {siteConfig.name}. All Rights Reserved.</span>
+            <span>&copy; {new Date().getFullYear()} {business.name}. All Rights Reserved.</span>
             <span className="mx-2 text-white/20">|</span>
             <span className="flex items-center gap-1">
               Made with
@@ -203,13 +269,26 @@ export function Footer() {
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
             {siteConfig.legalLinks.map((link) => {
               return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="text-ink-subtle hover:text-white transition-colors"
-                >
-                  {link.label}
-                </Link>
+                <Fragment key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-ink-subtle hover:text-white transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                  {link.href === '/cookies' && (
+                    /* Cookie Settings button (5th item) - rendered conditionally after Cookie Policy 
+                       because it triggers client-side modal rather than navigation */
+                    <button
+                      type="button"
+                      onClick={openSettings}
+                      data-sd-consent-settings
+                      className="text-ink-subtle hover:text-white transition-colors"
+                    >
+                      Cookie Settings
+                    </button>
+                  )}
+                </Fragment>
               );
             })}
           </div>

@@ -13,6 +13,7 @@ import { isSupportedPlatformUrl } from '@/lib/security/remote-url';
 import { requireToolAvailable } from '@/lib/toolStatus';
 import { normalizeYouTubeVideoUrl } from '@/lib/youtube-url';
 import { DOWNLOAD_NOT_PERMITTED, getToolPolicy } from '@/lib/downloaderPolicy';
+import { recordToolResult } from '@/lib/healthTracking';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -65,39 +66,44 @@ const PLAYLIST_TOOLS = new Set([
 ]);
 
 export async function POST(req: Request) {
-  /* ── 1. Rate limit ── */
-  const ip = getClientId(req);
-  const rl = await ratelimit(`dl:${ip}`, {
-    limit: 20,
-    windowSeconds: 60,
-    fallbackToMemory: true,
-  });
-  if (!rl.success) {
-    return NextResponse.json<DownloadResult>(
-      {
-        ok: false,
-        error: 'Too many requests. Please slow down.',
-        code: 'PROVIDER_RATE_LIMITED',
-      },
-      { status: 429, headers: { 'x-ratelimit-remaining': String(rl.remaining) } },
-    );
-  }
+  const startTime = Date.now(); // Track response time for health monitoring
+  let toolSlug = '';
 
-  /* ── 2. Require an account (free: this only reads metadata) ──
-     The credit is spent later, when the file is actually delivered by
-     /api/proxy or /api/download/merge, so looking up formats costs nothing. */
-  /* ── 3. Validate body ── */
-  let body: z.infer<typeof BodySchema>;
   try {
-    body = BodySchema.parse(await req.json());
-  } catch {
-    return NextResponse.json<DownloadResult>(
-      { ok: false, error: 'Invalid request.', code: 'INVALID_REQUEST' },
-      { status: 400 },
-    );
-  }
+    /* ── 1. Rate limit ── */
+    const ip = getClientId(req);
+    const rl = await ratelimit(`dl:${ip}`, {
+      limit: 20,
+      windowSeconds: 60,
+      fallbackToMemory: true,
+    });
+    if (!rl.success) {
+      return NextResponse.json<DownloadResult>(
+        {
+          ok: false,
+          error: 'Too many requests. Please slow down.',
+          code: 'PROVIDER_RATE_LIMITED',
+        },
+        { status: 429, headers: { 'x-ratelimit-remaining': String(rl.remaining) } },
+      );
+    }
 
-  /* ── 4. Look up tool ── */
+    /* ── 2. Require an account (free: this only reads metadata) ──
+       The credit is spent later, when the file is actually delivered by
+       /api/proxy or /api/download/merge, so looking up formats costs nothing. */
+    /* ── 3. Validate body ── */
+    let body: z.infer<typeof BodySchema>;
+    try {
+      body = BodySchema.parse(await req.json());
+      toolSlug = body.tool; // Store for health tracking
+    } catch {
+      return NextResponse.json<DownloadResult>(
+        { ok: false, error: 'Invalid request.', code: 'INVALID_REQUEST' },
+        { status: 400 },
+      );
+    }
+
+    /* ── 4. Look up tool ── */
   const tool = toolsBySlug.get(body.tool);
   if (!tool) {
     return NextResponse.json<DownloadResult>(
@@ -179,12 +185,36 @@ export async function POST(req: Request) {
     : result;
   const response = scoped.ok && operationId ? withOperationContext(scoped, operationId, tool.slug, tool.platform) : scoped;
 
+  // Record health metrics
+  const responseMs = Date.now() - startTime;
+  await recordToolResult(
+    tool.slug,
+    result.ok,
+    responseMs,
+    result.ok ? undefined : result.error,
+    result.ok ? undefined : result.code
+  );
+
   return NextResponse.json(response, {
     headers: {
       'x-ratelimit-limit':      String(rl.limit),
       'x-ratelimit-remaining':  String(rl.remaining),
     },
   });
+  } catch (error) {
+    // Record health metrics for unexpected errors
+    if (toolSlug) {
+      const responseMs = Date.now() - startTime;
+      await recordToolResult(
+        toolSlug,
+        false,
+        responseMs,
+        error instanceof Error ? error.message : 'Internal server error',
+        'INTERNAL_ERROR'
+      );
+    }
+    throw error; // Re-throw to let Next.js handle it
+  }
 }
 
 function withOperationContext(result: Extract<DownloadResult, { ok: true }>, operationId: string, tool: string, platform: string): DownloadResult {

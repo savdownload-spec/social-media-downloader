@@ -7,6 +7,12 @@ import { z } from 'zod';
 import { requireAdminApi, PRIVATE_NO_STORE_HEADERS } from '@/lib/admin-auth';
 import { MAINTENANCE_SETTING_KEY } from '@/lib/maintenance';
 import { DEFAULT_REFERRAL_CREDIT_USD_RATE, REFERRAL_CREDIT_VALUE_SETTING } from '@/lib/affiliates-constants';
+import {
+  BUSINESS_SETTING_KEYS,
+  DEFAULT_COMPLIANCE_SETTINGS,
+  POLICY_SETTING_KEYS,
+} from '@/config/compliance';
+import { revalidateComplianceSettings } from '@/lib/compliance-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -26,6 +32,7 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   [REFERRAL_CREDIT_VALUE_SETTING]: String(DEFAULT_REFERRAL_CREDIT_USD_RATE),
   newsletter_enabled:         'true',
   maintenance_mode:           'false',
+  ...DEFAULT_COMPLIANCE_SETTINGS,
 };
 
 export async function GET() {
@@ -77,6 +84,10 @@ export async function PATCH(req: NextRequest) {
 
 const updateSchema = z.record(z.string(), z.string());
 
+function isInternationalContactNumber(value: string): boolean {
+  return /^\+[1-9]\d{7,14}$/.test(value.replace(/[\s().-]/g, ''));
+}
+
 export async function PUT(req: NextRequest) {
   const session = await getServerSession(authOptions);
   const admin = session?.user as { id?: string; role?: string; email?: string };
@@ -91,6 +102,27 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Estimated USD value per SavCredit must be greater than 0 and no more than 1.' }, { status: 400 });
   }
 
+  const businessName = parsed.data[BUSINESS_SETTING_KEYS.name];
+  if (businessName !== undefined && (!businessName.trim() || businessName.length > 120)) {
+    return NextResponse.json({ ok: false, error: 'Business name is required and must be 120 characters or fewer.' }, { status: 400 });
+  }
+  const businessAddress = parsed.data[BUSINESS_SETTING_KEYS.address];
+  if (businessAddress !== undefined && (!businessAddress.trim() || businessAddress.length > 300)) {
+    return NextResponse.json({ ok: false, error: 'Office address is required and must be 300 characters or fewer.' }, { status: 400 });
+  }
+  for (const key of [BUSINESS_SETTING_KEYS.phone, BUSINESS_SETTING_KEYS.whatsapp]) {
+    const value = parsed.data[key];
+    if (value !== undefined && !isInternationalContactNumber(value)) {
+      return NextResponse.json({ ok: false, error: 'Phone and WhatsApp numbers must use international format, for example +92 304 8804973.' }, { status: 400 });
+    }
+  }
+  for (const key of Object.values(POLICY_SETTING_KEYS)) {
+    const value = parsed.data[key];
+    if (value !== undefined && (!value.trim() || value.length > 50_000)) {
+      return NextResponse.json({ ok: false, error: 'Policy content is required and must be 50,000 characters or fewer.' }, { status: 400 });
+    }
+  }
+
   // Only this form's settings belong to this write. Other AdminSetting rows
   // (AI configuration, provider settings, pricing) have their own editors.
   const settings = Object.fromEntries(Object.entries(parsed.data).filter(
@@ -99,6 +131,10 @@ export async function PUT(req: NextRequest) {
   await prisma.$transaction(Object.entries(settings).map(([key, value]) =>
     prisma.adminSetting.upsert({ where: { key }, update: { value }, create: { key, value } }),
   ));
+
+  if (Object.keys(settings).some((key) => Object.hasOwn(DEFAULT_COMPLIANCE_SETTINGS, key))) {
+    revalidateComplianceSettings();
+  }
 
   await writeAuditLog({ adminId: admin.id!, adminEmail: admin.email!, action: 'settings.update', detail: settings });
 

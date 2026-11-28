@@ -1,38 +1,33 @@
 'use client';
 
-import Script from 'next/script';
-
-interface GoogleTagManagerProps {
-  id: string;
-}
+import { useEffect } from 'react';
+import { useCookieConsent } from '@/contexts/CookieConsentContext';
+import { shouldLoadGtm, toConsentSignals } from '@/lib/cookie-consent';
 
 /**
- * Loads Google Tag Manager after the page becomes interactive so it does not
- * block the critical rendering path (FCP/LCP). The dataLayer initialisation
- * is inlined in the first Script tag so it is always available before the
- * GTM bundle executes.
- *
- * The container's GA4 Google tag only initialises after the legacy
- * `gtag('js', new Date())` signal: when GTM is injected dynamically after
- * window load (Next.js afterInteractive), omitting it leaves the container
- * running with gtm.dom/gtm.load but no GA4 hits. Verified against the live
- * container GTM-5SX8RKCS.
+ * Injects the GTM container only after the visitor allows analytics or
+ * marketing. Consent Mode defaults and gtag() are already defined by the
+ * blocking head script, so the consent update pushed here reaches the GA4
+ * tag before the container executes. `gtag('js')` is issued there too: the
+ * container's GA4 Google tag only initialises after that signal when GTM is
+ * injected after window load.
  */
-export function GoogleTagManager({ id }: GoogleTagManagerProps) {
-  return (
-    <>
-      <Script
-        id="gtm-datalayer-init"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());`,
-        }}
-      />
-      <Script
-        id="gtm-script"
-        strategy="afterInteractive"
-        src={`https://www.googletagmanager.com/gtm.js?id=${id}`}
-      />
-    </>
-  );
+export function GoogleTagManager({ id }: { id: string }) {
+  const { consent } = useCookieConsent();
+
+  useEffect(() => {
+    if (!consent || !shouldLoadGtm(consent)) return;
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = window.gtag || function gtag() { window.dataLayer.push(arguments); };
+    window.gtag('consent', 'update', toConsentSignals(consent));
+
+    const src = `https://www.googletagmanager.com/gtm.js?id=${id}`;
+    if (document.querySelector(`script[src="${src}"]`)) return;
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = src;
+    document.head.appendChild(script);
+  }, [consent, id]);
+
+  return null;
 }

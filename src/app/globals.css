@@ -591,6 +591,24 @@ body {
   border: none !important;
 }
 
+/* Cookie consent. The static HTML always ships the banner because it cannot
+   see the cookie; the blocking head script sets data-sd-consent when a saved
+   choice exists, so this hides it before first paint instead of flashing
+   until hydration. --sd-consent-h lifts fixed UI above the banner: the banner
+   publishes its measured height after hydration; before that, an estimate
+   keeps the support button from sitting on top of it. */
+html[data-sd-consent='set'] [data-sd-consent-banner] {
+  display: none;
+}
+html:has([data-sd-consent-banner]):not([data-sd-consent='set']) {
+  --sd-consent-h: 4.25rem;
+}
+@media (max-width: 1023px) {
+  html:has([data-sd-consent-banner]):not([data-sd-consent='set']) {
+    --sd-consent-h: 14rem;
+  }
+}
+
 @layer utilities {
   /* Tailwind maps both bg-primary and text-primary to one color. Dark mode
      needs them to diverge: solid fills must stay dark enough for white

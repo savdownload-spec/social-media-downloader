@@ -53,3 +53,8 @@ public/background-removal/isnet-fp16-v1/*.mjs
 
 # Verified upscaler assets generated from pinned npm packages.
 public/upscaler/
+
+# Database backups (local configuration backups)
+backups/
+*.backup.json
+config-export-*.json

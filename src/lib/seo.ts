@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { siteConfig } from '@/config/site';
+import { DEFAULT_BUSINESS, type BusinessDetails } from '@/config/compliance';
 
 type SeoInput = {
   title: string;
@@ -97,9 +98,13 @@ export function buildMetadata({
 }
 
 export function jsonLd(data: Record<string, unknown>) {
-  return {
-    __html: JSON.stringify({ '@context': 'https://schema.org', ...data }),
-  };
+  const serialized = JSON.stringify({ '@context': 'https://schema.org', ...data })
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+  return { __html: serialized };
 }
 
 export function softwareAppSchema(tool: { name: string; description: string; url: string }) {
@@ -129,17 +134,20 @@ export function faqSchema(items: ReadonlyArray<{ question: string; answer: strin
   };
 }
 
-export function organizationSchema() {
+export function organizationSchema(business: BusinessDetails = DEFAULT_BUSINESS) {
   return {
     '@type': 'Organization',
-    name: siteConfig.name,
-    url: siteConfig.url,
+    name: business.name,
+    alternateName: siteConfig.name,
+    url: business.website,
     logo: `${siteConfig.url}/icon-512.png`,
     description: siteConfig.description,
+    address: business.address,
     sameAs: siteConfig.social.map((s) => s.href),
     contactPoint: {
       '@type': 'ContactPoint',
-      email: 'info@getsavdown.com',
+      email: business.email,
+      telephone: business.phone,
       contactType: 'customer support',
       url: `${siteConfig.url}/contact`,
     },

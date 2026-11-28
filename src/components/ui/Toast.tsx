@@ -150,7 +150,7 @@ function ToastViewport({
     <div
       aria-live="polite"
       aria-atomic="false"
-      className="pointer-events-none fixed bottom-4 right-4 z-[100] flex w-[min(100%-2rem,24rem)] flex-col gap-2.5"
+      className="pointer-events-none fixed bottom-[calc(1rem+var(--sd-consent-h,0px))] right-4 z-[100] flex w-[min(100%-2rem,24rem)] flex-col gap-2.5"
     >
       <AnimatePresence initial={false}>
         {toasts.map((t) => (

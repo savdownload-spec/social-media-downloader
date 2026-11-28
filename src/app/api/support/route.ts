@@ -56,6 +56,7 @@ export async function POST(request: Request) {
   const rl = await ratelimit(`support:new:${actor.userId || getClientId(request)}`, {
     limit: actor.userId ? 8 : 3,
     windowSeconds: 600,
+    fallbackToMemory: true,
   });
   if (!rl.success) return fail('Too many new conversations. Please wait a few minutes.', 429);
 
@@ -81,9 +82,6 @@ export async function POST(request: Request) {
     const message = cleanSupportText(parsed.message);
     if (!message) return fail('Please enter a message.');
 
-    const detectedLanguage = detectSupportLanguage(message);
-    const translation = await translateSupportMessage(message, detectedLanguage);
-
     if (!actor.userId && (!parsed.name || !parsed.email)) {
       return fail('Please enter your name and a valid email address.');
     }
@@ -101,6 +99,8 @@ export async function POST(request: Request) {
       }
     }
 
+    const detectedLanguage = detectSupportLanguage(message);
+    const translation = await translateSupportMessage(message, detectedLanguage);
     const guestToken = actor.userId ? null : supportGuestToken();
 
     const attachmentData = await Promise.all(
